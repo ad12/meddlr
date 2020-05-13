@@ -4,21 +4,16 @@ Deep-learning based semi-supervised MRI reconstruction
 
 ### Setup
 
-#### Setting Up Symlinks
-To simplify path logic, all paths will be relative to the base repository directory.
+##### Registering New Users
+To register users to existing machines, add your username and machines to support
+with that username to the `_USER_PATHS` dictionary in 
+`ss_recon/utils/cluster.py`[ss_recon/utils/cluster.py].
 
-All data will be stored in a local directory `./datasets/data`.
-If you would like to store data at a different path, symlink the local directory `./datasets/data` 
-to the desired output directory:
-```bash
-# Run the following command from the base repository directory.
+##### Registering New Machines/Clusters
+To register new machines, you will have to find the regex pattern(s) that can be used to
+identify the machine or set of machines you want to add functionality for. See 
+`ss_recon/utils/cluster.py`[ss_recon/utils/cluster.py] for more details.
 
-# Linux
-ln -s /PATH/TO/DESIRED/DATASET/DIR ./datasets/data
-```
-
-Similarly, all results will be stored in the `./results` folder. Use symlinking to output
-to different folder.
 
 ### Contributing
 Please run `./dev/linter.sh` from the base repository directory before committing any code.
@@ -26,4 +21,24 @@ Please run `./dev/linter.sh` from the base repository directory before committin
 You may need to install the following libraries:
 ```bash
 pip install black==19.3b0 isort flake8 flake8-comprehensions
+```
+
+##### Handling file paths
+There are many file path manager libraries. For this project we use 
+[fvcore](https://github.com/facebookresearch/fvcore).
+
+For any opening files, writing to files, etc., do not use the `os` library as this
+can cause some internal breakings. Instead use `fvcore.common.file_io.PathManager`.
+
+```python
+from fvcore.common.file_io import PathManager
+path = "/my/path"
+
+# get absolute path
+PathManager.get_local_path(path)
+
+# open file
+with PathManager.open(path, "r") as f:
+    ...
+
 ```

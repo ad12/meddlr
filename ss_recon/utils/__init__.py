@@ -1,2 +1,1 @@
-"""
-"""
+from . import cluster  # used to set up default path prefixes.

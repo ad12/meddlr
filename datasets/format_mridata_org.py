@@ -24,6 +24,7 @@ import shutil
 import subprocess
 import sys
 
+from fvcore.common.file_io import PathManager
 import h5py
 import torch
 from tqdm import tqdm
@@ -41,11 +42,12 @@ from ss_recon.utils import cfl
 from ss_recon.utils import transforms as T
 from ss_recon.utils import complex_utils as cplx
 
+
 _FILE_DIR = os.path.dirname(__file__)
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
 
 BIN_BART = "bart"
-OUTPUT_DIR = os.path.join(_FILE_DIR, "data/mridata_org_knee")
+OUTPUT_DIR = "data://mridata_org_knee"
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 logger = logging.getLogger(_LOGGER_NAME)
 
@@ -297,7 +299,7 @@ if __name__ == "__main__":
     if args.random_seed >= 0:
         np.random.seed(args.random_seed)
 
-    root_dir = args.output
+    root_dir = PathManager.get_local_path(args.output)
     setup_logger(root_dir, name=_FILE_NAME)
 
     # Download raw mridata.org knee datasets
