@@ -19,7 +19,9 @@ Usage::
 """
 import argparse
 import datetime
+import functools
 import logging
+import multiprocessing as mp
 import os
 import shutil
 import subprocess
@@ -141,61 +143,6 @@ def ismrmrd_to_npy(dir_input, dir_output, overwrite: bool = False):
             np.save(file_output, kspace.astype(np.complex64))
 
 
-# def remove_bart_files(filenames):
-#     """Remove bart files in list.
-#     Args:
-#         filenames: List of bart file names.
-#     """
-#     for f in filenames:
-#         os.remove(f + ".hdr")
-#         os.remove(f + ".cfl")
-
-
-# def estimate_sense_maps(kspace, calib=20, method="espirit", device: int = -1):
-#     """Estimate sensitivity maps.
-
-#     ESPIRiT is used if bart exists. Otherwise, use JSENSE in sigpy.
-
-#     Args:
-#         kspace: k-Space data input as [coils, spatial dimensions].
-#         calib: Calibration region shape in all spatial dimensions.
-#         method: Sensitivity map estimation method.
-
-#     Returns:
-#         ndarray: Estimated sensitivity maps (complex 64-bit)
-#     """
-#     if method not in ["espirit", "jsense"]:
-#         raise ValueError("method must either be 'espirit' or 'jsense'")
-
-#     if args.device is -1:
-#         device = sp.cpu_device
-#     else:
-#         device = sp.Device(args.device)
-
-#     if method == "espirt":
-#         if not shutil.which(BIN_BART):
-#             raise ValueError("bart not installed")
-#         flags = "-c 1e-9 -m 1 -r %d" % calib
-#         randnum = np.random.randint(1e8)
-#         fileinput = "tmp.in.{}".format(randnum)
-#         fileoutput = "tmp.out.{}".format(randnum)
-#         cfl.write(fileinput, kspace)
-#         cmd = "{} ecalib {} {} {}".format(
-#             BIN_BART, flags, fileinput, fileoutput
-#         )
-#         subprocess.check_output(["bash", "-c", cmd])
-#         sensemap = np.squeeze(cfl.read(fileoutput))
-#         remove_bart_files([fileoutput, fileinput])
-#     else:
-#         JsenseApp = app.JsenseRecon(
-#             kspace, ksp_calib_width=calib, device=device, show_pbar=True
-#         )
-#         sensemap = JsenseApp.run()
-#         del JsenseApp
-#         sensemap = sensemap.astype(np.complex64)
-#     return sensemap
-
-
 def process_slice(kspace, calib_method="jsense", calib_size: int = 20, device: int = -1):
     # get data dimensions
     nky, nkz, ncoils = kspace.shape
@@ -243,6 +190,7 @@ def convert_to_h5(
     calib_method: str = "jsense",
     calib_size: int = 20,
     device: int = -1,
+    num_workers: int = 1,
     is_input_numpy: bool = False,
     overwrite: bool = False,
 ):
@@ -299,11 +247,21 @@ def convert_to_h5(
         images = np.zeros((shape_x, shape_y, shape_z, num_maps), dtype=np.complex64)
         maps = np.zeros((shape_x, shape_y, shape_z, num_coils, num_maps), dtype=np.complex64)
         with torch.no_grad():
-            for x in tqdm(range(shape_x)):
-                im_slice, maps_slice = process_slice(kspace[x], calib_method, calib_size, device)
+            if num_workers > 0:
+                kspace_sliced = [kspace[x] for x in range(shape_x)]
+                func = functools.partial(process_slice, calib_method=calib_method, calib_size=calib_size, device=device)
+                with mp.Pool(num_workers) as pool:
+                    info = pool.imap(kspace_sliced, func)
+                for x in range(shape_x):
+                    im_slice, maps_slice = info[x]
+                    images[x] = im_slice
+                    maps[x] = maps_slice
+            else:
+                for x in tqdm(range(shape_x)):
+                    im_slice, maps_slice = process_slice(kspace[x], calib_method, calib_size, device)
 
-                images[x] = im_slice
-                maps[x] = maps_slice
+                    images[x] = im_slice
+                    maps[x] = maps_slice
 
         with h5py.File(h5_file, "w") as f:
             f.create_dataset("kspace", data=kspace)
@@ -332,10 +290,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Recompute sensitivity maps and target image"
     )
-    # Sensitivity map parameters.
     parser.add_argument(
         "--device", type=int, default=-1,
-        help='Device on which to run sensitivity calibration step.')
+        help='Device on which to run sensitivity calibration step.'
+    )
+    parser.add_argument(
+        "--num-workers", type=int, default=0,
+        help='Number of workers to use for recontruction (default: 0)'
+    )
 
     args = parser.parse_args()
 
@@ -344,6 +306,8 @@ if __name__ == "__main__":
 
     root_dir = PathManager.get_local_path(args.output)
     setup_logger(root_dir, name=_FILE_NAME)
+
+    logger.info("Args:\n{}".format(args))
 
     # Download raw mridata.org knee datasets
     dir_mridata_org = os.path.join(root_dir, "raw/ismrmrd")
@@ -382,5 +346,6 @@ if __name__ == "__main__":
             dir_h5_data,
             is_input_numpy=True,
             device=args.device,
-            overwrite=args.recompute
+            overwrite=args.recompute,
+            num_workers=args.num_workers
         )
