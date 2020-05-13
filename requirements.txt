@@ -1,0 +1,11 @@
+h5py
+matplotlib
+numpy
+tensorboardX
+fvcore
+torch==1.5.0
+torchvision==0.6.0
+mridata
+sigpy
+ismrmrd
+tqdm
