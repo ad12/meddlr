@@ -18,11 +18,13 @@ Usage::
     ```
 """
 import argparse
+import datetime
 import logging
 import os
 import shutil
 import subprocess
 import sys
+import time
 
 from fvcore.common.file_io import PathManager
 import h5py
@@ -33,6 +35,7 @@ import mridata
 import ismrmrd
 import numpy as np
 import sigpy as sp
+from sigpy.mri import app
 
 from utils import fftc
 
@@ -138,65 +141,107 @@ def ismrmrd_to_npy(dir_input, dir_output, overwrite: bool = False):
             np.save(file_output, kspace.astype(np.complex64))
 
 
-def remove_bart_files(filenames):
-    """Remove bart files in list.
-    Args:
-        filenames: List of bart file names.
-    """
-    for f in filenames:
-        os.remove(f + ".hdr")
-        os.remove(f + ".cfl")
+# def remove_bart_files(filenames):
+#     """Remove bart files in list.
+#     Args:
+#         filenames: List of bart file names.
+#     """
+#     for f in filenames:
+#         os.remove(f + ".hdr")
+#         os.remove(f + ".cfl")
 
 
-def estimate_sense_maps(kspace, calib=20, method="espirit", device: int = -1):
-    """Estimate sensitivity maps.
+# def estimate_sense_maps(kspace, calib=20, method="espirit", device: int = -1):
+#     """Estimate sensitivity maps.
 
-    ESPIRiT is used if bart exists. Otherwise, use JSENSE in sigpy.
+#     ESPIRiT is used if bart exists. Otherwise, use JSENSE in sigpy.
 
-    Args:
-        kspace: k-Space data input as [coils, spatial dimensions].
-        calib: Calibration region shape in all spatial dimensions.
-        method: Sensitivity map estimation method.
+#     Args:
+#         kspace: k-Space data input as [coils, spatial dimensions].
+#         calib: Calibration region shape in all spatial dimensions.
+#         method: Sensitivity map estimation method.
 
-    Returns:
-        ndarray: Estimated sensitivity maps (complex 64-bit)
-    """
-    if method not in ["espirit", "jsense"]:
-        raise ValueError("method must either be 'espirit' or 'jsense'")
+#     Returns:
+#         ndarray: Estimated sensitivity maps (complex 64-bit)
+#     """
+#     if method not in ["espirit", "jsense"]:
+#         raise ValueError("method must either be 'espirit' or 'jsense'")
 
-    if args.device is -1:
+#     if args.device is -1:
+#         device = sp.cpu_device
+#     else:
+#         device = sp.Device(args.device)
+
+#     if method == "espirt":
+#         if not shutil.which(BIN_BART):
+#             raise ValueError("bart not installed")
+#         flags = "-c 1e-9 -m 1 -r %d" % calib
+#         randnum = np.random.randint(1e8)
+#         fileinput = "tmp.in.{}".format(randnum)
+#         fileoutput = "tmp.out.{}".format(randnum)
+#         cfl.write(fileinput, kspace)
+#         cmd = "{} ecalib {} {} {}".format(
+#             BIN_BART, flags, fileinput, fileoutput
+#         )
+#         subprocess.check_output(["bash", "-c", cmd])
+#         sensemap = np.squeeze(cfl.read(fileoutput))
+#         remove_bart_files([fileoutput, fileinput])
+#     else:
+#         JsenseApp = app.JsenseRecon(
+#             kspace, ksp_calib_width=calib, device=device, show_pbar=True
+#         )
+#         sensemap = JsenseApp.run()
+#         del JsenseApp
+#         sensemap = sensemap.astype(np.complex64)
+#     return sensemap
+
+
+def process_slice(kspace, calib_method="jsense", calib_size: int = 20, device: int = -1):
+    # get data dimensions
+    nky, nkz, ncoils = kspace.shape
+
+    # ESPIRiT parameters
+    nmaps = 1
+
+    if device is -1:
         device = sp.cpu_device
     else:
-        device = sp.Device(args.device)
+        device = sp.Device(device)
 
-    if method == "espirt":
-        if not shutil.which(BIN_BART):
-            raise ValueError("bart not installed")
-        flags = "-c 1e-9 -m 1 -r %d" % calib
-        randnum = np.random.randint(1e8)
-        fileinput = "tmp.in.{}".format(randnum)
-        fileoutput = "tmp.out.{}".format(randnum)
-        cfl.write(fileinput, kspace)
-        cmd = "{} ecalib {} {} {}".format(
-            BIN_BART, flags, fileinput, fileoutput
-        )
-        subprocess.check_output(["bash", "-c", cmd])
-        sensemap = np.squeeze(cfl.read(fileoutput))
-        remove_bart_files([fileoutput, fileinput])
+    # compute sensitivity maps (BART)
+    #cmd = f'ecalib -d 0 -S -m {nmaps} -c {crop_value} -r {calib_size}'
+    #maps = bart.bart(1, cmd, kspace[:,:,0,None,:])
+    #maps = np.reshape(maps, (nky, nkz, 1, ncoils, nmaps))
+
+    # compute sensitivity maps (SigPy)
+    ksp = np.transpose(kspace, [2, 1, 0])  # #coils x Kz x Ky
+    if calib_method is 'espirit':
+        maps = app.EspiritCalib(ksp, calib_width=calib_size, device=device, show_pbar=False).run()
+    elif calib_method is 'jsense':
+        maps = app.JsenseRecon(ksp, ksp_calib_width=calib_size, device=device, show_pbar=False).run()
     else:
-        JsenseApp = sp.mri.app.JsenseRecon(
-            kspace, ksp_calib_width=calib, device=device, show_pbar=True
-        )
-        sensemap = JsenseApp.run()
-        del JsenseApp
-        sensemap = sensemap.astype(np.complex64)
-    return sensemap
+        raise ValueError('%s calibration method not implemented...' % calib_method)
+    maps = np.reshape(np.transpose(maps, [2, 1, 0]), (nky, nkz, ncoils, nmaps))
+
+    # Convert everything to tensors
+    kspace_tensor = cplx.to_tensor(kspace).unsqueeze(0)  # 1 x Ky x Kz x #coils
+    maps_tensor = cplx.to_tensor(maps).unsqueeze(0)  # 1 x Ky x Kz x #coils
+
+    # Do coil combination using sensitivity maps (PyTorch)
+    A = T.SenseModel(maps_tensor)
+    im_tensor = A(kspace_tensor, adjoint=True)
+
+    # Convert tensor back to numpy array
+    image = cplx.to_numpy(im_tensor.squeeze(0))
+
+    return image, maps
 
 
 def convert_to_h5(
     file_paths,
     dir_output,
-    calib: int = 20,
+    calib_method: str = "jsense",
+    calib_size: int = 20,
     device: int = -1,
     is_input_numpy: bool = False,
     overwrite: bool = False,
@@ -215,6 +260,9 @@ def convert_to_h5(
             numpy files rather than recomputed.
         overwrite (bool): Overwrite existing files.
     """
+    eta = None
+    start_time = time.perf_counter()
+    num_files = len(file_paths)
     os.makedirs(dir_output, exist_ok=True)
     for idx, fp in enumerate(file_paths):
         fname = os.path.splitext(os.path.basename(fp))[0]
@@ -223,9 +271,14 @@ def convert_to_h5(
             logger.info("Skipping [{}/{}] {} - hdf5 file found".format(
                 idx + 1, len(file_paths), fp
             ))
+            continue
 
-        logger.info("Processing [{}/{}] {}...".format(
-            idx+1, len(file_paths), fp
+        if idx > 0:
+            eta = datetime.timedelta(
+                seconds=int((time.perf_counter() - start_time) / idx * (num_files - idx))
+            )
+        logger.info("Processing [{}/{}] {} {}".format(
+            idx+1, len(file_paths), fp, "- ETA: {}".format(str(eta)) if eta is not None else ""
         ))
         if is_input_numpy:
             kspace = np.squeeze(np.load(fp))
@@ -235,36 +288,26 @@ def convert_to_h5(
         shape_x = kspace.shape[-1]
         shape_y = kspace.shape[-2]
         shape_z = kspace.shape[-3]
-        shape_c = kspace.shape[-4]
-        logger.debug("Slice shape: (%d, %d)" % (shape_z, shape_y))
-        logger.debug("Num channels: %d" % shape_c)
-
-        logger.info("Estimating sensitivity maps...")
-        sensemap = estimate_sense_maps(kspace, calib=calib, device=device)
-        sensemap = np.expand_dims(sensemap, axis=0)  # M x C x Z x Y x X
+        num_coils = kspace.shape[-4]
+        num_maps = 1
 
         kspace = fftc.ifftc(kspace, axis=-1)
         kspace = kspace.astype(np.complex64)
 
         kspace = np.transpose(kspace, (3, 2, 1, 0))  # X x Y x Z x C
-        sensemap = np.transpose(sensemap, (4, 3, 2, 1, 0))  # X x Y x Z x C x M
-        shape_m = sensemap.shape[-1]
 
-        images = np.zeros(shape_x, shape_y, shape_z, shape_m)
+        images = np.zeros((shape_x, shape_y, shape_z, num_maps), dtype=np.complex64)
+        maps = np.zeros((shape_x, shape_y, shape_z, num_coils, num_maps), dtype=np.complex64)
         with torch.no_grad():
-            for x in range(shape_x):
-                map_tensor = cplx.to_tensor(sensemap[x]).unsqueeze(0)
-                k_tensor = cplx.to_tensor(kspace[x]).unsqueeze(0)
+            for x in tqdm(range(shape_x)):
+                im_slice, maps_slice = process_slice(kspace[x], calib_method, calib_size, device)
 
-                A = T.SenseModel(map_tensor)
-                im_tensor = A(k_tensor, adjoint=True)
-
-                # Convert tensor back to numpy array
-                images[x] = cplx.to_numpy(im_tensor.squeeze(0))
+                images[x] = im_slice
+                maps[x] = maps_slice
 
         with h5py.File(h5_file, "w") as f:
             f.create_dataset("kspace", data=kspace)
-            f.create_dataset("maps", data=sensemap)
+            f.create_dataset("maps", data=maps)
             f.create_dataset("target", data=images)
 
 
@@ -332,6 +375,7 @@ if __name__ == "__main__":
     for split, files in zip(
         ["train", "val", "test"], [train_files, val_files, test_files]
     ):
+        logger.info("Processing {} split...".format(split))
         dir_h5_data = os.path.join(root_dir, split)
         convert_to_h5(
             files,

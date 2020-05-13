@@ -109,7 +109,7 @@ class GeneralPathHandler(PathHandler, ABC):
 
     def _get_local_path(self, path: str, **kwargs):
         name = path[len(self.PREFIX):]
-        return os.path.join(CLUSTER.save_dir, name)
+        return os.path.join(self._root_dir(), name)
 
     def _open(self, path, mode="r", **kwargs):
         return PathManager.open(self._get_local_path(path), mode, **kwargs)
