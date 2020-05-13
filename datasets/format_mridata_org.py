@@ -1,8 +1,10 @@
 """Format the mridata.org Knee dataset.
 
-This file is adapted from the repo:
+This file is adapted from the repo at https://github.com/MRSRL/dl-cs/.
 
-https://github.com/MRSRL/dl-cs/
+Note that this formatting file computes sensitivity maps per slice, not
+per volume as was initially done in the repository mentioned above.
+We find that this leads to more stable reconstruction.
 
 Usage::
     ```bash
@@ -39,9 +41,11 @@ from ss_recon.utils import cfl
 from ss_recon.utils import transforms as T
 from ss_recon.utils import complex_utils as cplx
 
-BIN_BART = "bart"
-OUTPUT_DIR = "./datasets/data/mridata_org_knee"
+_FILE_DIR = os.path.dirname(__file__)
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
+
+BIN_BART = "bart"
+OUTPUT_DIR = os.path.join(_FILE_DIR, "data/mridata_org_knee")
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 logger = logging.getLogger(_LOGGER_NAME)
 
