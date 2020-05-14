@@ -1,1 +1,1 @@
-from .config import CfgNode
+from .config import CfgNode, get_cfg

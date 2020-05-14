@@ -14,6 +14,8 @@ from ss_recon.utils.events import CommonMetricPrinter, JSONWriter, \
 from ss_recon.utils.logger import setup_logger
 from ss_recon.data import build_recon_train_loader, build_recon_test_loader
 
+__all__ = ["DefaultTrainer"]
+
 
 def format_as_iter(
     vals: Union[int, Sequence[int]],
