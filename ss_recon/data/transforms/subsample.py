@@ -1,20 +1,28 @@
-"""
-Copyright (c) Facebook, Inc. and its affiliates.
-
-This source code is licensed under the MIT license found in the
-LICENSE file in the root directory of this source tree.
-"""
-
-from math import ceil, floor
-
 import numpy as np
 import sigpy.mri
 import torch
+from fvcore.common.registry import Registry
+
+MASK_FUNC_REGISTRY = Registry("MASK_FUNC")
+MASK_FUNC_REGISTRY.__doc__ = """
+Registry for mask functions, which create undersampling masks of a specified
+shape.
+"""
+
+
+def build_mask_func(cfg):
+    name = cfg.MASK_FUNC.NAME
+    accelerations = cfg.MASK_FUNC.ACCELERATIONS
+    calibration_size = cfg.MASK_FUNC.CALIBRATION_SIZE
+
+    return MASK_FUNC_REGISTRY.get(name)(accelerations, calibration_size)
 
 
 class MaskFunc:
-    """
-    Abstract MaskFunc class for creating undersampling masks of a specified shape.
+    """Abstract MaskFunc class for creating undersampling masks of a specified
+    shape.
+
+    Adapted from Facebook fastMRI.
     """
 
     def __init__(self, accelerations):
@@ -34,6 +42,7 @@ class MaskFunc:
         return acceleration
 
 
+@MASK_FUNC_REGISTRY.register()
 class RandomMaskFunc(MaskFunc):
     """
     RandomMaskFunc creates a 2D uniformly random undersampling mask.
@@ -66,6 +75,7 @@ class RandomMaskFunc(MaskFunc):
         return mask.reshape(out_shape)
 
 
+@MASK_FUNC_REGISTRY.register()
 class PoissonDiskMaskFunc(MaskFunc):
     """
     PoissonDiskMaskFunc creates a 2D Poisson disk undersampling mask.
@@ -76,8 +86,6 @@ class PoissonDiskMaskFunc(MaskFunc):
         self.calib_size = [calib_size, calib_size]
 
     def __call__(self, out_shape, seed=None):
-        # self.rng.seed(seed)
-
         # Design parameters for mask
         nky = out_shape[1]
         nkz = out_shape[2]

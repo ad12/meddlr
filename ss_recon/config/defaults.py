@@ -18,7 +18,111 @@ _C = CN()
 _C.VERSION = 1
 
 _C.MODEL = CN()
-_C.MODEL.NAME = "Unrolled2D"
+_C.MODEL.DEVICE = "cuda"
+_C.MODEL.META_ARCHITECTURE = "Unrolled2DCNN"
 
-_C.MODEL.NUM_UNROLLED_STEPS = 5
-_C.MODEL.NUM_RESBLOCKS = 2
+# -----------------------------------------------------------------------------
+# Unrolled model - TODO: Deprecate
+# -----------------------------------------------------------------------------
+_C.MODEL.UNROLLED = CN()
+_C.MODEL.UNROLLED.NUM_UNROLLED_STEPS = 5
+_C.MODEL.UNROLLED.NUM_RESBLOCKS = 2
+_C.MODEL.UNROLLED.NUM_FEATURES = 256
+_C.MODEL.UNROLLED.DROPOUT = 0.
+# Padding options. "" or "circular"
+_C.MODEL.UNROLLED.PADDING = ""
+_C.MODEL.UNROLLED.FIX_STEP_SIZE = False
+_C.MODEL.UNROLLED.SHARE_WEIGHTS = False
+# Kernel size
+_C.MODEL.UNROLLED.KERNEL_SIZE = (3,)
+# Number of ESPIRiT maps
+_C.MODEL.UNROLLED.NUM_EMAPS = 1
+
+# -----------------------------------------------------------------------------
+# Dataset
+# -----------------------------------------------------------------------------
+_C.DATASETS = CN()
+# List of the dataset names for training. Must be registered in DatasetCatalog
+_C.DATASETS.TRAIN = ()
+# List of the dataset names for testing. Must be registered in DatasetCatalog
+_C.DATASETS.TEST = ()
+
+
+# -----------------------------------------------------------------------------
+# DataLoader
+# -----------------------------------------------------------------------------
+_C.DATALOADER = CN()
+# Number of data loading threads
+_C.DATALOADER.NUM_WORKERS = 4
+# If True, the dataloader will drop the last batch.
+_C.DATALOADER.DROP_LAST = True
+
+# ---------------------------------------------------------------------------- #
+# Solver
+# ---------------------------------------------------------------------------- #
+_C.SOLVER = CN()
+
+# See ss_recon/solver/build.py for LR scheduler options
+_C.SOLVER.LR_SCHEDULER_NAME = "WarmupMultiStepLR"
+
+_C.SOLVER.MAX_ITER = 100
+
+_C.SOLVER.BASE_LR = 0.001
+
+_C.SOLVER.MOMENTUM = 0.9
+
+_C.SOLVER.WEIGHT_DECAY = 0.0001
+# The weight decay that's applied to parameters of normalization layers
+# (typically the affine transformation)
+_C.SOLVER.WEIGHT_DECAY_NORM = 0.0
+
+_C.SOLVER.GAMMA = 0.1
+# The iteration number to decrease learning rate by GAMMA.
+_C.SOLVER.STEPS = (30000,)
+
+_C.SOLVER.WARMUP_FACTOR = 1.0 / 1000
+_C.SOLVER.WARMUP_ITERS = 1000
+_C.SOLVER.WARMUP_METHOD = "linear"
+
+# Save a checkpoint after every this number of iterations
+_C.SOLVER.CHECKPOINT_PERIOD = 1
+
+# Number of images per batch across all machines.
+# If we have 16 GPUs and IMS_PER_BATCH = 32,
+# each GPU will see 2 images per batch.
+_C.SOLVER.TRAIN_BATCH_SIZE = 16
+_C.SOLVER.TEST_BATCH_SIZE = 16
+
+# Detectron v1 (and previous detection code) used a 2x higher LR and 0 WD for
+# biases. This is not useful (at least for recent models). You should avoid
+# changing these and they exist only to reproduce Detectron v1 training if
+# desired.
+_C.SOLVER.BIAS_LR_FACTOR = 1.0
+_C.SOLVER.WEIGHT_DECAY_BIAS = _C.SOLVER.WEIGHT_DECAY
+
+# ---------------------------------------------------------------------------- #
+# Specific test options
+# ---------------------------------------------------------------------------- #
+_C.TEST = CN()
+# The period over which to evaluate the model during training.
+# Set to 0 to disable.
+_C.TEST.EVAL_PERIOD = 1
+
+
+# ---------------------------------------------------------------------------- #
+# Misc options
+# ---------------------------------------------------------------------------- #
+# Directory where output files are written
+_C.OUTPUT_DIR = ""
+# Set seed to negative to fully randomize everything.
+# Set seed to positive to use a fixed seed. Note that a fixed seed does not
+# guarantee fully deterministic behavior.
+_C.SEED = -1
+# The period (in terms of steps) for minibatch visualization at train time.
+# Set to 0 to disable.
+_C.VIS_PERIOD = 0
+# The scale when referring to time generally in the config.
+# Note that there are certain fields, which are explicitly at the iteration
+# scale (e.g. NUM_GRAD_STEPS).
+# Either "epoch" or "iter"
+_C.TIME_SCALE = "epoch"

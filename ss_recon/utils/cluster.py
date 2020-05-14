@@ -162,10 +162,8 @@ _USER_PATHS = {
 
 # Register default user paths.
 _USER = getpass.getuser()
-if _USER not in _USER_PATHS:
-    raise ValueError("User {} not registered".format(_USER))
-
-for cluster, (data_dir, results_dir) in _USER_PATHS[_USER].items():
-    cluster.register_user(_USER, data_dir, results_dir)
+if _USER in _USER_PATHS:
+    for cluster, (data_dir, results_dir) in _USER_PATHS[_USER].items():
+        cluster.register_user(_USER, data_dir, results_dir)
 
 

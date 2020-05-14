@@ -40,7 +40,7 @@ def setup_logger(
     distributed_rank=0,
     *,
     color=True,
-    name="detectron2",
+    name="ss_recon",
     abbrev_name=None
 ):
     """
@@ -64,7 +64,7 @@ def setup_logger(
     logger.propagate = False
 
     if abbrev_name is None:
-        abbrev_name = "d2" if name == "detectron2" else name
+        abbrev_name = "ssr" if name == "ss_recon" else name
 
     plain_formatter = logging.Formatter(
         "[%(asctime)s] %(name)s %(levelname)s: %(message)s",
@@ -130,7 +130,7 @@ def _find_caller():
         if os.path.join("utils", "logger.") not in code.co_filename:
             mod_name = frame.f_globals["__name__"]
             if mod_name == "__main__":
-                mod_name = "detectron2"
+                mod_name = "ss_recon"
             return mod_name, (code.co_filename, frame.f_lineno, code.co_name)
         frame = frame.f_back
 

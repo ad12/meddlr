@@ -3,26 +3,33 @@ import importlib
 import importlib.util
 import logging
 import os
+import subprocess
 import sys
+import numpy as np
+import torch
+import random
 
 __all__ = []
 
 
-def generate_seed():
+def seed_all_rng(seed=None):
     """
     Set the random seed for the RNG in torch, numpy and python.
 
     Args:
         seed (int): if None, will use a strong random seed.
     """
-    seed = (
-        os.getpid()
-        + int(datetime.now().strftime("%S%f"))
-        + int.from_bytes(os.urandom(2), "big")
-    )
-    logger = logging.getLogger(__name__)
-    logger.info("Using a generated random seed {}".format(seed))
-    return seed
+    if seed is None:
+        seed = (
+            os.getpid()
+            + int(datetime.now().strftime("%S%f"))
+            + int.from_bytes(os.urandom(2), "big")
+        )
+        logger = logging.getLogger(__name__)
+        logger.info("Using a generated random seed {}".format(seed))
+    np.random.seed(seed)
+    torch.set_rng_state(torch.manual_seed(seed).get_state())
+    random.seed(seed)
 
 
 # from https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path  # noqa
@@ -101,3 +108,63 @@ def setup_custom_environment(custom_module):
         custom_module
     )
     module.setup_environment()
+
+
+def get_available_gpus(num_gpus: int = None):
+    """Get gpu ids for gpus that are >95% free.
+
+    Tensorflow does not support checking free memory on gpus.
+    This is a crude method that relies on `nvidia-smi` to
+    determine which gpus are occupied and which are free.
+
+    Args:
+        num_gpus: Number of requested gpus. If not specified,
+            ids of all available gpu(s) are returned.
+
+    Returns:
+        List[int]: List of gpu ids that are free. Length
+            will equal `num_gpus`, if specified.
+    """
+    # Built-in tensorflow gpu id.
+    assert isinstance(num_gpus, (type(None), int))
+    if num_gpus == 0:
+        return [-1]
+
+    num_requested_gpus = num_gpus
+    num_gpus = (
+        len(
+            subprocess.check_output("nvidia-smi --list-gpus", shell=True)
+            .decode()
+            .split("\n")
+        )
+        - 1
+    )
+
+    out_str = subprocess.check_output(
+        "nvidia-smi | grep MiB", shell=True
+    ).decode()
+    mem_str = [x for x in out_str.split() if "MiB" in x]
+    # First 2 * num_gpu elements correspond to memory for gpus
+    # Order: (occupied-0, total-0, occupied-1, total-1, ...)
+    mems = [float(x[:-3]) for x in mem_str]
+    gpu_percent_occupied_mem = [
+        mems[2 * gpu_id] / mems[2 * gpu_id + 1] for gpu_id in range(num_gpus)
+    ]
+
+    available_gpus = [
+        gpu_id
+        for gpu_id, mem in enumerate(gpu_percent_occupied_mem)
+        if mem < 0.05
+    ]
+    if num_requested_gpus and num_requested_gpus > len(available_gpus):
+        raise ValueError(
+            "Requested {} gpus, only {} are free".format(
+                num_requested_gpus, len(available_gpus)
+            )
+        )
+
+    return (
+        available_gpus[:num_requested_gpus]
+        if num_requested_gpus
+        else available_gpus
+    )
