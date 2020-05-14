@@ -25,6 +25,8 @@ import multiprocessing as mp
 import os
 import shutil
 import subprocess
+import json
+import getpass
 import sys
 import time
 
@@ -269,6 +271,29 @@ def convert_to_h5(
             f.create_dataset("target", data=images)
 
 
+def write_ann_file(ann_file, h5_dir, split, **kwargs):
+    files = sorted([x for x in os.listdir(h5_dir) if x.endswith(".h5")])
+
+    image_data = []
+    for fname in files:
+        with h5py.File(os.path.join(h5_dir, fname)) as f:
+            kspace_size = f["kspace"].shape
+        image_data.append({"file_name": fname, "kspace_size": kspace_size})
+
+    data = {
+        "info": {
+            "contributor": getpass.getuser(),
+            "description": "2019 MRIData.org Knee Dataset - {}".format(split),
+            "year": time.strftime("%Y"),
+            "date_created": time.strftime("%Y-%m-%d %H-%M-%S %Z"),
+            "version": "v1.0.0",
+        },
+        "images": image_data,
+    }
+
+    json.dump(data, ann_file, indent=2)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Data preparation")
     parser.add_argument(
@@ -349,3 +374,13 @@ if __name__ == "__main__":
             overwrite=args.recompute,
             num_workers=args.num_workers
         )
+
+        # Save annotation files.
+        ann_file = os.path.join(
+            root_dir, "annotations", "{}.json".format(split)
+        )
+        ann_dir = os.path.dirname(
+            PathManager.get_local_path(ann_file)
+        )
+        os.makedirs(ann_dir, exist_ok=True)
+        write_ann_file(ann_file, dir_h5_data, split)

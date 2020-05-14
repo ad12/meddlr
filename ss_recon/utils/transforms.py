@@ -8,7 +8,7 @@ LICENSE file in the root directory of this source tree.
 import torch
 from torch import nn
 
-from . import complex_utils as cplx
+from ss_recon.utils import complex_utils as cplx
 
 
 class SenseModel(nn.Module):
