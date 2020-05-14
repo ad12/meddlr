@@ -204,13 +204,14 @@ class SimpleTrainer(TrainerBase):
         """
         If your want to do something with the data, you can wrap the dataloader.
         """
-        data = next(self._data_loader_iter)
+        # TODO: Pass dict around
+        kspace, maps, target, mean, std, norm = next(self._data_loader_iter)
         data_time = time.perf_counter() - start
 
         """
         If your want to do something with the losses, you can wrap the model.
         """
-        loss_dict = self.model(data)
+        loss_dict = self.model(kspace, maps, target=target, mean=mean, std=std, norm=norm)
         losses = sum(
             v for k, v in loss_dict.items() if "loss" in k
         )

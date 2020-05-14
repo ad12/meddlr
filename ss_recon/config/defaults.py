@@ -19,7 +19,8 @@ _C.VERSION = 1
 
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
-_C.MODEL.META_ARCHITECTURE = "Unrolled2DCNN"
+_C.MODEL.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.WEIGHTS = ""
 
 # -----------------------------------------------------------------------------
 # Unrolled model - TODO: Deprecate
@@ -37,6 +38,9 @@ _C.MODEL.UNROLLED.SHARE_WEIGHTS = False
 _C.MODEL.UNROLLED.KERNEL_SIZE = (3,)
 # Number of ESPIRiT maps
 _C.MODEL.UNROLLED.NUM_EMAPS = 1
+
+_C.MODEL.RECON_LOSS = CN()
+_C.MODEL.RECON_LOSS.NAME = "l1"
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -57,10 +61,21 @@ _C.DATALOADER.NUM_WORKERS = 4
 # If True, the dataloader will drop the last batch.
 _C.DATALOADER.DROP_LAST = True
 
+# -----------------------------------------------------------------------------
+# Augmentations/Transforms
+# -----------------------------------------------------------------------------
+_C.AUG_TRAIN = CN()
+_C.AUG_TRAIN.UNDERSAMPLE = CN()
+_C.AUG_TRAIN.UNDERSAMPLE.NAME = "RandomMaskFunc"
+_C.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6, 8)
+_C.AUG_TRAIN.UNDERSAMPLE.CALIBRATION_SIZE = 20
+
 # ---------------------------------------------------------------------------- #
 # Solver
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
+
+_C.SOLVER.OPTIMIZER = "Adam"
 
 # See ss_recon/solver/build.py for LR scheduler options
 _C.SOLVER.LR_SCHEDULER_NAME = "WarmupMultiStepLR"
@@ -126,3 +141,4 @@ _C.VIS_PERIOD = 0
 # scale (e.g. NUM_GRAD_STEPS).
 # Either "epoch" or "iter"
 _C.TIME_SCALE = "epoch"
+_C.CUDNN_BENCHMARK = False

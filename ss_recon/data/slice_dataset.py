@@ -8,7 +8,7 @@ This code was adapted from Facebook's fastMRI Challenge codebase:
 
 https://github.com/facebookresearch/fastMRI
 """
-
+import os
 from typing import List, Dict
 import h5py
 from torch.utils.data import Dataset
@@ -43,12 +43,16 @@ class SliceData(Dataset):
         return len(self.examples)
 
     def __getitem__(self, i):
-        fname, slice = self.examples[i]
+        fname, slice_id = self.examples[i]
         with h5py.File(fname, "r") as data:
-            kspace = data["kspace"][slice]
-            maps = data["maps"][slice]
-            target = data["target"][slice]
+            kspace = data["kspace"][slice_id]
+            maps = data["maps"][slice_id]
+            target = data["target"][slice_id]
+            # attrs = data.attrs
 
-        return self.transform(
-            kspace, maps, target, data.attrs, fname.name, slice
+        fname = os.path.splitext(os.path.basename(fname))[0]
+        vals = self.transform(
+            kspace, maps, target, fname, slice_id
         )
+
+        return vals

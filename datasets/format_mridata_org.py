@@ -276,7 +276,7 @@ def write_ann_file(ann_file, h5_dir, split, **kwargs):
 
     image_data = []
     for fname in files:
-        with h5py.File(os.path.join(h5_dir, fname)) as f:
+        with h5py.File(os.path.join(h5_dir, fname), "r") as f:
             kspace_size = f["kspace"].shape
         image_data.append({"file_name": fname, "kspace_size": kspace_size})
 
@@ -290,8 +290,8 @@ def write_ann_file(ann_file, h5_dir, split, **kwargs):
         },
         "images": image_data,
     }
-
-    json.dump(data, ann_file, indent=2)
+    with open(ann_file, "w") as f:
+        json.dump(data, f, indent=2)
 
 
 if __name__ == "__main__":

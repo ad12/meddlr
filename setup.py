@@ -10,8 +10,8 @@ import torchvision
 
 torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
 assert [1, 5] <= torch_ver, "Requires torch >=1.5"
-tv_ver = [int(x) for x in torchvision.__version__.split(".")[:3]]
-assert [0, 6, 0] <= tv_ver, "Requires torchvision >=0.6.0"
+tv_ver = [int(x) for x in torchvision.__version__.split(".")[:2]]
+assert [0, 6] <= tv_ver, "Requires torchvision >=0.6"
 
 
 def get_version():

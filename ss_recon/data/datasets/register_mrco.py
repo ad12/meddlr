@@ -34,7 +34,8 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
     """
     json_file = PathManager.get_local_path(json_file)
     start_time = time.perf_counter()
-    data = json.load(json_file)
+    with open(json_file, "r") as f:
+        data = json.load(f)
     logger.info("Loading {} takes {:.2f} seconds".format(
         json_file, time.perf_counter() - start_time)
     )

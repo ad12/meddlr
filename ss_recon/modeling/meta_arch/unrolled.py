@@ -22,9 +22,10 @@ from ss_recon.utils.transforms import SenseModel
 from .build import META_ARCH_REGISTRY
 from ss_recon.modeling.loss_computer import BasicLossComputer
 
+__all__ = ["GeneralizedUnrolledCNN"]
 
 @META_ARCH_REGISTRY.register()
-class UnrolledCNN2D(nn.Module):
+class GeneralizedUnrolledCNN(nn.Module):
     """
     PyTorch implementation of Unrolled Compressed Sensing.
 
@@ -43,14 +44,14 @@ class UnrolledCNN2D(nn.Module):
         self.device = torch.device(cfg.MODEL.DEVICE)
 
         # Extract network parameters
-        num_grad_steps = cfg.MODEL.UNROLLED.NUM_UNROLLED_STEP
+        num_grad_steps = cfg.MODEL.UNROLLED.NUM_UNROLLED_STEPS
         num_resblocks = cfg.MODEL.UNROLLED.NUM_RESBLOCKS
         num_features = cfg.MODEL.UNROLLED.NUM_FEATURES
         kernel_size = cfg.MODEL.UNROLLED.KERNEL_SIZE
         if len(kernel_size) == 1:
             kernel_size = kernel_size[0]
         drop_prob = cfg.MODEL.UNROLLED.DROPOUT
-        circular_pad = cfg.MODEL.UNROLLED.PAD == "circular"
+        circular_pad = cfg.MODEL.UNROLLED.PADDING == "circular"
         fix_step_size = cfg.MODEL.UNROLLED.FIX_STEP_SIZE
         share_weights = cfg.MODEL.UNROLLED.SHARE_WEIGHTS
 
@@ -91,6 +92,7 @@ class UnrolledCNN2D(nn.Module):
 
         # Build loss computer.
         self._loss_computer = BasicLossComputer(cfg)
+        self.to(self.device)
 
     def forward(
         self,
@@ -113,11 +115,12 @@ class UnrolledCNN2D(nn.Module):
         Returns:
             (torch.Tensor): Output tensor of shape [batch_size, height, width, num_emaps, 2]
         """
-
         if self.num_emaps != maps.size()[-2]:
             raise ValueError(
                 "Incorrect number of ESPIRiT maps! Re-prep data..."
             )
+
+        kspace = kspace.to(self.device)
 
         if mask is None:
             mask = cplx.get_mask(kspace)
@@ -131,7 +134,7 @@ class UnrolledCNN2D(nn.Module):
 
         # Compute zero-filled image reconstruction
         zf_image = A(kspace, adjoint=True)
-        image = zf_image if init_image is None else init_image
+        image = zf_image if init_image is None else init_image.to(self.device)
 
         # Begin unrolled proximal gradient descent
         for resnet, step_size in zip(self.resnets, self.step_sizes):
@@ -154,12 +157,14 @@ class UnrolledCNN2D(nn.Module):
 
         if self.training:
             output_dict.update({
+                "target": target,
                 "mean": mean,
                 "std": std,
                 "norm": norm,
             })
         if self.training and target is not None:
             metrics_dict = self._loss_computer(output_dict)
+            return metrics_dict
             output_dict.update(metrics_dict)
 
-        return image
+        return output_dict

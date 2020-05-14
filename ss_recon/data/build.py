@@ -22,13 +22,13 @@ def get_recon_dataset_dicts(dataset_names: Sequence[str]):
 def build_recon_train_loader(cfg):
 
     dataset_dicts = get_recon_dataset_dicts(dataset_names=cfg.DATASETS.TRAIN)
-    mask_func = build_mask_func(cfg.AUG_TRAIN.UNDERSAMPLE)
+    mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=False)
 
     train_data = SliceData(dataset_dicts, data_transform)
     train_loader = DataLoader(
         dataset=train_data,
-        batch_size=cfg.DATALOADER.TRAIN_BATCH_SIZE,
+        batch_size=cfg.SOLVER.TRAIN_BATCH_SIZE,
         shuffle=True,
         num_workers=cfg.DATALOADER.NUM_WORKERS,
         drop_last=cfg.DATALOADER.DROP_LAST,

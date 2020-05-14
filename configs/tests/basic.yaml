@@ -1,0 +1,14 @@
+# Simplest test config for unrolled network
+MODEL:
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 10
+    NUM_RESBLOCKS: 2
+    NUM_FEATURES: 256
+    DROPOUT: 0.
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  TEST: ("mridata_knee_2019_val", "mridata_knee_2019_test")
+DATALOADER:
+  NUM_WORKERS: 0  # for debugging purposes
+OUTPUT_DIR: "results://tests/basic"
+VERSION: 1

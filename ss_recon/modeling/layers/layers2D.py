@@ -8,7 +8,7 @@ by Christopher M. Sandino (sandino@stanford.edu), 2019.
 import torch
 from torch import nn
 
-from utils.transforms import center_crop
+from ss_recon.utils.transforms import center_crop
 
 
 class ConvBlock(nn.Module):

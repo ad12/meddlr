@@ -33,7 +33,7 @@ def build_optimizer(cfg: CfgNode, model: torch.nn.Module) -> torch.optim.Optimiz
 
 
 def _build_opt(params, cfg):
-    optim = cfg.SOLVER.OPTIM_NAME
+    optim = cfg.SOLVER.OPTIMIZER
     if optim == "SGD":
         return torch.optim.SGD(
             params, cfg.SOLVER.BASE_LR, momentum=cfg.SOLVER.MOMENTUM

@@ -1,2 +1,2 @@
-from .build import build_model
-from .unrolled import UnrolledCNN2D
+from .build import build_model, META_ARCH_REGISTRY
+from .unrolled import GeneralizedUnrolledCNN

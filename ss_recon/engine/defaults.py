@@ -26,7 +26,11 @@ from ss_recon.utils.collect_env import collect_env_info
 from ss_recon.utils.env import seed_all_rng, get_available_gpus
 from ss_recon.utils.logger import setup_logger
 
-__all__ = ["default_argument_parser", "default_setup", "DefaultPredictor"]
+__all__ = [
+    "default_argument_parser", 
+    "default_setup", 
+    # "DefaultPredictor",
+]
 
 
 def default_argument_parser():
@@ -68,6 +72,9 @@ def default_setup(cfg, args):
         cfg (CfgNode): the full config to be used
         args (argparse.NameSpace): the command line arguments to be logged
     """
+    cfg.defrost()
+    cfg.OUTPUT_DIR = PathManager.get_local_path(cfg.OUTPUT_DIR)
+    cfg.freeze()
     output_dir = cfg.OUTPUT_DIR
     if output_dir:
         PathManager.mkdirs(output_dir)
@@ -91,7 +98,7 @@ def default_setup(cfg, args):
             gpus = [gpus]
     else:
         gpus = get_available_gpus(args.num_gpus)
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(gpus)
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(x) for x in gpus])
 
     logger.info("Running with full config:\n{}".format(cfg))
     if output_dir:

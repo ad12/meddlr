@@ -4,7 +4,7 @@ from ss_recon.utils import complex_utils as cplx
 
 class BasicLossComputer(object):
     def __init__(self, cfg):
-        loss_name = cfg.LOSS.NAME
+        loss_name = cfg.MODEL.RECON_LOSS.NAME
         assert loss_name in ["l1", "l2", "psnr"]
         self.loss = loss_name
 

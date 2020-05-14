@@ -11,9 +11,9 @@ shape.
 
 
 def build_mask_func(cfg):
-    name = cfg.MASK_FUNC.NAME
-    accelerations = cfg.MASK_FUNC.ACCELERATIONS
-    calibration_size = cfg.MASK_FUNC.CALIBRATION_SIZE
+    name = cfg.UNDERSAMPLE.NAME
+    accelerations = cfg.UNDERSAMPLE.ACCELERATIONS
+    calibration_size = cfg.UNDERSAMPLE.CALIBRATION_SIZE
 
     return MASK_FUNC_REGISTRY.get(name)(accelerations, calibration_size)
 

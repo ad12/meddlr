@@ -48,7 +48,7 @@ class DataTransform:
         mask_func = build_mask_func(cfg)
         self._subsampler = Subsampler(mask_func)
 
-    def __call__(self, kspace, maps, target, attrs, fname, slice):
+    def __call__(self, kspace, maps, target, fname, slice):
         """
         Args:
             kspace (numpy.array): Input k-space of shape (num_coils, rows, cols, 2) for multi-coil
