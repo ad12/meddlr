@@ -150,7 +150,12 @@ class DefaultTrainer(SimpleTrainer):
         optimizer = self.build_optimizer(cfg, model)
 
         # For training, wrap with DP. But don't need this for inference.
-        model = DataParallel(model)
+        num_gpus = len(os.environ["CUDA_VISIBLE_DEVICES"].split(","))
+        if num_gpus > 1:
+            logger.info("Using data parallel...")
+            model = DataParallel(model)
+        model.to(cfg.MODEL.DEVICE)
+
         super().__init__(model, data_loader, optimizer)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)

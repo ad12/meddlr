@@ -1,10 +1,7 @@
-"""
-Implementations of different CNNs
-
-by Christopher M. Sandino (sandino@stanford.edu), 2019.
-
+"""Implementation of 2D base layers.
 """
 
+from typing import Sequence, Tuple, Union
 import torch
 from torch import nn
 
@@ -21,13 +18,13 @@ class ConvBlock(nn.Module):
 
     def __init__(
         self,
-        in_chans,
-        out_chans,
-        kernel_size,
-        drop_prob,
-        conv_type="conv2d",
-        act_type="relu",
-        norm_type="none",
+        in_chans: int,
+        out_chans: int,
+        kernel_size: Union[int, Tuple[int, int]],
+        drop_prob: float,
+        act_type: str="relu",
+        norm_type: str="none",
+        order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
     ):
         """
         Args:
@@ -40,14 +37,24 @@ class ConvBlock(nn.Module):
         self.in_chans = in_chans
         self.out_chans = out_chans
         self.drop_prob = drop_prob
-        padding = 1 if kernel_size > 1 else 0
+
+        if isinstance(kernel_size, int):
+            kernel_size = (kernel_size, kernel_size)
+        else:
+            assert len(kernel_size) == 2
+        if not all(k % 2 == 1 for k in kernel_size):
+            raise ValueError("Kernel size must be odd - got {}".format(kernel_size))
+
+        padding = tuple(k // 2 for k in kernel_size)
 
         # Define choices for each layer in ConvBlock
+        conv_after_norm = order.index("conv") > order.index("norm")
+        norm_channels = in_chans if conv_after_norm else out_chans
         normalizations = nn.ModuleDict(
             [
                 ["none", nn.Identity()],
-                ["instance", nn.InstanceNorm2d(in_chans, affine=False)],
-                ["batch", nn.BatchNorm2d(in_chans, affine=False)],
+                ["instance", nn.InstanceNorm2d(norm_channels, affine=False)],
+                ["batch", nn.BatchNorm2d(norm_channels, affine=False)],
             ]
         )
         activations = nn.ModuleDict(
@@ -55,8 +62,16 @@ class ConvBlock(nn.Module):
         )
         dropout = nn.Dropout2d(p=drop_prob)
         convolution = nn.Conv2d(
-            in_chans, out_chans, kernel_size=kernel_size, padding=padding
+            in_chans, out_chans, kernel_size=kernel_size, padding=padding,
         )
+
+        layer_dict = {
+            "conv": convolution,
+            "drop": dropout,
+            "act": activations[act_type],
+            "norm": normalizations[norm_type]
+        }
+        layers = [layer_dict[l] for l in order]
 
         # Define forward pass
         self.layers = nn.Sequential(
@@ -88,7 +103,16 @@ class ResBlock(nn.Module):
     A ResNet block that consists of two convolutional layers followed by a residual connection.
     """
 
-    def __init__(self, in_chans, out_chans, kernel_size, drop_prob):
+    def __init__(
+        self, 
+        in_chans, 
+        out_chans, 
+        kernel_size, 
+        drop_prob,
+        act_type: str="relu",
+        norm_type: str="none",
+        order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
+    ):
         """
         Args:
             in_chans (int): Number of channels in the input.
@@ -98,8 +122,8 @@ class ResBlock(nn.Module):
         super().__init__()
 
         self.layers = nn.Sequential(
-            ConvBlock(in_chans, out_chans, kernel_size, drop_prob),
-            ConvBlock(out_chans, out_chans, kernel_size, drop_prob),
+            ConvBlock(in_chans, out_chans, kernel_size, drop_prob, act_type, norm_type, order,),  # noqa
+            ConvBlock(out_chans, out_chans, kernel_size, drop_prob, act_type, norm_type, order,),  # noqa
         )
 
         if in_chans != out_chans:
@@ -166,10 +190,10 @@ class ResNet(nn.Module):
         """
 
         orig_shape = input.shape
-        if self.circular_pad:
-            input = nn.functional.pad(
-                input, 2 * (self.pad_size,) + (0, 0), mode="circular"
-            )
+        # if self.circular_pad:
+        #     input = nn.functional.pad(
+        #         input, 2 * (self.pad_size,) + (0, 0), mode="circular"
+        #     )
 
         # Perform forward pass through the network
         output = input
@@ -177,4 +201,6 @@ class ResNet(nn.Module):
             output = res_block(output)
         output = self.final_layer(output) + input
 
-        return center_crop(output, orig_shape)
+        #return center_crop(output, orig_shape)
+
+        return output

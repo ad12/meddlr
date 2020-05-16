@@ -10,5 +10,8 @@ DATASETS:
   TEST: ("mridata_knee_2019_val", "mridata_knee_2019_test")
 DATALOADER:
   NUM_WORKERS: 0  # for debugging purposes
+SOLVER:
+  TRAIN_BATCH_SIZE: 1
+  TEST_BATCH_SIZE: 2
 OUTPUT_DIR: "results://tests/basic"
 VERSION: 1

@@ -210,10 +210,13 @@ class SimpleTrainer(TrainerBase):
 
         """
         If your want to do something with the losses, you can wrap the model.
+        Use torch.mean so that if there are two elements in the loss dict, they
+        will be reduced to a single digit
         """
         loss_dict = self.model(kspace, maps, target=target, mean=mean, std=std, norm=norm)
+        import pdb; pdb.set_trace()
         losses = sum(
-            v for k, v in loss_dict.items() if "loss" in k
+            torch.sum(v) for k, v in loss_dict.items() if "loss" in k
         )
         self._detect_anomaly(losses, loss_dict)
 
@@ -248,7 +251,7 @@ class SimpleTrainer(TrainerBase):
             metrics_dict (dict): dict of scalar metrics
         """
         metrics_dict = {
-            k: v.detach().cpu().item() if isinstance(v, torch.Tensor) else float(v)
+            k: torch.sum(v.detach().cpu()).item() if isinstance(v, torch.Tensor) else float(v)
             for k, v in metrics_dict.items()
         }
 

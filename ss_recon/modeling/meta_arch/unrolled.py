@@ -79,20 +79,15 @@ class GeneralizedUnrolledCNN(nn.Module):
             )
 
         # Declare step sizes for each iteration
-        init_step_size = torch.tensor([-2.0], dtype=torch.float32).to(
-            self.device
-        )
+        init_step_size = torch.tensor([-2.0], dtype=torch.float32)
         if fix_step_size:
             self.step_sizes = [init_step_size] * num_grad_steps
         else:
-            self.step_sizes = [
-                torch.nn.Parameter(init_step_size)
-                for _ in range(num_grad_steps)
-            ]
+            self.step_sizes = [torch.nn.Parameter(init_step_size) for i in range(num_grad_steps)]
 
         # Build loss computer.
         self._loss_computer = BasicLossComputer(cfg)
-        self.to(self.device)
+        #self.to(self.device)
 
     def forward(
         self,
@@ -120,7 +115,17 @@ class GeneralizedUnrolledCNN(nn.Module):
                 "Incorrect number of ESPIRiT maps! Re-prep data..."
             )
 
-        kspace = kspace.to(self.device)
+        # Need to fetch device at runtime for proper data transfer.
+        device = self.resnets[0].final_layer.weight.device
+        kspace = kspace.to(device)
+        maps = maps.to(device)
+        target = target.to(device)
+        mean = mean.to(device)
+        std = std.to(device)
+        norm = norm.to(device)
+
+        # Move step sizes to the right device.
+        step_sizes = [x.to(device) for x in self.step_sizes]
 
         if mask is None:
             mask = cplx.get_mask(kspace)
@@ -134,10 +139,10 @@ class GeneralizedUnrolledCNN(nn.Module):
 
         # Compute zero-filled image reconstruction
         zf_image = A(kspace, adjoint=True)
-        image = zf_image if init_image is None else init_image.to(self.device)
+        image = zf_image
 
         # Begin unrolled proximal gradient descent
-        for resnet, step_size in zip(self.resnets, self.step_sizes):
+        for resnet, step_size in zip(self.resnets, step_sizes):
             # dc update
             grad_x = A(A(image), adjoint=True) - zf_image
             image = image + step_size * grad_x
@@ -146,6 +151,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(
                 0, 3, 1, 2
             )
+
             image = resnet(image)
             image = image.permute(0, 2, 3, 1).reshape(
                 dims[0:3] + (self.num_emaps, 2)
@@ -162,6 +168,7 @@ class GeneralizedUnrolledCNN(nn.Module):
                 "std": std,
                 "norm": norm,
             })
+
         if self.training and target is not None:
             metrics_dict = self._loss_computer(output_dict)
             return metrics_dict
