@@ -13,6 +13,7 @@ from ss_recon.utils.events import CommonMetricPrinter, JSONWriter, \
     TensorboardXWriter
 from ss_recon.utils.logger import setup_logger
 from ss_recon.data import build_recon_train_loader, build_recon_test_loader
+from ss_recon.modeling import BasicLossComputer
 
 __all__ = ["DefaultTrainer"]
 
@@ -156,7 +157,8 @@ class DefaultTrainer(SimpleTrainer):
             model = DataParallel(model)
         model.to(cfg.MODEL.DEVICE)
 
-        super().__init__(model, data_loader, optimizer)
+        loss_computer = BasicLossComputer(cfg)
+        super().__init__(model, data_loader, optimizer, loss_computer)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
         # Assume no other objects need to be checkpointed.

@@ -85,8 +85,6 @@ class GeneralizedUnrolledCNN(nn.Module):
         else:
             self.step_sizes = [torch.nn.Parameter(init_step_size) for i in range(num_grad_steps)]
 
-        # Build loss computer.
-        self._loss_computer = BasicLossComputer(cfg)
         #self.to(self.device)
 
     def forward(
@@ -159,19 +157,10 @@ class GeneralizedUnrolledCNN(nn.Module):
 
         output_dict = {
             "pred": image,
+            "target": target,
+            "mean": mean,
+            "std": std,
+            "norm": norm,
         }
-
-        if self.training:
-            output_dict.update({
-                "target": target,
-                "mean": mean,
-                "std": std,
-                "norm": norm,
-            })
-
-        if self.training and target is not None:
-            metrics_dict = self._loss_computer(output_dict)
-            return metrics_dict
-            output_dict.update(metrics_dict)
 
         return output_dict

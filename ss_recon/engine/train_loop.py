@@ -172,13 +172,19 @@ class SimpleTrainer(TrainerBase):
     or write your own training loop.
     """
 
-    def __init__(self, model, data_loader, optimizer):
+    def __init__(
+        self, model, data_loader, optimizer, loss_computer, metrics_computer=None
+    ):
         """
         Args:
             model: a torch Module. Takes a data from data_loader and returns a
                 dict of losses.
             data_loader: an iterable. Contains data to be used to call model.
             optimizer: a torch optimizer.
+            loss_computer: A callable that returns a dict of losses.
+                All terms must have the word "loss" to be a valid loss.
+            metrics_computer: A callable that returns a dict of metrics.
+                Will not be used for loss.
         """
         super().__init__()
 
@@ -194,6 +200,8 @@ class SimpleTrainer(TrainerBase):
         self.data_loader = data_loader
         self._data_loader_iter = iter(data_loader)
         self.optimizer = optimizer
+        self.loss_computer = loss_computer
+        self.metrics_computer = metrics_computer
 
     def run_step(self):
         """
@@ -210,18 +218,24 @@ class SimpleTrainer(TrainerBase):
 
         """
         If your want to do something with the losses, you can wrap the model.
-        Use torch.mean so that if there are two elements in the loss dict, they
-        will be reduced to a single digit
         """
-        loss_dict = self.model(kspace, maps, target=target, mean=mean, std=std, norm=norm)
-        import pdb; pdb.set_trace()
-        losses = sum(
-            torch.sum(v) for k, v in loss_dict.items() if "loss" in k
+        output_dict = self.model(
+            kspace, maps, target=target, mean=mean, std=std, norm=norm
         )
+        output_dict.update(
+            {"mean": mean, "std": std, "norm": norm}
+        )
+        loss_dict = {k: v for k, v in output_dict.items() if "loss" in k}
+        loss_dict.update(self.loss_computer(output_dict))
+
+        losses = sum(v for v in loss_dict.values())
         self._detect_anomaly(losses, loss_dict)
 
         metrics_dict = loss_dict
         metrics_dict["data_time"] = data_time
+        metrics_dict.update(
+            self.metrics_computer(output_dict) if self.metrics_computer else {}
+        )
         self._write_metrics(metrics_dict)
 
         """
