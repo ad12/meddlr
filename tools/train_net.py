@@ -6,24 +6,22 @@ This scripts reads a given config file and runs the training or evaluation.
 It is an entry point that is made to train standard models in detectron2.
 
 In order to let one script support training of many models,
-this script contains logic that are specific to these built-in models and therefore
-may not be suitable for your own project.
+this script contains logic that are specific to these built-in models and
+therefore may not be suitable for your own project.
 For example, your research project perhaps only needs a single "evaluator".
 
 Therefore, we recommend you to use detectron2 as an library and take
 this file as an example of how to use the library.
-You may want to write your own script with your datasets and other customizations.
+You may want to write your own script with your datasets and other
+customizations.
 """
 
-import logging
-import os
-from collections import OrderedDict
-import torch
-
-from ss_recon.checkpoint import DetectionCheckpointer
 from ss_recon.config import get_cfg
-from ss_recon.data import MetadataCatalog
-from ss_recon.engine import DefaultTrainer, default_argument_parser, default_setup, hooks
+from ss_recon.engine import (
+    DefaultTrainer,
+    default_argument_parser,
+    default_setup,
+)
 
 
 def setup(args):

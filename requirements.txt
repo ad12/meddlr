@@ -1,10 +1,11 @@
 h5py
 matplotlib
 numpy
-tensorboardX
+tensorboard
 fvcore
 mridata
 sigpy
 ismrmrd
 tqdm
 cupy
+scikit-image

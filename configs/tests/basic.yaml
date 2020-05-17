@@ -1,4 +1,7 @@
-# Simplest test config for unrolled network
+# Basic testing config
+# Use this for any testing you may want to do in the future.
+# If config is used as is, the model will be trained for 60 iterations (not epochs)
+# on the mridata.org 2019 knee dataset.
 MODEL:
   UNROLLED:
     NUM_UNROLLED_STEPS: 10
