@@ -91,7 +91,7 @@ class DataTransform:
         masked_kspace /= scale
         target /= scale
         mean = torch.tensor([0.0], dtype=torch.float32)
-        std = scale
+        std = scale.unsqueeze(-1)
 
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)

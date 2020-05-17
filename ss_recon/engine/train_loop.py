@@ -228,11 +228,12 @@ class SimpleTrainer(TrainerBase):
         loss_dict = {k: v for k, v in output_dict.items() if "loss" in k}
         loss_dict.update(self.loss_computer(output_dict))
 
-        losses = sum(v for v in loss_dict.values())
+        losses = sum(v for k, v in loss_dict.items() if "loss" in k)
         self._detect_anomaly(losses, loss_dict)
 
         metrics_dict = loss_dict
         metrics_dict["data_time"] = data_time
+        metrics_dict["total_loss"] = losses
         metrics_dict.update(
             self.metrics_computer(output_dict) if self.metrics_computer else {}
         )
@@ -265,15 +266,9 @@ class SimpleTrainer(TrainerBase):
             metrics_dict (dict): dict of scalar metrics
         """
         metrics_dict = {
-            k: torch.sum(v.detach().cpu()).item() if isinstance(v, torch.Tensor) else float(v)
+            k: torch.mean(v.detach().cpu()).item() if isinstance(v, torch.Tensor) else float(v)
             for k, v in metrics_dict.items()
         }
 
-        # average the rest metrics
-        total_losses_reduced = sum(
-            v for k, v in metrics_dict.items() if "loss" in k
-        )
-
-        self.storage.put_scalar("total_loss", total_losses_reduced)
         if len(metrics_dict) > 1:
             self.storage.put_scalars(**metrics_dict)

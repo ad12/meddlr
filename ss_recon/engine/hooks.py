@@ -16,7 +16,7 @@ from fvcore.nn.precise_bn import get_bn_modules, update_bn_stats
 
 #from detectron2.evaluation.testing import flatten_results_dict
 from ss_recon.utils.events import EventStorage, EventWriter
-
+from ss_recon.evaluation.testing import flatten_results_dict
 from .train_loop import HookBase
 
 __all__ = [

@@ -23,8 +23,8 @@ _PREDEFINED_SPLITS_MRCO["mridata_knee_2019"] = {
         "mridata_knee_2019/annotations/val.json",
     ),
     "mridata_knee_2019_test": (
-        "mridata_knee_2019/val",
-        "mridata_knee_2019/annotations/val.json",
+        "mridata_knee_2019/test",
+        "mridata_knee_2019/annotations/test.json",
     ),
 }
 

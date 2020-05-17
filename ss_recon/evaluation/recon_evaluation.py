@@ -40,7 +40,7 @@ class ReconEvaluator(DatasetEvaluator):
                 2. "coco_instances_results.json" a json file in COCO's result
                    format.
         """
-        self._tasks = self._tasks_from_config(cfg)
+        #self._tasks = self._tasks_from_config(cfg)
         self._output_dir = output_dir
 
         self._cpu_device = torch.device("cpu")
@@ -82,10 +82,15 @@ class ReconEvaluator(DatasetEvaluator):
                 "instances" that contains :class:`Instances`.
         """
         N = outputs["pred"].shape[0]
+        preds = outputs["pred"].to(self._cpu_device)
+        targets = outputs["target"].to(self._cpu_device)
+        means = outputs["mean"].to(self._cpu_device)
+        stds = outputs["std"].to(self._cpu_device)
+
         for i in range(N):
-            pred, target = outputs["pred"][i], outputs["target"][i]
-            mean = outputs["mean"][i]
-            std = outputs["std"][i]
+            pred, target = preds[i], targets[i]
+            mean = means[i]
+            std = stds[i]
             pred = pred * std + mean
             target = target * std + mean
 
@@ -118,15 +123,19 @@ class ReconEvaluator(DatasetEvaluator):
 
         # Compute metrics magnitude images
         abs_error = cplx.abs(output - target)
-        l1 = torch.mean(abs_error)
-        l2 = torch.sqrt(torch.mean(abs_error ** 2))
-        psnr = 20 * torch.log10(cplx.abs(target).max() / l2)
+        l1 = torch.mean(abs_error).item()
+        l2 = torch.sqrt(torch.mean(abs_error ** 2)).item()
+        psnr = 20 * torch.log10(cplx.abs(target).max() / l2).item()
 
         output, target = cplx.abs(output), cplx.abs(target)
+        target = target.squeeze(-1).numpy()
+        output = output.squeeze(-1).numpy()
         ssim = structural_similarity(
-            target, output, data_range=output.max() - output.min(),
+            target, 
+            output, 
+            data_range=output.max() - output.min(),
         )
 
         return {
-            "l1": l1, "l2": l2, "psnr": psnr, "ssim": ssim,
+            "val_l1": l1, "val_l2": l2, "val_psnr": psnr, "val_ssim": ssim,
         }

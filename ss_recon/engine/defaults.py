@@ -110,7 +110,7 @@ def default_setup(cfg, args):
         logger.info("Full config saved to {}".format(os.path.abspath(path)))
 
     # make sure each worker has a different, yet deterministic seed if specified
-    seed_all_rng(None if cfg.SEED < 0 else cfg.SEED + rank)
+    seed_all_rng(None if cfg.SEED < 0 else cfg.SEED)
 
     # cudnn benchmark has large overhead. It shouldn't be used considering the small size of
     # typical validation set.

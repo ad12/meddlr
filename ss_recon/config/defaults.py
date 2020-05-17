@@ -70,6 +70,10 @@ _C.AUG_TRAIN.UNDERSAMPLE.NAME = "RandomMaskFunc"
 _C.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6, 8)
 _C.AUG_TRAIN.UNDERSAMPLE.CALIBRATION_SIZE = 20
 
+_C.AUG_TEST = CN()
+_C.AUG_TEST.UNDERSAMPLE = CN()
+_C.AUG_TEST.UNDERSAMPLE.ACCELERATIONS = (6, 8)
+
 # ---------------------------------------------------------------------------- #
 # Solver
 # ---------------------------------------------------------------------------- #
@@ -80,9 +84,9 @@ _C.SOLVER.OPTIMIZER = "Adam"
 # See ss_recon/solver/build.py for LR scheduler options
 _C.SOLVER.LR_SCHEDULER_NAME = "WarmupMultiStepLR"
 
-_C.SOLVER.MAX_ITER = 100
+_C.SOLVER.MAX_ITER = 20
 
-_C.SOLVER.BASE_LR = 0.001
+_C.SOLVER.BASE_LR = 1e-4
 
 _C.SOLVER.MOMENTUM = 0.9
 
@@ -122,7 +126,10 @@ _C.TEST = CN()
 # The period over which to evaluate the model during training.
 # Set to 0 to disable.
 _C.TEST.EVAL_PERIOD = 1
-
+# For end-to-end tests to verify the expected accuracy.
+# Each item is [task, metric, value, tolerance]
+# e.g.: [['bbox', 'AP', 38.5, 0.2]]
+_C.TEST.EXPECTED_RESULTS = []
 
 # ---------------------------------------------------------------------------- #
 # Misc options

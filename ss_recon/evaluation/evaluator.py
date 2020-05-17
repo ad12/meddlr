@@ -116,9 +116,9 @@ def inference_on_dataset(model, data_loader, evaluator):
             if idx == num_warmup:
                 start_time = time.perf_counter()
                 total_compute_time = 0
-
             start_compute_time = time.perf_counter()
-            outputs = model(inputs)
+            kspace, maps, target, mean, std, norm = inputs
+            outputs = model(kspace, maps, target=target, mean=mean, std=std, norm=norm)
             total_compute_time += time.perf_counter() - start_compute_time
             evaluator.process(inputs, outputs)
 

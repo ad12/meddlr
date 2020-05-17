@@ -156,8 +156,8 @@ class GeneralizedUnrolledCNN(nn.Module):
             )
 
         output_dict = {
-            "pred": image,
-            "target": target,
+            "pred": image,  # N x Y x Z x 1 x 2
+            "target": target,  # N x Y x Z x 1 x 2
             "mean": mean,
             "std": std,
             "norm": norm,

@@ -1,0 +1,30 @@
+# Configuration for DL-CS Paper
+MODEL:
+  META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 4
+    NUM_RESBLOCKS: 3
+    NUM_FEATURES: 128
+    DROPOUT: 0.
+  RECON_LOSS:
+    NAME: "l1"
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  TEST: ("mridata_knee_2019_val", "mridata_knee_2019_test")
+DATALOADER:
+  NUM_WORKERS: 4
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: "StepLR"
+  TRAIN_BATCH_SIZE: 4
+  TEST_BATCH_SIZE: 4
+  CHECKPOINT_PERIOD: 1
+  MAX_ITER: 25
+  BASE_LR: 0.01
+  STEPS: (40000,)  # set steps so high it is never reached.
+TEST:
+  EVAL_PERIOD: 1
+TIME_SCALE: "epoch"
+OUTPUT_DIR: "results://basic/dl-cs-paper"
+SEED: 1000
+VERSION: 1
