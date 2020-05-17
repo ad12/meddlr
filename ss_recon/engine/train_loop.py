@@ -213,7 +213,13 @@ class SimpleTrainer(TrainerBase):
         If your want to do something with the data, you can wrap the dataloader.
         """
         # TODO: Pass dict around
-        kspace, maps, target, mean, std, norm = next(self._data_loader_iter)
+        try:
+            kspace, maps, target, mean, std, norm = next(self._data_loader_iter)
+        except StopIteration:
+            # Epoch has ended, reinitialize the iterator.
+            self._data_loader_iter = iter(self.data_loader)
+            kspace, maps, target, mean, std, norm = next(self._data_loader_iter)
+
         data_time = time.perf_counter() - start
 
         """

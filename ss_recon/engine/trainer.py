@@ -1,5 +1,6 @@
 import logging
 import os
+import math
 from typing import Union, Sequence
 
 from torch.nn import DataParallel
@@ -150,9 +151,11 @@ class DefaultTrainer(SimpleTrainer):
 
         num_iter_per_epoch = len(
             data_loader.dataset
-        ) // cfg.SOLVER.TRAIN_BATCH_SIZE
-        if not cfg.DATALOADER.DROP_LAST:
-            num_iter_per_epoch += 1
+        ) / cfg.SOLVER.TRAIN_BATCH_SIZE
+        if cfg.DATALOADER.DROP_LAST:
+            num_iter_per_epoch = int(num_iter_per_epoch)
+        else:
+            num_iter_per_epoch = math.ceil(num_iter_per_epoch)
         cfg = convert_cfg_time_to_iter(cfg, num_iter_per_epoch)
 
         optimizer = self.build_optimizer(cfg, model)
