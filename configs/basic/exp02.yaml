@@ -1,0 +1,23 @@
+# Configuration for DL-CS Paper
+_BASE_: "dl-cs-paper.yaml"
+MODEL:
+  META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 16
+    NUM_RESBLOCKS: 2
+    NUM_FEATURES: 256
+    DROPOUT: 0.
+  RECON_LOSS:
+    NAME: "l1"
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: "StepLR"
+  TRAIN_BATCH_SIZE: 1
+  TEST_BATCH_SIZE: 4
+  CHECKPOINT_PERIOD: 1
+  MAX_ITER: 25
+  BASE_LR: 1e-4
+  STEPS: (40000,)  # set steps so high it is never reached.
+OUTPUT_DIR: "results://basic/exp02"
+SEED: 1000
+VERSION: 1
