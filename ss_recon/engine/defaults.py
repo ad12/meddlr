@@ -16,12 +16,12 @@ from fvcore.common.file_io import PathManager
 from torch.nn.parallel import DataParallel
 from typing import Sequence
 
-# from detectron2.evaluation import (
-#     DatasetEvaluator,
-#     inference_on_dataset,
-#     print_csv_format,
-#     verify_results,
-# )
+from ss_recon.evaluation import (
+    DatasetEvaluator,
+    inference_on_dataset,
+    print_csv_format,
+    verify_results,
+)
 from ss_recon.utils.collect_env import collect_env_info
 from ss_recon.utils.env import seed_all_rng, get_available_gpus
 from ss_recon.utils.logger import setup_logger

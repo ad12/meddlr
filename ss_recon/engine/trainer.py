@@ -3,7 +3,7 @@ import os
 from typing import Union, Sequence
 
 from torch.nn import DataParallel
-
+from collections import OrderedDict
 from ss_recon.checkpoint import DetectionCheckpointer
 from ss_recon.config import CfgNode
 from ss_recon.engine import SimpleTrainer, hooks
@@ -14,6 +14,13 @@ from ss_recon.utils.events import CommonMetricPrinter, JSONWriter, \
 from ss_recon.utils.logger import setup_logger
 from ss_recon.data import build_recon_train_loader, build_recon_test_loader
 from ss_recon.modeling import BasicLossComputer
+from ss_recon.evaluation import (
+    DatasetEvaluator,
+    inference_on_dataset,
+    ReconEvaluator,
+    print_csv_format,
+    verify_results,
+)
 
 __all__ = ["DefaultTrainer"]
 
@@ -241,7 +248,7 @@ class DefaultTrainer(SimpleTrainer):
 
         # Do evaluation after checkpointer, because then if it fails,
         # we can use the saved checkpoint to debug.
-        # ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
+        ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
         ret.append(hooks.PeriodicWriter(self.build_writers()))
         return ret
 
@@ -284,7 +291,7 @@ class DefaultTrainer(SimpleTrainer):
         """
         super().train(self.start_iter, self.max_iter)
         if hasattr(self, "_last_eval_results"):
-            # verify_results(self.cfg, self._last_eval_results)
+            verify_results(self.cfg, self._last_eval_results)
             return self._last_eval_results
 
     @classmethod
@@ -350,10 +357,7 @@ class DefaultTrainer(SimpleTrainer):
 
         It is not implemented by default.
         """
-        raise NotImplementedError(
-            "Please either implement `build_evaluator()` in subclasses, or pass "
-            "your evaluator as arguments to `DefaultTrainer.test()`."
-        )
+        return ReconEvaluator(dataset_name, cfg)
 
     @classmethod
     def test(cls, cfg, model, evaluators=None):
@@ -368,43 +372,42 @@ class DefaultTrainer(SimpleTrainer):
         Returns:
             dict: a dict of result metrics
         """
-        pass
-        # logger = logging.getLogger(__name__)
-        # if isinstance(evaluators, DatasetEvaluator):
-        #     evaluators = [evaluators]
-        # if evaluators is not None:
-        #     assert len(cfg.DATASETS.TEST) == len(evaluators), "{} != {}".format(
-        #         len(cfg.DATASETS.TEST), len(evaluators)
-        #     )
-        #
-        # results = OrderedDict()
-        # for idx, dataset_name in enumerate(cfg.DATASETS.TEST):
-        #     data_loader = cls.build_test_loader(cfg, dataset_name)
-        #     # When evaluators are passed in as arguments,
-        #     # implicitly assume that evaluators can be created before data_loader.
-        #     if evaluators is not None:
-        #         evaluator = evaluators[idx]
-        #     else:
-        #         try:
-        #             evaluator = cls.build_evaluator(cfg, dataset_name)
-        #         except NotImplementedError:
-        #             logger.warn(
-        #                 "No evaluator found. Use `DefaultTrainer.test(evaluators=)`, "
-        #                 "or implement its `build_evaluator` method."
-        #             )
-        #             results[dataset_name] = {}
-        #             continue
-        #     results_i = inference_on_dataset(model, data_loader, evaluator)
-        #     results[dataset_name] = results_i
-        #     if comm.is_main_process():
-        #         assert isinstance(
-        #             results_i, dict
-        #         ), "Evaluator must return a dict on the main process. Got {} instead.".format(
-        #             results_i
-        #         )
-        #         logger.info("Evaluation results for {} in csv format:".format(dataset_name))
-        #         print_csv_format(results_i)
-        #
-        # if len(results) == 1:
-        #     results = list(results.values())[0]
-        # return results
+        logger = logging.getLogger(__name__)
+        if isinstance(evaluators, DatasetEvaluator):
+            evaluators = [evaluators]
+        if evaluators is not None:
+            assert len(cfg.DATASETS.TEST) == len(evaluators), "{} != {}".format(
+                len(cfg.DATASETS.TEST), len(evaluators)
+            )
+
+        results = OrderedDict()
+        for idx, dataset_name in enumerate(cfg.DATASETS.TEST):
+            data_loader = cls.build_test_loader(cfg, dataset_name)
+            # When evaluators are passed in as arguments,
+            # implicitly assume that evaluators can be created
+            # before data_loader.
+            if evaluators is not None:
+                evaluator = evaluators[idx]
+            else:
+                try:
+                    evaluator = cls.build_evaluator(cfg, dataset_name)
+                except NotImplementedError:
+                    logger.warn(
+                        "No evaluator found. Use `DefaultTrainer.test(evaluators=)`, "
+                        "or implement its `build_evaluator` method."
+                    )
+                    results[dataset_name] = {}
+                    continue
+            results_i = inference_on_dataset(model, data_loader, evaluator)
+            results[dataset_name] = results_i
+            assert isinstance(
+                results_i, dict
+            ), "Evaluator must return a dict on the main process. Got {} instead.".format(
+                results_i
+            )
+            logger.info("Evaluation results for {} in csv format:".format(dataset_name))
+            print_csv_format(results_i)
+
+        if len(results) == 1:
+            results = list(results.values())[0]
+        return results

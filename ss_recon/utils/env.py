@@ -168,3 +168,11 @@ def get_available_gpus(num_gpus: int = None):
         if num_requested_gpus
         else available_gpus
     )
+
+
+def get_world_size():
+    """Returns number of gpus currently being used by this process"""
+    gpu_ids = os.environ["CUDA_VISIBLE_DEVICES"].split(",")
+    if len(gpu_ids) == 1 and gpu_ids[0] == "-1":
+        return 0
+    return len(gpu_ids)
