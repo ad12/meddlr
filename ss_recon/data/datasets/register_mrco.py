@@ -36,8 +36,10 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
     start_time = time.perf_counter()
     with open(json_file, "r") as f:
         data = json.load(f)
-    logger.info("Loading {} takes {:.2f} seconds".format(
-        json_file, time.perf_counter() - start_time)
+    logger.info(
+        "Loading {} takes {:.2f} seconds".format(
+            json_file, time.perf_counter() - start_time
+        )
     )
 
     # TODO: Add any relevant metadata.
@@ -46,7 +48,9 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
         {
             "file_name": PathManager.get_local_path(
                 os.path.join(image_root, d["file_name"])
-            ) if "file_path" not in d else d["file_path"],
+            )
+            if "file_path" not in d
+            else d["file_path"],
             "kspace_size": d["kspace_size"],
         }
         for d in data
@@ -71,10 +75,15 @@ def register_mrco_scans(name, metadata, json_file, image_root: str = None):
         image_root (str): directory which contains all the images.
     """
     # 1. register a function which returns dicts
-    DatasetCatalog.register(name, lambda: load_mrco_json(json_file, image_root, name))
+    DatasetCatalog.register(
+        name, lambda: load_mrco_json(json_file, image_root, name)
+    )
 
     # 2. Optionally, add metadata about this dataset,
     # since they might be useful in evaluation, visualization or logging
     MetadataCatalog.get(name).set(
-        json_file=json_file, image_root=image_root, evaluator_type="coco", **metadata
+        json_file=json_file,
+        image_root=image_root,
+        evaluator_type="coco",
+        **metadata
     )

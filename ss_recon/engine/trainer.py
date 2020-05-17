@@ -1,35 +1,36 @@
 import logging
-import os
 import math
-from typing import Union, Sequence
+import os
+from collections import OrderedDict
+from typing import Sequence, Union
 
 from torch.nn import DataParallel
-from collections import OrderedDict
+
 from ss_recon.checkpoint import DetectionCheckpointer
 from ss_recon.config import CfgNode
+from ss_recon.data import build_recon_test_loader, build_recon_train_loader
 from ss_recon.engine import SimpleTrainer, hooks
-from ss_recon.modeling import build_model
-from ss_recon.solver import build_optimizer, build_lr_scheduler
-from ss_recon.utils.events import CommonMetricPrinter, JSONWriter, \
-    TensorboardXWriter
-from ss_recon.utils.logger import setup_logger
-from ss_recon.data import build_recon_train_loader, build_recon_test_loader
-from ss_recon.modeling import BasicLossComputer
 from ss_recon.evaluation import (
     DatasetEvaluator,
-    inference_on_dataset,
     ReconEvaluator,
+    inference_on_dataset,
     print_csv_format,
     verify_results,
 )
+from ss_recon.modeling import BasicLossComputer, build_model
+from ss_recon.solver import build_lr_scheduler, build_optimizer
+from ss_recon.utils.events import (
+    CommonMetricPrinter,
+    JSONWriter,
+    TensorboardXWriter,
+)
+from ss_recon.utils.logger import setup_logger
 
 __all__ = ["DefaultTrainer"]
 
 
 def format_as_iter(
-    vals: Union[int, Sequence[int]],
-    iters_per_epoch: int,
-    time_scale: str,
+    vals: Union[int, Sequence[int]], iters_per_epoch: int, time_scale: str
 ):
     """Format data to be at iteration time scale.
 
@@ -52,9 +53,8 @@ def format_as_iter(
         vals = [vals]
 
     epoch_convention = (
-        (time_scale == "epoch" and all([x >= 0 for x in vals])) or
-        (time_scale == "iter" and all([x <= 0 for x in vals]))
-    )
+        time_scale == "epoch" and all(x >= 0 for x in vals)
+    ) or (time_scale == "iter" and all(x <= 0 for x in vals))
 
     if epoch_convention:
         vals = type(vals)([iters_per_epoch * abs(x) for x in vals])
@@ -75,20 +75,18 @@ def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int):
 
     time_scale = cfg.TIME_SCALE
     cfg.SOLVER.MAX_ITER = format_as_iter(
-        cfg.SOLVER.MAX_ITER, iters_per_epoch, time_scale,
+        cfg.SOLVER.MAX_ITER, iters_per_epoch, time_scale
     )
     cfg.SOLVER.STEPS = format_as_iter(
-        cfg.SOLVER.STEPS, iters_per_epoch, time_scale,
+        cfg.SOLVER.STEPS, iters_per_epoch, time_scale
     )
     cfg.SOLVER.CHECKPOINT_PERIOD = format_as_iter(
-        cfg.SOLVER.CHECKPOINT_PERIOD, iters_per_epoch, time_scale,
+        cfg.SOLVER.CHECKPOINT_PERIOD, iters_per_epoch, time_scale
     )
     cfg.TEST.EVAL_PERIOD = format_as_iter(
-        cfg.TEST.EVAL_PERIOD, iters_per_epoch, time_scale,
+        cfg.TEST.EVAL_PERIOD, iters_per_epoch, time_scale
     )
-    cfg.VIS_PERIOD = format_as_iter(
-        cfg.VIS_PERIOD, iters_per_epoch, time_scale,
-    )
+    cfg.VIS_PERIOD = format_as_iter(cfg.VIS_PERIOD, iters_per_epoch, time_scale)
     cfg.TIME_SCALE = "iter"
     cfg.freeze()
     return cfg
@@ -103,14 +101,15 @@ class DefaultTrainer(SimpleTrainer):
     2. Load a checkpoint or `cfg.MODEL.WEIGHTS`, if exists.
     3. Register a few common hooks.
 
-    It is created to simplify the **standard model training workflow** and reduce code boilerplate
-    for users who only need the standard training workflow, with standard features.
+    It is created to simplify the **standard model training workflow**
+    and reduce code boilerplate for users who only need the standard training
+    workflow, with standard features.
     It means this class makes *many assumptions* about your training logic that
-    may easily become invalid in a new research. In fact, any assumptions beyond those made in the
-    :class:`SimpleTrainer` are too much for research.
+    may easily become invalid in a new research. In fact, any assumptions beyond
+    those made in the :class:`SimpleTrainer` are too much for research.
 
-    The code of this class has been annotated about restrictive assumptions it mades.
-    When they do not work for you, you're encouraged to:
+    The code of this class has been annotated about restrictive assumptions it
+    makes. When they do not work for you, you're encouraged to:
 
     1. Overwrite methods of this class, OR:
     2. Use :class:`SimpleTrainer`, which only does minimal SGD training and
@@ -118,9 +117,12 @@ class DefaultTrainer(SimpleTrainer):
     3. Write your own training loop similar to `tools/plain_train_net.py`.
 
     Also note that the behavior of this class, like other functions/classes in
-    this file, is not stable, since it is meant to represent the "common default behavior".
-    It is only guaranteed to work well with the standard models and training workflow in detectron2.
-    To obtain more stable behavior, write your own training logic with other public APIs.
+    this file, is not stable, since it is meant to represent the
+    "common default behavior".
+    It is only guaranteed to work well with the standard models and training
+    workflow in detectron2.
+    To obtain more stable behavior, write your own training logic with other
+    public APIs.
 
     Attributes:
         scheduler:
@@ -142,16 +144,18 @@ class DefaultTrainer(SimpleTrainer):
             cfg (CfgNode):
         """
         logger = logging.getLogger("ss_recon")
-        if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for d2
+        if not logger.isEnabledFor(
+            logging.INFO
+        ):  # setup_logger is not called for d2
             setup_logger()
 
         # Assume these objects must be constructed in this order.
         model = self.build_model(cfg)
         data_loader = self.build_train_loader(cfg)
 
-        num_iter_per_epoch = len(
-            data_loader.dataset
-        ) / cfg.SOLVER.TRAIN_BATCH_SIZE
+        num_iter_per_epoch = (
+            len(data_loader.dataset) / cfg.SOLVER.TRAIN_BATCH_SIZE
+        )
         if cfg.DATALOADER.DROP_LAST:
             num_iter_per_epoch = int(num_iter_per_epoch)
         else:
@@ -215,14 +219,13 @@ class DefaultTrainer(SimpleTrainer):
         Args:
             resume (bool): whether to do resume or not
         """
-        # The checkpoint stores the training iteration that just finished, thus we start
-        # at the next iteration (or iter zero if there's no checkpoint).
+        # The checkpoint stores the training iteration that just finished,
+        # thus we start at the next iteration
+        # (or iter zero if there's no checkpoint).
         self.start_iter = (
             self.checkpointer.resume_or_load(
                 self.cfg.MODEL.WEIGHTS, resume=resume
-            ).get(
-                "iteration", -1
-            )
+            ).get("iteration", -1)
             + 1
         )
 
@@ -236,13 +239,16 @@ class DefaultTrainer(SimpleTrainer):
         """
         cfg = self.cfg.clone()
         cfg.defrost()
-        cfg.DATALOADER.NUM_WORKERS = 0  # save some memory and time for PreciseBN
+        cfg.DATALOADER.NUM_WORKERS = (
+            0
+        )  # save some memory and time for PreciseBN
 
         ret = [
             hooks.IterationTimer(),
             hooks.LRScheduler(self.optimizer, self.scheduler),
-            hooks.PeriodicCheckpointer(self.checkpointer,
-                                       cfg.SOLVER.CHECKPOINT_PERIOD)
+            hooks.PeriodicCheckpointer(
+                self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD
+            ),
         ]
 
         def test_and_save_results():
@@ -279,7 +285,8 @@ class DefaultTrainer(SimpleTrainer):
         """
         # Assume the default print/log frequency.
         return [
-            # It may not always print what you want to see, since it prints "common" metrics only.
+            # It may not always print what you want to see,
+            # since it prints "common" metrics only.
             CommonMetricPrinter(self.max_iter),
             JSONWriter(os.path.join(self.cfg.OUTPUT_DIR, "metrics.json")),
             TensorboardXWriter(self.cfg.OUTPUT_DIR),
@@ -369,8 +376,8 @@ class DefaultTrainer(SimpleTrainer):
             cfg (CfgNode):
             model (nn.Module):
             evaluators (list[DatasetEvaluator] or None): if None, will call
-                :meth:`build_evaluator`. Otherwise, must have the same length as
-                `cfg.DATASETS.TEST`.
+                :meth:`build_evaluator`. Otherwise, must have the same length
+                as `cfg.DATASETS.TEST`.
 
         Returns:
             dict: a dict of result metrics
@@ -395,20 +402,22 @@ class DefaultTrainer(SimpleTrainer):
                 try:
                     evaluator = cls.build_evaluator(cfg, dataset_name)
                 except NotImplementedError:
-                    logger.warn(
-                        "No evaluator found. Use `DefaultTrainer.test(evaluators=)`, "
+                    logger.warning(
+                        "No evaluator found. "
+                        "Use `DefaultTrainer.test(evaluators=)`, "
                         "or implement its `build_evaluator` method."
                     )
                     results[dataset_name] = {}
                     continue
             results_i = inference_on_dataset(model, data_loader, evaluator)
             results[dataset_name] = results_i
-            assert isinstance(
-                results_i, dict
-            ), "Evaluator must return a dict on the main process. Got {} instead.".format(
-                results_i
+            assert isinstance(results_i, dict), (
+                "Evaluator must return a dict on the main process. "
+                "Got {} instead.".format(results_i)
             )
-            logger.info("Evaluation results for {} in csv format:".format(dataset_name))
+            logger.info(
+                "Evaluation results for {} in csv format:".format(dataset_name)
+            )
             print_csv_format(results_i)
 
         if len(results) == 1:

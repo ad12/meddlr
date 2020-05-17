@@ -36,7 +36,9 @@ def register_all_mrco(root="data://"):
             register_mrco_scans(
                 key,
                 {},  # TODO: add metadata
-                os.path.join(root, json_file) if "://" not in json_file else json_file,  # noqa
+                os.path.join(root, json_file)
+                if "://" not in json_file
+                else json_file,  # noqa
                 os.path.join(root, image_root),
             )
 

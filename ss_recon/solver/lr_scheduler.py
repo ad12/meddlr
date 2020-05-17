@@ -2,14 +2,13 @@
 import math
 from bisect import bisect_right
 from typing import List
+
 import torch
-from torch.optim.lr_scheduler import StepLR as _StepLR
-import warnings
 
 # NOTE: PyTorch's LR scheduler interface uses names that assume the LR changes
 # only on epoch boundaries. We typically use iteration based schedules instead.
-# As a result, "epoch" (e.g., as in self.last_epoch) should be understood to mean
-# "iteration" instead.
+# As a result, "epoch" (e.g., as in self.last_epoch) should be understood to
+# mean "iteration" instead.
 
 # FIXME: ideally this would be achieved with a CombinedLRScheduler, separating
 # MultiStepLR with WarmupLR but the current LRScheduler design doesn't allow it.
@@ -28,7 +27,8 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     ):
         if not list(milestones) == sorted(milestones):
             raise ValueError(
-                "Milestones should be a list of" " increasing integers. Got {}", milestones
+                "Milestones should be a list of" " increasing integers. Got {}",
+                milestones,
             )
         self.milestones = milestones
         self.gamma = gamma
@@ -39,10 +39,15 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
 
     def get_lr(self) -> List[float]:
         warmup_factor = _get_warmup_factor_at_iter(
-            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
+            self.warmup_method,
+            self.last_epoch,
+            self.warmup_iters,
+            self.warmup_factor,
         )
         return [
-            base_lr * warmup_factor * self.gamma ** bisect_right(self.milestones, self.last_epoch)
+            base_lr
+            * warmup_factor
+            * self.gamma ** bisect_right(self.milestones, self.last_epoch)
             for base_lr in self.base_lrs
         ]
 
@@ -69,13 +74,16 @@ class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
 
     def get_lr(self) -> List[float]:
         warmup_factor = _get_warmup_factor_at_iter(
-            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
+            self.warmup_method,
+            self.last_epoch,
+            self.warmup_iters,
+            self.warmup_factor,
         )
         # Different definitions of half-cosine with warmup are possible. For
         # simplicity we multiply the standard half-cosine schedule by the warmup
-        # factor. An alternative is to start the period of the cosine at warmup_iters
-        # instead of at 0. In the case that warmup_iters << max_iters the two are
-        # very close to each other.
+        # factor. An alternative is to start the period of the cosine at warmup
+        # iters instead of at 0. In the case that warmup_iters << max_iters the
+        # two are very close to each other.
         return [
             base_lr
             * warmup_factor
@@ -100,8 +108,8 @@ def _get_warmup_factor_at_iter(
         method (str): warmup method; either "constant" or "linear".
         iter (int): iteration at which to calculate the warmup factor.
         warmup_iters (int): the number of warmup iterations.
-        warmup_factor (float): the base warmup factor (the meaning changes according
-            to the method used).
+        warmup_factor (float): the base warmup factor (the meaning changes
+            according to the method used).
 
     Returns:
         float: the effective warmup factor at the given iteration.

@@ -3,32 +3,28 @@
 
 """
 This file contains components with some default boilerplate logic user may need
-in training / testing. They will not work for everyone, but many users may find them useful.
+in training / testing. They will not work for everyone, but many users may find
+them useful.
 
 The behavior of functions/classes in this file is subject to change,
-since they are meant to represent the "common default behavior" people need in their projects.
+since they are meant to represent the "common default behavior" people need in
+their projects.
 """
 
 import argparse
 import os
-import torch
-from fvcore.common.file_io import PathManager
-from torch.nn.parallel import DataParallel
 from typing import Sequence
 
-from ss_recon.evaluation import (
-    DatasetEvaluator,
-    inference_on_dataset,
-    print_csv_format,
-    verify_results,
-)
+import torch
+from fvcore.common.file_io import PathManager
+
 from ss_recon.utils.collect_env import collect_env_info
-from ss_recon.utils.env import seed_all_rng, get_available_gpus
+from ss_recon.utils.env import get_available_gpus, seed_all_rng
 from ss_recon.utils.logger import setup_logger
 
 __all__ = [
-    "default_argument_parser", 
-    "default_setup", 
+    "default_argument_parser",
+    "default_setup",
     # "DefaultPredictor",
 ]
 
@@ -41,14 +37,23 @@ def default_argument_parser():
         argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(description="Detectron2 Training")
-    parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
+    parser.add_argument(
+        "--config-file", default="", metavar="FILE", help="path to config file"
+    )
     parser.add_argument(
         "--resume",
         action="store_true",
         help="whether to attempt to resume from the checkpoint directory",
     )
-    parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
-    parser.add_argument("--num-gpus", type=int, default=1, help="number of gpus. overrided by --devices")
+    parser.add_argument(
+        "--eval-only", action="store_true", help="perform evaluation only"
+    )
+    parser.add_argument(
+        "--num-gpus",
+        type=int,
+        default=1,
+        help="number of gpus. overrided by --devices",
+    )
     parser.add_argument("--devices", type=int, nargs="*", default=None)
 
     parser.add_argument(
@@ -98,10 +103,11 @@ def default_setup(cfg, args):
             gpus = [gpus]
     else:
         gpus = get_available_gpus(args.num_gpus)
-    
+
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(x) for x in gpus])
 
-    # TODO: Remove this and find a better way to launch the script with the desired gpus.
+    # TODO: Remove this and find a better way to launch the script
+    # with the desired gpus.
     if gpus[0] >= 0:
         torch.cuda.set_device(gpus[0])
 
@@ -117,9 +123,8 @@ def default_setup(cfg, args):
     # make sure each worker has a different, yet deterministic seed if specified
     seed_all_rng(None if cfg.SEED < 0 else cfg.SEED)
 
-    # cudnn benchmark has large overhead. It shouldn't be used considering the small size of
+    # cudnn benchmark has large overhead.
+    # It shouldn't be used considering the small size of
     # typical validation set.
     if not (hasattr(args, "eval_only") and args.eval_only):
         torch.backends.cudnn.benchmark = cfg.CUDNN_BENCHMARK
-
-

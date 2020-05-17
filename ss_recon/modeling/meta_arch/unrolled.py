@@ -17,12 +17,14 @@ import torch
 from torch import nn
 
 import ss_recon.utils.complex_utils as cplx
-from ..layers.layers2D import ResNet
-from ss_recon.utils.transforms import SenseModel
-from .build import META_ARCH_REGISTRY
 from ss_recon.modeling.loss_computer import BasicLossComputer
+from ss_recon.utils.transforms import SenseModel
+
+from ..layers.layers2D import ResNet
+from .build import META_ARCH_REGISTRY
 
 __all__ = ["GeneralizedUnrolledCNN"]
+
 
 @META_ARCH_REGISTRY.register()
 class GeneralizedUnrolledCNN(nn.Module):
@@ -83,9 +85,12 @@ class GeneralizedUnrolledCNN(nn.Module):
         if fix_step_size:
             self.step_sizes = [init_step_size] * num_grad_steps
         else:
-            self.step_sizes = [torch.nn.Parameter(init_step_size) for i in range(num_grad_steps)]
+            self.step_sizes = [
+                torch.nn.Parameter(init_step_size)
+                for i in range(num_grad_steps)
+            ]
 
-        #self.to(self.device)
+        # self.to(self.device)
 
     def forward(
         self,
@@ -96,7 +101,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         mean=None,
         std=None,
         norm=None,
-        mask=None
+        mask=None,
     ):
         """
         TODO: condense into list of dataset dicts.

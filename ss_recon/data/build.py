@@ -1,6 +1,8 @@
-from torch.utils.data import DataLoader
-from typing import Sequence
 import itertools
+from typing import Sequence
+
+from torch.utils.data import DataLoader
+
 from .catalog import DatasetCatalog
 from .slice_dataset import SliceData
 from .transforms import transform as T

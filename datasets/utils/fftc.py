@@ -3,7 +3,6 @@ try:
     import pyfftw.interfaces.numpy_fft as fft
 except BaseException:
     from numpy import fft
-import numpy as np
 
 
 def ifftnc(x, axes, ortho=True):

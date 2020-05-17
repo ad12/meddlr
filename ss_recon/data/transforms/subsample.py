@@ -111,12 +111,14 @@ def subsample(data, mask_func, seed=None, mode="2D"):
     Subsample given k-space by multiplying with a mask.
 
     Args:
-        data (torch.Tensor): The input k-space data. This should have at least 3 dimensions, where
-            dimensions -3 and -2 are the spatial dimensions, and the final dimension has size
+        data (torch.Tensor): The input k-space data. This should have at
+            least 3 dimensions, where dimensions -3 and -2 are the spatial
+            dimensions, and the final dimension has size
             2 (for complex values).
-        mask_func (callable): A function that takes a shape (tuple of ints) and a random
-            number seed and returns a mask.
-        seed (int or 1-d array_like, optional): Seed for the random number generator.
+        mask_func (callable): A function that takes a shape (tuple of ints) and
+            a random number seed and returns a mask.
+        seed (int or 1-d array_like, optional): Seed for the random number
+            generator.
 
     Returns:
         (tuple): tuple containing:
@@ -124,9 +126,9 @@ def subsample(data, mask_func, seed=None, mode="2D"):
             mask (torch.Tensor): The generated mask
     """
     data_shape = tuple(data.shape)
-    if mode is "2D":
+    if mode == "2D":
         mask_shape = (1,) + data_shape[1:3] + (1, 1)
-    elif mode is "3D":
+    elif mode == "3D":
         mask_shape = (1,) + data_shape[1:4] + (1, 1)
     else:
         raise ValueError("Only 2D and 3D undersampling masks are supported.")

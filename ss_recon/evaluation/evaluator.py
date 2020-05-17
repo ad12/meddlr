@@ -4,6 +4,7 @@ import logging
 import time
 from collections import OrderedDict
 from contextlib import contextmanager
+
 import torch
 
 from ss_recon.utils.env import get_world_size
@@ -15,9 +16,11 @@ class DatasetEvaluator:
     Base class for a dataset evaluator.
 
     The function :func:`inference_on_dataset` runs the model over
-    all samples in the dataset, and have a DatasetEvaluator to process the inputs/outputs.
+    all samples in the dataset, and have a DatasetEvaluator to process the
+    inputs/outputs.
 
-    This class will accumulate information of the inputs/outputs (by :meth:`process`),
+    This class will accumulate information of the inputs/outputs
+    (by :meth:`process`),
     and produce evaluation results in the end (by :meth:`evaluate`).
     """
 
@@ -40,7 +43,8 @@ class DatasetEvaluator:
 
     def evaluate(self):
         """
-        Evaluate/summarize the performance, after processing all input/output pairs.
+        Evaluate/summarize the performance, after processing all input/output
+        pairs.
 
         Returns:
             dict:
@@ -74,9 +78,10 @@ class DatasetEvaluators(DatasetEvaluator):
             result = evaluator.evaluate()
             if result is not None:
                 for k, v in result.items():
-                    assert (
-                        k not in results
-                    ), "Different evaluators produce results with the same key {}".format(k)
+                    assert k not in results, (
+                        "Different evaluators produce results "
+                        "with the same key {}".format(k)
+                    )
                     results[k] = v
         return results
 
@@ -88,10 +93,12 @@ def inference_on_dataset(model, data_loader, evaluator):
 
     Args:
         model (nn.Module): a module which accepts an object from
-            `data_loader` and returns some outputs. It will be temporarily set to `eval` mode.
+            `data_loader` and returns some outputs. It will be temporarily set
+            to `eval` mode.
 
             If you wish to evaluate a model in `training` mode instead, you can
-            wrap the given model and override its behavior of `.eval()` and `.train()`.
+            wrap the given model and override its behavior of `.eval()` and
+            `.train()`.
         data_loader: an iterable object with a length.
             The elements it generates will be the inputs to the model.
         evaluator (DatasetEvaluator): the evaluator to run. Use
@@ -118,15 +125,21 @@ def inference_on_dataset(model, data_loader, evaluator):
                 total_compute_time = 0
             start_compute_time = time.perf_counter()
             kspace, maps, target, mean, std, norm = inputs
-            outputs = model(kspace, maps, target=target, mean=mean, std=std, norm=norm)
+            outputs = model(
+                kspace, maps, target=target, mean=mean, std=std, norm=norm
+            )
             total_compute_time += time.perf_counter() - start_compute_time
             evaluator.process(inputs, outputs)
 
             iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
             seconds_per_img = total_compute_time / iters_after_start
             if idx >= num_warmup * 2 or seconds_per_img > 5:
-                total_seconds_per_img = (time.perf_counter() - start_time) / iters_after_start  # noqa
-                eta = datetime.timedelta(seconds=int(total_seconds_per_img * (total - idx - 1)))  # noqa
+                total_seconds_per_img = (
+                    time.perf_counter() - start_time
+                ) / iters_after_start  # noqa
+                eta = datetime.timedelta(
+                    seconds=int(total_seconds_per_img * (total - idx - 1))
+                )  # noqa
                 log_every_n_seconds(
                     logging.INFO,
                     "Inference done {}/{}. {:.4f} s / img. ETA={}".format(
@@ -142,18 +155,18 @@ def inference_on_dataset(model, data_loader, evaluator):
     logger.info(
         "Total inference time: "
         "{} ({:.6f} s / batch on {} devices)".format(
-            total_time_str,
-            total_time / (total - num_warmup),
-            num_devices
+            total_time_str, total_time / (total - num_warmup), num_devices
         )
     )
-    total_compute_time_str = str(datetime.timedelta(seconds=int(total_compute_time)))
+    total_compute_time_str = str(
+        datetime.timedelta(seconds=int(total_compute_time))
+    )
     logger.info(
         "Total inference pure compute time: "
         "{} ({:.6f} s / batch on {} devices)".format(
             total_compute_time_str,
             total_compute_time / (total - num_warmup),
-            num_devices
+            num_devices,
         )
     )
 

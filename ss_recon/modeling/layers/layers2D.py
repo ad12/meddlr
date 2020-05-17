@@ -2,6 +2,7 @@
 """
 
 from typing import Sequence, Tuple, Union
+
 import torch
 from torch import nn
 
@@ -22,8 +23,8 @@ class ConvBlock(nn.Module):
         out_chans: int,
         kernel_size: Union[int, Tuple[int, int]],
         drop_prob: float,
-        act_type: str="relu",
-        norm_type: str="none",
+        act_type: str = "relu",
+        norm_type: str = "none",
         order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
     ):
         """
@@ -43,7 +44,9 @@ class ConvBlock(nn.Module):
         else:
             assert len(kernel_size) == 2
         if not all(k % 2 == 1 for k in kernel_size):
-            raise ValueError("Kernel size must be odd - got {}".format(kernel_size))
+            raise ValueError(
+                "Kernel size must be odd - got {}".format(kernel_size)
+            )
 
         padding = tuple(k // 2 for k in kernel_size)
 
@@ -62,14 +65,14 @@ class ConvBlock(nn.Module):
         )
         dropout = nn.Dropout2d(p=drop_prob)
         convolution = nn.Conv2d(
-            in_chans, out_chans, kernel_size=kernel_size, padding=padding,
+            in_chans, out_chans, kernel_size=kernel_size, padding=padding
         )
 
         layer_dict = {
             "conv": convolution,
             "drop": dropout,
             "act": activations[act_type],
-            "norm": normalizations[norm_type]
+            "norm": normalizations[norm_type],
         }
         layers = [layer_dict[l] for l in order]
 
@@ -104,13 +107,13 @@ class ResBlock(nn.Module):
     """
 
     def __init__(
-        self, 
-        in_chans, 
-        out_chans, 
-        kernel_size, 
+        self,
+        in_chans,
+        out_chans,
+        kernel_size,
         drop_prob,
-        act_type: str="relu",
-        norm_type: str="none",
+        act_type: str = "relu",
+        norm_type: str = "none",
         order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
     ):
         """
@@ -122,8 +125,24 @@ class ResBlock(nn.Module):
         super().__init__()
 
         self.layers = nn.Sequential(
-            ConvBlock(in_chans, out_chans, kernel_size, drop_prob, act_type, norm_type, order,),  # noqa
-            ConvBlock(out_chans, out_chans, kernel_size, drop_prob, act_type, norm_type, order,),  # noqa
+            ConvBlock(
+                in_chans,
+                out_chans,
+                kernel_size,
+                drop_prob,
+                act_type,
+                norm_type,
+                order,
+            ),  # noqa
+            ConvBlock(
+                out_chans,
+                out_chans,
+                kernel_size,
+                drop_prob,
+                act_type,
+                norm_type,
+                order,
+            ),  # noqa
         )
 
         if in_chans != out_chans:
@@ -201,6 +220,6 @@ class ResNet(nn.Module):
             output = res_block(output)
         output = self.final_layer(output) + input
 
-        #return center_crop(output, orig_shape)
+        # return center_crop(output, orig_shape)
 
         return output

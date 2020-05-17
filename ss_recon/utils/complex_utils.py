@@ -124,7 +124,8 @@ def svd(X, compute_uv=True):
     Computes singular value decomposition of batch of complex-valued matrices
 
     Args:
-        matrix (torch.Tensor): batch of complex-valued 2D matrices [batch, m, n, 2]
+        matrix (torch.Tensor): batch of complex-valued 2D matrices
+            [batch, m, n, 2]
     Returns:
         U, S, V (tuple)
     """
@@ -133,7 +134,8 @@ def svd(X, compute_uv=True):
     # Get data dimensions
     batch_size, m, n, _ = X.shape
 
-    # Allocate block-wise matrix (otherwise, need to allocate new arrays three times)
+    # Allocate block-wise matrix
+    # (otherwise, need to allocate new arrays three times)
     if X.is_cuda:
         Xb = torch.cuda.FloatTensor(batch_size, 2 * m, 2 * n).fill_(0)
     else:
@@ -168,7 +170,7 @@ def to_numpy(x):
 
 def to_tensor(x):
     """
-    Convert complex-valued numpy array to real-valued PyTorch tensor. 
+    Convert complex-valued numpy array to real-valued PyTorch tensor.
     """
     x = np.stack((x.real, x.imag), axis=-1)
     return torch.from_numpy(x)

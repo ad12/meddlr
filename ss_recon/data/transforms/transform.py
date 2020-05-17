@@ -3,24 +3,26 @@
 import torch
 
 from ss_recon.utils import complex_utils as cplx
-from .subsample import build_mask_func
 from ss_recon.utils import transforms as T
+
+from .subsample import build_mask_func
 
 
 class Subsampler(object):
     def __init__(self, mask_func):
         self.mask_func = mask_func
 
-    def __call__(self, data, mode: str="2D", seed: int=None):
+    def __call__(self, data, mode: str = "2D", seed: int = None):
         data_shape = tuple(data.shape)
         assert mode in ["2D", "3D"]
-        if mode is "2D":
+        if mode == "2D":
             mask_shape = (1,) + data_shape[1:3] + (1, 1)
-        elif mode is "3D":
+        elif mode == "3D":
             mask_shape = (1,) + data_shape[1:4] + (1, 1)
         else:
             raise ValueError(
-                "Only 2D and 3D undersampling masks are supported.")
+                "Only 2D and 3D undersampling masks are supported."
+            )
         mask = self.mask_func(mask_shape, seed)
         return torch.where(mask == 0, torch.Tensor([0]), data), mask
 
@@ -33,8 +35,8 @@ class DataTransform:
     def __init__(self, cfg, mask_func, is_test: bool = False):
         """
         Args:
-            mask_func (utils.subsample.MaskFunc): A function that can create a mask of
-                appropriate shape.
+            mask_func (utils.subsample.MaskFunc): A function that can create a
+                mask of appropriate shape.
             is_test (bool): If `True`, this class behaves with test-time
                 functionality. In particular, it computes a pseudo random number
                 generator seed from the filename. This ensures that the same
@@ -51,10 +53,12 @@ class DataTransform:
     def __call__(self, kspace, maps, target, fname, slice):
         """
         Args:
-            kspace (numpy.array): Input k-space of shape (num_coils, rows, cols, 2) for multi-coil
+            kspace (numpy.array): Input k-space of shape
+                (num_coils, rows, cols, 2) for multi-coil
                 data or (rows, cols, 2) for single coil data.
             target (numpy.array): Target image
-            attrs (dict): Acquisition related information stored in the HDF5 object.
+            attrs (dict): Acquisition related information stored in the HDF5
+                object.
             fname (str): File name
             slice (int): Serial number of the slice.
         Returns:

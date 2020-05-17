@@ -23,11 +23,8 @@ import functools
 import logging
 import multiprocessing as mp
 import os
-import shutil
-import subprocess
 import json
 import getpass
-import sys
 import time
 
 from fvcore.common.file_io import PathManager
@@ -43,9 +40,7 @@ from sigpy.mri import app
 
 from utils import fftc
 
-sys.path.append("../")  # noqa
 from ss_recon.utils.logger import setup_logger
-from ss_recon.utils import cfl
 from ss_recon.utils import transforms as T
 from ss_recon.utils import complex_utils as cplx
 
@@ -128,24 +123,27 @@ def ismrmrd_to_npy(dir_input, dir_output, overwrite: bool = False):
     """Convert ISMRMRD files to npy files"""
     if os.path.isdir(dir_output):
         logger.warning(
-            'Writing npy data to existing directory {}...'.format(dir_output))
+            "Writing npy data to existing directory {}...".format(dir_output)
+        )
     else:
         os.makedirs(dir_output)
-        logger.info('Writing npy data to {}...'.format(dir_output))
+        logger.info("Writing npy data to {}...".format(dir_output))
 
     filelist = sorted(os.listdir(dir_input))
 
-    logger.info('Converting files from ISMRMD to npy...')
+    logger.info("Converting files from ISMRMD to npy...")
     for filename in filelist:
         file_input = os.path.join(dir_input, filename)
         filebase = os.path.splitext(filename)[0]
-        file_output = os.path.join(dir_output, filebase + '.npy')
+        file_output = os.path.join(dir_output, filebase + ".npy")
         if not os.path.exists(file_output) or overwrite:
             kspace = ismrmrd_to_np(file_input)
             np.save(file_output, kspace.astype(np.complex64))
 
 
-def process_slice(kspace, calib_method="jsense", calib_size: int = 20, device: int = -1):
+def process_slice(
+    kspace, calib_method="jsense", calib_size: int = 20, device: int = -1
+):
     # get data dimensions
     nky, nkz, ncoils = kspace.shape
 
@@ -158,18 +156,24 @@ def process_slice(kspace, calib_method="jsense", calib_size: int = 20, device: i
         device = sp.Device(device)
 
     # compute sensitivity maps (BART)
-    #cmd = f'ecalib -d 0 -S -m {nmaps} -c {crop_value} -r {calib_size}'
-    #maps = bart.bart(1, cmd, kspace[:,:,0,None,:])
-    #maps = np.reshape(maps, (nky, nkz, 1, ncoils, nmaps))
+    # cmd = f'ecalib -d 0 -S -m {nmaps} -c {crop_value} -r {calib_size}'
+    # maps = bart.bart(1, cmd, kspace[:,:,0,None,:])
+    # maps = np.reshape(maps, (nky, nkz, 1, ncoils, nmaps))
 
     # compute sensitivity maps (SigPy)
     ksp = np.transpose(kspace, [2, 1, 0])  # #coils x Kz x Ky
-    if calib_method is 'espirit':
-        maps = app.EspiritCalib(ksp, calib_width=calib_size, device=device, show_pbar=False).run()
-    elif calib_method is 'jsense':
-        maps = app.JsenseRecon(ksp, ksp_calib_width=calib_size, device=device, show_pbar=False).run()
+    if calib_method == "espirit":
+        maps = app.EspiritCalib(
+            ksp, calib_width=calib_size, device=device, show_pbar=False
+        ).run()
+    elif calib_method == "jsense":
+        maps = app.JsenseRecon(
+            ksp, ksp_calib_width=calib_size, device=device, show_pbar=False
+        ).run()
     else:
-        raise ValueError('%s calibration method not implemented...' % calib_method)
+        raise ValueError(
+            "%s calibration method not implemented..." % calib_method
+        )
     maps = np.reshape(np.transpose(maps, [2, 1, 0]), (nky, nkz, ncoils, nmaps))
 
     # Convert everything to tensors
@@ -218,18 +222,27 @@ def convert_to_h5(
         fname = os.path.splitext(os.path.basename(fp))[0]
         h5_file = os.path.join(dir_output, "{}.h5".format(fname))
         if os.path.isfile(h5_file) and not overwrite:
-            logger.info("Skipping [{}/{}] {} - hdf5 file found".format(
-                idx + 1, len(file_paths), fp
-            ))
+            logger.info(
+                "Skipping [{}/{}] {} - hdf5 file found".format(
+                    idx + 1, len(file_paths), fp
+                )
+            )
             continue
 
         if idx > 0:
             eta = datetime.timedelta(
-                seconds=int((time.perf_counter() - start_time) / idx * (num_files - idx))
+                seconds=int(
+                    (time.perf_counter() - start_time) / idx * (num_files - idx)
+                )
             )
-        logger.info("Processing [{}/{}] {} {}".format(
-            idx+1, len(file_paths), fp, "- ETA: {}".format(str(eta)) if eta is not None else ""
-        ))
+        logger.info(
+            "Processing [{}/{}] {} {}".format(
+                idx + 1,
+                len(file_paths),
+                fp,
+                "- ETA: {}".format(str(eta)) if eta is not None else "",
+            )
+        )
         if is_input_numpy:
             kspace = np.squeeze(np.load(fp))
         else:
@@ -246,12 +259,21 @@ def convert_to_h5(
 
         kspace = np.transpose(kspace, (3, 2, 1, 0))  # X x Y x Z x C
 
-        images = np.zeros((shape_x, shape_y, shape_z, num_maps), dtype=np.complex64)
-        maps = np.zeros((shape_x, shape_y, shape_z, num_coils, num_maps), dtype=np.complex64)
+        images = np.zeros(
+            (shape_x, shape_y, shape_z, num_maps), dtype=np.complex64
+        )
+        maps = np.zeros(
+            (shape_x, shape_y, shape_z, num_coils, num_maps), dtype=np.complex64
+        )
         with torch.no_grad():
             if num_workers > 0:
                 kspace_sliced = [kspace[x] for x in range(shape_x)]
-                func = functools.partial(process_slice, calib_method=calib_method, calib_size=calib_size, device=device)
+                func = functools.partial(
+                    process_slice,
+                    calib_method=calib_method,
+                    calib_size=calib_size,
+                    device=device,
+                )
                 with mp.Pool(num_workers) as pool:
                     info = pool.imap(kspace_sliced, func)
                 for x in range(shape_x):
@@ -260,7 +282,9 @@ def convert_to_h5(
                     maps[x] = maps_slice
             else:
                 for x in tqdm(range(shape_x)):
-                    im_slice, maps_slice = process_slice(kspace[x], calib_method, calib_size, device)
+                    im_slice, maps_slice = process_slice(
+                        kspace[x], calib_method, calib_size, device
+                    )
 
                     images[x] = im_slice
                     maps[x] = maps_slice
@@ -272,7 +296,7 @@ def convert_to_h5(
 
 
 def write_ann_file(ann_file, h5_dir, split, **kwargs):
-    files = sorted([x for x in os.listdir(h5_dir) if x.endswith(".h5")])
+    files = sorted(x for x in os.listdir(h5_dir) if x.endswith(".h5"))
 
     image_data = []
     for fname in files:
@@ -304,7 +328,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output",
         default=OUTPUT_DIR,
-        help="Root directory (default: datasets/data/mridata_org_knee)"
+        help="Root directory (default: datasets/data/mridata_org_knee)",
     )
     parser.add_argument("--random_seed", default=1000, help="Random seed")
     parser.add_argument(
@@ -313,15 +337,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--recompute",
         action="store_true",
-        help="Recompute sensitivity maps and target image"
+        help="Recompute sensitivity maps and target image",
     )
     parser.add_argument(
-        "--device", type=int, default=-1,
-        help='Device on which to run sensitivity calibration step.'
+        "--device",
+        type=int,
+        default=-1,
+        help="Device on which to run sensitivity calibration step.",
     )
     parser.add_argument(
-        "--num-workers", type=int, default=0,
-        help='Number of workers to use for recontruction (default: 0)'
+        "--num-workers",
+        type=int,
+        default=0,
+        help="Number of workers to use for recontruction (default: 0)",
     )
 
     args = parser.parse_args()
@@ -347,17 +375,18 @@ if __name__ == "__main__":
 
     # Split data into 75/5/20 (train/val/test) after sorting
     # to preserve splits used in other literature.
-    file_paths = sorted([
+    file_paths = sorted(
         os.path.join(dir_npy, x)
-        for x in os.listdir(dir_npy) if x.endswith(".npy")
-    ])
+        for x in os.listdir(dir_npy)
+        if x.endswith(".npy")
+    )
     data_divide = (0.75, 0.05, 2)
     num_files = len(file_paths)
     train_idx = np.round(data_divide[0] * num_files).astype(int) + 1
     val_idx = np.round(data_divide[1] * num_files).astype(int) + train_idx
 
     train_files = file_paths[:train_idx]
-    val_files = file_paths[train_idx: val_idx]
+    val_files = file_paths[train_idx:val_idx]
     test_files = file_paths[val_idx:]
 
     # Write h5 files.
@@ -372,15 +401,13 @@ if __name__ == "__main__":
             is_input_numpy=True,
             device=args.device,
             overwrite=args.recompute,
-            num_workers=args.num_workers
+            num_workers=args.num_workers,
         )
 
         # Save annotation files.
         ann_file = os.path.join(
             root_dir, "annotations", "{}.json".format(split)
         )
-        ann_dir = os.path.dirname(
-            PathManager.get_local_path(ann_file)
-        )
+        ann_dir = os.path.dirname(PathManager.get_local_path(ann_file))
         os.makedirs(ann_dir, exist_ok=True)
         write_ann_file(ann_file, dir_h5_data, split)

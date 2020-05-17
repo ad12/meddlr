@@ -18,8 +18,10 @@ class DatasetCatalog(object):
     to a function which parses the dataset and returns the samples in the
     format of `list[dict]`.
 
-    The returned dicts should be in Detectron2 Dataset format (See DATASETS.md for details)
-    if used with the data loader functionalities in `data/build.py,data/detection_transform.py`.
+    The returned dicts should be in Detectron2 Dataset format
+    (See DATASETS.md for details)
+    if used with the data loader functionalities in
+    `data/build.py,data/detection_transform.py`.
 
     The purpose of having this catalog is to make it easy to choose
     different datasets, by just using the strings in the config.
@@ -31,13 +33,17 @@ class DatasetCatalog(object):
     def register(name, func):
         """
         Args:
-            name (str): the name that identifies a dataset, e.g. "coco_2014_train".
-            func (callable): a callable which takes no arguments and returns a list of dicts.
+            name (str): the name that identifies a dataset,
+                e.g. "coco_2014_train".
+            func (callable): a callable which takes no arguments and returns a
+                list of dicts.
         """
-        assert callable(func), "You must register a function with `DatasetCatalog.register`!"
-        assert name not in DatasetCatalog._REGISTERED, "Dataset '{}' is already registered!".format(
-            name
-        )
+        assert callable(
+            func
+        ), "You must register a function with `DatasetCatalog.register`!"
+        assert (
+            name not in DatasetCatalog._REGISTERED
+        ), "Dataset '{}' is already registered!".format(name)
         DatasetCatalog._REGISTERED[name] = func
 
     @staticmethod
@@ -46,7 +52,8 @@ class DatasetCatalog(object):
         Call the registered function and return its results.
 
         Args:
-            name (str): the name that identifies a dataset, e.g. "coco_2014_train".
+            name (str): the name that identifies a dataset,
+                e.g. "coco_2014_train".
 
         Returns:
             list[dict]: dataset annotations.0
@@ -55,7 +62,8 @@ class DatasetCatalog(object):
             f = DatasetCatalog._REGISTERED[name]
         except KeyError:
             raise KeyError(
-                "Dataset '{}' is not registered! Available datasets are: {}".format(
+                "Dataset '{}' is not registered! "
+                "Available datasets are: {}".format(
                     name, ", ".join(DatasetCatalog._REGISTERED.keys())
                 )
             )
@@ -82,7 +90,8 @@ class DatasetCatalog(object):
 class Metadata(types.SimpleNamespace):
     """
     A class that supports simple attribute setter/getter.
-    It is intended for storing metadata of a dataset and make it accessible globally.
+    It is intended for storing metadata of a dataset and make it accessible
+    globally.
 
     Examples:
 
@@ -96,7 +105,8 @@ class Metadata(types.SimpleNamespace):
     """
 
     # the name of the dataset
-    # set default to N/A so that `self.name` in the errors will not trigger getattr again
+    # set default to N/A so that `self.name` in the errors
+    # will not trigger getattr again
     name: str = "N/A"
 
     _RENAMED = {
@@ -109,13 +119,16 @@ class Metadata(types.SimpleNamespace):
         if key in self._RENAMED:
             log_first_n(
                 logging.WARNING,
-                "Metadata '{}' was renamed to '{}'!".format(key, self._RENAMED[key]),
+                "Metadata '{}' was renamed to '{}'!".format(
+                    key, self._RENAMED[key]
+                ),
                 n=10,
             )
             return getattr(self, self._RENAMED[key])
 
         raise AttributeError(
-            "Attribute '{}' does not exist in the metadata of '{}'. Available keys are {}.".format(
+            "Attribute '{}' does not exist in the metadata of '{}'. "
+            "Available keys are {}.".format(
                 key, self.name, str(self.__dict__.keys())
             )
         )
@@ -124,7 +137,9 @@ class Metadata(types.SimpleNamespace):
         if key in self._RENAMED:
             log_first_n(
                 logging.WARNING,
-                "Metadata '{}' was renamed to '{}'!".format(key, self._RENAMED[key]),
+                "Metadata '{}' was renamed to '{}'!".format(
+                    key, self._RENAMED[key]
+                ),
                 n=10,
             )
             setattr(self, self._RENAMED[key], val)
@@ -134,7 +149,9 @@ class Metadata(types.SimpleNamespace):
             oldval = getattr(self, key)
             assert oldval == val, (
                 "Attribute '{}' in the metadata of '{}' cannot be set "
-                "to a different value!\n{} != {}".format(key, self.name, oldval, val)
+                "to a different value!\n{} != {}".format(
+                    key, self.name, oldval, val
+                )
             )
         except AttributeError:
             super().__setattr__(key, val)
@@ -142,7 +159,8 @@ class Metadata(types.SimpleNamespace):
     def as_dict(self):
         """
         Returns all the metadata as a dict.
-        Note that modifications to the returned dict will not reflect on the Metadata object.
+        Note that modifications to the returned dict will not reflect on the
+        Metadata object.
         """
         return copy.copy(self.__dict__)
 
@@ -170,11 +188,12 @@ class MetadataCatalog:
     MetadataCatalog provides access to "Metadata" of a given dataset.
 
     The metadata associated with a certain name is a singleton: once created,
-    the metadata will stay alive and will be returned by future calls to `get(name)`.
+    the metadata will stay alive and will be returned by future calls to
+    `get(name)`.
 
     It's like global variables, so don't abuse it.
-    It's meant for storing knowledge that's constant and shared across the execution
-    of the program, e.g.: the class names in COCO.
+    It's meant for storing knowledge that's constant and shared across the
+    execution of the program, e.g.: the class names in COCO.
     """
 
     _NAME_TO_META = {}

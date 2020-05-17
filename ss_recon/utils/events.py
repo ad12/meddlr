@@ -5,6 +5,7 @@ import logging
 import os
 from collections import defaultdict
 from contextlib import contextmanager
+
 import torch
 from fvcore.common.file_io import PathManager
 from fvcore.common.history_buffer import HistoryBuffer
@@ -18,15 +19,17 @@ def get_event_storage():
         The :class:`EventStorage` object that's currently being used.
         Throws an error if no :class`EventStorage` is currently enabled.
     """
-    assert len(
-        _CURRENT_STORAGE_STACK
-    ), "get_event_storage() has to be called inside a 'with EventStorage(...)' context!"
+    assert len(_CURRENT_STORAGE_STACK), (
+        "get_event_storage() has to be called inside a "
+        "'with EventStorage(...)' context!"
+    )
     return _CURRENT_STORAGE_STACK[-1]
 
 
 class EventWriter:
     """
-    Base class for writers that obtain events from :class:`EventStorage` and process them.
+    Base class for writers that obtain events from :class:`EventStorage` and
+    process them.
     """
 
     def write(self):
@@ -40,7 +43,8 @@ class JSONWriter(EventWriter):
     """
     Write scalars to a json file.
 
-    It saves scalars as one json per line (instead of a big json) for easy parsing.
+    It saves scalars as one json per line (instead of a big json) for easy
+    parsing.
 
     Examples parsing such a json file:
 
@@ -85,9 +89,10 @@ class JSONWriter(EventWriter):
     def __init__(self, json_file, window_size=20):
         """
         Args:
-            json_file (str): path to the json file. New data will be appended if the file exists.
-            window_size (int): the window size of median smoothing for the scalars whose
-                `smoothing_hint` are True.
+            json_file (str): path to the json file. New data will be appended
+                if the file exists.
+            window_size (int): the window size of median smoothing for the
+                scalars whose `smoothing_hint` are True.
         """
         self._file_handle = PathManager.open(json_file, "a")
         self._window_size = window_size
@@ -116,9 +121,11 @@ class TensorboardXWriter(EventWriter):
         """
         Args:
             log_dir (str): the directory to save the output events
-            window_size (int): the scalars will be median-smoothed by this window size
+            window_size (int): the scalars will be median-smoothed by this
+                window size
 
-            kwargs: other arguments passed to `torch.utils.tensorboard.SummaryWriter(...)`
+            kwargs: other arguments passed to
+                `torch.utils.tensorboard.SummaryWriter(...)`
         """
         self._window_size = window_size
         from torch.utils.tensorboard import SummaryWriter
@@ -127,7 +134,9 @@ class TensorboardXWriter(EventWriter):
 
     def write(self):
         storage = get_event_storage()
-        for k, v in storage.latest_with_smoothing_hint(self._window_size).items():
+        for k, v in storage.latest_with_smoothing_hint(
+            self._window_size
+        ).items():
             self._writer.add_scalar(k, v, storage.iter)
 
         if len(storage.vis_data) >= 1:
@@ -136,7 +145,9 @@ class TensorboardXWriter(EventWriter):
             storage.clear_images()
 
     def close(self):
-        if hasattr(self, "_writer"):  # doesn't exist when the code fails at import
+        if hasattr(
+            self, "_writer"
+        ):  # doesn't exist when the code fails at import
             self._writer.close()
 
 
@@ -145,7 +156,8 @@ class CommonMetricPrinter(EventWriter):
     Print **common** metrics to the terminal, including
     iteration time, ETA, memory, all losses, and the learning rate.
 
-    To print something different, please implement a similar printer by yourself.
+    To print something different, please implement a similar printer by
+    yourself.
     """
 
     def __init__(self, max_iter):
@@ -166,10 +178,12 @@ class CommonMetricPrinter(EventWriter):
         try:
             data_time = storage.history("data_time").avg(20)
             time = storage.history("time").global_avg()
-            eta_seconds = storage.history("time").median(1000) * (self._max_iter - iteration)
+            eta_seconds = storage.history("time").median(1000) * (
+                self._max_iter - iteration
+            )
             storage.put_scalar("eta_seconds", eta_seconds, smoothing_hint=False)
             eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
-        except KeyError:  # they may not exist in the first few iterations (due to warmup)
+        except KeyError:  # they may not exist in the first few iterations (due to warmup)  # noqa: E501
             pass
 
         try:
@@ -199,9 +213,13 @@ lr: {lr}  {memory}\
                     ]
                 ),
                 time="time: {:.4f}".format(time) if time is not None else "",
-                data_time="data_time: {:.4f}".format(data_time) if data_time is not None else "",
+                data_time="data_time: {:.4f}".format(data_time)
+                if data_time is not None
+                else "",
                 lr=lr,
-                memory="max_mem: {:.0f}M".format(max_mem_mb) if max_mem_mb is not None else "",
+                memory="max_mem: {:.0f}M".format(max_mem_mb)
+                if max_mem_mb is not None
+                else "",
             )
         )
 
@@ -210,7 +228,8 @@ class EventStorage:
     """
     The user-facing class that provides metric storage functionalities.
 
-    In the future we may add support for storing / logging other types of data if needed.
+    In the future we may add support for storing / logging other types of data
+    if needed.
     """
 
     def __init__(self, start_iter=0):
@@ -251,12 +270,14 @@ class EventStorage:
         Add a scalar `value` to the `HistoryBuffer` associated with `name`.
 
         Args:
-            smoothing_hint (bool): a 'hint' on whether this scalar is noisy and should be
+            smoothing_hint (bool): a 'hint' on whether this scalar is noisy and
+                should be
                 smoothed when logged. The hint will be accessible through
-                :meth:`EventStorage.smoothing_hints`.  A writer may ignore the hint
-                and apply custom smoothing rule.
+                :meth:`EventStorage.smoothing_hints`.  A writer may ignore the
+                hint and apply custom smoothing rule.
 
-                It defaults to True because most scalars we save need to be smoothed to
+                It defaults to True because most scalars we save need to be
+                smoothed to
                 provide any useful signal.
         """
         name = self._current_prefix + name
@@ -279,7 +300,9 @@ class EventStorage:
 
         Examples:
 
-            storage.put_scalars(loss=my_loss, accuracy=my_accuracy, smoothing_hint=True)
+            storage.put_scalars(
+                loss=my_loss, accuracy=my_accuracy, smoothing_hint=True
+            )
         """
         for k, v in kwargs.items():
             self.put_scalar(k, v, smoothing_hint=smoothing_hint)
@@ -304,7 +327,8 @@ class EventStorage:
     def latest(self):
         """
         Returns:
-            dict[name -> number]: the scalars that's added in the current iteration.
+            dict[name -> number]: the scalars that's added in the current
+                iteration.
         """
         return self._latest_scalars
 
@@ -319,7 +343,11 @@ class EventStorage:
         """
         result = {}
         for k, v in self._latest_scalars.items():
-            result[k] = self._history[k].median(window_size) if self._smoothing_hints[k] else v
+            result[k] = (
+                self._history[k].median(window_size)
+                if self._smoothing_hints[k]
+                else v
+            )
         return result
 
     def smoothing_hints(self):

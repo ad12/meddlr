@@ -46,8 +46,10 @@ class SenseModel(nn.Module):
 class ArrayToBlocks(nn.Module):
     def __init__(self, block_size, image_shape, overlapping=False):
         """
-        A module that extracts spatial patches from a 6D array with size [1, x, y, t, e, 2].
-        Output is also a 6D array with size [N, block_size, block_size, t, e, 2].
+        A module that extracts spatial patches from a 6D array with size
+        [1, x, y, t, e, 2].
+        Output is also a 6D array with size
+        [N, block_size, block_size, t, e, 2].
         """
         super().__init__()
 
@@ -157,7 +159,8 @@ def decompose_LR(
     images, num_basis, block_size=16, overlapping=False, block_op=None
 ):
     """
-    Decomposes spatio-temporal data into spatial and temporal basis functions (L, R)
+    Decomposes spatio-temporal data into spatial and temporal basis functions
+    (L, R)
     """
     # Get image dimensions
     _, nx, ny, nt, ne, _ = images.shape
@@ -199,8 +202,8 @@ def fft2(data):
     Apply centered 2 dimensional Fast Fourier Transform.
 
     Args:
-        data (torch.Tensor): Complex valued input data with the last dimension containing
-            real and imaginary components.
+        data (torch.Tensor): Complex valued input data with the last dimension
+            containing real and imaginary components.
         dims (2-tuple): Containing spatial dimension indices.
 
     Returns:
@@ -235,8 +238,8 @@ def ifft2(data):
     Apply centered 2-dimensional Inverse Fast Fourier Transform.
 
     Args:
-        data (torch.Tensor): Complex valued input data with the last dimension containing
-            real and imaginary components.
+        data (torch.Tensor): Complex valued input data with the last dimension
+            containing real and imaginary components.
         dims (2-tuple): Containing spatial dimension indices.
 
     Returns:
@@ -268,7 +271,8 @@ def ifft2(data):
 
 def root_sum_of_squares(x, dim=0):
     """
-    Compute the root sum-of-squares (RSS) transform along a given dimension of a complex-valued tensor.
+    Compute the root sum-of-squares (RSS) transform along a given dimension of
+    a complex-valued tensor.
     """
     assert x.size(-1) == 2
     return torch.sqrt((x ** 2).sum(dim=-1).sum(dim))
@@ -286,7 +290,8 @@ def time_average(data, dim, eps=1e-6, keepdim=True):
 
 def sliding_window(data, dim, window_size):
     """
-    Computes sliding window with circular boundary conditions across a specified axis.
+    Computes sliding window with circular boundary conditions across a specified
+    axis.
     """
     assert 0 < window_size <= data.shape[dim]
 
@@ -304,8 +309,8 @@ def center_crop(data, shape):
     Apply a center crop to a batch of images.
 
     Args:
-        data (torch.Tensor): The input tensor to be center cropped. 
-        shape (list of ints): The output shape. If shape[dim] = -1, then no crop 
+        data (torch.Tensor): The input tensor to be center cropped.
+        shape (list of ints): The output shape. If shape[dim] = -1, then no crop
             will be applied in that dimension.
     """
     for i in range(len(shape)):

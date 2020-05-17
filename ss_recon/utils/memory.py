@@ -3,6 +3,7 @@
 import logging
 from contextlib import contextmanager
 from functools import wraps
+
 import torch
 
 __all__ = ["retry_if_cuda_oom"]
@@ -48,9 +49,10 @@ def retry_if_cuda_oom(func):
         # output may be on CPU even if inputs are on GPU
 
     Note:
-        1. When converting inputs to CPU, it will only look at each argument and check
-           if it has `.device` and `.to` for conversion. Nested structures of tensors
-           are not supported.
+        1. When converting inputs to CPU, it will only look at each argument
+           and check
+           if it has `.device` and `.to` for conversion. Nested structures of
+           tensors are not supported.
 
         2. Since the function might be called more than once, it has to be
            stateless.
@@ -76,9 +78,14 @@ def retry_if_cuda_oom(func):
         with _ignore_torch_cuda_oom():
             return func(*args, **kwargs)
 
-        # Try on CPU. This slows down the code significantly, therefore print a notice.
+        # Try on CPU.
+        # This slows down the code significantly, therefore print a notice.
         logger = logging.getLogger(__name__)
-        logger.info("Attempting to copy inputs of {} to CPU due to CUDA OOM".format(str(func)))
+        logger.info(
+            "Attempting to copy inputs of {} to CPU due to CUDA OOM".format(
+                str(func)
+            )
+        )
         new_args = (maybe_to_cpu(x) for x in args)
         new_kwargs = {k: maybe_to_cpu(v) for k, v in kwargs.items()}
         return func(*new_args, **new_kwargs)

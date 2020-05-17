@@ -2,21 +2,22 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import datetime
-import itertools
 import logging
 import os
 import tempfile
 import time
 from collections import Counter
+
 import torch
-from fvcore.common.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
+from fvcore.common.checkpoint import (
+    PeriodicCheckpointer as _PeriodicCheckpointer,
+)
 from fvcore.common.file_io import PathManager
 from fvcore.common.timer import Timer
-from fvcore.nn.precise_bn import get_bn_modules, update_bn_stats
 
-#from detectron2.evaluation.testing import flatten_results_dict
-from ss_recon.utils.events import EventStorage, EventWriter
 from ss_recon.evaluation.testing import flatten_results_dict
+from ss_recon.utils.events import EventWriter
+
 from .train_loop import HookBase
 
 __all__ = [
@@ -40,7 +41,14 @@ class CallbackHook(HookBase):
     Create a hook using callback functions provided by the user.
     """
 
-    def __init__(self, *, before_train=None, after_train=None, before_step=None, after_step=None):
+    def __init__(
+        self,
+        *,
+        before_train=None,
+        after_train=None,
+        before_step=None,
+        after_step=None
+    ):
         """
         Each argument is a function that takes one argument: the trainer.
         """
@@ -85,8 +93,8 @@ class IterationTimer(HookBase):
     def __init__(self, warmup_iter=3):
         """
         Args:
-            warmup_iter (int): the number of iterations at the beginning to exclude
-                from timing.
+            warmup_iter (int): the number of iterations at the beginning to
+                exclude from timing.
         """
         self._warmup_iter = warmup_iter
         self._step_timer = Timer()
@@ -102,15 +110,20 @@ class IterationTimer(HookBase):
         total_time_minus_hooks = self._total_timer.seconds()
         hook_time = total_time - total_time_minus_hooks
 
-        num_iter = self.trainer.iter + 1 - self.trainer.start_iter - self._warmup_iter
+        num_iter = (
+            self.trainer.iter + 1 - self.trainer.start_iter - self._warmup_iter
+        )
 
         if num_iter > 0 and total_time_minus_hooks > 0:
             # Speed is meaningful only after warmup
             # NOTE this format is parsed by grep in some scripts
             logger.info(
-                "Overall training speed: {} iterations in {} ({:.4f} s / it)".format(
+                "Overall training speed: "
+                "{} iterations in {} ({:.4f} s / it)".format(
                     num_iter,
-                    str(datetime.timedelta(seconds=int(total_time_minus_hooks))),
+                    str(
+                        datetime.timedelta(seconds=int(total_time_minus_hooks))
+                    ),
                     total_time_minus_hooks / num_iter,
                 )
             )
@@ -237,13 +250,15 @@ class AutogradProfiler(HookBase):
     .. code-block:: python
 
         hooks.AutogradProfiler(
-             lambda trainer: trainer.iter > 10 and trainer.iter < 20, self.cfg.OUTPUT_DIR
+             lambda trainer: trainer.iter > 10 and trainer.iter < 20,
+                self.cfg.OUTPUT_DIR
         )
 
     The above example will run the profiler for iteration 10~20 and dump
     results to ``OUTPUT_DIR``. We did not profile the first few iterations
     because they are typically slower than the rest.
-    The result files can be loaded in the ``chrome://tracing`` page in chrome browser.
+    The result files can be loaded in the ``chrome://tracing`` page in chrome
+    browser.
 
     Note:
         When used together with NCCL on older version of GPUs,
@@ -256,9 +271,10 @@ class AutogradProfiler(HookBase):
     def __init__(self, enable_predicate, output_dir, *, use_cuda=True):
         """
         Args:
-            enable_predicate (callable[trainer -> bool]): a function which takes a trainer,
-                and returns whether to enable the profiler.
-                It will be called once every step, and can be used to select which steps to profile.
+            enable_predicate (callable[trainer -> bool]): a function which takes
+                a trainer, and returns whether to enable the profiler.
+                It will be called once every step, and can be used to select
+                which steps to profile.
             output_dir (str): the output directory to dump tracing files.
             use_cuda (bool): same as in `torch.autograd.profiler.profile`.
         """
@@ -268,7 +284,9 @@ class AutogradProfiler(HookBase):
 
     def before_step(self):
         if self._enable_predicate(self.trainer):
-            self._profiler = torch.autograd.profiler.profile(use_cuda=self._use_cuda)
+            self._profiler = torch.autograd.profiler.profile(
+                use_cuda=self._use_cuda
+            )
             self._profiler.__enter__()
         else:
             self._profiler = None
@@ -278,7 +296,8 @@ class AutogradProfiler(HookBase):
             return
         self._profiler.__exit__(None, None, None)
         out_file = os.path.join(
-            self._output_dir, "profiler-trace-iter{}.json".format(self.trainer.iter)
+            self._output_dir,
+            "profiler-trace-iter{}.json".format(self.trainer.iter),
         )
         if "://" not in out_file:
             self._profiler.export_chrome_trace(out_file)
@@ -297,7 +316,8 @@ class EvalHook(HookBase):
     """
     Run an evaluation function periodically, and at the end of training.
 
-    It is executed every ``eval_period`` iterations and after the last iteration.
+    It is executed every ``eval_period`` iterations and after the last
+    iteration.
     """
 
     def __init__(self, eval_period, eval_function):
@@ -322,7 +342,9 @@ class EvalHook(HookBase):
         if results:
             assert isinstance(
                 results, dict
-            ), "Eval function must return a dict. Got {} instead.".format(results)
+            ), "Eval function must return a dict. Got {} instead.".format(
+                results
+            )
 
             flattened_results = flatten_results_dict(results)
             for k, v in flattened_results.items():
@@ -330,10 +352,13 @@ class EvalHook(HookBase):
                     v = float(v)
                 except Exception:
                     raise ValueError(
-                        "[EvalHook] eval_function should return a nested dict of float. "
+                        "[EvalHook] eval_function should return "
+                        "a nested dict of float. "
                         "Got '{}: {}' instead.".format(k, v)
                     )
-            self.trainer.storage.put_scalars(**flattened_results, smoothing_hint=False)
+            self.trainer.storage.put_scalars(
+                **flattened_results, smoothing_hint=False
+            )
 
     def after_step(self):
         next_iter = self.trainer.iter + 1

@@ -14,7 +14,7 @@ def read_hdr(name, order="C"):
     # get dims from .hdr
     h = open(name + ".hdr", "r")
     h.readline()  # skip line
-    l = h.readline()
+    l = h.readline()  # noqa: E741
     h.close()
     dims = [int(i) for i in l.split()]
     if order == "C":

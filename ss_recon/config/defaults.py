@@ -29,7 +29,7 @@ _C.MODEL.UNROLLED = CN()
 _C.MODEL.UNROLLED.NUM_UNROLLED_STEPS = 5
 _C.MODEL.UNROLLED.NUM_RESBLOCKS = 2
 _C.MODEL.UNROLLED.NUM_FEATURES = 256
-_C.MODEL.UNROLLED.DROPOUT = 0.
+_C.MODEL.UNROLLED.DROPOUT = 0.0
 # Padding options. "" or "circular"
 _C.MODEL.UNROLLED.PADDING = ""
 _C.MODEL.UNROLLED.FIX_STEP_SIZE = False
@@ -141,7 +141,7 @@ _C.OUTPUT_DIR = ""
 # guarantee fully deterministic behavior.
 _C.SEED = -1
 # The period (in terms of steps) for minibatch visualization at train time.
-# Set to 0 to disable.
+# Set to 0 to disable. Currently not functional.
 _C.VIS_PERIOD = 0
 # The scale when referring to time generally in the config.
 # Note that there are certain fields, which are explicitly at the iteration

@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from typing import Any, Dict, List
+
 import torch
 
 from ss_recon.config import CfgNode
@@ -7,7 +8,9 @@ from ss_recon.config import CfgNode
 from .lr_scheduler import WarmupCosineLR, WarmupMultiStepLR
 
 
-def build_optimizer(cfg: CfgNode, model: torch.nn.Module) -> torch.optim.Optimizer:
+def build_optimizer(
+    cfg: CfgNode, model: torch.nn.Module
+) -> torch.optim.Optimizer:
     """
     Build an optimizer from config.
     """
@@ -74,7 +77,7 @@ def build_lr_scheduler(
         lr_step = cfg.SOLVER.STEPS[0]
         max_iter = cfg.SOLVER.MAX_ITER
         num_steps = max_iter // lr_step
-        steps = [lr_step * x for x in range(1, 1+num_steps)]
+        steps = [lr_step * x for x in range(1, 1 + num_steps)]
 
         # No warmup if plain StepLR.
         warmup_iters = cfg.SOLVER.WARMUP_ITERS if name == "WarmupStepLR" else 0
@@ -84,7 +87,7 @@ def build_lr_scheduler(
             cfg.SOLVER.GAMMA,
             warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
             warmup_iters=warmup_iters,
-            warmup_method=cfg.SOLVER.WARMUP_METHOD
+            warmup_method=cfg.SOLVER.WARMUP_METHOD,
         )
     else:
         raise ValueError("Unknown LR scheduler: {}".format(name))

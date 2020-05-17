@@ -4,6 +4,7 @@
 import logging
 import time
 import weakref
+
 import torch
 
 from ss_recon.utils.events import EventStorage
@@ -34,16 +35,19 @@ class HookBase:
         2. A hook that does something in :meth:`before_step` can often be
            implemented equivalently in :meth:`after_step`.
            If the hook takes non-trivial time, it is strongly recommended to
-           implement the hook in :meth:`after_step` instead of :meth:`before_step`.
-           The convention is that :meth:`before_step` should only take negligible time.
+           implement the hook in :meth:`after_step` instead of
+           :meth:`before_step`.
+           The convention is that :meth:`before_step` should only take
+           negligible time.
 
-           Following this convention will allow hooks that do care about the difference
+           Following this convention will allow hooks that do care about the
+           difference
            between :meth:`before_step` and :meth:`after_step` (e.g., timer) to
            function properly.
 
     Attributes:
-        trainer: A weak reference to the trainer object. Set by the trainer when the hook is
-            registered.
+        trainer: A weak reference to the trainer object. Set by the trainer
+            when the hook is registered.
     """
 
     def before_train(self):
@@ -77,7 +81,8 @@ class TrainerBase:
 
     The only assumption we made here is: the training runs in a loop.
     A subclass can implement what the loop is.
-    We made no assumptions about the existence of dataloader, optimizer, model, etc.
+    We made no assumptions about the existence of dataloader, optimizer, model,
+    etc.
 
     Attributes:
         iter(int): the current iteration.
@@ -87,7 +92,8 @@ class TrainerBase:
 
         max_iter(int): The iteration to end training.
 
-        storage(EventStorage): An EventStorage that's opened during the course of training.
+        storage(EventStorage): An EventStorage that's opened during the course
+            of training.
     """
 
     def __init__(self):
@@ -104,10 +110,11 @@ class TrainerBase:
         hooks = [h for h in hooks if h is not None]
         for h in hooks:
             assert isinstance(h, HookBase)
-            # To avoid circular reference, hooks and trainer cannot own each other.
+            # To avoid circular reference, hooks and
+            # trainer cannot own each other.
             # This normally does not matter, but will cause memory leak if the
             # involved objects contain __del__:
-            # See http://engineering.hearsaysocial.com/2013/06/16/circular-references-in-python/
+            # See http://engineering.hearsaysocial.com/2013/06/16/circular-references-in-python/  # noqa
             h.trainer = weakref.proxy(self)
         self._hooks.extend(hooks)
 
@@ -150,7 +157,8 @@ class TrainerBase:
     def after_step(self):
         for h in self._hooks:
             h.after_step()
-        # this guarantees, that in each hook's after_step, storage.iter == trainer.iter
+        # this guarantees, that in each hook's after_step,
+        # storage.iter == trainer.iter
         self.storage.step()
 
     def run_step(self):
@@ -173,7 +181,12 @@ class SimpleTrainer(TrainerBase):
     """
 
     def __init__(
-        self, model, data_loader, optimizer, loss_computer, metrics_computer=None
+        self,
+        model,
+        data_loader,
+        optimizer,
+        loss_computer,
+        metrics_computer=None,
     ):
         """
         Args:
@@ -207,7 +220,9 @@ class SimpleTrainer(TrainerBase):
         """
         Implement the standard training logic described above.
         """
-        assert self.model.training, "[SimpleTrainer] model was changed to eval mode!"
+        assert (
+            self.model.training
+        ), "[SimpleTrainer] model was changed to eval mode!"
         start = time.perf_counter()
         """
         If your want to do something with the data, you can wrap the dataloader.
@@ -228,9 +243,7 @@ class SimpleTrainer(TrainerBase):
         output_dict = self.model(
             kspace, maps, target=target, mean=mean, std=std, norm=norm
         )
-        output_dict.update(
-            {"mean": mean, "std": std, "norm": norm}
-        )
+        output_dict.update({"mean": mean, "std": std, "norm": norm})
         loss_dict = {k: v for k, v in output_dict.items() if "loss" in k}
         loss_dict.update(self.loss_computer(output_dict))
 
@@ -261,9 +274,8 @@ class SimpleTrainer(TrainerBase):
     def _detect_anomaly(self, losses, loss_dict):
         if not torch.isfinite(losses).all():
             raise FloatingPointError(
-                "Loss became infinite or NaN at iteration={}!\nloss_dict = {}".format(
-                    self.iter, loss_dict
-                )
+                "Loss became infinite or NaN at iteration={}!\n"
+                "loss_dict = {}".format(self.iter, loss_dict)
             )
 
     def _write_metrics(self, metrics_dict: dict):
@@ -272,7 +284,9 @@ class SimpleTrainer(TrainerBase):
             metrics_dict (dict): dict of scalar metrics
         """
         metrics_dict = {
-            k: torch.mean(v.detach().cpu()).item() if isinstance(v, torch.Tensor) else float(v)
+            k: torch.mean(v.detach().cpu()).item()
+            if isinstance(v, torch.Tensor)
+            else float(v)
             for k, v in metrics_dict.items()
         }
 

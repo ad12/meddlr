@@ -1,12 +1,13 @@
-import logging
 import copy
+import logging
+from collections import OrderedDict, defaultdict
+
 import numpy as np
-from collections import defaultdict, OrderedDict
-from fvcore.common.file_io import PathManager
-from skimage.metrics import structural_similarity
 import torch
+from skimage.metrics import structural_similarity
 
 from ss_recon.utils import complex_utils as cplx
+
 from .evaluator import DatasetEvaluator
 
 
@@ -21,7 +22,7 @@ class ReconEvaluator(DatasetEvaluator):
     - SSIM (to be implemented)
     """
 
-    def __init__(self, dataset_name, cfg, output_dir = None):
+    def __init__(self, dataset_name, cfg, output_dir=None):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
@@ -40,7 +41,7 @@ class ReconEvaluator(DatasetEvaluator):
                 2. "coco_instances_results.json" a json file in COCO's result
                    format.
         """
-        #self._tasks = self._tasks_from_config(cfg)
+        # self._tasks = self._tasks_from_config(cfg)
         self._output_dir = output_dir
 
         self._cpu_device = torch.device("cpu")
@@ -50,7 +51,7 @@ class ReconEvaluator(DatasetEvaluator):
         # self._metadata = MetadataCatalog.get(dataset_name)
         # if not hasattr(self._metadata, "json_file"):
         #     self._logger.warning(
-        #         f"json_file was not found in MetaDataCatalog for '{dataset_name}'")
+        #         f"json_file was not found in MetaDataCatalog for '{dataset_name}'")  # noqa
         #
         #     cache_path = os.path.join(output_dir,
         #                               f"{dataset_name}_coco_format.json")
@@ -64,7 +65,8 @@ class ReconEvaluator(DatasetEvaluator):
     def _tasks_from_config(self, cfg):
         """
         Returns:
-            tuple[str]: tasks that can be evaluated under the given configuration.
+            tuple[str]: tasks that can be evaluated under the given
+                configuration.
         """
         tasks = ("bbox",)
         if cfg.MODEL.MASK_ON:
@@ -112,9 +114,9 @@ class ReconEvaluator(DatasetEvaluator):
             for k, v in val.items():
                 pred_vals[k].append(v)
 
-        self._results = OrderedDict({
-            k: np.mean(v) for k, v in pred_vals.items()
-        })
+        self._results = OrderedDict(
+            {k: np.mean(v) for k, v in pred_vals.items()}
+        )
         # Copy so the caller can do whatever with results
         return copy.deepcopy(self._results)
 
@@ -131,11 +133,7 @@ class ReconEvaluator(DatasetEvaluator):
         target = target.squeeze(-1).numpy()
         output = output.squeeze(-1).numpy()
         ssim = structural_similarity(
-            target, 
-            output, 
-            data_range=output.max() - output.min(),
+            target, output, data_range=output.max() - output.min()
         )
 
-        return {
-            "val_l1": l1, "val_l2": l2, "val_psnr": psnr, "val_ssim": ssim,
-        }
+        return {"val_l1": l1, "val_l2": l2, "val_psnr": psnr, "val_ssim": ssim}

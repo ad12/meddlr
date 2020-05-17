@@ -2,15 +2,15 @@
 
 DO NOT MOVE THIS FILE.
 """
-from abc import ABC, abstractmethod
 import getpass
 import os
 import re
 import socket
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List
 
-from fvcore.common.file_io import PathManager, PathHandler
+from fvcore.common.file_io import PathHandler, PathManager
 
 # Path to the repository directory.
 # TODO: make this cleaner
@@ -35,8 +35,8 @@ class Cluster(Enum):
     ROMA = 1, ["roma"]
     VIGATA = 2, ["vigata"]
     NERO = 3, ["slurm-gpu-compute.*"]
-    SHERLOCK = 4, ['sh[0-9]+.*']
-    SAIL = 5, ['sc.*stanford.edu', 'pasteur[0-9].stanford.edu']
+    SHERLOCK = 4, ["sh[0-9]+.*"]
+    SAIL = 5, ["sc.*stanford.edu", "pasteur[0-9].stanford.edu"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -66,7 +66,7 @@ class Cluster(Enum):
         return cls.UNKNOWN
 
     def register_user(
-        self, user_id: str, data_dir: str="", results_dir: str=""
+        self, user_id: str, data_dir: str = "", results_dir: str = ""
     ):
         """Register user preferences for paths.
 
@@ -108,7 +108,7 @@ class GeneralPathHandler(PathHandler, ABC):
         return [self.PREFIX]
 
     def _get_local_path(self, path: str, **kwargs):
-        name = path[len(self.PREFIX):]
+        name = path[len(self.PREFIX) :]
         return os.path.join(self._root_dir(), name)
 
     def _open(self, path, mode="r", **kwargs):
@@ -155,7 +155,6 @@ _USER_PATHS = {
             "/share/pi/bah/arjundd/results/ss_recon",
         ),
     },
-
     # New users add path preference below.
 }
 
@@ -165,5 +164,3 @@ _USER = getpass.getuser()
 if _USER in _USER_PATHS:
     for cluster, (data_dir, results_dir) in _USER_PATHS[_USER].items():
         cluster.register_user(_USER, data_dir, results_dir)
-
-
