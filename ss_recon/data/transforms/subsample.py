@@ -2,6 +2,7 @@ import numpy as np
 import sigpy.mri
 import torch
 from fvcore.common.registry import Registry
+from typing import Sequence
 
 MASK_FUNC_REGISTRY = Registry("MASK_FUNC")
 MASK_FUNC_REGISTRY.__doc__ = """
@@ -37,6 +38,10 @@ class MaskFunc:
         """
         Chooses a random acceleration rate given a range.
         """
+        if not isinstance(self.accelerations, Sequence):
+            return self.accelerations
+        elif len(self.accelerations) == 1:
+            return self.accelerations[0]
         accel_range = self.accelerations[1] - self.accelerations[0]
         acceleration = self.accelerations[0] + accel_range * self.rng.rand()
         return acceleration
