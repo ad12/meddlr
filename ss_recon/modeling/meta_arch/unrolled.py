@@ -94,7 +94,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         self.vis_period = cfg.VIS_PERIOD
         # self.to(self.device)
 
-    def visualize_training(self, masks, zfs, targets, preds):
+    def visualize_training(self, kspace, zfs, targets, preds):
         """A function used to visualize reconstructions.
 
         Args:
@@ -102,29 +102,32 @@ class GeneralizedUnrolledCNN(nn.Module):
             preds: NxHxWx2 tensors of predictions.
         """
         storage = get_event_storage()
+        
         with torch.no_grad():
-            masks = masks.cpu()
-            targets = targets.cpu()
-            preds = preds.cpu()
-            zfs = zfs.cpu()
+            kspace = kspace.cpu()[0, ..., 0, :].unsqueeze(0) # calc mask for first coil only
+            targets = targets.cpu()[0, ...].unsqueeze(0)
+            preds = preds.cpu()[0, ...].unsqueeze(0)
+            zfs = zfs.cpu()[0, ...].unsqueeze(0)
 
-            import pdb; pdb.set_trace()
+            N = preds.shape[0]
 
-            all_images = torch.cat([zfs, preds, targets], dim=1)
+            all_images = torch.cat([zfs, preds, targets], dim=2)
 
             imgs_to_write = {
                 "phases": cplx.angle(all_images),
                 "images": cplx.abs(all_images),
                 "errors": cplx.abs(preds - targets),
-                "masks": masks,
+                "masks": cplx.get_mask(kspace),
             }
 
+            #import pdb; pdb.set_trace()
             for name, data in imgs_to_write.items():
+                data = data.squeeze(-1).unsqueeze(1)
+                #data = torch.cat([data, data, data], dim=1)
                 data = tv_utils.make_grid(
-                    data, nrow=1, padding=1, normalize=True
+                    data, nrow=1, padding=1, normalize=True, scale_each=True,
                 )
-
-                storage.put_image("train/{}".format(name), data)
+                storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
 
     def forward(
         self,
@@ -202,9 +205,9 @@ class GeneralizedUnrolledCNN(nn.Module):
             "norm": norm,
         }
 
-        if self.vis_period > 0:
+        if self.training and self.vis_period > 0:
             storage = get_event_storage()
             if storage.iter % self.vis_period == 0:
-                self.visualize_training(mask, zf_image, target, image)
+                self.visualize_training(kspace, zf_image, target, image)
 
         return output_dict
