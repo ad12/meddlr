@@ -246,7 +246,7 @@ class EventStorage:
         self._current_prefix = ""
         self._vis_data = []
 
-    def put_image(self, img_name, img_tensor, data_format="CHW"):
+    def put_image(self, img_name, img_tensor, data_format="HWC"):
         """
         Add an `img_tensor` to the `_vis_data` associated with `img_name`.
 
