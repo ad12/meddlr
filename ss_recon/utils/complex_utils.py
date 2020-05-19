@@ -24,17 +24,28 @@ def mul(x, y):
     Multiplies two complex-valued tensors x and y.
      i.e. z = (a + ib) * (c + id)
     """
+    # assert x.size(-1) == 2
+    # assert y.size(-1) == 2
+    #
+    # a = x[..., 0]
+    # b = x[..., 1]
+    # c = y[..., 0]
+    # d = y[..., 1]
+    #
+    # real = a * c - b * d
+    # imag = a * d + b * c
+
+    #return torch.stack((real, imag), dim=-1)
+
     assert x.size(-1) == 2
     assert y.size(-1) == 2
-
-    a = x[..., 0]
-    b = x[..., 1]
-    c = y[..., 0]
-    d = y[..., 1]
-
-    real = a * c - b * d
-    imag = a * d + b * c
-
+    # note: using select() makes sure that another copy is not made.
+    # real = a*c - b*d
+    real = x.select(-1, 0) * y.select(-1, 0)  # a*c
+    real -= x.select(-1, 1) * y.select(-1, 1)  # b*d
+    # imag = a*d + b*c
+    imag = x.select(-1, 0) * y.select(-1, 1)  # a*d
+    imag += x.select(-1, 1) * y.select(-1, 0)  # b*c
     return torch.stack((real, imag), dim=-1)
 
 

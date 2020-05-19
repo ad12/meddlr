@@ -12,16 +12,17 @@ Implementation is based on:
     Clinical Practice with Deep Neural Networks" IEEE Signal Processing
     Magazine, 2020.
 """
-
+import numpy as np
 import torch
 from torch import nn
-
+import torchvision.utils as tv_utils
 import ss_recon.utils.complex_utils as cplx
 from ss_recon.modeling.loss_computer import BasicLossComputer
 from ss_recon.utils.transforms import SenseModel
 
 from ..layers.layers2D import ResNet
 from .build import META_ARCH_REGISTRY
+from ss_recon.utils.events import get_event_storage
 
 __all__ = ["GeneralizedUnrolledCNN"]
 
@@ -87,10 +88,43 @@ class GeneralizedUnrolledCNN(nn.Module):
         else:
             self.step_sizes = [
                 torch.nn.Parameter(init_step_size)
-                for i in range(num_grad_steps)
+                for _ in range(num_grad_steps)
             ]
 
+        self.vis_period = cfg.VIS_PERIOD
         # self.to(self.device)
+
+    def visualize_training(self, masks, zfs, targets, preds):
+        """A function used to visualize reconstructions.
+
+        Args:
+            targets: NxHxWx2 tensors of target images.
+            preds: NxHxWx2 tensors of predictions.
+        """
+        storage = get_event_storage()
+        with torch.no_grad():
+            masks = masks.cpu()
+            targets = targets.cpu()
+            preds = preds.cpu()
+            zfs = zfs.cpu()
+
+            import pdb; pdb.set_trace()
+
+            all_images = torch.cat([zfs, preds, targets], dim=1)
+
+            imgs_to_write = {
+                "phases": cplx.angle(all_images),
+                "images": cplx.abs(all_images),
+                "errors": cplx.abs(preds - targets),
+                "masks": masks,
+            }
+
+            for name, data in imgs_to_write.items():
+                data = tv_utils.make_grid(
+                    data, nrow=1, padding=1, normalize=True
+                )
+
+                storage.put_image("train/{}".format(name), data)
 
     def forward(
         self,
@@ -167,5 +201,10 @@ class GeneralizedUnrolledCNN(nn.Module):
             "std": std,
             "norm": norm,
         }
+
+        if self.vis_period > 0:
+            storage = get_event_storage()
+            if storage.iter % self.vis_period == 0:
+                self.visualize_training(mask, zf_image, target, image)
 
         return output_dict

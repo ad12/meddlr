@@ -140,8 +140,10 @@ class TensorboardXWriter(EventWriter):
             self._writer.add_scalar(k, v, storage.iter)
 
         if len(storage.vis_data) >= 1:
-            for img_name, img, step_num in storage.vis_data:
-                self._writer.add_image(img_name, img, step_num)
+            for img_name, img, step_num, data_format in storage.vis_data:
+                self._writer.add_image(
+                    img_name, img, step_num, dataformats=data_format
+                )
             storage.clear_images()
 
     def close(self):
@@ -244,7 +246,7 @@ class EventStorage:
         self._current_prefix = ""
         self._vis_data = []
 
-    def put_image(self, img_name, img_tensor):
+    def put_image(self, img_name, img_tensor, data_format="CHW"):
         """
         Add an `img_tensor` to the `_vis_data` associated with `img_name`.
 
@@ -255,8 +257,9 @@ class EventStorage:
                 3. The image format should be RGB. The elements in img_tensor
                 can either have values in [0, 1] (float32) or [0, 255] (uint8).
                 The `img_tensor` will be visualized in tensorboard.
+            data_format (str): Either "CHW", "HW", or "HWC"
         """
-        self._vis_data.append((img_name, img_tensor, self._iter))
+        self._vis_data.append((img_name, img_tensor, self._iter, data_format))
 
     def clear_images(self):
         """
