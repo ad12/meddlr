@@ -1,0 +1,13 @@
+# Compute loss without renormalizing the data.
+# This should reduce the effective l1 loss and potentially stabilize
+# gradients
+_BASE_: "exp02.yaml"
+MODEL:
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 15
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+OUTPUT_DIR: "results://basic/no_image_renormalization"
+SEED: 1000
+VERSION: 1

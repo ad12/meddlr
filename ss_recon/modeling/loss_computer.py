@@ -8,6 +8,7 @@ class BasicLossComputer(object):
         loss_name = cfg.MODEL.RECON_LOSS.NAME
         assert loss_name in ["l1", "l2", "psnr"]
         self.loss = loss_name
+        self.renormalize_data = cfg.MODEL.RECON_LOSS.RENORMALIZE_DATA
 
     def __call__(self, output_dict):
         pred: torch.Tensor = output_dict["pred"]
@@ -15,8 +16,11 @@ class BasicLossComputer(object):
         std = output_dict["std"].to(pred.device)
         target = output_dict["target"].to(pred.device)
 
-        output = pred * std + mean
-        target = target * std + mean
+        if self.renormalize_data:
+            output = pred * std + mean
+            target = target * std + mean
+        else:
+            output = pred
 
         # Compute metrics
         abs_error = cplx.abs(output - target)

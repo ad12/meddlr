@@ -41,6 +41,7 @@ _C.MODEL.UNROLLED.NUM_EMAPS = 1
 
 _C.MODEL.RECON_LOSS = CN()
 _C.MODEL.RECON_LOSS.NAME = "l1"
+_C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -142,6 +143,7 @@ _C.OUTPUT_DIR = ""
 _C.SEED = -1
 # The period (in terms of steps) for minibatch visualization at train time.
 # Set to 0 to disable. Currently not functional.
+# This will always be in number of iterations. 
 _C.VIS_PERIOD = 0
 # The scale when referring to time generally in the config.
 # Note that there are certain fields, which are explicitly at the iteration
