@@ -65,7 +65,7 @@ def default_argument_parser():
     return parser
 
 
-def default_setup(cfg, args):
+def default_setup(cfg, args, save_cfg: bool = True):
     """
     Perform some basic common setups at the beginning of a job, including:
 
@@ -76,6 +76,7 @@ def default_setup(cfg, args):
     Args:
         cfg (CfgNode): the full config to be used
         args (argparse.NameSpace): the command line arguments to be logged
+        save_cfg (bool, optional): If `True`, writes config to `cfg.OUTPUT_DIR`.
     """
     cfg.defrost()
     cfg.OUTPUT_DIR = PathManager.get_local_path(cfg.OUTPUT_DIR)
@@ -112,7 +113,7 @@ def default_setup(cfg, args):
         torch.cuda.set_device(gpus[0])
 
     logger.info("Running with full config:\n{}".format(cfg))
-    if output_dir:
+    if output_dir and save_cfg:
         # Note: some of our scripts may expect the existence of
         # config.yaml in output directory
         path = os.path.join(output_dir, "config.yaml")

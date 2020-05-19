@@ -1,8 +1,9 @@
 import itertools
 from typing import Sequence
+from collections import defaultdict
 
 from torch.utils.data import DataLoader
-
+import numpy as np
 from .catalog import DatasetCatalog
 from .slice_dataset import SliceData
 from .transforms import transform as T
@@ -52,3 +53,40 @@ def build_recon_test_loader(cfg, dataset_name):
         pin_memory=True,
     )
     return train_loader
+
+
+def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):
+    """Creates a data loader for each unique scan.
+
+    TODO: Deprecate this function and incorporate scan action into standard
+    testing pipeline
+    """
+    dataset_dicts = get_recon_dataset_dicts(dataset_names=[dataset_name])
+
+    if accelerations is None:
+        accelerations = cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS
+        accelerations = list(np.arange(accelerations[0], accelerations[1]))
+
+    loaders = defaultdict(dict)
+    for acc in accelerations:
+        aug_cfg = cfg.AUG_TRAIN.clone()
+        aug_cfg.defrost()
+        aug_cfg.UNDERSAMPLE.ACCELERATIONS = (acc,)
+        aug_cfg.freeze()
+        for dataset_dict in dataset_dicts:
+            mask_func = build_mask_func(aug_cfg)
+            data_transform = T.DataTransform(
+                cfg.AUG_TRAIN, mask_func, is_test=True
+            )
+            train_data = SliceData([dataset_dict], data_transform)
+            loader = DataLoader(
+                dataset=train_data,
+                batch_size=cfg.SOLVER.TEST_BATCH_SIZE,
+                shuffle=False,
+                num_workers=cfg.DATALOADER.NUM_WORKERS,
+                drop_last=False,
+                pin_memory=True,
+            )
+            loaders["{}x".format(acc)][dataset_dict["file_name"]] = loader
+
+    return loaders

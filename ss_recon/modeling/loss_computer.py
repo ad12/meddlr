@@ -22,7 +22,7 @@ class BasicLossComputer(object):
         abs_error = cplx.abs(output - target)
         l1 = torch.mean(abs_error)
         l2 = torch.sqrt(torch.mean(abs_error ** 2))
-        psnr = 20 * torch.log10(cplx.abs(output).max() / l2)
+        psnr = 20 * torch.log10(cplx.abs(target).max() / l2)
 
         metrics_dict = {"l1": l1, "l2": l2, "psnr": psnr}
         loss = metrics_dict[self.loss]
