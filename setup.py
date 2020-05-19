@@ -61,6 +61,7 @@ setup(
         "scikit-image",
         "sigpy",
         "ismrmrd",
+        "pandas",
         "tqdm",
     ],
     extras_require={

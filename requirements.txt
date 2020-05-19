@@ -9,3 +9,4 @@ ismrmrd
 tqdm
 cupy
 scikit-image
+pandas
