@@ -34,3 +34,6 @@
 
 #ignore cross validation files
 *.cv
+
+# ignore notebooks (for now)
+**/notebooks

@@ -11,9 +11,12 @@ Supported metrics include:
 """
 import logging
 import os
+import datetime
+import time
 
 import h5py
 import pandas as pd
+import silx.io.dictdump as silx_dd
 from tabulate import tabulate
 import torch
 
@@ -38,13 +41,17 @@ logger = logging.getLogger(_LOGGER_NAME)
 
 @torch.no_grad()
 def compute_metrics(ref: torch.Tensor, x: torch.Tensor):
-    """
+    """Metrics are computed per volume.
+
     Args:
         ref (torch.Tensor): The target. Shape (...)x2
         x (torch.Tensor): The prediction. Same shape as `ref`.
     """
-    psnr = metrics.compute_psnr(ref, x).item().numpy()
-    nrmse = metrics.compute_nrmse(ref, x).item().numpy()
+    ref = ref.squeeze()
+    x = x.squeeze()
+    psnr = metrics.compute_psnr(ref, x).item()
+    nrmse = metrics.compute_nrmse(ref, x).item()
+
     ssim = metrics.compute_ssim(ref, x, multichannel=False)
     ssim_mc = metrics.compute_ssim(ref, x, multichannel=True)
 
@@ -108,16 +115,15 @@ def eval(cfg, model):
         loaders = build_data_loaders_per_scan(cfg, dataset_name, (6, 8))
         for acc in loaders:
             for scan_name, loader in loaders[acc].items():
+                scan_name = os.path.splitext(os.path.basename(scan_name))[0]
                 header = "{} - {} - {}".format(dataset_name, acc, scan_name)
                 zf_images = []
                 targets = []
                 outputs = []
                 num_batches = len(loader)
+                start_time = data_start_time = time.perf_counter()
                 for idx, (kspace, maps, target, mean, std, norm) in enumerate(loader):  # noqa
-                    # Declare signal model
-                    # Compute zero-filled image reconstruction
-                    A = SenseModel(maps, weights=cplx.get_mask(kspace))
-                    zf_images.append(A(kspace, adjoint=True).cpu())
+                    data_load_time = time.perf_counter() - data_start_time
 
                     output_dict = model(
                         kspace, maps, target=target, mean=mean, std=std,
@@ -125,36 +131,70 @@ def eval(cfg, model):
                     )
                     targets.append(output_dict["target"].cpu())
                     outputs.append(output_dict["pred"].cpu())
+                    zf_images.append(output_dict["zf_image"].cpu())
+
+                    eta = datetime.timedelta(
+                        seconds=int(
+                            (time.perf_counter() - start_time) / (idx + 1) * (num_batches - idx - 1)
+                        )
+                    )
 
                     log_every_n_seconds(
                         logging.INFO,
-                        "{}: Processed {}/{}".format(header, idx+1, num_batches),
+                        "{}: Processed {}/{} - data_time: {:.6f} - ETA: {}".format(
+                            header, idx+1, num_batches,  data_load_time, eta
+                        ),
                         n=5,
                         name=_LOGGER_NAME,
                     )
+
+                    data_start_time = time.perf_counter()
+
+                recon_time = time.perf_counter() - start_time
 
                 zf_images = torch.cat(zf_images, dim=0)
                 targets = torch.cat(targets, dim=0)
                 outputs = torch.cat(outputs, dim=0)
 
+                logger.info("Computing metrics...")
                 zf_results = pd.DataFrame([compute_metrics(targets, zf_images)])
-                dl_results = pd.DataFrame([compute_metrics(targets, outputs)])
+                dl_results = compute_metrics(targets, outputs)
+                dl_results["recon_time"] = recon_time
+                dl_results = pd.DataFrame([dl_results])
                 zf_results["Method"] = "zero-filled"
                 dl_results["Method"] = "DL-Recon"
                 scan_results = pd.concat([zf_results, dl_results])
 
-                logger.info("Results:\n{}".format(tabulate(scan_results)))
+                logger.info("Results:\n{}".format(tabulate(scan_results, headers=scan_results.columns)))
 
                 scan_results["Acceleration"] = acc
                 scan_results["dataset"] = dataset_name
+                scan_results["scan_name"] = scan_name
                 results.append(scan_results)
 
                 logger.info("Saving data...")
-                file_path = os.path.join(output_dir, "{}.h5".format(scan_name))
-                with h5py.File(file_path, "w") as f:
-                    f.create_dataset("zf", data=zf_images.numpy())
-                    f.create_dataset("dl", data=outputs.numpy())
-                    f.create_dataset("fs", data=targets.numpy())
+                file_path = os.path.join(output_dir, dataset_name, "{}.h5".format(scan_name))
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                silx_dd.dicttoh5(
+                    {
+                        acc: {
+                            "zf": zf_images.numpy(),
+                            "dl": outputs.numpy(),
+                        },
+                        "fs": targets.numpy()
+                    },
+                    file_path,
+                    mode="a",
+                    overwrite_data = True,
+                )
+                # with h5py.File(file_path, "a") as f:
+                #     f.create_dataset("zf_{}".format(acc), data=zf_images.numpy())
+                #     f.create_dataset("dl_{}".format(acc), data=outputs.numpy())
+                #     if "fs" not in f:
+                #         f.create_dataset("fs", data=targets.numpy())
+
+    results = pd.concat(results, ignore_index=True)
+    results.to_csv(os.path.join(output_dir, "metrics.csv"))
 
 
 def main(args):

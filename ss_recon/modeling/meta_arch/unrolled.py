@@ -210,4 +210,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             if storage.iter % self.vis_period == 0:
                 self.visualize_training(kspace, zf_image, target, image)
 
+        if not self.training:
+            output_dict["zf_image"] = zf_image
+
         return output_dict

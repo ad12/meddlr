@@ -1,0 +1,17 @@
+# Template for subsampled training experiments using dl-recon setup.
+_BASE_: "../basic/no_image_renormalization.yaml"
+MODEL:
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 15
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    # change NUM_TOTAL to control how many scans should be included for training. 
+    # `-1` -> all scans will be included
+    NUM_TOTAL: -1
+    SEED: 1000
+OUTPUT_DIR: ""
+SEED: 1000
+VERSION: 1

@@ -89,6 +89,10 @@ def compute_ssim(
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
 
+    if not multichannel:
+        ref = cplx.abs(ref)
+        x = cplx.abs(x)
+
     x = x.squeeze().numpy()
     ref = ref.squeeze().numpy()
 
