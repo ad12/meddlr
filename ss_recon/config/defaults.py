@@ -61,6 +61,18 @@ _C.DATALOADER = CN()
 _C.DATALOADER.NUM_WORKERS = 4
 # If True, the dataloader will drop the last batch.
 _C.DATALOADER.DROP_LAST = True
+# Subsample training data to simulate data limited scenarios.
+_C.DATALOADER.SUBSAMPLE_TRAIN = CN()
+# Number of training examples to retain. All others will be force dropped
+# meaning they will not be used for any training, even w/ semi-supervised N2R
+# framework
+_C.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL = -1
+# Number of scans out of total to undersample. If NUM_TOTAL is not -1, must be
+# less than NUM_TOTAL.
+_C.DATALOADER.SUBSAMPLE_TRAIN.NUM_UNDERSAMPLED = 0
+# Seed for shuffling data. Should always be deterministic
+_C.DATALOADER.SUBSAMPLE_TRAIN.SEED = 1000
+
 
 # -----------------------------------------------------------------------------
 # Augmentations/Transforms
