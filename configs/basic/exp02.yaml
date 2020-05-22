@@ -7,6 +7,10 @@ MODEL:
     NUM_RESBLOCKS: 2
     NUM_FEATURES: 256
     DROPOUT: 0.
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER: ("act", "conv")
   RECON_LOSS:
     NAME: "l1"
 SOLVER:

@@ -2,28 +2,49 @@
 # All experiments are trained for 40000 epochs with a base learning rate of 1e-4
 # Checkpoint and eval every 1 epoch
 #
+# The settings below should not be modified.
+#
 # Model: 
 # - Unrolled network with 15 unrolled steps
 # - Each step has 2 resblocks
 # - conv blocks are conv -> relu (no normalization)
-_BASE_: "../basic/no_image_renormalization.yaml"
+#
+# Seeds:
+# - General: 1000
+# - DataLoader: 1000
 MODEL:
+  META_ARCHITECTURE: "GeneralizedUnrolledCNN"
   UNROLLED:
     NUM_UNROLLED_STEPS: 15
     NUM_RESBLOCKS: 2
     NUM_FEATURES: 256
     NUM_EMAPS: 1
+    DROPOUT: 0.
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER: ("norm", "act", "drop", "conv")
   RECON_LOSS:
     NAME: "l1"
     RENORMALIZE_DATA: False
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
 DATALOADER:
   SUBSAMPLE_TRAIN:
     # change NUM_TOTAL to control how many scans should be included for training. 
     # `-1` -> all scans will be included
     NUM_TOTAL: -1
     SEED: 1000
+  NUM_WORKERS: 4
 SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: "StepLR"
+  TRAIN_BATCH_SIZE: 1
+  TEST_BATCH_SIZE: 4
   MAX_ITER: 40000
+  GAMMA: 1.0  # do not decrease learning rate.
   STEPS: (80000,)  # ensures learning rate does not decay
   BASE_LR: 1e-4
   BIAS_LR_FACTOR: 1.0

@@ -5,6 +5,10 @@ _BASE_: "exp02.yaml"
 MODEL:
   UNROLLED:
     NUM_UNROLLED_STEPS: 15
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER: ("act", "conv")
   RECON_LOSS:
     NAME: "l1"
     RENORMALIZE_DATA: False

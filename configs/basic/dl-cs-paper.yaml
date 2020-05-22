@@ -15,7 +15,8 @@ MODEL:
     RENORMALIZE_DATA: False
 DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
-  TEST: ("mridata_knee_2019_val",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
 DATALOADER:
   NUM_WORKERS: 4
 SOLVER:
