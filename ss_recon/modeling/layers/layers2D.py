@@ -39,7 +39,7 @@ class ConvBlock(nn.Module):
         drop_prob: float,
         act_type: str = "relu",
         norm_type: str = "none",
-        order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
+        order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
         Args:
@@ -86,16 +86,13 @@ class ConvBlock(nn.Module):
             "conv": convolution,
             "drop": dropout,
             "act": activations[act_type],
-            "norm": normalizations[norm_type],
+            "norm": normalizations[norm_type] if norm_type in normalizations else nn.Identity(),
         }
         layers = [layer_dict[l] for l in order]
 
         # Define forward pass
         self.layers = nn.Sequential(
-            normalizations[norm_type],
-            activations[act_type],
-            dropout,
-            convolution,
+            *layers
         )
 
     def forward(self, input):
@@ -107,12 +104,6 @@ class ConvBlock(nn.Module):
             (torch.Tensor): Output tensor of shape [batch_size, self.out_chans, depth, width, height]
         """
         return self.layers(input)
-
-    # def __repr__(self):
-    #     return (
-    #         f"ConvBlock2D(in_chans={self.in_chans}, out_chans={self.out_chans}, "
-    #         f"drop_prob={self.drop_prob})"
-    #     )
 
 
 class ResBlock(nn.Module):
@@ -128,7 +119,7 @@ class ResBlock(nn.Module):
         drop_prob,
         act_type: str = "relu",
         norm_type: str = "none",
-        order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
+        order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
         Args:
@@ -194,7 +185,7 @@ class ResNet(nn.Module):
         circular_pad=False,
         act_type: str = "relu",
         norm_type: str = "none",
-        order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
+        order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
 

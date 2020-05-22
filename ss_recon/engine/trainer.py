@@ -252,7 +252,7 @@ class DefaultTrainer(SimpleTrainer):
         ]
 
         def test_and_save_results():
-            self._last_eval_results = self.test(self.cfg, self.model)
+            self._last_eval_results = self.test(self.cfg, self.model, use_val=True)
             return self._last_eval_results
 
         # Do evaluation after checkpointer, because then if it fails,
@@ -370,14 +370,16 @@ class DefaultTrainer(SimpleTrainer):
         return ReconEvaluator(dataset_name, cfg)
 
     @classmethod
-    def test(cls, cfg, model, evaluators=None):
+    def test(cls, cfg, model, evaluators=None, use_val: bool = False):
         """
         Args:
             cfg (CfgNode):
             model (nn.Module):
             evaluators (list[DatasetEvaluator] or None): if None, will call
                 :meth:`build_evaluator`. Otherwise, must have the same length
-                as `cfg.DATASETS.TEST`.
+                as `cfg.DATASETS.{VAL/TEST}` depending on `use_val` flag.
+            use_val (bool, optional): If `True`, un inference on validation data.
+                Should be `True` during training.
 
         Returns:
             dict: a dict of result metrics
@@ -385,13 +387,19 @@ class DefaultTrainer(SimpleTrainer):
         logger = logging.getLogger(__name__)
         if isinstance(evaluators, DatasetEvaluator):
             evaluators = [evaluators]
+
+        # To use validation data, flag must be enabled and val datasets must be available.
+        if use_val and cfg.DATASETS.VAL:
+            inf_dataset = cfg.DATASETS.VAL
+        else:
+            inf_dataset = cfg.DATASETS.TEST
         if evaluators is not None:
-            assert len(cfg.DATASETS.TEST) == len(evaluators), "{} != {}".format(
-                len(cfg.DATASETS.TEST), len(evaluators)
+            assert len(inf_dataset) == len(evaluators), "{} != {}".format(
+                len(inf_dataset), len(evaluators)
             )
 
         results = OrderedDict()
-        for idx, dataset_name in enumerate(cfg.DATASETS.TEST):
+        for idx, dataset_name in enumerate(inf_dataset):
             data_loader = cls.build_test_loader(cfg, dataset_name)
             # When evaluators are passed in as arguments,
             # implicitly assume that evaluators can be created

@@ -45,7 +45,7 @@ _C.MODEL.UNROLLED.CONV_BLOCK = CN()
 _C.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION = "relu"
 # Either "none", "instance", or "batch"
 _C.MODEL.UNROLLED.CONV_BLOCK.NORM = "none"
-_C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("conv", "norm", "act", "drop")
+_C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
 
 _C.MODEL.RECON_LOSS = CN()
 _C.MODEL.RECON_LOSS.NAME = "l1"
@@ -57,6 +57,8 @@ _C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
 _C.DATASETS = CN()
 # List of the dataset names for training. Must be registered in DatasetCatalog
 _C.DATASETS.TRAIN = ()
+# List of the dataset names for validation. Must be registered in DatasetCatalog
+_C.DATASETS.VAL = ()
 # List of the dataset names for testing. Must be registered in DatasetCatalog
 _C.DATASETS.TEST = ()
 
