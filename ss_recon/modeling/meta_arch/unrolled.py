@@ -69,6 +69,9 @@ class GeneralizedUnrolledCNN(nn.Module):
             kernel_size=kernel_size,
             drop_prob=drop_prob,
             circular_pad=circular_pad,
+            act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
+            norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
+            order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
         )
 
         # Declare ResNets and RNNs for each unrolled iteration

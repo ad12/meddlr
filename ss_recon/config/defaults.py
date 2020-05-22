@@ -30,7 +30,7 @@ _C.MODEL.UNROLLED.NUM_UNROLLED_STEPS = 5
 _C.MODEL.UNROLLED.NUM_RESBLOCKS = 2
 _C.MODEL.UNROLLED.NUM_FEATURES = 256
 _C.MODEL.UNROLLED.DROPOUT = 0.0
-# Padding options. "" or "circular"
+# Padding options. "" for now. TODO: add "circular"
 _C.MODEL.UNROLLED.PADDING = ""
 _C.MODEL.UNROLLED.FIX_STEP_SIZE = False
 _C.MODEL.UNROLLED.SHARE_WEIGHTS = False
@@ -38,6 +38,14 @@ _C.MODEL.UNROLLED.SHARE_WEIGHTS = False
 _C.MODEL.UNROLLED.KERNEL_SIZE = (3,)
 # Number of ESPIRiT maps
 _C.MODEL.UNROLLED.NUM_EMAPS = 1
+
+# Conv block parameters
+_C.MODEL.UNROLLED.CONV_BLOCK = CN()
+# Either "relu" or "leaky_relu"
+_C.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION = "relu"
+# Either "none", "instance", or "batch"
+_C.MODEL.UNROLLED.CONV_BLOCK.NORM = "none"
+_C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("conv", "norm", "act", "drop")
 
 _C.MODEL.RECON_LOSS = CN()
 _C.MODEL.RECON_LOSS.NAME = "l1"
