@@ -65,7 +65,7 @@ class ConvBlock(nn.Module):
         padding = tuple(k // 2 for k in kernel_size)
 
         # Define choices for each layer in ConvBlock
-        conv_after_norm = order.index("conv") > order.index("norm")
+        conv_after_norm = "norm" in order and order.index("conv") > order.index("norm")
         norm_channels = in_chans if conv_after_norm else out_chans
         normalizations = nn.ModuleDict(
             [
