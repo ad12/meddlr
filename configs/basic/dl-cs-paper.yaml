@@ -6,17 +6,22 @@ MODEL:
     NUM_RESBLOCKS: 3
     NUM_FEATURES: 128
     DROPOUT: 0.
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "batch"
+      ORDER: ("norm", "act", "conv")
   RECON_LOSS:
     NAME: "l1"
+    RENORMALIZE_DATA: False
 DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
-  TEST: ("mridata_knee_2019_val", "mridata_knee_2019_test")
+  TEST: ("mridata_knee_2019_val",)
 DATALOADER:
   NUM_WORKERS: 4
 SOLVER:
   OPTIMIZER: "Adam"
   LR_SCHEDULER_NAME: "StepLR"
-  TRAIN_BATCH_SIZE: 4
+  TRAIN_BATCH_SIZE: 2
   TEST_BATCH_SIZE: 4
   CHECKPOINT_PERIOD: 1
   MAX_ITER: 25
