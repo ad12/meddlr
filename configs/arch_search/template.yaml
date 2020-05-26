@@ -1,0 +1,40 @@
+# Very basic template for architecture search.
+# All experiments are trained for 40000 epochs with a base learning rate of 1e-4
+# Checkpoint and eval every 1 epoch
+#
+# Model: All config params for unrolled model should be defined in the appropriate config
+#
+# Seeds:
+# - General: 1000
+# - DataLoader: 1000
+MODEL:
+  META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: -1
+    SEED: 1000
+  NUM_WORKERS: 4
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: "StepLR"
+  TRAIN_BATCH_SIZE: 1
+  TEST_BATCH_SIZE: 4
+  MAX_ITER: 40000
+  GAMMA: 1.0  # do not decrease learning rate.
+  STEPS: (80000,)  # ensures learning rate does not decay
+  BASE_LR: 1e-4
+  BIAS_LR_FACTOR: 1.0
+  CHECKPOINT_PERIOD: -1
+TEST:
+  EVAL_PERIOD: -1
+TIME_SCALE: "iter"
+OUTPUT_DIR: ""  # template should not have an output directory
+SEED: 1000
+VERSION: 1

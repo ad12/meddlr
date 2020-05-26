@@ -1,0 +1,11 @@
+# Train with only 1 scan.
+_BASE_: "template.yaml"
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 1
+    SEED: 1000
+SOLVER:
+  MAX_ITER: 60
+OUTPUT_DIR: "results://dl-recon-subsampled/sub-1"
+SEED: 1000
+VERSION: 1

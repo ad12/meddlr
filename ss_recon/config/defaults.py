@@ -30,7 +30,7 @@ _C.MODEL.UNROLLED.NUM_UNROLLED_STEPS = 5
 _C.MODEL.UNROLLED.NUM_RESBLOCKS = 2
 _C.MODEL.UNROLLED.NUM_FEATURES = 256
 _C.MODEL.UNROLLED.DROPOUT = 0.0
-# Padding options. "" or "circular"
+# Padding options. "" for now. TODO: add "circular"
 _C.MODEL.UNROLLED.PADDING = ""
 _C.MODEL.UNROLLED.FIX_STEP_SIZE = False
 _C.MODEL.UNROLLED.SHARE_WEIGHTS = False
@@ -39,8 +39,17 @@ _C.MODEL.UNROLLED.KERNEL_SIZE = (3,)
 # Number of ESPIRiT maps
 _C.MODEL.UNROLLED.NUM_EMAPS = 1
 
+# Conv block parameters
+_C.MODEL.UNROLLED.CONV_BLOCK = CN()
+# Either "relu" or "leaky_relu"
+_C.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION = "relu"
+# Either "none", "instance", or "batch"
+_C.MODEL.UNROLLED.CONV_BLOCK.NORM = "none"
+_C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
+
 _C.MODEL.RECON_LOSS = CN()
 _C.MODEL.RECON_LOSS.NAME = "l1"
+_C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -48,6 +57,8 @@ _C.MODEL.RECON_LOSS.NAME = "l1"
 _C.DATASETS = CN()
 # List of the dataset names for training. Must be registered in DatasetCatalog
 _C.DATASETS.TRAIN = ()
+# List of the dataset names for validation. Must be registered in DatasetCatalog
+_C.DATASETS.VAL = ()
 # List of the dataset names for testing. Must be registered in DatasetCatalog
 _C.DATASETS.TEST = ()
 
@@ -154,6 +165,7 @@ _C.OUTPUT_DIR = ""
 _C.SEED = -1
 # The period (in terms of steps) for minibatch visualization at train time.
 # Set to 0 to disable. Currently not functional.
+# This will always be in number of iterations. 
 _C.VIS_PERIOD = 0
 # The scale when referring to time generally in the config.
 # Note that there are certain fields, which are explicitly at the iteration

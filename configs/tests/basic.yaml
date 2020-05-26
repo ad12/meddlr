@@ -10,7 +10,7 @@ MODEL:
     DROPOUT: 0.
 DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
-  TEST: ("mridata_knee_2019_val",)
+  VAL: ("mridata_knee_2019_val",)
 DATALOADER:
   NUM_WORKERS: 0  # for debugging purposes
 SOLVER:

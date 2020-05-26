@@ -69,6 +69,9 @@ class GeneralizedUnrolledCNN(nn.Module):
             kernel_size=kernel_size,
             drop_prob=drop_prob,
             circular_pad=circular_pad,
+            act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
+            norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
+            order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
         )
 
         # Declare ResNets and RNNs for each unrolled iteration
@@ -209,5 +212,8 @@ class GeneralizedUnrolledCNN(nn.Module):
             storage = get_event_storage()
             if storage.iter % self.vis_period == 0:
                 self.visualize_training(kspace, zf_image, target, image)
+
+        if not self.training:
+            output_dict["zf_image"] = zf_image
 
         return output_dict

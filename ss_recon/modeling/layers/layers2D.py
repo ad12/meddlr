@@ -9,6 +9,20 @@ from torch import nn
 from ss_recon.utils.transforms import center_crop
 
 
+def _get_same_padding(kernel_size: Union[int, Tuple[int, int]]):
+    if isinstance(kernel_size, int):
+        kernel_size = (kernel_size, kernel_size)
+    else:
+        assert len(kernel_size) == 2
+    if not all(k % 2 == 1 for k in kernel_size):
+        raise ValueError(
+            "Kernel size must be odd - got {}".format(kernel_size)
+        )
+    padding = tuple(k // 2 for k in kernel_size)
+
+    return padding
+
+
 class ConvBlock(nn.Module):
     """
     A 2D Convolutional Block that consists of Norm -> ReLU -> Dropout -> Conv
@@ -25,7 +39,7 @@ class ConvBlock(nn.Module):
         drop_prob: float,
         act_type: str = "relu",
         norm_type: str = "none",
-        order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
+        order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
         Args:
@@ -51,7 +65,7 @@ class ConvBlock(nn.Module):
         padding = tuple(k // 2 for k in kernel_size)
 
         # Define choices for each layer in ConvBlock
-        conv_after_norm = order.index("conv") > order.index("norm")
+        conv_after_norm = "norm" in order and order.index("conv") > order.index("norm")
         norm_channels = in_chans if conv_after_norm else out_chans
         normalizations = nn.ModuleDict(
             [
@@ -72,16 +86,13 @@ class ConvBlock(nn.Module):
             "conv": convolution,
             "drop": dropout,
             "act": activations[act_type],
-            "norm": normalizations[norm_type],
+            "norm": normalizations[norm_type] if norm_type in normalizations else nn.Identity(),
         }
         layers = [layer_dict[l] for l in order]
 
         # Define forward pass
         self.layers = nn.Sequential(
-            normalizations[norm_type],
-            activations[act_type],
-            dropout,
-            convolution,
+            *layers
         )
 
     def forward(self, input):
@@ -93,12 +104,6 @@ class ConvBlock(nn.Module):
             (torch.Tensor): Output tensor of shape [batch_size, self.out_chans, depth, width, height]
         """
         return self.layers(input)
-
-    def __repr__(self):
-        return (
-            f"ConvBlock2D(in_chans={self.in_chans}, out_chans={self.out_chans}, "
-            f"drop_prob={self.drop_prob})"
-        )
 
 
 class ResBlock(nn.Module):
@@ -114,7 +119,7 @@ class ResBlock(nn.Module):
         drop_prob,
         act_type: str = "relu",
         norm_type: str = "none",
-        order: Tuple[str, str, str, str] = ("conv", "norm", "act", "drop"),
+        order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
         Args:
@@ -177,26 +182,42 @@ class ResNet(nn.Module):
         chans,
         kernel_size,
         drop_prob,
-        circular_pad=True,
+        circular_pad=False,
+        act_type: str = "relu",
+        norm_type: str = "none",
+        order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
 
         """
         super().__init__()
 
+        if circular_pad:
+            raise NotImplementedError(
+                "Circular padding is not available. "
+                "It is retained in the init to be used in the future."
+            )
         self.circular_pad = circular_pad
         self.pad_size = 2 * num_resblocks + 1
 
+        resblock_params = {
+            "act_type": act_type, 
+            "norm_type": norm_type, 
+            "order": order,
+            "kernel_size": kernel_size,
+            "drop_prob": drop_prob,
+        }
         # Declare ResBlock layers
         self.res_blocks = nn.ModuleList(
-            [ResBlock(in_chans, chans, kernel_size, drop_prob)]
+            [ResBlock(in_chans, chans, **resblock_params)]
         )
         for _ in range(num_resblocks - 1):
-            self.res_blocks += [ResBlock(chans, chans, kernel_size, drop_prob)]
+            self.res_blocks += [ResBlock(chans, chans, **resblock_params)]
 
         # Declare final conv layer (down-sample to original in_chans)
+        padding = _get_same_padding(kernel_size)
         self.final_layer = nn.Conv2d(
-            chans, in_chans, kernel_size=kernel_size, padding=1
+            chans, in_chans, kernel_size=kernel_size, padding=padding
         )
 
     def forward(self, input):
