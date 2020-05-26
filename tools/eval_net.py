@@ -9,12 +9,14 @@ Supported metrics include:
     - psnr
     - nrmse
 """
+import json
 import logging
 import os
 import datetime
 import time
 
 import h5py
+import numpy as np
 import pandas as pd
 import silx.io.dictdump as silx_dd
 from tabulate import tabulate
@@ -96,12 +98,17 @@ def setup(args):
 
 
 @torch.no_grad()
-def eval(cfg, model):
+def eval(cfg, model, zero_filled: bool = False):
     """Evaluate model on per scan metrics with acceleration factors
     between 6-8x.
 
     Save scan outputs to an h5 file.
 
+    Args:
+        cfg:
+        model:
+        zero_filled (bool, optional): If `True`, calculate metrics
+            for zero-filled reconstruction.
     """
     device = cfg.MODEL.DEVICE
     model = model.to(device)
@@ -112,7 +119,7 @@ def eval(cfg, model):
 
     results = []
     for dataset_name in cfg.DATASETS.TEST:
-        loaders = build_data_loaders_per_scan(cfg, dataset_name, (6, 8))
+        loaders = build_data_loaders_per_scan(cfg, dataset_name, (6,8))
         for acc in loaders:
             for scan_name, loader in loaders[acc].items():
                 scan_name = os.path.splitext(os.path.basename(scan_name))[0]
@@ -157,13 +164,16 @@ def eval(cfg, model):
                 outputs = torch.cat(outputs, dim=0)
 
                 logger.info("Computing metrics...")
-                zf_results = pd.DataFrame([compute_metrics(targets, zf_images)])
                 dl_results = compute_metrics(targets, outputs)
                 dl_results["recon_time"] = recon_time
                 dl_results = pd.DataFrame([dl_results])
-                zf_results["Method"] = "zero-filled"
                 dl_results["Method"] = "DL-Recon"
-                scan_results = pd.concat([zf_results, dl_results])
+                if zero_filled:
+                    zf_results = pd.DataFrame([compute_metrics(targets, zf_images)])
+                    zf_results["Method"] = "zero-filled"
+                    scan_results = pd.concat([zf_results, dl_results])
+                else:
+                    scan_results = dl_results
 
                 logger.info("Results:\n{}".format(tabulate(scan_results, headers=scan_results.columns)))
 
@@ -187,29 +197,131 @@ def eval(cfg, model):
                     mode="a",
                     overwrite_data = True,
                 )
-                # with h5py.File(file_path, "a") as f:
-                #     f.create_dataset("zf_{}".format(acc), data=zf_images.numpy())
-                #     f.create_dataset("dl_{}".format(acc), data=outputs.numpy())
-                #     if "fs" not in f:
-                #         f.create_dataset("fs", data=targets.numpy())
 
     results = pd.concat(results, ignore_index=True)
     results.to_csv(os.path.join(output_dir, "metrics.csv"))
+    logger.info("Summary:\n{}".format(tabulate(results, headers=results.columns)))
+
+
+# Supported validation metrics and the operation to perform on them.
+SUPPORTED_VAL_METRICS = {
+    "l1": "min",
+    "l2": "min",
+    "psnr": "max",
+    "ssim": "max",
+}
+
+
+def find_weights(cfg, criterion=""):
+    """Find the best weights based on a validation criterion/metric.
+
+    Args:
+        criterion (str): The criterion that we can select from 
+    """
+    if not criterion:
+        criterion = cfg.MODEL.RECON_LOSS.NAME.lower()
+        operation = "min"  # loss is always minimized
+    else:
+        operation = SUPPORTED_VAL_METRICS[criterion]
+
+    assert operation in ["min", "max"]
+    criterion = "val_{}".format(criterion)
+
+    logger.info("Finding best weights in {} using {}...".format(cfg.OUTPUT_DIR, criterion))
+
+    # Filter metrics to find reporting of real validation metrics.
+    # If metric is wrapped (e.g. "mridata_knee_2019_val/val_l1"), that means
+    # multiple datasets were validated on.
+    # We filter out metrics from datasets that contain the word "test".
+    # The criterion from all other datasets are averaged and used as the
+    # target criterion.
+    metrics_file = os.path.join(cfg.OUTPUT_DIR, "metrics.json")
+    metrics = []
+    with open(metrics_file) as f:
+        metrics = [json.loads(line.strip()) for line in f]
+    metrics = [
+        m for m in metrics 
+        if criterion in m or any(k.endswith(criterion) for k in m.keys())
+    ]
+    is_metric_wrapped = criterion not in metrics[0]
+    if is_metric_wrapped:
+        metrics = [
+            (
+                m["iteration"], 
+                np.mean([
+                    m[k] for k in m 
+                    if k.endswith(criterion) and "test" not in k.split("/")[0]
+                ]).item(),
+            )
+            for m in metrics
+        ]
+    else:
+        metrics = [(m["iteration"], m[criterion]) for m in metrics]
+
+    # Retraining does not overwrite the metrics file.
+    # We make sure that the metrics correspond only to the most
+    # recent run.
+    metrics_recent_order = metrics[::-1]
+    iterations = [m[0] for m in metrics_recent_order]
+    intervals = np.diff(iterations)
+    if any(intervals > 0):
+        stop_idx = np.argmax(intervals > 0) + 1
+        metrics_recent_order = metrics_recent_order[:stop_idx]
+        metrics = metrics_recent_order[::-1]
+
+    # Note that resuming can sometimes report metrics for the same
+    # iteration. We handle this by taking the most recent metric for the
+    # iteration __after__ filtering out old training runs.
+    metrics = {iteration: value for iteration, value in metrics}
+    metrics = [(k, v) for k, v in metrics.items()]
+    best_iter, best_value = sorted(metrics, key=lambda x: x[1], reverse=operation=="max")[0]
+
+
+    if best_iter == cfg.SOLVER.MAX_ITER - 1:
+        file_name = "model_final.pth"
+    else:
+        file_name = "model_{:07d}.pth".format(best_iter)
+    file_path = os.path.join(cfg.OUTPUT_DIR, file_name)
+
+    if not os.path.isfile(file_path):
+        raise ValueError("Model for iteration {} does not exist".format(best_iter))
+
+    logger.info("Weights: {} - {}: {:0.4f}".format(file_name, criterion, best_value))
+    return file_path
 
 
 def main(args):
     cfg = setup(args)
     model = DefaultTrainer.build_model(cfg)
+    weights = cfg.MODEL.WEIGHTS if cfg.MODEL.WEIGHTS else find_weights(cfg, args.metric)
     DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-        cfg.MODEL.WEIGHTS, resume=args.resume
+        weights, resume=args.resume
     )
     logger.info("\n\n==============================")
-    logger.info("Loading weights from {}".format(cfg.MODEL.WEIGHTS))
+    logger.info("Loading weights from {}".format(weights))
 
-    eval(cfg, model)
+    eval(cfg, model, args.zero_filled)
 
 
 if __name__ == "__main__":
-    args = default_argument_parser().parse_args()
+    parser = default_argument_parser()
+    parser.add_argument(
+        "--metric",
+        type=str,
+        default="",
+        help=(
+            "Val metric used to select weights. "
+            "Defaults to recon loss. "
+            "Ignored if `MODEL.WEIGHTS` specified"
+        ),
+        choices=list(SUPPORTED_VAL_METRICS.keys()),
+    )
+    parser.add_argument(
+        "--zero-filled",
+        action="store_true",
+        help="Calculate metrics for zero-filled images"
+    )
+
+    args = parser.parse_args()
     print("Command Line Args:", args)
     main(args)

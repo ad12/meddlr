@@ -153,6 +153,10 @@ _C.TEST.EVAL_PERIOD = 1
 # Each item is [task, metric, value, tolerance]
 # e.g.: [['bbox', 'AP', 38.5, 0.2]]
 _C.TEST.EXPECTED_RESULTS = []
+# Validate with test-like functionality.
+# If True, undersampling masks for every validation scan will be fixed
+# given an acceleration.
+_C.TEST.VAL_AS_TEST = False
 
 # ---------------------------------------------------------------------------- #
 # Misc options

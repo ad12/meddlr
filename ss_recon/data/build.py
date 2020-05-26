@@ -101,10 +101,10 @@ def build_recon_train_loader(cfg):
     return train_loader
 
 
-def build_recon_test_loader(cfg, dataset_name):
+def build_recon_val_loader(cfg, dataset_name, as_test: bool = False):
     dataset_dicts = get_recon_dataset_dicts(dataset_names=[dataset_name])
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=True)
+    data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=as_test)
     train_data = SliceData(dataset_dicts, data_transform)
     train_loader = DataLoader(
         dataset=train_data,

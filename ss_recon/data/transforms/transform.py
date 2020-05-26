@@ -47,8 +47,8 @@ class DataTransform:
         self._is_test = is_test
 
         # Build subsampler.
-        mask_func = build_mask_func(cfg)
-        self._subsampler = Subsampler(mask_func)
+        # mask_func = build_mask_func(cfg)
+        self._subsampler = Subsampler(self.mask_func)
 
     def __call__(self, kspace, maps, target, fname, slice):
         """
@@ -82,7 +82,7 @@ class DataTransform:
         # TODO: Add other transforms here.
 
         # Apply mask in k-space
-        seed = None if not self._is_test else tuple(map(ord, fname))
+        seed = None if not self._is_test else sum(tuple(map(ord, fname)))
         masked_kspace, mask = self._subsampler(kspace, mode="2D", seed=seed)
 
         # Normalize data...

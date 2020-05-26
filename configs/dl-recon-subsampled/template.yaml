@@ -53,6 +53,7 @@ SOLVER:
   CHECKPOINT_PERIOD: -1
 TEST:
   EVAL_PERIOD: -1
+VIS_PERIOD: 400
 TIME_SCALE: "iter"
 OUTPUT_DIR: ""  # template should not have an output directory
 SEED: 1000

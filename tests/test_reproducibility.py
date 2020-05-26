@@ -4,34 +4,45 @@ import torch
 
 from ss_recon.data.build import build_data_loaders_per_scan
 from ss_recon.config import get_cfg
+from ss_recon.utils import complex_utils as cplx
 
 
 def test_eval_reproducibility():
     cfg = get_cfg()
     cfg.DATALOADER.NUM_WORKERS = 4
-    cfg.SOLVER.TEST_BATCH_SIZE = 4
+    cfg.SOLVER.TEST_BATCH_SIZE = 16
     dataset_name = "mridata_knee_2019_test"
     loaders = build_data_loaders_per_scan(cfg, dataset_name, (6,))
     kspace_data = []
+    mask = None
     for acc in loaders:
         for scan_name, loader in loaders[acc].items():
+            scan_name1 = scan_name
             for idx, (kspace, maps, target, mean, std, norm) in enumerate(loader):  # noqa
                 kspace_data.append(kspace)
+                c_mask = cplx.get_mask(kspace)
+                if mask is not None:
+                    pass
+                    # assert torch.all(mask == c_mask)
+                else:
+                    mask = c_mask
             break
         break
-    kspace = torch.cat(kspace_data, dim=0)
+    kspace1 = torch.cat(kspace_data, dim=0)
 
     loaders2 = build_data_loaders_per_scan(cfg, dataset_name, (6,))
     kspace_data2 = []
     for acc in loaders:
         for scan_name, loader in loaders2[acc].items():
+            scan_name2 = scan_name
             for idx, (kspace, maps, target, mean, std, norm) in enumerate(loader):  # noqa
                 kspace_data2.append(kspace)
             break
         break
     kspace2 = torch.cat(kspace_data2, dim=0)
 
-    assert torch.allclose(kspace, kspace2)
+    assert scan_name1 == scan_name2
+    assert torch.allclose(kspace1, kspace2)
 
 
 if __name__ == "__main__":

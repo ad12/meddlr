@@ -38,3 +38,16 @@ To train a basic configuration from the repository folder in the command line, r
 ```bash
 python tools/train_net.py --config-file configs/tests/basic.yaml
 ```
+
+To evaluate the results, use `tools/eval_net.py`.
+```bash
+# Will automatically find best weights based on loss
+python tools/eval_net.py --config-file configs/tests/basic.yaml
+
+# Automatically find best weights based on psnr.
+# options include psnr, l1, l2, ssim
+python tools/eval_net.py --config-file configs/tests/basic.yaml --metric psnr
+
+# Choose specific weights to run evaluation.
+python tools/eval_net.py --config-file configs/tests/basic.yaml MODEL.WEIGHTS path/to/weights
+```

@@ -35,8 +35,10 @@ class MaskFunc:
         self.rng = np.random.RandomState()
 
     def choose_acceleration(self):
-        """
-        Chooses a random acceleration rate given a range.
+        """Chooses a random acceleration rate given a range.
+
+        If self.accelerations is a constant, it will be returned
+
         """
         if not isinstance(self.accelerations, Sequence):
             return self.accelerations
@@ -58,16 +60,18 @@ class RandomMaskFunc(MaskFunc):
         self.calib_size = calib_size
 
     def __call__(self, out_shape, seed=None):
-        # self.rng.seed(seed)
-
         # Design parameters for mask
         nky = out_shape[1]
         nkz = out_shape[2]
         acceleration = self.choose_acceleration()
         prob = 1.0 / acceleration
 
-        # Generate undersampling mask
-        mask = torch.rand([nky, nkz], dtype=torch.float32)
+        # Generate undersampling mask.
+        rand_kwargs = {"dtype": torch.float32}
+        if seed is not None:
+            rand_kwargs["generator"] = torch.Generator().manual_seed(seed)
+        
+        mask = torch.rand([nky, nkz], **rand_kwargs)
         mask = torch.where(mask < prob, torch.Tensor([1]), torch.Tensor([0]))
 
         # Add calibration region
@@ -97,6 +101,9 @@ class PoissonDiskMaskFunc(MaskFunc):
         acceleration = self.choose_acceleration()
 
         # Generate undersampling mask
+        # NOTE: Due to a sigpy bug, fixing a seed will cause a change
+        # in the fixed numpy seed. Note this can cause downstream reproducibility
+        # issues.
         mask = sigpy.mri.poisson(
             [nky, nkz],
             acceleration,

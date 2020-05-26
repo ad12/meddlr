@@ -8,7 +8,7 @@ from torch.nn import DataParallel
 
 from ss_recon.checkpoint import DetectionCheckpointer
 from ss_recon.config import CfgNode
-from ss_recon.data import build_recon_test_loader, build_recon_train_loader
+from ss_recon.data import build_recon_val_loader, build_recon_train_loader
 from ss_recon.engine import SimpleTrainer, hooks
 from ss_recon.evaluation import (
     DatasetEvaluator,
@@ -357,7 +357,7 @@ class DefaultTrainer(SimpleTrainer):
         It now calls :func:`detectron2.data.build_detection_test_loader`.
         Overwrite it if you'd like a different data loader.
         """
-        return build_recon_test_loader(cfg, dataset_name)
+        return build_recon_val_loader(cfg, dataset_name, as_test=cfg.TEST.VAL_AS_TEST)
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name):
@@ -428,6 +428,6 @@ class DefaultTrainer(SimpleTrainer):
             )
             print_csv_format(results_i)
 
-        if len(results) == 1:
-            results = list(results.values())[0]
+        # if len(results) == 1:
+        #     results = list(results.values())[0]
         return results
