@@ -82,6 +82,12 @@ _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL = -1
 _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_UNDERSAMPLED = 0
 # Seed for shuffling data. Should always be deterministic
 _C.DATALOADER.SUBSAMPLE_TRAIN.SEED = 1000
+# Options: "" (defaults to random sampling), "AlternatingSampler"
+_C.DATALOADER.SAMPLER_TRAIN = ""
+# AlternatingSampler config parameters.
+_C.DATALOADER.ALT_SAMPLER = CN()
+_C.DATALOADER.ALT_SAMPLER.PERIOD_SUPERVISED = 1
+_C.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED = 1
 
 
 # -----------------------------------------------------------------------------

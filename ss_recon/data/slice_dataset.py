@@ -33,20 +33,21 @@ class SliceData(Dataset):
         self.transform = transform
 
         # Convert dataset dict into slices.
+        # Each slice is tuple of (file name, slice id, is_unsupervised)
         self.examples = []
         for dd in dataset_dicts:
-            self.examples.extend(
-                [
-                    (dd["file_name"], slice_id)
-                    for slice_id in range(dd["kspace_size"][0])
-                ]
-            )
+            file_name = dd["file_name"]
+            is_unsupervised = dd.get("_is_unsupervised", False)
+            self.examples.extend([
+                (file_name, slice_id, is_unsupervised)
+                for slice_id in range(dd["kspace_size"][0])
+            ])
 
     def __len__(self):
         return len(self.examples)
 
     def __getitem__(self, i):
-        fname, slice_id = self.examples[i]
+        fname, slice_id, is_unsupervised = self.examples[i]
         with h5py.File(fname, "r") as data:
             kspace = data["kspace"][slice_id]
             maps = data["maps"][slice_id]
@@ -57,3 +58,13 @@ class SliceData(Dataset):
         vals = self.transform(kspace, maps, target, fname, slice_id)
 
         return vals
+
+    def get_supervised_idxs(self):
+        """Get indices of supervised examples."""
+        idxs = [idx for idx, x in enumerate(self.examples) if not x[2]]
+        return idxs
+
+    def get_unsupervised_idxs(self):
+        supervised_idxs = self.get_supervised_idxs()
+        unsupervised_idxs = set(range(len(self))) - set(supervised_idxs)
+        return sorted(list(unsupervised_idxs))

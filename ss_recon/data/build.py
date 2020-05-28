@@ -10,6 +10,7 @@ from .catalog import DatasetCatalog
 from .slice_dataset import SliceData
 from .transforms import transform as T
 from .transforms.subsample import build_mask_func
+from .samplers import AlternatingSampler
 
 
 def get_recon_dataset_dicts(
@@ -66,7 +67,7 @@ def get_recon_dataset_dicts(
         if num_scans_subsample > len(dataset_dicts):
             raise ValueError("")
         for dd in dataset_dicts[:num_scans_subsample]:
-            dd["_use_subsampled"] = True
+            dd["_is_unsupervised"] = True
     logger.info(
         "Dropped references for {}/{} scans. "
         "{} scans with reference remaining".format(
@@ -90,13 +91,32 @@ def build_recon_train_loader(cfg):
     data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=False)
 
     train_data = SliceData(dataset_dicts, data_transform)
+
+    # Build sampler.
+    sampler = cfg.DATALOADER.SAMPLER_TRAIN
+    shuffle = False  # shuffling should be handled by sampler, if specified.
+    seed = cfg.SEED if cfg.SEED > -1 else None
+    if sampler == "AlternatingSampler":
+        sampler = AlternatingSampler(
+            train_data,
+            T_s=cfg.DATALOADER.ALT_SAMPLER.PERIOD_SUPERVISED,
+            T_us=cfg.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED,
+            seed=seed,
+        )
+    elif sampler == "":
+        sampler = None
+        shuffle = True
+    else:
+        raise ValueError("Unknown Sampler {}".format(sampler))
+
     train_loader = DataLoader(
         dataset=train_data,
         batch_size=cfg.SOLVER.TRAIN_BATCH_SIZE,
-        shuffle=True,
+        shuffle=shuffle,
         num_workers=cfg.DATALOADER.NUM_WORKERS,
         drop_last=cfg.DATALOADER.DROP_LAST,
         pin_memory=True,
+        sampler=sampler
     )
     return train_loader
 
