@@ -1,2 +1,6 @@
 from .meta_arch import build_model
-from .loss_computer import BasicLossComputer
+from .loss_computer import (
+    BasicLossComputer,
+    N2RLossComputer,
+    build_loss_computer,
+)

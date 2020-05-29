@@ -50,6 +50,9 @@ _C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
 _C.MODEL.RECON_LOSS = CN()
 _C.MODEL.RECON_LOSS.NAME = "l1"
 _C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
+_C.MODEL.CONSISTENCY = CN()
+_C.MODEL.CONSISTENCY.LOSS_NAME = "l1"
+_C.MODEL.CONSISTENCY.LOSS_WEIGHT = 0.1
 
 # -----------------------------------------------------------------------------
 # Dataset

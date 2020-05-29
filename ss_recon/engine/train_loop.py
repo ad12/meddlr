@@ -227,7 +227,6 @@ class SimpleTrainer(TrainerBase):
         """
         If your want to do something with the data, you can wrap the dataloader.
         """
-        # TODO: Pass dict around
         try:
             inputs = next(self._data_loader_iter)
         except StopIteration:
@@ -245,7 +244,7 @@ class SimpleTrainer(TrainerBase):
             {k: inputs[k] for k in ["mean", "std", "norm"] if k in inputs}
         )
         loss_dict = {k: v for k, v in output_dict.items() if "loss" in k}
-        loss_dict.update(self.loss_computer(output_dict))
+        loss_dict.update(self.loss_computer(inputs, output_dict))
 
         losses = sum(v for k, v in loss_dict.items() if "loss" in k)
         self._detect_anomaly(losses, loss_dict)

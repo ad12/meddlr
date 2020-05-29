@@ -1,5 +1,4 @@
-# Basic testing config
-# Use this for any testing you may want to do in the future.
+# N2R standard testing config
 # The model will be trained for 60 iterations (not epochs)
 # on the mridata.org 2019 knee dataset.
 MODEL:
@@ -20,7 +19,6 @@ SOLVER:
   MAX_ITER: 60
 TEST:
   EVAL_PERIOD: 40
-VIS_PERIOD: 20
 TIME_SCALE: "iter"
-OUTPUT_DIR: "results://tests/basic"
+OUTPUT_DIR: "results://tests/n2r/standard"
 VERSION: 1

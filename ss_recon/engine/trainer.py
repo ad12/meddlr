@@ -17,7 +17,7 @@ from ss_recon.evaluation import (
     print_csv_format,
     verify_results,
 )
-from ss_recon.modeling import BasicLossComputer, build_model
+from ss_recon.modeling import BasicLossComputer, build_model, build_loss_computer
 from ss_recon.solver import build_lr_scheduler, build_optimizer
 from ss_recon.utils.events import (
     CommonMetricPrinter,
@@ -171,7 +171,7 @@ class DefaultTrainer(SimpleTrainer):
             model = DataParallel(model)
         model.to(cfg.MODEL.DEVICE)
 
-        loss_computer = BasicLossComputer(cfg)
+        loss_computer = self.build_loss_computer(cfg)
         super().__init__(model, data_loader, optimizer, loss_computer)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
@@ -317,6 +317,11 @@ class DefaultTrainer(SimpleTrainer):
         logger = logging.getLogger(__name__)
         logger.info("Model:\n{}".format(model))
         return model
+
+    @classmethod
+    def build_loss_computer(cls, cfg):
+        loss_computer = "N2RLossComputer" if cfg.MODEL.NAME == "N2RModel" else "BasicLossComputer"
+        return build_loss_computer(cfg, loss_computer)
 
     @classmethod
     def build_optimizer(cls, cfg, model):

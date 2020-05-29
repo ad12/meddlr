@@ -1,4 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from fvcore.common.registry import Registry
 
 META_ARCH_REGISTRY = Registry("META_ARCH")  # noqa F401 isort:skip

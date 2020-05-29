@@ -131,7 +131,7 @@ class GeneralizedUnrolledCNN(nn.Module):
                     "train/{}".format(name), data.numpy(), data_format="CHW"
                 )
 
-    def forward(self, inputs):
+    def forward(self, inputs, return_pp=False):
         """
         TODO: condense into list of dataset dicts.
         Args:
@@ -145,12 +145,9 @@ class GeneralizedUnrolledCNN(nn.Module):
         # Need to fetch device at runtime for proper data transfer.
         device = self.resnets[0].final_layer.weight.device
         kspace = inputs["kspace"].to(device)
-        maps = inputs["maps"].to(device)
-        # mean = inputs["mean"].to(device)
-        # std = inputs["std"].to(device)
-        # norm = inputs["norm"].to(device)
         target = inputs["target"].to(device) if "target" in inputs else None
         mask = inputs["mask"].to(device) if "mask" in inputs else None
+        A = inputs["sense_model"].to(device) if "sense_model" in inputs else None
 
         if self.num_emaps != maps.size()[-2]:
             raise ValueError(
@@ -168,7 +165,10 @@ class GeneralizedUnrolledCNN(nn.Module):
         dims = tuple(kspace.size())
 
         # Declare signal model.
-        A = SenseModel(maps, weights=mask)
+        if A is None:
+            maps = inputs["maps"].to(device)
+            A = SenseModel(maps, weights=mask)
+
         # Compute zero-filled image reconstruction
         zf_image = A(kspace, adjoint=True)
 
@@ -192,10 +192,12 @@ class GeneralizedUnrolledCNN(nn.Module):
         output_dict = {
             "pred": image,  # N x Y x Z x 1 x 2
             "target": target,  # N x Y x Z x 1 x 2
-            # "mean": mean,
-            # "std": std,
-            # "norm": norm,
         }
+
+        if return_pp:
+            output_dict.update({
+                k: inputs[k] for k in ["mean", "std", "norm"]
+            })
 
         if self.training and self.vis_period > 0:
             storage = get_event_storage()
