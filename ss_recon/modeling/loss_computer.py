@@ -12,6 +12,7 @@ The registered object will be called with `obj(cfg)`
 and expected to return a LossComputer object.
 """
 
+EPS = 1e-8
 
 def build_loss_computer(cfg, name):
     return LOSS_COMPUTER_REGISTRY.get(name)(cfg)
@@ -72,7 +73,7 @@ class N2RLossComputer(object):
         """
         if output is None or len(output) == 0:
             return {
-                k: torch.Tensor([0.0]) for k in ["l1", "l2", "psnr"]
+                k: torch.Tensor([0.0]).detach() for k in ["l1", "l2", "psnr", "loss"]
             }
 
         pred: torch.Tensor = output["pred"]
@@ -89,7 +90,7 @@ class N2RLossComputer(object):
         abs_error = cplx.abs(output - target)
         l1 = torch.mean(abs_error)
         l2 = torch.sqrt(torch.mean(abs_error ** 2))
-        psnr = 20 * torch.log10(cplx.abs(target).max() / l2)
+        psnr = 20 * torch.log10(cplx.abs(target).max() / (l2 + EPS))
 
         metrics_dict = {"l1": l1, "l2": l2, "psnr": psnr}
         metrics_dict["loss"] = metrics_dict[loss]
@@ -117,21 +118,26 @@ class N2RLossComputer(object):
 
     def __call__(self, input, output):
         output_recon = output.get("recon", None)
-        output_consistency = output("consistency", None)
+        output_consistency = output.get("consistency", None)
 
+        loss = 0
         metrics_recon = {
             "recon_{}".format(k): v
-            for k, v in self._compute_metrics(output_recon, self.recon_loss)
+            for k, v in self._compute_metrics(output_recon, self.recon_loss).items()
         }
+        if output_recon is not None:
+            loss += metrics_recon["recon_loss"]
 
         metrics_consistency = {
             "cons_{}".format(k): v
-            for k, v in self._compute_metrics(output_consistency, self.consistency_loss)  # noqa
+            for k, v in self._compute_metrics(output_consistency, self.consistency_loss).items() # noqa
         }
+        if output_consistency is not None:
+            loss += self.consistency_weight * metrics_consistency["cons_loss"]
 
         metrics_consistency.update(metrics_recon)
         metrics = metrics_consistency
 
-        metrics["loss"] = metrics["recon_loss"] + self.consistency_weight * metrics["cons_loss"]  # noqa
+        metrics["loss"] = loss
         return metrics
 

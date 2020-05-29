@@ -2,6 +2,7 @@
 # The model will be trained for 60 iterations (not epochs)
 # on the mridata.org 2019 knee dataset.
 MODEL:
+  META_ARCHITECTURE: "N2RModel"
   UNROLLED:
     NUM_UNROLLED_STEPS: 8
     NUM_RESBLOCKS: 2
@@ -12,6 +13,8 @@ DATASETS:
   VAL: ("mridata_knee_2019_val",)
 DATALOADER:
   NUM_WORKERS: 0  # for debugging purposes
+  SUBSAMPLE_TRAIN:
+    NUM_UNDERSAMPLED: 8
 SOLVER:
   TRAIN_BATCH_SIZE: 1
   TEST_BATCH_SIZE: 2

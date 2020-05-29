@@ -246,7 +246,8 @@ class SimpleTrainer(TrainerBase):
         loss_dict = {k: v for k, v in output_dict.items() if "loss" in k}
         loss_dict.update(self.loss_computer(inputs, output_dict))
 
-        losses = sum(v for k, v in loss_dict.items() if "loss" in k)
+        # losses = sum(v for k, v in loss_dict.items() if "loss" in k)
+        losses = loss_dict["loss"]
         self._detect_anomaly(losses, loss_dict)
 
         metrics_dict = loss_dict

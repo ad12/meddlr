@@ -148,7 +148,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         target = inputs["target"].to(device) if "target" in inputs else None
         mask = inputs["mask"].to(device) if "mask" in inputs else None
         A = inputs["sense_model"].to(device) if "sense_model" in inputs else None
-
+        maps = inputs["maps"].to(device)
         if self.num_emaps != maps.size()[-2]:
             raise ValueError(
                 "Incorrect number of ESPIRiT maps! Re-prep data..."
@@ -166,7 +166,6 @@ class GeneralizedUnrolledCNN(nn.Module):
 
         # Declare signal model.
         if A is None:
-            maps = inputs["maps"].to(device)
             A = SenseModel(maps, weights=mask)
 
         # Compute zero-filled image reconstruction

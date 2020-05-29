@@ -320,7 +320,7 @@ class DefaultTrainer(SimpleTrainer):
 
     @classmethod
     def build_loss_computer(cls, cfg):
-        loss_computer = "N2RLossComputer" if cfg.MODEL.NAME == "N2RModel" else "BasicLossComputer"
+        loss_computer = "N2RLossComputer" if cfg.MODEL.META_ARCHITECTURE == "N2RModel" else "BasicLossComputer"
         return build_loss_computer(cfg, loss_computer)
 
     @classmethod
