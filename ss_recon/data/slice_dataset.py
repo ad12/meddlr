@@ -76,16 +76,15 @@ class SliceData(Dataset):
         )
 
         vals = {
-            "kspace": kspace,
+            "kspace": masked_kspace,
             "maps": maps,
             "mean": mean,
-            "std": mean,
+            "std": std,
             "norm": norm,
             "is_unsupervised": is_unsupervised,
         }
         if not is_unsupervised:
             vals["target"] = target
-
         return vals
 
     def get_supervised_idxs(self):

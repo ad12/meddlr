@@ -134,10 +134,7 @@ def eval(cfg, model, zero_filled: bool = False):
                     mean, std, norm = inputs["mean"], inputs["std"], inputs["norm"]  # noqa
                     data_load_time = time.perf_counter() - data_start_time
 
-                    output_dict = model(
-                        kspace, maps, target=target, mean=mean, std=std,
-                        norm=norm
-                    )
+                    output_dict = model(inputs)
                     targets.append(output_dict["target"].cpu())
                     outputs.append(output_dict["pred"].cpu())
                     zf_images.append(output_dict["zf_image"].cpu())

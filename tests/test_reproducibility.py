@@ -19,7 +19,7 @@ def test_eval_reproducibility():
         for scan_name, loader in loaders[acc].items():
             scan_name1 = scan_name
             for idx, inputs in enumerate(loader):  # noqa
-                kspace, = inputs["kspace"]
+                kspace = inputs["kspace"]
                 kspace_data.append(kspace)
                 c_mask = cplx.get_mask(kspace)
                 if mask is not None:

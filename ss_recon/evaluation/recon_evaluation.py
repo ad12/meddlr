@@ -86,8 +86,8 @@ class ReconEvaluator(DatasetEvaluator):
         N = outputs["pred"].shape[0]
         preds = outputs["pred"].to(self._cpu_device)
         targets = outputs["target"].to(self._cpu_device)
-        means = outputs["mean"].to(self._cpu_device)
-        stds = outputs["std"].to(self._cpu_device)
+        means = inputs["mean"].to(self._cpu_device)
+        stds = inputs["std"].to(self._cpu_device)
 
         for i in range(N):
             pred, target = preds[i], targets[i]
