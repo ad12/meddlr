@@ -12,12 +12,10 @@ Implementation is based on:
     Clinical Practice with Deep Neural Networks" IEEE Signal Processing
     Magazine, 2020.
 """
-import numpy as np
 import torch
 from torch import nn
 import torchvision.utils as tv_utils
 import ss_recon.utils.complex_utils as cplx
-from ss_recon.modeling.loss_computer import BasicLossComputer
 from ss_recon.utils.transforms import SenseModel
 
 from ..layers.layers2D import ResNet
@@ -131,23 +129,44 @@ class GeneralizedUnrolledCNN(nn.Module):
                     "train/{}".format(name), data.numpy(), data_format="CHW"
                 )
 
-    def forward(self, inputs, return_pp=False):
+    def forward(self, inputs, return_pp=False, vis_training=False):
         """
         TODO: condense into list of dataset dicts.
         Args:
-            kspace (torch.Tensor): Input tensor of shape [batch_size, height, width, num_coils, 2]
-            maps (torch.Tensor): Input tensor of shape [batch_size, height, width, num_coils, num_emaps, 2]
-            mask (torch.Tensor): Input tensor of shape [batch_size, height, width, 1, 1]
+            inputs: Standard ss_recon module input dictionary
+                * "kspace": Kspace. If fully sampled, and want to simulate
+                    undersampled kspace, provide "mask" argument.
+                * "maps": Sensitivity maps
+                * "target" (optional): Target image (typically fully sampled).
+                * "mask" (optional): Undersampling mask to apply.
+                * "signal_model" (optional): The signal model. If provided,
+                    "maps" will not be used to estimate the signal model.
+                    Use with caution.
+            return_pp (bool, optional): If `True`, return post-processing
+                parameters "mean", "std", and "norm" if included in the input.
+            vis_training (bool, optional): If `True`, force visualize training
+                on this pass. Can only be `True` if model is in training mode.
 
         Returns:
-            (torch.Tensor): Output tensor of shape [batch_size, height, width, num_emaps, 2]
+            Dict: A standard ss_recon output dict
+                * "pred": The reconstructed image
+                * "target" (optional): The target image.
+                    Added if provided in the input.
+                * "mean"/"std"/"norm" (optional): Pre-processing parameters.
+                    Added if provided in the input.
+                * "zf_image": The zero-filled image.
+                    Added when model is in eval mode.
         """
+        if vis_training and not self.training:
+            raise ValueError(
+                "vis_training is only applicable in training mode."
+            )
         # Need to fetch device at runtime for proper data transfer.
         device = self.resnets[0].final_layer.weight.device
         kspace = inputs["kspace"].to(device)
         target = inputs["target"].to(device) if "target" in inputs else None
         mask = inputs["mask"].to(device) if "mask" in inputs else None
-        A = inputs["sense_model"].to(device) if "sense_model" in inputs else None
+        A = inputs["signal_model"].to(device) if "signal_model" in inputs else None
         maps = inputs["maps"].to(device)
         if self.num_emaps != maps.size()[-2]:
             raise ValueError(
@@ -198,9 +217,9 @@ class GeneralizedUnrolledCNN(nn.Module):
                 k: inputs[k] for k in ["mean", "std", "norm"]
             })
 
-        if self.training and self.vis_period > 0:
+        if self.training and (vis_training or self.vis_period > 0):
             storage = get_event_storage()
-            if storage.iter % self.vis_period == 0:
+            if vis_training or storage.iter % self.vis_period == 0:
                 self.visualize_training(kspace, zf_image, target, image)
 
         if not self.training:

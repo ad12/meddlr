@@ -1,7 +1,10 @@
 import torch
 from torch import nn
+import torchvision.utils as tv_utils
 
 from ss_recon.utils import complex_utils as cplx
+from ss_recon.utils.events import get_event_storage
+
 from .build import META_ARCH_REGISTRY
 from .unrolled import GeneralizedUnrolledCNN
 
@@ -31,6 +34,45 @@ class N2RModel(nn.Module):
         inputs["kspace"] = aug_kspace
         return inputs
 
+    def visualize_aug_training(self, kspace, kspace_aug, preds, preds_aug):
+        """Visualize training of augmented data.
+
+        Args:
+            kspace: The base kspace.
+            kspace_aug: The augmented kspace.
+            pred: Reconstruction of base kspace. Shape: NxHxWx2.
+            pred_aug: Reconstruction of augmented kspace. Shape: NxHxWx2.
+        """
+        storage = get_event_storage()
+
+        with torch.no_grad():
+            # calc mask for first coil only
+            kspace = kspace.cpu()[0, ..., 0, :].unsqueeze(0)
+            kspace_aug = kspace_aug.cpu()[0, ..., 0, :].unsqueeze(0)
+            preds = preds.cpu()[0, ...].unsqueeze(0)
+            preds_aug = preds_aug.cpu()[0, ...].unsqueeze(0)
+            # zfs = zfs.cpu()[0, ...].unsqueeze(0)
+
+            all_images = torch.cat([preds, preds_aug], dim=2)
+            all_kspace = torch.cat([kspace, kspace_aug], dim=2)
+
+            imgs_to_write = {
+                "phases": cplx.angle(all_images),
+                "images": cplx.abs(all_images),
+                "errors": cplx.abs(preds_aug - preds),
+                "masks": cplx.get_mask(kspace),
+                "kspace": cplx.abs(all_kspace),
+            }
+
+            for name, data in imgs_to_write.items():
+                data = data.squeeze(-1).unsqueeze(1)
+                data = tv_utils.make_grid(
+                    data, nrow=1, padding=1, normalize=True, scale_each=True,
+                )
+                storage.put_image(
+                    "train_aug/{}".format(name), data.numpy(), data_format="CHW"
+                )
+
     def forward(self, inputs):
         if not self.training:
             assert "unsupervised" not in inputs, (
@@ -38,6 +80,12 @@ class N2RModel(nn.Module):
             )
             inputs = inputs.get("supervised", inputs)
             return self.unrolled(inputs)
+
+        vis_training = False
+        if self.training and self.vis_period > 0:
+            storage = get_event_storage()
+            if storage.iter % self.vis_period == 0:
+                vis_training = True
 
         inputs_supervised = inputs.get("supervised", None)
         inputs_unsupervised = inputs.get("unsupervised", None)
@@ -48,7 +96,7 @@ class N2RModel(nn.Module):
         # Recon
         if inputs_supervised is not None:
             output_dict["recon"] = self.unrolled(
-                inputs_supervised, return_pp=True
+                inputs_supervised, return_pp=True, vis_training=vis_training,
             )
 
         # Consistency.
@@ -61,5 +109,12 @@ class N2RModel(nn.Module):
                 del pred_aug["target"]
             pred_aug["target"] = pred_base.detach()
             output_dict["consistency"] = pred_aug
+            if vis_training:
+                self.visualize_aug_training(
+                    inputs_unsupervised["kspace"],
+                    inputs_us_aug["kspace"],
+                    pred_aug["target"],
+                    pred_base["target"],
+                )
 
         return output_dict

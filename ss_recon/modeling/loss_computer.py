@@ -12,7 +12,8 @@ The registered object will be called with `obj(cfg)`
 and expected to return a LossComputer object.
 """
 
-EPS = 1e-8
+EPS = 1e-11
+
 
 def build_loss_computer(cfg, name):
     return LOSS_COMPUTER_REGISTRY.get(name)(cfg)
