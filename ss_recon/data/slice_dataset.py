@@ -13,6 +13,23 @@ from typing import Dict, List
 
 import h5py
 from torch.utils.data import Dataset
+from torch.utils.data.dataloader import default_collate
+
+
+def collate_by_supervision(batch: list):
+    """Collate supervised/unsupervised batch examples."""
+    supervised = [x for x in batch if not x.get("is_unsupervised", False)]
+    unsupervised = [x for x in batch if x.get("is_unsupervised", False)]
+
+    out_dict = {}
+    if len(supervised) > 0:
+        supervised = default_collate(supervised)
+        out_dict["supervised"] = supervised
+    if len(unsupervised) > 0:
+        unsupervised = default_collate(unsupervised)
+        out_dict["unsupervised"] = unsupervised
+    assert len(out_dict) > 0
+    return out_dict
 
 
 class SliceData(Dataset):
@@ -29,7 +46,6 @@ class SliceData(Dataset):
                 take 'kspace', 'target', 'attributes', 'filename', and 'slice'
                 as inputs. 'target' may be null for test data.
         """
-
         self.transform = transform
 
         # Convert dataset dict into slices.
@@ -55,7 +71,20 @@ class SliceData(Dataset):
             # attrs = data.attrs
 
         fname = os.path.splitext(os.path.basename(fname))[0]
-        vals = self.transform(kspace, maps, target, fname, slice_id)
+        masked_kspace, maps, target, mean, std, norm = self.transform(
+            kspace, maps, target, fname, slice_id
+        )
+
+        vals = {
+            "kspace": kspace,
+            "maps": maps,
+            "mean": mean,
+            "std": mean,
+            "norm": norm,
+            "is_unsupervised": is_unsupervised,
+        }
+        if not is_unsupervised:
+            vals["target"] = target
 
         return vals
 

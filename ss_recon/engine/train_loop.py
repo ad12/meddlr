@@ -229,21 +229,21 @@ class SimpleTrainer(TrainerBase):
         """
         # TODO: Pass dict around
         try:
-            kspace, maps, target, mean, std, norm = next(self._data_loader_iter)
+            inputs = next(self._data_loader_iter)
         except StopIteration:
             # Epoch has ended, reinitialize the iterator.
             self._data_loader_iter = iter(self.data_loader)
-            kspace, maps, target, mean, std, norm = next(self._data_loader_iter)
+            inputs = next(self._data_loader_iter)
 
         data_time = time.perf_counter() - start
 
         """
         If your want to do something with the losses, you can wrap the model.
         """
-        output_dict = self.model(
-            kspace, maps, target=target, mean=mean, std=std, norm=norm
+        output_dict = self.model(inputs)
+        output_dict.update(
+            {k: inputs[k] for k in ["mean", "std", "norm"] if k in inputs}
         )
-        output_dict.update({"mean": mean, "std": std, "norm": norm})
         loss_dict = {k: v for k, v in output_dict.items() if "loss" in k}
         loss_dict.update(self.loss_computer(output_dict))
 

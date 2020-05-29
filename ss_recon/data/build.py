@@ -7,7 +7,7 @@ import logging
 from torch.utils.data import DataLoader
 import numpy as np
 from .catalog import DatasetCatalog
-from .slice_dataset import SliceData
+from .slice_dataset import SliceData, collate_by_supervision
 from .transforms import transform as T
 from .transforms.subsample import build_mask_func
 from .samplers import AlternatingSampler
@@ -91,6 +91,8 @@ def build_recon_train_loader(cfg):
     data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=False)
 
     train_data = SliceData(dataset_dicts, data_transform)
+    is_semi_supervised = len(train_data.get_unsupervised_idxs()) > 0
+    collate_fn = collate_by_supervision if is_semi_supervised else None
 
     # Build sampler.
     sampler = cfg.DATALOADER.SAMPLER_TRAIN
@@ -116,7 +118,8 @@ def build_recon_train_loader(cfg):
         num_workers=cfg.DATALOADER.NUM_WORKERS,
         drop_last=cfg.DATALOADER.DROP_LAST,
         pin_memory=True,
-        sampler=sampler
+        sampler=sampler,
+        collate_fn=collate_fn,
     )
     return train_loader
 

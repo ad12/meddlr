@@ -129,7 +129,9 @@ def eval(cfg, model, zero_filled: bool = False):
                 outputs = []
                 num_batches = len(loader)
                 start_time = data_start_time = time.perf_counter()
-                for idx, (kspace, maps, target, mean, std, norm) in enumerate(loader):  # noqa
+                for idx, inputs in enumerate(loader):  # noqa
+                    kspace, maps, target = inputs["kspace"], inputs["maps"], inputs["target"]  # noqa
+                    mean, std, norm = inputs["mean"], inputs["std"], inputs["norm"]  # noqa
                     data_load_time = time.perf_counter() - data_start_time
 
                     output_dict = model(

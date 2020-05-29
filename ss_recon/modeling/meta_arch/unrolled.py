@@ -95,7 +95,6 @@ class GeneralizedUnrolledCNN(nn.Module):
             ]
 
         self.vis_period = cfg.VIS_PERIOD
-        # self.to(self.device)
 
     def visualize_training(self, kspace, zfs, targets, preds):
         """A function used to visualize reconstructions.
@@ -123,26 +122,16 @@ class GeneralizedUnrolledCNN(nn.Module):
                 "masks": cplx.get_mask(kspace),
             }
 
-            #import pdb; pdb.set_trace()
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
-                #data = torch.cat([data, data, data], dim=1)
                 data = tv_utils.make_grid(
                     data, nrow=1, padding=1, normalize=True, scale_each=True,
                 )
-                storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
+                storage.put_image(
+                    "train/{}".format(name), data.numpy(), data_format="CHW"
+                )
 
-    def forward(
-        self,
-        kspace,
-        maps,
-        target=None,
-        init_image=None,
-        mean=None,
-        std=None,
-        norm=None,
-        mask=None,
-    ):
+    def forward(self, inputs):
         """
         TODO: condense into list of dataset dicts.
         Args:
@@ -153,19 +142,20 @@ class GeneralizedUnrolledCNN(nn.Module):
         Returns:
             (torch.Tensor): Output tensor of shape [batch_size, height, width, num_emaps, 2]
         """
+        # Need to fetch device at runtime for proper data transfer.
+        device = self.resnets[0].final_layer.weight.device
+        kspace = inputs["kspace"].to(device)
+        maps = inputs["maps"].to(device)
+        # mean = inputs["mean"].to(device)
+        # std = inputs["std"].to(device)
+        # norm = inputs["norm"].to(device)
+        target = inputs["target"].to(device) if "target" in inputs else None
+        mask = inputs["mask"].to(device) if "mask" in inputs else None
+
         if self.num_emaps != maps.size()[-2]:
             raise ValueError(
                 "Incorrect number of ESPIRiT maps! Re-prep data..."
             )
-
-        # Need to fetch device at runtime for proper data transfer.
-        device = self.resnets[0].final_layer.weight.device
-        kspace = kspace.to(device)
-        maps = maps.to(device)
-        target = target.to(device)
-        mean = mean.to(device)
-        std = std.to(device)
-        norm = norm.to(device)
 
         # Move step sizes to the right device.
         step_sizes = [x.to(device) for x in self.step_sizes]
@@ -177,14 +167,13 @@ class GeneralizedUnrolledCNN(nn.Module):
         # Get data dimensions
         dims = tuple(kspace.size())
 
-        # Declare signal model
+        # Declare signal model.
         A = SenseModel(maps, weights=mask)
-
         # Compute zero-filled image reconstruction
         zf_image = A(kspace, adjoint=True)
-        image = zf_image
 
         # Begin unrolled proximal gradient descent
+        image = zf_image
         for resnet, step_size in zip(self.resnets, step_sizes):
             # dc update
             grad_x = A(A(image), adjoint=True) - zf_image
@@ -203,9 +192,9 @@ class GeneralizedUnrolledCNN(nn.Module):
         output_dict = {
             "pred": image,  # N x Y x Z x 1 x 2
             "target": target,  # N x Y x Z x 1 x 2
-            "mean": mean,
-            "std": std,
-            "norm": norm,
+            # "mean": mean,
+            # "std": std,
+            # "norm": norm,
         }
 
         if self.training and self.vis_period > 0:

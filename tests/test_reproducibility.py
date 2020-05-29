@@ -18,7 +18,8 @@ def test_eval_reproducibility():
     for acc in loaders:
         for scan_name, loader in loaders[acc].items():
             scan_name1 = scan_name
-            for idx, (kspace, maps, target, mean, std, norm) in enumerate(loader):  # noqa
+            for idx, inputs in enumerate(loader):  # noqa
+                kspace, = inputs["kspace"]
                 kspace_data.append(kspace)
                 c_mask = cplx.get_mask(kspace)
                 if mask is not None:
@@ -35,7 +36,8 @@ def test_eval_reproducibility():
     for acc in loaders:
         for scan_name, loader in loaders2[acc].items():
             scan_name2 = scan_name
-            for idx, (kspace, maps, target, mean, std, norm) in enumerate(loader):  # noqa
+            for idx, inputs in enumerate(loader):  # noqa
+                kspace = inputs["kspace"]
                 kspace_data2.append(kspace)
             break
         break
