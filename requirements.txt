@@ -10,3 +10,4 @@ tqdm
 cupy
 scikit-image
 pandas
+silx

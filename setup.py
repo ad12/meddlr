@@ -62,6 +62,7 @@ setup(
         "sigpy",
         "ismrmrd",
         "pandas",
+        "silx",
         "tqdm",
     ],
     extras_require={
