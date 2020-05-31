@@ -57,6 +57,12 @@ def compute_metrics(ref: torch.Tensor, x: torch.Tensor):
     ssim = metrics.compute_ssim(ref, x, multichannel=False)
     ssim_mc = metrics.compute_ssim(ref, x, multichannel=True)
 
+    ssim_slice = [
+        metrics.compute_ssim(ref[i, ...], x[i, ...])
+        for i in range(x.shape[0])
+    ]
+    ssim_slice = torch.Tensor(ssim_slice).mean().item()
+
     # Average SSIM score for slices, but only compute SSIM for the
     # center 50% of slices and center 50% of volume.
     # Noise in reference contributes to the SSIM score.
@@ -71,13 +77,20 @@ def compute_metrics(ref: torch.Tensor, x: torch.Tensor):
 
     ssim_50 = metrics.compute_ssim(ref, x, multichannel=False)
     ssim_50_mc = metrics.compute_ssim(ref, x, multichannel=True)
+    ssim_50_slice = [
+        metrics.compute_ssim(ref[i, ...], x[i, ...])
+        for i in range(x.shape[0])
+    ]
+    ssim_50_slice = torch.Tensor(ssim_50_slice).mean().item()
     return {
         'psnr': psnr,
         'nrmse': nrmse,
         'ssim': ssim,
         "ssim_mc": ssim_mc,
+        "ssim_slice": ssim_slice,
         "ssim_50": ssim_50,
         "ssim_50_mc": ssim_50_mc,
+        "ssim_50_slice": ssim_50_slice,
     }
 
 
@@ -93,12 +106,16 @@ def setup(args):
     default_setup(cfg, args, save_cfg=False)
 
     # Setup logger for test results
-    setup_logger(os.path.join(cfg.OUTPUT_DIR, "test_results"), name=_FILE_NAME)
+    if args.renormalize:
+        dirname = "test_results_rn"
+    else:
+        dirname = "test_results"
+    setup_logger(os.path.join(cfg.OUTPUT_DIR, dirname), name=_FILE_NAME)
     return cfg
 
 
 @torch.no_grad()
-def eval(cfg, model, zero_filled: bool = False):
+def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
     """Evaluate model on per scan metrics with acceleration factors
     between 6-8x.
 
@@ -109,12 +126,17 @@ def eval(cfg, model, zero_filled: bool = False):
         model:
         zero_filled (bool, optional): If `True`, calculate metrics
             for zero-filled reconstruction.
+        renormalize (bool, optional): If `True`, renormalize data w/ mean/std.
     """
     device = cfg.MODEL.DEVICE
     model = model.to(device)
     model = model.eval()
 
-    output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
+    if renormalize:
+        output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results_rn")
+    else:
+        output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
+
     os.makedirs(output_dir, exist_ok=True)
 
     results = []
@@ -135,9 +157,18 @@ def eval(cfg, model, zero_filled: bool = False):
                     data_load_time = time.perf_counter() - data_start_time
 
                     output_dict = model(inputs)
-                    targets.append(output_dict["target"].cpu())
-                    outputs.append(output_dict["pred"].cpu())
-                    zf_images.append(output_dict["zf_image"].cpu())
+
+                    target = output_dict["target"]
+                    pred = output_dict["pred"]
+                    zf = output_dict["zf_image"]
+                    if renormalize:
+                        pred = pred * std + mean
+                        target = target * std + mean
+                        zf = target * std + mean
+
+                    targets.append(target.cpu())
+                    outputs.append(pred.cpu())
+                    zf_images.append(zf.cpu())
 
                     eta = datetime.timedelta(
                         seconds=int(
@@ -299,7 +330,7 @@ def main(args):
     logger.info("\n\n==============================")
     logger.info("Loading weights from {}".format(weights))
 
-    eval(cfg, model, args.zero_filled)
+    eval(cfg, model, args.zero_filled, args.renormalize)
 
 
 if __name__ == "__main__":
@@ -319,6 +350,11 @@ if __name__ == "__main__":
         "--zero-filled",
         action="store_true",
         help="Calculate metrics for zero-filled images"
+    )
+    parser.add_argument(
+        "--renormalize",
+        action="store_true",
+        help="Renormalize images based on std/mean vals"
     )
 
     args = parser.parse_args()

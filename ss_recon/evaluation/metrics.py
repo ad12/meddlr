@@ -64,6 +64,7 @@ def compute_ssim(
     ref: torch.Tensor,
     x: torch.Tensor,
     multichannel: bool = False,
+    data_range=None,
 ):
     """Compute structural similarity index metric. Does not preserve autograd.
 
@@ -75,8 +76,11 @@ def compute_ssim(
     Args:
         ref (torch.Tensor): The target. Shape (...)x2
         x (torch.Tensor): The prediction. Same shape as `ref`.
-        multichannel (torch.Tensor): If `True`, computes ssim for real and
+        multichannel (bool, optional): If `True`, computes ssim for real and
             imaginary channels separately and then averages the two.
+        data_range(float, optional): The data range of the input image
+        (distance between minimum and maximum possible values). By default,
+        this is estimated from the image data-type.
 
     References:
     .. [1] Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P.
@@ -102,7 +106,7 @@ def compute_ssim(
     return structural_similarity(
         ref,
         x,
-        # data_range=data_range,
+        data_range=data_range,
         gaussian_weights=True,
         sigma=1.5,
         use_sample_covariance=False,
