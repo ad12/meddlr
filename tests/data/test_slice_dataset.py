@@ -13,13 +13,15 @@ class MockSliceData(SliceData):
         vals["fname"] = fname
         vals["slice_id"] = slice_id
         vals["is_unsupervised"] = is_unsupervised
+        return vals
 
 
 class TestBuildTrainLoader(unittest.TestCase):
     def test_dataset(self):
         """Test number of examples in the dataset"""
         cfg = get_cfg()
-        cfg.DATASETS.TRAIN = "mridata_knee_2019_train"
+        cfg.DATASETS.TRAIN = ("mridata_knee_2019_train",)
+        cfg.DATALOADER.NUM_WORKERS = 0
         data_loader = build_recon_train_loader(cfg)
         dataset: SliceData = data_loader.dataset
 
@@ -36,13 +38,15 @@ class TestBuildTrainLoader(unittest.TestCase):
 
     def test_data_loader(self):
         cfg = get_cfg()
-        cfg.DATASETS.TRAIN = "mridata_knee_2019_train"
+        cfg.DATASETS.TRAIN = ("mridata_knee_2019_train",)
+        cfg.DATALOADER.NUM_WORKERS = 0
         cfg.SOLVER.TRAIN_BATCH_SIZE = 1
         data_loader = build_recon_train_loader(cfg, MockSliceData)
+        assert len(data_loader) == 16*320
 
         scans_to_slices = defaultdict(list)
         for d in data_loader:
-            fnames = d["fname"].tolist()
+            fnames = d["fname"]
             slice_ids = d["slice_id"].tolist()
             for fname, s_id in zip(fnames, slice_ids):
                 scans_to_slices[fname].append(s_id)

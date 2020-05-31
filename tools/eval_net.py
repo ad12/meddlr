@@ -162,6 +162,9 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
                     pred = output_dict["pred"]
                     zf = output_dict["zf_image"]
                     if renormalize:
+                        # TODO: make this prettier
+                        std = std.to(pred.device).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+                        mean = mean.to(pred.device).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
                         pred = pred * std + mean
                         target = target * std + mean
                         zf = target * std + mean
