@@ -80,7 +80,7 @@ def get_recon_dataset_dicts(
     return dataset_dicts
 
 
-def build_recon_train_loader(cfg):
+def build_recon_train_loader(cfg, dataset_type=None):
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=cfg.DATASETS.TRAIN,
         num_scans_total=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL,
@@ -90,7 +90,9 @@ def build_recon_train_loader(cfg):
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=False)
 
-    train_data = SliceData(dataset_dicts, data_transform)
+    if dataset_type is None:
+        dataset_type = SliceData
+    train_data = dataset_type(dataset_dicts, data_transform)
     is_semi_supervised = len(train_data.get_unsupervised_idxs()) > 0
     collate_fn = collate_by_supervision if is_semi_supervised else None
 
