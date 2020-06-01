@@ -139,9 +139,10 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
 
     os.makedirs(output_dir, exist_ok=True)
 
+    accelerations = cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS
     results = []
     for dataset_name in cfg.DATASETS.TEST:
-        loaders = build_data_loaders_per_scan(cfg, dataset_name, (6,8))
+        loaders = build_data_loaders_per_scan(cfg, dataset_name, accelerations)
         for acc in loaders:
             for scan_name, loader in loaders[acc].items():
                 scan_name = os.path.splitext(os.path.basename(scan_name))[0]
@@ -152,13 +153,12 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
                 num_batches = len(loader)
                 start_time = data_start_time = time.perf_counter()
                 for idx, inputs in enumerate(loader):  # noqa
-                    kspace, maps, target = inputs["kspace"], inputs["maps"], inputs["target"]  # noqa
-                    mean, std, norm = inputs["mean"], inputs["std"], inputs["norm"]  # noqa
+                    target = inputs["target"]  # noqa
+                    mean, std = inputs["mean"], inputs["std"]
                     data_load_time = time.perf_counter() - data_start_time
 
                     output_dict = model(inputs)
 
-                    target = output_dict["target"]
                     pred = output_dict["pred"]
                     zf = output_dict["zf_image"]
                     if renormalize:
@@ -166,8 +166,10 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
                         std = std.to(pred.device).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
                         mean = mean.to(pred.device).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
                         pred = pred * std + mean
-                        target = target * std + mean
+                        # target = target * std + mean
                         zf = target * std + mean
+                    else:
+                        target = output_dict["target"]
 
                     targets.append(target.cpu())
                     outputs.append(pred.cpu())
