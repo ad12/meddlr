@@ -54,8 +54,14 @@ class SliceData(Dataset):
         for dd in dataset_dicts:
             file_name = dd["file_name"]
             is_unsupervised = dd.get("_is_unsupervised", False)
+            acc = dd.get("_acceleration", None)
             self.examples.extend([
-                (file_name, slice_id, is_unsupervised)
+                {
+                    "fname": file_name,
+                    "slice_id": slice_id,
+                    "is_unsupervised": is_unsupervised,
+                    "fixed_acc": acc,
+                }
                 for slice_id in range(dd["kspace_size"][0])
             ])
 
@@ -63,7 +69,16 @@ class SliceData(Dataset):
         return len(self.examples)
 
     def __getitem__(self, i):
-        fname, slice_id, is_unsupervised = self.examples[i]
+        example = self.examples[i]
+        fname, slice_id, is_unsupervised, fixed_acc = tuple(
+            example[k]
+            for k in ["fname", "slice_id", "is_unsupervised", "fixed_acc"]
+        )
+
+        # TODO: remove this forced check.
+        if not is_unsupervised:
+            fixed_acc = None
+
         with h5py.File(fname, "r") as data:
             kspace = data["kspace"][slice_id]
             maps = data["maps"][slice_id]
@@ -72,7 +87,7 @@ class SliceData(Dataset):
 
         fname = os.path.splitext(os.path.basename(fname))[0]
         masked_kspace, maps, target, mean, std, norm = self.transform(
-            kspace, maps, target, fname, slice_id
+            kspace, maps, target, fname, slice_id, is_unsupervised, fixed_acc,
         )
 
         vals = {
@@ -89,7 +104,10 @@ class SliceData(Dataset):
 
     def get_supervised_idxs(self):
         """Get indices of supervised examples."""
-        idxs = [idx for idx, x in enumerate(self.examples) if not x[2]]
+        idxs = [
+            idx for idx, x in enumerate(self.examples)
+            if not x["is_unsupervised"]
+        ]
         return idxs
 
     def get_unsupervised_idxs(self):

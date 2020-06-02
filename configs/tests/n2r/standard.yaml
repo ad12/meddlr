@@ -22,6 +22,7 @@ SOLVER:
   MAX_ITER: 60
 TEST:
   EVAL_PERIOD: 40
+VIS_PERIOD: 10
 TIME_SCALE: "iter"
 OUTPUT_DIR: "results://tests/n2r/standard"
 VERSION: 1

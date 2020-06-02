@@ -11,10 +11,10 @@ Usage::
     # Run only from this repository (do not run as a module)
 
     # Ok
-    python format_mridata.org ...
+    python format_mridata_org.py ...
 
     # Not ok
-    python -m datasets.format_mridata.org
+    python -m datasets.format_mridata_org.py
     ```
 """
 import argparse

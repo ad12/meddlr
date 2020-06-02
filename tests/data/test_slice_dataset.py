@@ -8,12 +8,7 @@ from ss_recon.config import get_cfg
 
 class MockSliceData(SliceData):
     def __getitem__(self, i):
-        vals = {}
-        fname, slice_id, is_unsupervised = self.examples[i]
-        vals["fname"] = fname
-        vals["slice_id"] = slice_id
-        vals["is_unsupervised"] = is_unsupervised
-        return vals
+        return self.examples[i]
 
 
 class TestBuildTrainLoader(unittest.TestCase):
