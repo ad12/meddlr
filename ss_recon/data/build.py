@@ -18,6 +18,7 @@ def get_recon_dataset_dicts(
     num_scans_total: int = -1,
     num_scans_subsample: int = 0,
     seed: int = 1000,
+    accelerations = (),
 ):
     """Get recon datasets and perform filtering.
 
@@ -35,6 +36,9 @@ def get_recon_dataset_dicts(
         num_scans_subsample (int): Number of scans to mark as only subsample
             scans. These scans will not have a ground truth scan.
         seed (int): the deterministic seed for filtering which scans to select.
+        accelerations (sequence): the range of accelerations for this dataset.
+            The maximum in the range will be used for retrospective
+            undersampling of the unsupervised subset of scans.
     """
     assert len(dataset_names)
     dataset_dicts = [
@@ -68,6 +72,8 @@ def get_recon_dataset_dicts(
             raise ValueError("")
         for dd in dataset_dicts[:num_scans_subsample]:
             dd["_is_unsupervised"] = True
+            # Select the maximum acceleration when doing undersampling.
+            dd["_acceleration"] = max(accelerations)
     logger.info(
         "Dropped references for {}/{} scans. "
         "{} scans with reference remaining".format(
@@ -86,6 +92,7 @@ def build_recon_train_loader(cfg, dataset_type=None):
         num_scans_total=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL,
         num_scans_subsample=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_UNDERSAMPLED,
         seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
+        accelerations=cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS,
     )
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=False)

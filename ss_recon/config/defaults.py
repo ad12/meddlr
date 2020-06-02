@@ -53,6 +53,11 @@ _C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
 _C.MODEL.CONSISTENCY = CN()
 _C.MODEL.CONSISTENCY.LOSS_NAME = "l1"
 _C.MODEL.CONSISTENCY.LOSS_WEIGHT = 0.1
+# Consistency Augmentations
+_C.MODEL.CONSISTENCY.AUG = CN()
+_C.MODEL.CONSISTENCY.AUG.NOISE = CN()
+# Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
+_C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
 
 # -----------------------------------------------------------------------------
 # Dataset

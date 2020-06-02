@@ -152,12 +152,15 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
                 outputs = []
                 num_batches = len(loader)
                 start_time = data_start_time = time.perf_counter()
+                recon_time = 0
                 for idx, inputs in enumerate(loader):  # noqa
                     target = inputs["target"]  # noqa
                     mean, std = inputs["mean"], inputs["std"]
                     data_load_time = time.perf_counter() - data_start_time
 
+                    recon_start_time = time.perf_counter()
                     output_dict = model(inputs)
+                    recon_time += time.perf_counter() - recon_start_time
 
                     pred = output_dict["pred"]
                     zf = output_dict["zf_image"]
@@ -191,8 +194,6 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
                     )
 
                     data_start_time = time.perf_counter()
-
-                recon_time = time.perf_counter() - start_time
 
                 zf_images = torch.cat(zf_images, dim=0)
                 targets = torch.cat(targets, dim=0)

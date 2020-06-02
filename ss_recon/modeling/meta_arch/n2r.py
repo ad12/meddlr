@@ -20,6 +20,12 @@ class N2RModel(nn.Module):
         # Keep gradient for base images in transform.
         self.use_base_grad = False
 
+        noise_std_dev = cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV
+        assert len(noise_std_dev) == 1, (
+            "Noise std dev currently only supports one value."
+        )
+        self.noise_std_dev = noise_std_dev[0]
+
     def augment(self, inputs):
         """Noise augmentation module.
         TODO: Perform the augmentation here.
@@ -27,13 +33,11 @@ class N2RModel(nn.Module):
         kspace = inputs["kspace"].clone()
         mask = cplx.get_mask(kspace)
 
-        # Replace line below with augmentation.
-        noise_std = 1 #1,5,8 used in Lustig paper. todo: change to a config opt. 
+        noise_std = self.noise_std_dev
         noise = noise_std * torch.randn(inputs['kspace'].size())
         masked_noise = noise * mask
         aug_kspace = kspace + masked_noise
         #import pdb; pdb.set_trace();
-        
 
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = aug_kspace

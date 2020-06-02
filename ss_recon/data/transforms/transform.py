@@ -12,7 +12,9 @@ class Subsampler(object):
     def __init__(self, mask_func):
         self.mask_func = mask_func
 
-    def __call__(self, data, mode: str = "2D", seed: int = None):
+    def __call__(
+        self, data, mode: str = "2D", seed: int = None, acceleration: int = None
+    ):
         data_shape = tuple(data.shape)
         assert mode in ["2D", "3D"]
         if mode == "2D":
@@ -23,13 +25,15 @@ class Subsampler(object):
             raise ValueError(
                 "Only 2D and 3D undersampling masks are supported."
             )
-        mask = self.mask_func(mask_shape, seed)
+        mask = self.mask_func(mask_shape, seed, acceleration)
         return torch.where(mask == 0, torch.Tensor([0]), data), mask
 
 
 class DataTransform:
     """
     Data Transformer for training unrolled reconstruction models.
+
+    For scans that
     """
 
     def __init__(self, cfg, mask_func, is_test: bool = False):
@@ -50,7 +54,10 @@ class DataTransform:
         # mask_func = build_mask_func(cfg)
         self._subsampler = Subsampler(self.mask_func)
 
-    def __call__(self, kspace, maps, target, fname, slice):
+    def __call__(
+        self, kspace, maps, target, fname, slice, is_fixed,
+        acceleration: int = None
+    ):
         """
         Args:
             kspace (numpy.array): Input k-space of shape
@@ -61,6 +68,10 @@ class DataTransform:
                 object.
             fname (str): File name
             slice (int): Serial number of the slice.
+            is_fixed (bool, optional): If `True`, transform the example
+                to have a fixed mask and acceleration factor.
+            acceleration (int): Acceleration factor. Must be provided if
+                `is_undersampled=True`.
         Returns:
             (tuple): tuple containing:
                 image (torch.Tensor): Zero-filled input image.
@@ -69,6 +80,11 @@ class DataTransform:
                 std (float): Standard deviation value used for normalization.
                 norm (float): L2 norm of the entire volume.
         """
+        if is_fixed and not acceleration:
+            raise ValueError(
+                "Accelerations must be specified for undersampled scans"
+            )
+
         # Convert everything from numpy arrays to tensors
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
         maps = cplx.to_tensor(maps).unsqueeze(0)
@@ -82,8 +98,10 @@ class DataTransform:
         # TODO: Add other transforms here.
 
         # Apply mask in k-space
-        seed = None if not self._is_test else sum(tuple(map(ord, fname)))
-        masked_kspace, mask = self._subsampler(kspace, mode="2D", seed=seed)
+        seed = sum(tuple(map(ord, fname))) if self._is_test or is_fixed else None  # noqa
+        masked_kspace, mask = self._subsampler(
+            kspace, mode="2D", seed=seed, acceleration=acceleration
+        )
 
         # Normalize data...
         A = T.SenseModel(maps, weights=mask)

@@ -59,11 +59,13 @@ class RandomMaskFunc(MaskFunc):
         super().__init__(accelerations)
         self.calib_size = calib_size
 
-    def __call__(self, out_shape, seed=None):
+    def __call__(self, out_shape, seed=None, acceleration=None):
         # Design parameters for mask
         nky = out_shape[1]
         nkz = out_shape[2]
-        acceleration = self.choose_acceleration()
+
+        if not acceleration:
+            acceleration = self.choose_acceleration()
         prob = 1.0 / acceleration
 
         # Generate undersampling mask.
@@ -92,20 +94,21 @@ class PoissonDiskMaskFunc(MaskFunc):
 
     def __init__(self, accelerations, calib_size):
         super().__init__(accelerations)
-        self.calib_size = [calib_size, calib_size]
+        self.calib_size = (calib_size, calib_size)
 
-    def __call__(self, out_shape, seed=None):
+    def __call__(self, out_shape, seed=None, acceleration=None):
         # Design parameters for mask
         nky = out_shape[1]
         nkz = out_shape[2]
-        acceleration = self.choose_acceleration()
+        if not acceleration:
+            acceleration = self.choose_acceleration()
 
         # Generate undersampling mask
         # NOTE: Due to a sigpy bug, fixing a seed will cause a change
         # in the fixed numpy seed. Note this can cause downstream reproducibility
         # issues.
         mask = sigpy.mri.poisson(
-            [nky, nkz],
+            (nky, nkz),
             acceleration,
             calib=self.calib_size,
             dtype=np.float32,
@@ -117,32 +120,3 @@ class PoissonDiskMaskFunc(MaskFunc):
 
         return mask
 
-
-def subsample(data, mask_func, seed=None, mode="2D"):
-    """
-    Subsample given k-space by multiplying with a mask.
-
-    Args:
-        data (torch.Tensor): The input k-space data. This should have at
-            least 3 dimensions, where dimensions -3 and -2 are the spatial
-            dimensions, and the final dimension has size
-            2 (for complex values).
-        mask_func (callable): A function that takes a shape (tuple of ints) and
-            a random number seed and returns a mask.
-        seed (int or 1-d array_like, optional): Seed for the random number
-            generator.
-
-    Returns:
-        (tuple): tuple containing:
-            masked data (torch.Tensor): Subsampled k-space data
-            mask (torch.Tensor): The generated mask
-    """
-    data_shape = tuple(data.shape)
-    if mode == "2D":
-        mask_shape = (1,) + data_shape[1:3] + (1, 1)
-    elif mode == "3D":
-        mask_shape = (1,) + data_shape[1:4] + (1, 1)
-    else:
-        raise ValueError("Only 2D and 3D undersampling masks are supported.")
-    mask = mask_func(mask_shape, seed)
-    return torch.where(mask == 0, torch.Tensor([0]), data), mask
