@@ -49,7 +49,7 @@ _FILE_DIR = os.path.dirname(__file__)
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
 
 BIN_BART = "bart"
-OUTPUT_DIR = "data://mridata_org_knee"
+OUTPUT_DIR = "data://mridata_knee_2019"
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 logger = logging.getLogger(_LOGGER_NAME)
 
@@ -328,7 +328,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output",
         default=OUTPUT_DIR,
-        help="Root directory (default: datasets/data/mridata_org_knee)",
+        help="Root directory (default: datasets/data/mridata_knee_2019)",
     )
     parser.add_argument("--random_seed", default=1000, help="Random seed")
     parser.add_argument(
