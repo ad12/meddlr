@@ -1,0 +1,13 @@
+# Template for N2R experiments.
+# By default, it uses an alternating sampler that returns 1 supervised and 1 unsupervised scan
+
+_BASE_: "template.yaml"
+MODEL:
+  META_ARCHITECTURE: "N2RModel"
+DATALOADER:
+  SAMPLER_TRAIN: "AlternatingSampler"
+  ALT_SAMPLER:
+    PERIOD_UNSUPERVISED: 1
+    PERIOD_SUPERVISED: 1
+OUTPUT_DIR: "results://n2r-experiments/alt_sampler"
+VERSION: 1
