@@ -167,7 +167,7 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
                         mean = mean.to(pred.device).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
                         pred = pred * std + mean
                         # target = target * std + mean
-                        zf = target * std + mean
+                        zf = zf * std + mean
                     else:
                         target = output_dict["target"]
 
