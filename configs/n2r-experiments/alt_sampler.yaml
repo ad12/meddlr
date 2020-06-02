@@ -1,0 +1,12 @@
+# N2R with alternating sampler
+# The alternating sampler switches between periods of supervised examples and unsupervised examples
+# The model will be trained for 60 iterations (not epochs)
+# on the mridata.org 2019 knee dataset.
+_BASE_: "template.yaml"
+DATALOADER:
+  SAMPLER_TRAIN: "AlternatingSampler"
+  ALT_SAMPLER:
+    PERIOD_UNSUPERVISED: 1
+    PERIOD_SUPERVISED: 1
+OUTPUT_DIR: "results://n2r-experiments/alt_sampler"
+VERSION: 1
