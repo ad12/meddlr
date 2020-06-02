@@ -5,6 +5,7 @@ tensorboard
 fvcore
 mridata
 sigpy
+pyxb
 ismrmrd
 tqdm
 cupy

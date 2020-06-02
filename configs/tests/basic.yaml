@@ -12,12 +12,12 @@ DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
   VAL: ("mridata_knee_2019_val",)
 DATALOADER:
-  NUM_WORKERS: 0  # for debugging purposes
+  NUM_WORKERS: 1  # for debugging purposes
 SOLVER:
   TRAIN_BATCH_SIZE: 1
   TEST_BATCH_SIZE: 2
   CHECKPOINT_PERIOD: 20
-  MAX_ITER: 60
+  MAX_ITER: 80
 TEST:
   EVAL_PERIOD: 40
 VIS_PERIOD: 20

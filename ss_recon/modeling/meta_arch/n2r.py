@@ -28,7 +28,12 @@ class N2RModel(nn.Module):
         mask = cplx.get_mask(kspace)
 
         # Replace line below with augmentation.
-        aug_kspace = kspace 
+        noise_std = 1 #1,5,8 used in Lustig paper. todo: change to a config opt. 
+        noise = noise_std * torch.randn(inputs['kspace'].size())
+        masked_noise = noise * mask
+        aug_kspace = kspace + masked_noise
+        #import pdb; pdb.set_trace();
+        
 
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = aug_kspace

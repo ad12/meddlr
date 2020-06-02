@@ -37,6 +37,7 @@ class Cluster(Enum):
     NERO = 3, ["slurm-gpu-compute.*"]
     SHERLOCK = 4, ["sh[0-9]+.*"]
     SAIL = 5, ["sc.*stanford.edu", "pasteur[0-9].stanford.edu"]
+    HARBIN = 6, ["harbin"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -153,6 +154,12 @@ _USER_PATHS = {
         CLUSTER.NERO: (
             "/share/pi/bah/data",
             "/share/pi/bah/arjundd/results/ss_recon",
+        ),
+    },
+    "ozt": {
+        CLUSTER.HARBIN: (
+            "/home/ozt/dl-ss-recon/data",
+            "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
     },
     # New users add path preference below.
