@@ -13,5 +13,5 @@ AUG_TEST:
 DATALOADER:
   SUBSAMPLE_TRAIN:
     NUM_UNDERSAMPLED: 6
-OUTPUT_DIR: "results://prelim-exps/n2r_6x/sub_10"
+OUTPUT_DIR: "results://prelim-exps/n2r_6x/sub_10_stddev-1"
 VERSION: 1
