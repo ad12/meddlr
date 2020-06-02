@@ -8,7 +8,12 @@ from ss_recon.config import get_cfg
 
 class MockSliceData(SliceData):
     def __getitem__(self, i):
-        return self.examples[i]
+        example = self.examples[i]
+        vals = {}
+        vals["fname"] = example["fname"]
+        vals["slice_id"] = example["slice_id"]
+        vals["is_unsupervised"] = example["is_unsupervised"]
+        return vals
 
 
 class TestBuildTrainLoader(unittest.TestCase):
@@ -22,12 +27,12 @@ class TestBuildTrainLoader(unittest.TestCase):
 
         assert len(dataset) == len(dataset.examples)
 
-        scan_names = [x[0] for x in dataset.examples]
+        scan_names = [x["fname"] for x in dataset.examples]
         assert len(set(scan_names)) == 16
 
         scans_to_slices = defaultdict(list)
         for x in dataset.examples:
-            scans_to_slices[x[0]].append(x[1])
+            scans_to_slices[x["fname"]].append(x["slice_id"])
         for x, slice_nums in scans_to_slices.items():
             assert set(slice_nums) == set(range(0, 320))
 

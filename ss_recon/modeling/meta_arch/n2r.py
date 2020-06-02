@@ -123,7 +123,7 @@ class N2RModel(nn.Module):
                     inputs_unsupervised["kspace"],
                     inputs_us_aug["kspace"],
                     pred_aug["target"],
-                    pred_base["target"],
+                    pred_base,
                 )
 
         return output_dict

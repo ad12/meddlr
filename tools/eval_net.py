@@ -152,7 +152,7 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
                 outputs = []
                 num_batches = len(loader)
                 start_time = data_start_time = time.perf_counter()
-                recon_time = 0
+                model_time = 0
                 for idx, inputs in enumerate(loader):  # noqa
                     target = inputs["target"]  # noqa
                     mean, std = inputs["mean"], inputs["std"]
@@ -160,16 +160,21 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
 
                     recon_start_time = time.perf_counter()
                     output_dict = model(inputs)
-                    recon_time += time.perf_counter() - recon_start_time
+                    model_time += time.perf_counter() - recon_start_time
 
                     pred = output_dict["pred"]
                     zf = output_dict["zf_image"]
                     if renormalize:
                         # TODO: make this prettier
-                        std = std.to(pred.device).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
-                        mean = mean.to(pred.device).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+                        std = std.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+                        mean = mean.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+                        # We have to rescale the target because the dataset
+                        # transforms the target data before returning.
+                        # TODO: Do not transform target in dataset.
+                        target = target * std + mean
+
+                        std, mean= std.to(pred.device), mean.to(pred.device)
                         pred = pred * std + mean
-                        # target = target * std + mean
                         zf = zf * std + mean
                     else:
                         target = output_dict["target"]
@@ -195,6 +200,8 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
 
                     data_start_time = time.perf_counter()
 
+                recon_time = time.perf_counter() - start_time
+
                 zf_images = torch.cat(zf_images, dim=0)
                 targets = torch.cat(targets, dim=0)
                 outputs = torch.cat(outputs, dim=0)
@@ -202,6 +209,7 @@ def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
                 logger.info("Computing metrics...")
                 dl_results = compute_metrics(targets, outputs)
                 dl_results["recon_time"] = recon_time
+                dl_results["model_time"] = model_time
                 dl_results = pd.DataFrame([dl_results])
                 dl_results["Method"] = "DL-Recon"
                 if zero_filled:
