@@ -1,0 +1,19 @@
+_BASE_: "../baseline_template.yaml"
+MODEL:
+  CONSISTENCY:
+    AUG:
+      NOISE:
+        STD_DEV: (1,)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    ACCELERATIONS: (6,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (6,)
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 10
+SOLVER:
+  TRAIN_BATCH_SIZE: 1
+OUTPUT_DIR: "results://prelim-exps/baseline_6x/sub-10_bs-1"
+VERSION: 1

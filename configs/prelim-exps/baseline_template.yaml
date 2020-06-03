@@ -1,3 +1,4 @@
 # Template for baseline model.
+_BASE_: "template.yaml"
 MODEL:
   META_ARCHITECTURE: "GeneralizedUnrolledCNN"
