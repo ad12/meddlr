@@ -13,5 +13,5 @@ AUG_TEST:
 DATALOADER:
   SUBSAMPLE_TRAIN:
     NUM_TOTAL: 5
-OUTPUT_DIR: "results://prelim-exps/baseline_6x/sub-5_bs-1"
+OUTPUT_DIR: "results://prelim-exps/baseline_6x/sub-5"
 VERSION: 1
