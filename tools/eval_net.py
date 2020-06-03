@@ -101,7 +101,10 @@ def setup(args):
     """
     cfg = get_cfg()
     cfg.merge_from_file(args.config_file)
-    cfg.merge_from_list(args.opts)
+    opts = args.opts
+    if opts[0] == "--":
+        opts = opts[1:]
+    cfg.merge_from_list(opts)
     cfg.freeze()
     default_setup(cfg, args, save_cfg=False)
 

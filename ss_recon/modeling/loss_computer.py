@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 import torch
 from fvcore.common.registry import Registry
 
@@ -19,8 +21,31 @@ def build_loss_computer(cfg, name):
     return LOSS_COMPUTER_REGISTRY.get(name)(cfg)
 
 
+class LossComputer(ABC):
+    @abstractmethod
+    def __call__(self, input, output):
+        pass
+
+    def _get_metrics(self, target: torch.Tensor, output: torch.Tensor, loss_name):
+        # Compute metrics
+        abs_error = cplx.abs(output - target)
+        l1 = torch.mean(abs_error)
+        N = target.shape[0]
+
+        abs_error = abs_error.view(N, -1)
+        tgt_mag = cplx.abs(target).view(N, -1)
+        l2 = torch.sqrt(torch.mean(abs_error ** 2, dim=1))
+        psnr = 20 * torch.log10(tgt_mag.max(dim=1)[0] / (l2 + EPS))
+
+        metrics_dict = {"l1": l1, "l2": l2.mean(), "psnr": psnr.mean()}
+        loss = metrics_dict[loss_name]
+        metrics_dict["loss"] = loss
+
+        return metrics_dict
+
+
 @LOSS_COMPUTER_REGISTRY.register()
-class BasicLossComputer(object):
+class BasicLossComputer(LossComputer):
     def __init__(self, cfg):
         loss_name = cfg.MODEL.RECON_LOSS.NAME
         assert loss_name in ["l1", "l2", "psnr"]
@@ -39,21 +64,12 @@ class BasicLossComputer(object):
         else:
             output = pred
 
-        # Compute metrics
-        abs_error = cplx.abs(output - target)
-        l1 = torch.mean(abs_error)
-        l2 = torch.sqrt(torch.mean(abs_error ** 2))
-        psnr = 20 * torch.log10(cplx.abs(target).max() / l2)
-
-        metrics_dict = {"l1": l1, "l2": l2, "psnr": psnr}
-        loss = metrics_dict[self.loss]
-        metrics_dict["loss"] = loss
-
+        metrics_dict = self._get_metrics(target, output, self.loss)
         return metrics_dict
 
 
 @LOSS_COMPUTER_REGISTRY.register()
-class N2RLossComputer(object):
+class N2RLossComputer(LossComputer):
     def __init__(self, cfg):
         recon_loss = cfg.MODEL.RECON_LOSS.NAME
         consistency_loss = cfg.MODEL.CONSISTENCY.LOSS_NAME
@@ -88,14 +104,7 @@ class N2RLossComputer(object):
             output = pred
 
         # Compute metrics
-        abs_error = cplx.abs(output - target)
-        l1 = torch.mean(abs_error)
-        l2 = torch.sqrt(torch.mean(abs_error ** 2))
-        psnr = 20 * torch.log10(cplx.abs(target).max() / (l2 + EPS))
-
-        metrics_dict = {"l1": l1, "l2": l2, "psnr": psnr}
-        metrics_dict["loss"] = metrics_dict[loss]
-
+        metrics_dict = self._get_metrics(target, output, loss)
         return metrics_dict
 
     # def compute_robust_loss(self, group_loss):
