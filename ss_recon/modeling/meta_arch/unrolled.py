@@ -69,6 +69,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             circular_pad=circular_pad,
             act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
             norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
+            norm_affine=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE,
             order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
         )
 

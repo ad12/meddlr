@@ -45,6 +45,8 @@ _C.MODEL.UNROLLED.CONV_BLOCK = CN()
 _C.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION = "relu"
 # Either "none", "instance", or "batch"
 _C.MODEL.UNROLLED.CONV_BLOCK.NORM = "none"
+# Use affine on norm
+_C.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE = False
 _C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
 
 _C.MODEL.RECON_LOSS = CN()

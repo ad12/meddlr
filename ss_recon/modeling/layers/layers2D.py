@@ -39,6 +39,7 @@ class ConvBlock(nn.Module):
         drop_prob: float,
         act_type: str = "relu",
         norm_type: str = "none",
+        norm_affine: bool = False,
         order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
@@ -70,8 +71,8 @@ class ConvBlock(nn.Module):
         normalizations = nn.ModuleDict(
             [
                 ["none", nn.Identity()],
-                ["instance", nn.InstanceNorm2d(norm_channels, affine=False)],
-                ["batch", nn.BatchNorm2d(norm_channels, affine=False)],
+                ["instance", nn.InstanceNorm2d(norm_channels, affine=norm_affine)],
+                ["batch", nn.BatchNorm2d(norm_channels, affine=norm_affine)],
             ]
         )
         activations = nn.ModuleDict(
@@ -119,6 +120,7 @@ class ResBlock(nn.Module):
         drop_prob,
         act_type: str = "relu",
         norm_type: str = "none",
+        norm_affine: bool = False,
         order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
@@ -137,6 +139,7 @@ class ResBlock(nn.Module):
                 drop_prob,
                 act_type,
                 norm_type,
+                norm_affine,
                 order,
             ),  # noqa
             ConvBlock(
@@ -146,6 +149,7 @@ class ResBlock(nn.Module):
                 drop_prob,
                 act_type,
                 norm_type,
+                norm_affine,
                 order,
             ),  # noqa
         )
@@ -185,6 +189,7 @@ class ResNet(nn.Module):
         circular_pad=False,
         act_type: str = "relu",
         norm_type: str = "none",
+        norm_affine: bool = False,
         order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
         """
@@ -202,7 +207,8 @@ class ResNet(nn.Module):
 
         resblock_params = {
             "act_type": act_type, 
-            "norm_type": norm_type, 
+            "norm_type": norm_type,
+            "norm_affine": norm_affine,
             "order": order,
             "kernel_size": kernel_size,
             "drop_prob": drop_prob,
