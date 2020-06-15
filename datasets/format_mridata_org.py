@@ -375,14 +375,15 @@ if __name__ == "__main__":
 
     # Split data into 75/5/20 (train/val/test) after sorting
     # to preserve splits used in other literature.
+    uuids = open(args.mridata_txt).read().splitlines()
     file_paths = sorted(
         os.path.join(dir_npy, x)
         for x in os.listdir(dir_npy)
-        if x.endswith(".npy")
+        if x.endswith(".npy") and os.path.splitext(x)[0] in uuids
     )
-    data_divide = (0.75, 0.05, 2)
+    data_divide = (0.72, 0.08, 0.2)  # 14 train - 2 val - 3 test
     num_files = len(file_paths)
-    train_idx = np.round(data_divide[0] * num_files).astype(int) + 1
+    train_idx = np.round(data_divide[0] * num_files).astype(int)
     val_idx = np.round(data_divide[1] * num_files).astype(int) + train_idx
 
     train_files = file_paths[:train_idx]
