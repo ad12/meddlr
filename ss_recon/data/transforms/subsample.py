@@ -161,6 +161,8 @@ def poisson(img_shape, accel, K=30, calib=[0, 0], dtype=np.complex,
 
     slope_max = 40
     slope_min = 0
+    if seed is not None:
+        rand_state = np.random.get_state()
     while slope_min < slope_max:
         slope = (slope_max + slope_min) / 2.0
         R = (1.0 + r * slope)
@@ -177,6 +179,8 @@ def poisson(img_shape, accel, K=30, calib=[0, 0], dtype=np.complex,
         else:
             slope_max = slope
 
+    if seed is not None:
+        np.random.set_state(rand_state)
     mask = mask.reshape(img_shape).astype(dtype)
     if return_density:
         return mask, r
@@ -185,24 +189,22 @@ def poisson(img_shape, accel, K=30, calib=[0, 0], dtype=np.complex,
 
 
 @nb.jit(nopython=True, cache=True)  # pragma: no cover
-def _poisson(nx, ny, K, R, calib, seed):
+def _poisson(nx, ny, K, R, calib, seed=None):
 
     mask = np.zeros((ny, nx))
     f = ny / nx
 
     if seed is not None:
-        rand_state = np.random.RandomState(int(seed))
-    else:
-        rand_state = np.random
+        np.random.seed(int(seed))
 
     pxs = np.empty(nx * ny, np.int32)
     pys = np.empty(nx * ny, np.int32)
-    pxs[0] = rand_state.randint(0, nx)
-    pys[0] = rand_state.randint(0, ny)
+    pxs[0] = np.random.randint(0, nx)
+    pys[0] = np.random.randint(0, ny)
     m = 1
     while (m > 0):
 
-        i = rand_state.randint(0, m)
+        i = np.random.randint(0, m)
         px = pxs[i]
         py = pys[i]
         rad = R[py, px]
@@ -213,8 +215,8 @@ def _poisson(nx, ny, K, R, calib, seed):
         while not done and k < K:
 
             # Generate point randomly from R and 2R
-            rd = rad * (rand_state.random() * 3 + 1)**0.5
-            t = 2 * np.pi * rand_state.random()
+            rd = rad * (np.random.random() * 3 + 1)**0.5
+            t = 2 * np.pi * np.random.random()
             qx = px + rd * np.cos(t)
             qy = py + rd * f * np.sin(t)
 
