@@ -98,6 +98,16 @@ _C.DATALOADER.SAMPLER_TRAIN = ""
 _C.DATALOADER.ALT_SAMPLER = CN()
 _C.DATALOADER.ALT_SAMPLER.PERIOD_SUPERVISED = 1
 _C.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED = 1
+# Paired tuple of data keys and H5DF keys. Empty tuple will result in default keys being used.
+# e.g. (("target", "espirit_recon"), ("maps", "espirit_maps"))
+_C.DATALOADER.DATA_KEYS = ()
+
+_C.DATALOADER.FILTER = CN()
+# Paired tuple of key and values for filtering. Multiple values should be specified as tuple.
+# e.g. (("num_slices", 30),) will only keep data with number of slices = 30
+# Field must appear in all dataset dicts.
+# Both training and validation data is filtered by this field
+_C.DATALOADER.FILTER.BY = ()
 
 
 # -----------------------------------------------------------------------------
@@ -106,12 +116,12 @@ _C.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED = 1
 _C.AUG_TRAIN = CN()
 _C.AUG_TRAIN.UNDERSAMPLE = CN()
 _C.AUG_TRAIN.UNDERSAMPLE.NAME = "PoissonDiskMaskFunc"
-_C.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6, 8)
+_C.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6,)
 _C.AUG_TRAIN.UNDERSAMPLE.CALIBRATION_SIZE = 20
 
 _C.AUG_TEST = CN()
 _C.AUG_TEST.UNDERSAMPLE = CN()
-_C.AUG_TEST.UNDERSAMPLE.ACCELERATIONS = (6, 8)
+_C.AUG_TEST.UNDERSAMPLE.ACCELERATIONS = (6,)
 
 # ---------------------------------------------------------------------------- #
 # Solver

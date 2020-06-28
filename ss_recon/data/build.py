@@ -19,6 +19,7 @@ def get_recon_dataset_dicts(
     num_scans_subsample: int = 0,
     seed: int = 1000,
     accelerations = (),
+    filter_by=(),
 ):
     """Get recon datasets and perform filtering.
 
@@ -56,6 +57,18 @@ def get_recon_dataset_dicts(
         dataset_dicts = sorted(dataset_dicts, key=lambda x: x["file_name"])
         state.shuffle(dataset_dicts)
 
+    if filter_by:
+        for k, v in filter_by:
+            num_before = len(dataset_dicts)
+            if not isinstance(v, Sequence):
+                v = (v,)
+            dataset_dicts = [dd for dd in dataset_dicts if dd[k] in v]
+            num_after = len(dataset_dicts)
+            logger.info(
+                f"Filtered by {k}: Dropped {num_before - num_after} scans. "
+                f"{num_after} scans remaining"
+            )
+
     if num_scans_total > 0:
         dataset_dicts = dataset_dicts[:num_scans_total]
 
@@ -86,6 +99,17 @@ def get_recon_dataset_dicts(
     return dataset_dicts
 
 
+def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None):
+    keys = cfg.DATALOADER.DATA_KEYS
+    if keys:
+        assert all(len(x) == 2 for x in keys), "cfg.DATALOADER.DATA_KEYS should be sequence of tuples of len 2"
+        keys = {k: v for k, v in keys}
+
+    if dataset_type is None:
+        dataset_type = SliceData
+    return dataset_type(dataset_dicts, data_transform, keys=keys)
+
+
 def build_recon_train_loader(cfg, dataset_type=None):
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=cfg.DATASETS.TRAIN,
@@ -93,13 +117,12 @@ def build_recon_train_loader(cfg, dataset_type=None):
         num_scans_subsample=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_UNDERSAMPLED,
         seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
         accelerations=cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS,
+        filter_by=cfg.DATALOADER.FILTER.BY,
     )
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=False)
 
-    if dataset_type is None:
-        dataset_type = SliceData
-    train_data = dataset_type(dataset_dicts, data_transform)
+    train_data = _build_dataset(cfg, dataset_dicts, data_transform, dataset_type)
     is_semi_supervised = len(train_data.get_unsupervised_idxs()) > 0
     collate_fn = collate_by_supervision if is_semi_supervised else None
 
@@ -134,10 +157,14 @@ def build_recon_train_loader(cfg, dataset_type=None):
 
 
 def build_recon_val_loader(cfg, dataset_name, as_test: bool = False):
-    dataset_dicts = get_recon_dataset_dicts(dataset_names=[dataset_name])
+    dataset_dicts = get_recon_dataset_dicts(
+        dataset_names=[dataset_name],
+        filter_by=cfg.DATALOADER.FILTER.BY,
+    )
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=as_test)
-    train_data = SliceData(dataset_dicts, data_transform)
+
+    train_data = _build_dataset(cfg, dataset_dicts, data_transform)
     train_loader = DataLoader(
         dataset=train_data,
         batch_size=cfg.SOLVER.TEST_BATCH_SIZE,
@@ -172,7 +199,7 @@ def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):
             data_transform = T.DataTransform(
                 cfg.AUG_TRAIN, mask_func, is_test=True
             )
-            train_data = SliceData([dataset_dict], data_transform)
+            train_data = _build_dataset(cfg, [dataset_dict], data_transform)
             loader = DataLoader(
                 dataset=train_data,
                 batch_size=cfg.SOLVER.TEST_BATCH_SIZE,

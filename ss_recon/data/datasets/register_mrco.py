@@ -43,18 +43,16 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
     )
 
     # TODO: Add any relevant metadata.
-    data = data["images"]
-    return [
-        {
-            "file_name": PathManager.get_local_path(
-                os.path.join(image_root, d["file_name"])
-            )
-            if "file_path" not in d
-            else d["file_path"],
-            "kspace_size": d["kspace_size"],
-        }
-        for d in data
-    ]
+    dataset_dicts = []
+    for d in data["images"]:
+        dd = dict(d)
+        if image_root is not None and "file_path" not in d:
+            file_name = PathManager.get_local_path(os.path.join(image_root, d["file_name"]))
+        else:
+            file_name = PathManager.get_local_path(d["file_path"])
+        dd["file_name"] = file_name
+        dataset_dicts.append(dd)
+    return dataset_dicts
 
 
 def register_mrco_scans(name, metadata, json_file, image_root: str = None):

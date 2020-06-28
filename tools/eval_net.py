@@ -265,6 +265,18 @@ def find_weights(cfg, criterion=""):
     Args:
         criterion (str): The criterion that we can select from 
     """
+    ckpt_period = cfg.SOLVER.CHECKPOINT_PERIOD
+    eval_period = cfg.TEST.EVAL_PERIOD
+    if (
+        ckpt_period * eval_period <= 0  # same sign (i.e. same time scale)
+        or abs(eval_period) % abs(ckpt_period) != 0  # checkpoint period is multiple of eval period
+    ):
+        raise ValueError(
+            "Cannot find weights if checkpoint/eval periods "
+            "at different time scales or eval period is not"
+            "a multiple of checkpoint period."
+        )
+
     if not criterion:
         criterion = cfg.MODEL.RECON_LOSS.NAME.lower()
         operation = "min"  # loss is always minimized
@@ -305,6 +317,8 @@ def find_weights(cfg, criterion=""):
     else:
         metrics = [(m["iteration"], m[criterion]) for m in metrics]
 
+    last_iter = metrics[-1][0]
+
     # Retraining does not overwrite the metrics file.
     # We make sure that the metrics correspond only to the most
     # recent run.
@@ -323,8 +337,7 @@ def find_weights(cfg, criterion=""):
     metrics = [(k, v) for k, v in metrics.items()]
     best_iter, best_value = sorted(metrics, key=lambda x: x[1], reverse=operation=="max")[0]
 
-
-    if best_iter == cfg.SOLVER.MAX_ITER - 1:
+    if best_iter == last_iter:
         file_name = "model_final.pth"
     else:
         file_name = "model_{:07d}.pth".format(best_iter)

@@ -5,7 +5,7 @@ import torch
 
 from ss_recon.config import CfgNode
 
-from .lr_scheduler import WarmupCosineLR, WarmupMultiStepLR
+from .lr_scheduler import NoOpLR, WarmupCosineLR, WarmupMultiStepLR
 
 
 def build_optimizer(
@@ -54,7 +54,9 @@ def build_lr_scheduler(
     Build a LR scheduler from config.
     """
     name = cfg.SOLVER.LR_SCHEDULER_NAME
-    if name == "WarmupMultiStepLR":
+    if not name:
+        return NoOpLR(optimizer)
+    elif name == "WarmupMultiStepLR":
         return WarmupMultiStepLR(
             optimizer,
             cfg.SOLVER.STEPS,

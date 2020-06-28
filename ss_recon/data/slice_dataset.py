@@ -35,8 +35,14 @@ def collate_by_supervision(batch: list):
 class SliceData(Dataset):
     """A PyTorch Dataset class that iterates over 2D MR image slices.
     """
+    # Default mapping for key types
+    _DEFAULT_MAPPING = {
+        "kspace": "kspace",
+        "maps": "maps",
+        "target": "target"
+    }
 
-    def __init__(self, dataset_dicts: List[Dict], transform):
+    def __init__(self, dataset_dicts: List[Dict], transform, keys=None):
         """
         Args:
             dataset_dicts (List[Dict]): List of dictionaries. Each dictionary
@@ -50,42 +56,79 @@ class SliceData(Dataset):
 
         # Convert dataset dict into slices.
         # Each slice is tuple of (file name, slice id, is_unsupervised)
-        self.examples = []
+        self.examples = self._init_examples(dataset_dicts)
+
+        # All examples should have the following keys:
+        #   - fname (str): The file name
+        #   - is_unsupervised (bool): If `True`, the example should be treated as unsupervised
+        #   - fixed_acc (float): The fixed acceleration for unsupervised examples.
+        #   - Any other keys required for data loading.
+        for idx, example in enumerate(self.examples):
+            assert all(k in example for k in ["file_name", "is_unsupervised", "fixed_acc"]), (
+                f"Example {idx}"
+            )
+
+        self.mapping = dict(self._DEFAULT_MAPPING)
+        if keys:
+            self.mapping.update(keys)
+
+    def _init_examples(self, dataset_dicts):
+        examples = []
         for dd in dataset_dicts:
-            file_name = dd["file_name"]
+            file_path = dd["file_name"]
             is_unsupervised = dd.get("_is_unsupervised", False)
             acc = dd.get("_acceleration", None)
-            self.examples.extend([
+
+            if "kspace_size" in dd:
+                num_slices = dd["kspace_size"][0]
+            elif "num_slices" in dd:
+                num_slices = dd["num_slices"]
+            else:
+                with h5py.File(file_path, "r") as f:
+                    num_slices = f["kspace"].shape[0]
+
+            examples.extend([
                 {
-                    "fname": file_name,
+                    "file_name": file_path,
                     "slice_id": slice_id,
                     "is_unsupervised": is_unsupervised,
                     "fixed_acc": acc,
                 }
-                for slice_id in range(dd["kspace_size"][0])
+                for slice_id in range(num_slices)
             ])
+        return examples
 
-    def __len__(self):
-        return len(self.examples)
+    def _load_data(self, example, idx):
+        file_path = example["file_name"]
+        slice_id = example["slice_id"]
+        with h5py.File(file_path, "r") as data:
+            kspace = data[self.mapping["kspace"]][slice_id]
+            maps = data[self.mapping["maps"]][slice_id]
+            target = data[self.mapping["target"]][slice_id]
+
+        return {
+            "kspace": kspace,
+            "maps": maps,
+            "target": target,
+        }
 
     def __getitem__(self, i):
         example = self.examples[i]
-        fname, slice_id, is_unsupervised, fixed_acc = tuple(
+        file_path, slice_id, is_unsupervised, fixed_acc = tuple(
             example[k]
-            for k in ["fname", "slice_id", "is_unsupervised", "fixed_acc"]
+            for k in ["file_name", "slice_id", "is_unsupervised", "fixed_acc"]
         )
 
         # TODO: remove this forced check.
         if not is_unsupervised:
             fixed_acc = None
 
-        with h5py.File(fname, "r") as data:
-            kspace = data["kspace"][slice_id]
-            maps = data["maps"][slice_id]
-            target = data["target"][slice_id]
-            # attrs = data.attrs
+        data = self._load_data(example, i)
+        kspace = data["kspace"]
+        maps = data["maps"]
+        target = data["target"]
 
-        fname = os.path.splitext(os.path.basename(fname))[0]
+        fname = os.path.splitext(os.path.basename(file_path))[0]
         masked_kspace, maps, target, mean, std, norm = self.transform(
             kspace, maps, target, fname, slice_id, is_unsupervised, fixed_acc,
         )
@@ -101,6 +144,9 @@ class SliceData(Dataset):
         if not is_unsupervised:
             vals["target"] = target
         return vals
+
+    def __len__(self):
+        return len(self.examples)
 
     def get_supervised_idxs(self):
         """Get indices of supervised examples."""
