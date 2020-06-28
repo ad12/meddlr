@@ -4,7 +4,7 @@ numpy
 tensorboard
 fvcore
 mridata
-sigpy
+sigpy>=0.1.17
 pyxb
 ismrmrd
 tqdm

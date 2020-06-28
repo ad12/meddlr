@@ -52,6 +52,7 @@ setup(
     packages=find_packages(exclude=("configs", "tests")),
     python_requires=">=3.6",
     install_requires=[
+        "pyxb",  # need to install before ismrmrd
         "h5py",
         "matplotlib",
         "numpy",
@@ -59,7 +60,7 @@ setup(
         "fvcore",
         "mridata",
         "scikit-image",
-        "sigpy",
+        "sigpy>=0.1.17",
         "ismrmrd",
         "pandas",
         "silx",
