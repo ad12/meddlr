@@ -1,9 +1,9 @@
-_BASE_: "../n2r_template.yaml"
+_BASE_: "../baseline_template.yaml"
 MODEL:
   CONSISTENCY:
     AUG:
       NOISE:
-        STD_DEV: (5,)
+        STD_DEV: (1,)
 AUG_TRAIN:
   UNDERSAMPLE:
     ACCELERATIONS: (6,)
@@ -12,6 +12,6 @@ AUG_TEST:
     ACCELERATIONS: (6,)
 DATALOADER:
   SUBSAMPLE_TRAIN:
-    NUM_UNDERSAMPLED: 4
-OUTPUT_DIR: "results://prelim-exps/n2r_6x/sub-10_stddev-5"
+    NUM_TOTAL: 1
+OUTPUT_DIR: "results://prelim-exps/baseline_6x/sub-1"
 VERSION: 1

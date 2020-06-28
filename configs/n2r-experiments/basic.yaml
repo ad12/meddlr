@@ -1,0 +1,5 @@
+# N2R basic setup
+# The alternating sampler switches between periods of supervised examples and unsupervised examples
+_BASE_: "template.yaml"
+OUTPUT_DIR: "results://n2r-experiments/basic"
+VERSION: 1

@@ -1,5 +1,5 @@
 # Template for n2r experiments.
-# All experiments are trained for 40000 epochs with a base learning rate of 1e-4
+# All experiments are trained for 80000 epochs with a base learning rate of 1e-4
 # Checkpoint and eval every 1 epoch
 #
 # The settings below should not be modified.
@@ -23,10 +23,16 @@ MODEL:
     CONV_BLOCK:
       ACTIVATION: "relu"
       NORM: "none"
-      ORDER: ("norm", "act", "drop", "conv")
+      ORDER: ("act", "conv")
   RECON_LOSS:
     NAME: "l1"
     RENORMALIZE_DATA: False
+AUG_TRAIN:
+  UNDERSAMPLE:
+    ACCELERATIONS: (6,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (6,)
 DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
   VAL: ("mridata_knee_2019_val",)
@@ -35,15 +41,16 @@ DATALOADER:
   SUBSAMPLE_TRAIN:
     # change NUM_TOTAL to control how many scans should be included for training. 
     # `-1` -> all scans will be included
-    NUM_UNDERSAMPLED: 8
+    # 7/14 training scans are undersampled
+    NUM_UNDERSAMPLED: 7
     SEED: 1000
   NUM_WORKERS: 4
 SOLVER:
   OPTIMIZER: "Adam"
-  LR_SCHEDULER_NAME: "StepLR"
+  LR_SCHEDULER_NAME: ""
   TRAIN_BATCH_SIZE: 1
   TEST_BATCH_SIZE: 4
-  MAX_ITER: 40000
+  MAX_ITER: 80000
   GAMMA: 1.0  # do not decrease learning rate.
   STEPS: (80000,)  # ensures learning rate does not decay
   BASE_LR: 1e-4

@@ -1,6 +1,6 @@
 # Template for preliminary experiments.
 #
-# All experiments are trained for 40000 iterations with a base learning rate of 1e-4
+# All experiments are trained for 80000 iterations with a base learning rate of 1e-4
 # Checkpoint and eval every 1 epoch.
 # Train batch size: 2, Test batch size: 8
 #
@@ -23,10 +23,10 @@ MODEL:
     CONV_BLOCK:
       ACTIVATION: "relu"
       NORM: "none"
-      ORDER: ("norm", "act", "drop", "conv")
+      ORDER: ("act", "conv")
   RECON_LOSS:
     NAME: "l1"
-    RENORMALIZE_DATA: False
+    RENORMALIZE_DATA: True
 DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
   VAL: ("mridata_knee_2019_val",)
@@ -40,12 +40,12 @@ DATALOADER:
   NUM_WORKERS: 4
 SOLVER:
   OPTIMIZER: "Adam"
-  LR_SCHEDULER_NAME: "StepLR"
+  LR_SCHEDULER_NAME: ""
   TRAIN_BATCH_SIZE: 2
   TEST_BATCH_SIZE: 8
-  MAX_ITER: 40000
+  MAX_ITER: 80000
   GAMMA: 1.0 # do not decrease learning rate.
-  STEPS: (80000,)  # ensures learning rate does not decay
+  STEPS: ()  # ensures learning rate does not decay
   BASE_LR: 1e-4
   BIAS_LR_FACTOR: 1.0
   WEIGHT_DECAY: 0.0001

@@ -1,0 +1,8 @@
+# N2R with alternating sampler
+# The alternating sampler switches between periods of supervised examples and unsupervised examples
+# A batch size of 2 will allow both fully sampled and undersampled data to be seen simultaneously
+_BASE_: "alt_sampler.yaml"
+SOLVER:
+  TRAIN_BATCH_SIZE: 2
+OUTPUT_DIR: "results://n2r-experiments/alt_sampler_bs-2"
+VERSION: 1

@@ -3,5 +3,5 @@ _BASE_: "template.yaml"
 DATALOADER:
   SUBSAMPLE_TRAIN:
     NUM_TOTAL: 1
-OUTPUT_DIR: "results://dl-recon-subsampled_v2/sub-1"
+OUTPUT_DIR: "results://dl-recon-subsampled/8x_feat-128/sub-1"
 VERSION: 1
