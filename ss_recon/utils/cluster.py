@@ -38,6 +38,8 @@ class Cluster(Enum):
     SHERLOCK = 4, ["sh[0-9]+.*"]
     SAIL = 5, ["sc.*stanford.edu", "pasteur[0-9].stanford.edu"]
     HARBIN = 6, ["harbin"]
+    MRLEARNING = 7, ["mrlearning"]
+    AUTOFOCUS = 8, ["autofocus"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -158,6 +160,14 @@ _USER_PATHS = {
     },
     "ozt": {
         CLUSTER.HARBIN: (
+            "/home/ozt/dl-ss-recon/data",
+            "/home/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.MRLEARNING: (
+            "/home/ozt/dl-ss-recon/data",
+            "/home/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.AUTOFOCUS: (
             "/home/ozt/dl-ss-recon/data",
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),

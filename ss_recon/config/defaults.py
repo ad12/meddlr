@@ -62,6 +62,16 @@ _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
 
 # -----------------------------------------------------------------------------
+# UNET model 
+# -----------------------------------------------------------------------------
+_C.MODEL.UNET = CN()
+_C.MODEL.UNET.OUT_CHANNELS = 2
+_C.MODEL.UNET.IN_CHANNELS = 2
+_C.MODEL.UNET.CHANNELS = 32
+_C.MODEL.UNET.NUM_POOL_LAYERS = 4
+_C.MODEL.UNET.DROPOUT = 0.0
+
+# -----------------------------------------------------------------------------
 # Dataset
 # -----------------------------------------------------------------------------
 _C.DATASETS = CN()
