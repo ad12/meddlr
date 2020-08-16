@@ -220,4 +220,7 @@ class UnetModel(nn.Module):
             "target": target,  # N x Y x Z x 1 x 2
         }
 
+        if not self.training:
+            output_dict["zf_image"] = zf_image
+
         return output_dict

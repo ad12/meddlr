@@ -209,7 +209,7 @@ lr: {lr}  {memory}\
                 iter=iteration,
                 losses="  ".join(
                     [
-                        "{}: {:.3f}".format(k, v.median(20))
+                        ("{}: {:.3%s}" % ('f' if v.median(20) >= 0.0005 else 'e')).format(k, v.median(20))
                         for k, v in storage.histories().items()
                         if "loss" in k
                     ]

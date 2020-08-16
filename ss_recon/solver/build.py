@@ -6,6 +6,7 @@ import torch
 from ss_recon.config import CfgNode
 
 from .lr_scheduler import NoOpLR, WarmupCosineLR, WarmupMultiStepLR
+from .optimizer import GradAccumOptimizer
 
 
 def build_optimizer(
@@ -38,13 +39,21 @@ def build_optimizer(
 def _build_opt(params, cfg):
     optim = cfg.SOLVER.OPTIMIZER
     if optim == "SGD":
-        return torch.optim.SGD(
+        optimizer = torch.optim.SGD(
             params, cfg.SOLVER.BASE_LR, momentum=cfg.SOLVER.MOMENTUM
         )
     elif optim == "Adam":
-        return torch.optim.Adam(params, cfg.SOLVER.BASE_LR)
+        optimizer = torch.optim.Adam(params, cfg.SOLVER.BASE_LR)
     else:
-        raise ValueError("Optimizer {} not supported".format(optim))
+        raise ValueError(f"Optimizer {optim} not supported")
+
+    # Gradient accumulation wrapper.
+    num_grad_accum = cfg.SOLVER.GRAD_ACCUM_ITERS
+    if num_grad_accum < 1:
+        raise ValueError(f"cfg.SOLVER.GRAD_ACCUM_ITERS must be >= 1. Got {num_grad_accum}")
+    elif num_grad_accum > 1:
+        optimizer = GradAccumOptimizer(optimizer, num_grad_accum)
+    return optimizer
 
 
 def build_lr_scheduler(
@@ -53,6 +62,10 @@ def build_lr_scheduler(
     """
     Build a LR scheduler from config.
     """
+    if not isinstance(optimizer, torch.optim.Optimizer):
+        if hasattr(optimizer, "optimizer"):
+            optimizer = optimizer.optimizer
+
     name = cfg.SOLVER.LR_SCHEDULER_NAME
     if not name:
         return NoOpLR(optimizer)

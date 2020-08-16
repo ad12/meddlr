@@ -18,7 +18,7 @@ from ss_recon.evaluation import (
     verify_results,
 )
 from ss_recon.modeling import BasicLossComputer, build_model, build_loss_computer
-from ss_recon.solver import build_lr_scheduler, build_optimizer
+from ss_recon.solver import build_lr_scheduler, build_optimizer, GradAccumOptimizer
 from ss_recon.utils.events import (
     CommonMetricPrinter,
     JSONWriter,
@@ -150,9 +150,7 @@ class DefaultTrainer(SimpleTrainer):
             setup_logger()
 
         # Assume these objects must be constructed in this order.
-        model = self.build_model(cfg)
         data_loader = self.build_train_loader(cfg)
-
         num_iter_per_epoch = (
             len(data_loader.dataset) / cfg.SOLVER.TRAIN_BATCH_SIZE
         )
@@ -162,6 +160,7 @@ class DefaultTrainer(SimpleTrainer):
             num_iter_per_epoch = math.ceil(num_iter_per_epoch)
         cfg = convert_cfg_time_to_iter(cfg, num_iter_per_epoch)
 
+        model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
 
         # For training, wrap with DP. But don't need this for inference.
@@ -257,8 +256,15 @@ class DefaultTrainer(SimpleTrainer):
 
         # Do evaluation after checkpointer, because then if it fails,
         # we can use the saved checkpoint to debug.
-        ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
-        ret.append(hooks.PeriodicWriter(self.build_writers()))
+        ret.append(hooks.EvalHook(
+            cfg.TEST.EVAL_PERIOD,
+            test_and_save_results,
+            optimizer=self.optimizer if isinstance(self.optimizer, GradAccumOptimizer) else None,
+        ))
+        ret.append(hooks.PeriodicWriter(
+            self.build_writers(),
+            periods=(20, cfg.TEST.EVAL_PERIOD),
+        ))
         return ret
 
     def build_writers(self):
