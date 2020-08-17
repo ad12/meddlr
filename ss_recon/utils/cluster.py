@@ -38,6 +38,7 @@ class Cluster(Enum):
     SHERLOCK = 4, ["sh[0-9]+.*"]
     SAIL = 5, ["sc.*stanford.edu", "pasteur[0-9].stanford.edu"]
     HARBIN = 6, ["harbin"]
+    SIENA = 7, ["siena"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -94,7 +95,7 @@ class Cluster(Enum):
     def get_path(self, key):
         user_id = getpass.getuser()
         if user_id not in self.dir_map:
-            raise ValueError("User {} is not registered".format(user_id))
+            raise ValueError("User {} is not registered on cluster {}".format(user_id, self.name))
         return self.dir_map[user_id][key]
 
 
@@ -155,6 +156,10 @@ _USER_PATHS = {
             "/share/pi/bah/data",
             "/share/pi/bah/arjundd/results/ss_recon",
         ),
+        CLUSTER.SIENA: (
+            "/bmrNAS/people/arjun/data",
+            "/bmrNAS/people/arjun/results/ss_recon",
+        )
     },
     "ozt": {
         CLUSTER.HARBIN: (
