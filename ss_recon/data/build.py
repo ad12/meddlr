@@ -188,6 +188,10 @@ def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):
         accelerations = cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS
         accelerations = list(np.arange(accelerations[0], accelerations[1]))
 
+    assert len(cfg.AUG_TRAIN.UNDERSAMPLE.CENTER_FRACTIONS) <= 1, (
+        "Currently only support single center fraction during testing"
+    )
+
     loaders = defaultdict(dict)
     for acc in accelerations:
         aug_cfg = cfg.AUG_TRAIN.clone()

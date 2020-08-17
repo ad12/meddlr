@@ -33,10 +33,27 @@ To register new machines, you will have to find the regex pattern(s) that can be
 identify the machine or set of machines you want to add functionality for. See
 [ss_recon/utils/cluster.py](ss_recon/utils/cluster.py) for more details.
 
+##### Weights and Biases
+Weights and Biases (W&B) is a convenient online experiment visualizer (like Tensorboard) that is currently free for academics. It's useful for sharing training runs, creating reports, and making other data-driven decisions.
+
+Use `pip install wandb` to install W&B library
+
+W&B account setup:
+1. Create an account at [wandb.com](wandb.com)
+2. Use chat to upgrade to the academic license
+3. Send email to `arjundd at stanford dot edu` to get access
+
+Adding API Key:
+1. Get your user API key ([instructions](https://docs.wandb.com/library/api))
+2. Add `export WANDB_API_KEY=<API KEY HERE>` to `.bashrc` (linux) or `.bash_profile` (OsX)
+
 ### Usage
 To train a basic configuration from the repository folder in the command line, run
 ```bash
 python tools/train_net.py --config-file configs/tests/basic.yaml
+
+# Run in debug mode.`
+python tools/train_net.py --config-file configs/tests/basic.yaml --debug
 ```
 
 To evaluate the results, use `tools/eval_net.py`.

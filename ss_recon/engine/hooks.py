@@ -16,6 +16,7 @@ from fvcore.common.file_io import PathManager
 from fvcore.common.timer import Timer
 
 from ss_recon.evaluation.testing import flatten_results_dict
+from ss_recon.solver import GradAccumOptimizer
 from ss_recon.utils.events import EventWriter
 
 from .train_loop import HookBase
@@ -159,20 +160,25 @@ class PeriodicWriter(HookBase):
     It is executed every ``period`` iterations and after the last iteration.
     """
 
-    def __init__(self, writers, period=20):
+    def __init__(self, writers, periods=(20,)):
         """
         Args:
             writers (list[EventWriter]): a list of EventWriter objects
-            period (int):
+            periods(`int` or `Sequence[int]`): Period(s) over which to
+                save data. This is useful when the evaluation period is
+                not a multiple of the default period.
         """
         self._writers = writers
         for w in writers:
             assert isinstance(w, EventWriter), w
-        self._period = period
+        if isinstance(periods, int):
+            periods = (periods,)
+        self._periods = periods
 
     def after_step(self):
-        if (self.trainer.iter + 1) % self._period == 0 or (
-            self.trainer.iter == self.trainer.max_iter - 1
+        if (
+            any((self.trainer.iter + 1) % period == 0 for period in self._periods)
+            or self.trainer.iter == self.trainer.max_iter - 1
         ):
             for writer in self._writers:
                 writer.write()
@@ -320,12 +326,14 @@ class EvalHook(HookBase):
     iteration.
     """
 
-    def __init__(self, eval_period, eval_function):
+    def __init__(self, eval_period, eval_function, optimizer: GradAccumOptimizer=None):
         """
         Args:
             eval_period (int): the period to run `eval_function`.
             eval_function (callable): a function which takes no arguments, and
                 returns a nested dict of evaluation metrics.
+            optimizer (GradAccumOptimizer, optional): If specified, the optimizer
+                is flushed (i.e. step + zero grad) before evaluation.
 
         Note:
             This hook must be enabled in all or none workers.
@@ -335,6 +343,7 @@ class EvalHook(HookBase):
         self._period = eval_period
         self._func = eval_function
         self._done_eval_at_last = False
+        self._optimizer = optimizer
 
     def _do_eval(self):
         results = self._func()
@@ -364,6 +373,8 @@ class EvalHook(HookBase):
         next_iter = self.trainer.iter + 1
         is_final = next_iter == self.trainer.max_iter
         if is_final or (self._period > 0 and next_iter % self._period == 0):
+            if self._optimizer is not None:
+                self._optimizer.flush()
             self._do_eval()
             if is_final:
                 self._done_eval_at_last = True

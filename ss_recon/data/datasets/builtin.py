@@ -29,6 +29,35 @@ _PREDEFINED_SPLITS_MRCO["mridata_knee_2019"] = {
 }
 
 
+_PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
+    "fastMRI_knee_multicoil_dev_train": (
+        None,
+        "fastmri/knee_multicoil/annotations/vtoy-dev/train.json"
+    ),
+    "fastMRI_knee_multicoil_dev_val": (
+        None,
+        "fastmri/knee_multicoil/annotations/vtoy-dev/val.json"
+    ),
+    "fastMRI_knee_multicoil_dev_test": (
+        None,
+        "fastmri/knee_multicoil/annotations/vtoy-dev/test.json"
+    ),
+
+    "fastMRI_knee_multicoil_v0.0.1_train": (
+        None,
+        "fastmri/knee_multicoil/annotations/v0.0.1-dev/train.json"
+    ),
+    "fastMRI_knee_multicoil_v0.0.1_val": (
+        None,
+        "fastmri/knee_multicoil/annotations/v0.0.1-dev/val.json"
+    ),
+    "fastMRI_knee_multicoil_v0.0.1_test": (
+        None,
+        "fastmri/knee_multicoil/annotations/v0.0.1-dev/test.json"
+    ),
+}
+
+
 def register_all_mrco(root="data://"):
     for dataset_name, splits_per_dataset in _PREDEFINED_SPLITS_MRCO.items():
         for key, (image_root, json_file) in splits_per_dataset.items():
@@ -39,7 +68,9 @@ def register_all_mrco(root="data://"):
                 os.path.join(root, json_file)
                 if "://" not in json_file
                 else json_file,  # noqa
-                os.path.join(root, image_root),
+                os.path.join(root, image_root)
+                if image_root is not None
+                else None,
             )
 
 

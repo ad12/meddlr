@@ -62,6 +62,16 @@ _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
 
 # -----------------------------------------------------------------------------
+# UNET model 
+# -----------------------------------------------------------------------------
+_C.MODEL.UNET = CN()
+_C.MODEL.UNET.OUT_CHANNELS = 2
+_C.MODEL.UNET.IN_CHANNELS = 2
+_C.MODEL.UNET.CHANNELS = 32
+_C.MODEL.UNET.NUM_POOL_LAYERS = 4
+_C.MODEL.UNET.DROPOUT = 0.0
+
+# -----------------------------------------------------------------------------
 # Dataset
 # -----------------------------------------------------------------------------
 _C.DATASETS = CN()
@@ -100,6 +110,7 @@ _C.DATALOADER.ALT_SAMPLER.PERIOD_SUPERVISED = 1
 _C.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED = 1
 # Paired tuple of data keys and H5DF keys. Empty tuple will result in default keys being used.
 # e.g. (("target", "espirit_recon"), ("maps", "espirit_maps"))
+# See data/slice_data.py for more information.
 _C.DATALOADER.DATA_KEYS = ()
 
 _C.DATALOADER.FILTER = CN()
@@ -118,6 +129,7 @@ _C.AUG_TRAIN.UNDERSAMPLE = CN()
 _C.AUG_TRAIN.UNDERSAMPLE.NAME = "PoissonDiskMaskFunc"
 _C.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6,)
 _C.AUG_TRAIN.UNDERSAMPLE.CALIBRATION_SIZE = 20
+_C.AUG_TRAIN.UNDERSAMPLE.CENTER_FRACTIONS = ()
 
 _C.AUG_TEST = CN()
 _C.AUG_TEST.UNDERSAMPLE = CN()
@@ -151,6 +163,8 @@ _C.SOLVER.STEPS = (30000,)
 _C.SOLVER.WARMUP_FACTOR = 1.0 / 1000
 _C.SOLVER.WARMUP_ITERS = 1000
 _C.SOLVER.WARMUP_METHOD = "linear"
+
+_C.SOLVER.GRAD_ACCUM_ITERS = 1
 
 # Save a checkpoint after every this number of iterations
 _C.SOLVER.CHECKPOINT_PERIOD = 1
@@ -199,7 +213,7 @@ _C.SEED = -1
 _C.VIS_PERIOD = 0
 # The scale when referring to time generally in the config.
 # Note that there are certain fields, which are explicitly at the iteration
-# scale (e.g. NUM_GRAD_STEPS).
+# scale (e.g. GRAD_ACCUM_ITERS).
 # Either "epoch" or "iter"
 _C.TIME_SCALE = "epoch"
 _C.CUDNN_BENCHMARK = False

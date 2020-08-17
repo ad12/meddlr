@@ -15,6 +15,8 @@ this file as an example of how to use the library.
 You may want to write your own script with your datasets and other
 customizations.
 """
+import os
+import sys
 
 from ss_recon.config import get_cfg
 from ss_recon.engine import (
@@ -22,7 +24,12 @@ from ss_recon.engine import (
     default_argument_parser,
     default_setup,
 )
+from ss_recon.utils.env import supports_wandb
 
+try:
+    import wandb
+except:
+    pass
 
 def setup(args):
     """
@@ -40,6 +47,18 @@ def setup(args):
         raise ValueError("OUTPUT_DIR not specified")
 
     default_setup(cfg, args)
+
+    # TODO: Add suppport for resume.
+    if supports_wandb():
+        wandb.init(
+            project="ss_recon",
+            name=os.path.basename(cfg.OUTPUT_DIR),
+            config=cfg,
+            sync_tensorboard=True,
+            job_type="training",
+            dir=cfg.OUTPUT_DIR,
+            entity="ss_recon",
+        )
     return cfg
 
 
