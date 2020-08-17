@@ -17,6 +17,7 @@ customizations.
 """
 import os
 import sys
+import warnings
 
 from ss_recon.config import get_cfg
 from ss_recon.engine import (
@@ -50,14 +51,20 @@ def setup(args):
 
     # TODO: Add suppport for resume.
     if supports_wandb():
+        exp_name = cfg.DESCRIPTION.EXP_NAME
+        if not exp_name:
+            warnings.warn("DESCRIPTION.EXP_NAME not specified. Defaulting to basename...")
+            exp_name = os.path.basename(cfg.OUTPUT_DIR)
         wandb.init(
             project="ss_recon",
-            name=os.path.basename(cfg.OUTPUT_DIR),
+            name=exp_name,
             config=cfg,
             sync_tensorboard=True,
             job_type="training",
             dir=cfg.OUTPUT_DIR,
             entity="ss_recon",
+            tags=cfg.DESCRIPTION.TAGS,
+            notes=cfg.DESCRIPTION.BRIEF,
         )
     return cfg
 

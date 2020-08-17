@@ -40,7 +40,7 @@ class Cluster(Enum):
     HARBIN = 6, ["harbin"]
     MRLEARNING = 7, ["mrlearning"]
     AUTOFOCUS = 8, ["autofocus"]
-    SIENA = 7, ["siena"]
+    SIENA = 9, ["siena"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """

@@ -217,3 +217,11 @@ _C.VIS_PERIOD = 0
 # Either "epoch" or "iter"
 _C.TIME_SCALE = "epoch"
 _C.CUDNN_BENCHMARK = False
+
+# ---------------------------------------------------------------------------- #
+# Config Description
+# ---------------------------------------------------------------------------- #
+_C.DESCRIPTION = CN()
+_C.DESCRIPTION.BRIEF = ""
+_C.DESCRIPTION.EXP_NAME = ""
+_C.DESCRIPTION.TAGS = ()
