@@ -3,12 +3,20 @@ import datetime
 import json
 import logging
 import os
+import sys
 from collections import defaultdict
 from contextlib import contextmanager
 
 import torch
 from fvcore.common.file_io import PathManager
 from fvcore.common.history_buffer import HistoryBuffer
+
+from ss_recon.utils.env import supports_wandb
+
+try:
+    import wandb
+except:
+    pass
 
 _CURRENT_STORAGE_STACK = []
 
@@ -224,6 +232,37 @@ lr: {lr}  {memory}\
                 else "",
             )
         )
+
+
+class WandBWriter(EventWriter):
+    """Write scalars with Weights and Biases.
+
+    If `wandb.init` is called with `sync_tensorboard=True`, this writer may not be needed.
+    When synced with tensorboard, W&B automatically scrapes tensorboard for logged data.
+    Therefore, you would only need to log to tensorboard and it would be copied over.
+
+    Note there is a bug related to tensorboard step/iteration count not corresponding with
+    W&B steps/iteration count 
+    """
+
+    def __init__(self, window_size=20):
+        """
+        Args:
+            window_size (int): the window size of median smoothing for the
+                scalars whose `smoothing_hint` are True.
+        """
+        if not supports_wandb():
+            raise ModuleNotFoundError("Module `wandb` not found or running in debug mode.")
+        if wandb.run is None:
+            raise ValueError("wand.run not found. Call `wand.init` before creating writer.")
+        self._window_size = window_size
+
+    def write(self):
+        storage = get_event_storage()
+        to_save = storage.latest_with_smoothing_hint(self._window_size)
+        wandb.log(to_save, step=storage.iter)
+
+        # TODO: Add logging images.
 
 
 class EventStorage:

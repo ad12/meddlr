@@ -55,6 +55,9 @@ def default_argument_parser():
         help="number of gpus. overrided by --devices",
     )
     parser.add_argument("--devices", type=int, nargs="*", default=None)
+    parser.add_argument(
+        "--debug", action="store_true", help="use debug mode"
+    )
 
     parser.add_argument(
         "opts",
@@ -87,6 +90,10 @@ def default_setup(cfg, args, save_cfg: bool = True):
 
     setup_logger(output_dir, name="fvcore")
     logger = setup_logger(output_dir)
+
+    if args.debug:
+        os.environ["SSRECON_DEBUG"] = "True"
+        logger.info("Running in debug mode")
 
     logger.info("Environment info:\n" + collect_env_info())
 

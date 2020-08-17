@@ -23,7 +23,9 @@ from ss_recon.utils.events import (
     CommonMetricPrinter,
     JSONWriter,
     TensorboardXWriter,
+    WandBWriter,
 )
+from ss_recon.utils.env import supports_wandb
 from ss_recon.utils.logger import setup_logger
 
 __all__ = ["DefaultTrainer"]

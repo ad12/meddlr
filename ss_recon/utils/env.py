@@ -10,6 +10,11 @@ from datetime import datetime
 import numpy as np
 import torch
 
+try:
+    import wandb
+except:
+    pass
+
 __all__ = []
 
 
@@ -177,3 +182,11 @@ def get_world_size():
     if len(gpu_ids) == 1 and gpu_ids[0] == "-1":
         return 0
     return len(gpu_ids)
+
+
+def is_debug() -> bool:
+    return os.environ.get("SSRECON_DEBUG", "") == "True"
+
+
+def supports_wandb():
+    return "wandb" in sys.modules and not is_debug()
