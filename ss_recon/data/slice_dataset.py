@@ -15,6 +15,8 @@ import h5py
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate
 
+__all__ = ["collate_by_supervision", "SliceData"]
+
 
 def collate_by_supervision(batch: list):
     """Collate supervised/unsupervised batch examples."""

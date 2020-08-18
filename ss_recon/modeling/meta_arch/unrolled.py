@@ -15,6 +15,8 @@ Implementation is based on:
 import torch
 from torch import nn
 import torchvision.utils as tv_utils
+
+from ss_recon.utils.general import move_to_device
 import ss_recon.utils.complex_utils as cplx
 from ss_recon.utils.transforms import SenseModel
 
@@ -88,10 +90,10 @@ class GeneralizedUnrolledCNN(nn.Module):
         if fix_step_size:
             self.step_sizes = [init_step_size] * num_grad_steps
         else:
-            self.step_sizes = [
+            self.step_sizes = nn.ParameterList([
                 torch.nn.Parameter(init_step_size)
                 for _ in range(num_grad_steps)
-            ]
+            ])
 
         self.vis_period = cfg.VIS_PERIOD
 
@@ -105,10 +107,10 @@ class GeneralizedUnrolledCNN(nn.Module):
         storage = get_event_storage()
         
         with torch.no_grad():
-            kspace = kspace.cpu()[0, ..., 0, :].unsqueeze(0) # calc mask for first coil only
-            targets = targets.cpu()[0, ...].unsqueeze(0)
-            preds = preds.cpu()[0, ...].unsqueeze(0)
-            zfs = zfs.cpu()[0, ...].unsqueeze(0)
+            kspace = kspace[0, ..., 0, :].unsqueeze(0).cpu() # calc mask for first coil only
+            targets = targets[0, ...].unsqueeze(0).cpu()
+            preds = preds[0, ...].unsqueeze(0).cpu()
+            zfs = zfs[0, ...].unsqueeze(0).cpu()
 
             N = preds.shape[0]
 
@@ -164,11 +166,12 @@ class GeneralizedUnrolledCNN(nn.Module):
             )
         # Need to fetch device at runtime for proper data transfer.
         device = self.resnets[0].final_layer.weight.device
-        kspace = inputs["kspace"].to(device)
-        target = inputs["target"].to(device) if "target" in inputs else None
-        mask = inputs["mask"].to(device) if "mask" in inputs else None
-        A = inputs["signal_model"].to(device) if "signal_model" in inputs else None
-        maps = inputs["maps"].to(device)
+        inputs = move_to_device(inputs, device)
+        kspace = inputs["kspace"]
+        target = inputs.get("target", None)
+        mask = inputs.get("mask", None)
+        A = inputs.get("signal_model", None)
+        maps = inputs["maps"]
         if self.num_emaps != maps.size()[-2]:
             raise ValueError(
                 "Incorrect number of ESPIRiT maps! Re-prep data..."
