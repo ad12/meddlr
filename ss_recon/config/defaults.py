@@ -61,6 +61,8 @@ _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
 
+# Image normalization options.
+# See ss_recon/data/transforms/transform.py for more details.
 _C.MODEL.NORMALIZER = CN()
 _C.MODEL.NORMALIZER.NAME = "TopMagnitudeNormalizer"
 _C.MODEL.NORMALIZER.PROCESS_TARGET = True
@@ -226,6 +228,10 @@ _C.CUDNN_BENCHMARK = False
 # Config Description
 # ---------------------------------------------------------------------------- #
 _C.DESCRIPTION = CN()
+# Brief description about config 
 _C.DESCRIPTION.BRIEF = ""
+# Experiment name for logging to Weights & Biases
 _C.DESCRIPTION.EXP_NAME = ""
+# Tags associated with experiment.
+# e.g. "fastmri_knee_mc" for fastMRI dataset; "unrolled" for using unrolled network; etc.
 _C.DESCRIPTION.TAGS = ()
