@@ -120,7 +120,7 @@ def build_recon_train_loader(cfg, dataset_type=None):
         filter_by=cfg.DATALOADER.FILTER.BY,
     )
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=False)
+    data_transform = T.DataTransform(cfg, mask_func, is_test=False)
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform, dataset_type)
     is_semi_supervised = len(train_data.get_unsupervised_idxs()) > 0
@@ -162,7 +162,7 @@ def build_recon_val_loader(cfg, dataset_name, as_test: bool = False):
         filter_by=cfg.DATALOADER.FILTER.BY,
     )
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(cfg.AUG_TRAIN, mask_func, is_test=as_test)
+    data_transform = T.DataTransform(cfg, mask_func, is_test=as_test)
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform)
     train_loader = DataLoader(
@@ -201,7 +201,7 @@ def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):
         for dataset_dict in dataset_dicts:
             mask_func = build_mask_func(aug_cfg)
             data_transform = T.DataTransform(
-                cfg.AUG_TRAIN, mask_func, is_test=True
+                cfg, mask_func, is_test=True
             )
             train_data = _build_dataset(cfg, [dataset_dict], data_transform)
             loader = DataLoader(

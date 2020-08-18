@@ -61,6 +61,10 @@ _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
 
+_C.MODEL.NORMALIZER = CN()
+_C.MODEL.NORMALIZER.NAME = "TopMagnitudeNormalizer"
+_C.MODEL.NORMALIZER.PROCESS_TARGET = True
+
 # -----------------------------------------------------------------------------
 # UNET model 
 # -----------------------------------------------------------------------------

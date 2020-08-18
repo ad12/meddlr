@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from skimage.metrics import structural_similarity
 
+from ss_recon.data.transforms.transform import build_normalizer
 from ss_recon.utils import complex_utils as cplx
 
 from .evaluator import DatasetEvaluator
@@ -46,6 +47,7 @@ class ReconEvaluator(DatasetEvaluator):
 
         self._cpu_device = torch.device("cpu")
         self._logger = logging.getLogger(__name__)
+        self._normalizer = build_normalizer(cfg)
 
         # TODO: Uncomment when metadata is supported
         # self._metadata = MetadataCatalog.get(dataset_name)
@@ -84,22 +86,30 @@ class ReconEvaluator(DatasetEvaluator):
                 "instances" that contains :class:`Instances`.
         """
         N = outputs["pred"].shape[0]
-        preds = outputs["pred"].to(self._cpu_device)
-        targets = outputs["target"].to(self._cpu_device)
-        means = inputs["mean"].to(self._cpu_device)
-        stds = inputs["std"].to(self._cpu_device)
 
-        for i in range(N):
-            pred, target = preds[i], targets[i]
-            mean = means[i]
-            std = stds[i]
-            pred = pred * std + mean
-            target = target * std + mean
+        normalized = self._normalizer.undo(
+            outputs["pred"], outputs["target"], mean=inputs["mean"], std=inputs["std"]
+        )
+        preds = normalized["image"].to(self._cpu_device, non_blocking=True)
+        targets = normalized["target"].to(self._cpu_device, non_blocking=True)
 
-            # probably isn't best practice to hang onto each prediction.
-            prediction = {"pred": pred, "target": target}
+        self._predictions.extend([{"pred": preds[i], "target": targets[i]} for i in range(N)])
 
-            self._predictions.append(prediction)
+        # preds = outputs["pred"].to(self._cpu_device)
+        # targets = outputs["target"].to(self._cpu_device)
+        # means = inputs["mean"].to(self._cpu_device)
+        # stds = inputs["std"].to(self._cpu_device)
+        # for i in range(N):
+        #     pred, target = preds[i], targets[i]
+        #     mean = means[i]
+        #     std = stds[i]
+        #     pred = pred * std + mean
+        #     target = target * std + mean
+
+        #     # probably isn't best practice to hang onto each prediction.
+        #     prediction = {"pred": pred, "target": target}
+
+        #     self._predictions.append(prediction)
 
     def evaluate(self):
         if len(self._predictions) == 0:

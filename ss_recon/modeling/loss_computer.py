@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 import torch
 from fvcore.common.registry import Registry
 
+from ss_recon.data.transforms.transform import build_normalizer
+from ss_recon.evaluation.metrics import compute_nrmse
 from ss_recon.utils import complex_utils as cplx
 
 
@@ -15,6 +17,7 @@ and expected to return a LossComputer object.
 """
 
 EPS = 1e-11
+IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse"]
 
 
 def build_loss_computer(cfg, name):
@@ -22,6 +25,9 @@ def build_loss_computer(cfg, name):
 
 
 class LossComputer(ABC):
+    def __init__(self, cfg):
+        self._normalizer = build_normalizer(cfg)
+
     @abstractmethod
     def __call__(self, input, output):
         pass
@@ -36,8 +42,9 @@ class LossComputer(ABC):
         tgt_mag = cplx.abs(target).view(N, -1)
         l2 = torch.sqrt(torch.mean(abs_error ** 2, dim=1))
         psnr = 20 * torch.log10(tgt_mag.max(dim=1)[0] / (l2 + EPS))
+        nrmse = l2 / torch.sqrt(torch.mean(tgt_mag ** 2, dim=1))
 
-        metrics_dict = {"l1": l1, "l2": l2.mean(), "psnr": psnr.mean()}
+        metrics_dict = {"l1": l1, "l2": l2.mean(), "psnr": psnr.mean(), "nrmse": nrmse.mean()}
         loss = metrics_dict[loss_name]
         metrics_dict["loss"] = loss
 
@@ -47,8 +54,9 @@ class LossComputer(ABC):
 @LOSS_COMPUTER_REGISTRY.register()
 class BasicLossComputer(LossComputer):
     def __init__(self, cfg):
+        super().__init__(cfg)
         loss_name = cfg.MODEL.RECON_LOSS.NAME
-        assert loss_name in ["l1", "l2", "psnr"]
+        assert loss_name in IMAGE_LOSSES
         self.loss = loss_name
         self.renormalize_data = cfg.MODEL.RECON_LOSS.RENORMALIZE_DATA
 
@@ -57,10 +65,11 @@ class BasicLossComputer(LossComputer):
         target = output["target"].to(pred.device)
 
         if self.renormalize_data:
-            mean = input["mean"].to(pred.device)
-            std = input["std"].to(pred.device)
-            output = pred * std + mean
-            target = target * std + mean
+            normalized = self._normalizer.undo(
+                pred, target, mean=input["mean"], std=input["std"]
+            )
+            output = normalized["image"]
+            target = normalized["target"]
         else:
             output = pred
 
@@ -71,11 +80,12 @@ class BasicLossComputer(LossComputer):
 @LOSS_COMPUTER_REGISTRY.register()
 class N2RLossComputer(LossComputer):
     def __init__(self, cfg):
+        super().__init__(cfg)
         recon_loss = cfg.MODEL.RECON_LOSS.NAME
         consistency_loss = cfg.MODEL.CONSISTENCY.LOSS_NAME
 
-        assert recon_loss in ["l1", "l2", "psnr"]
-        assert consistency_loss in ["l1", "l2", "psnr"]
+        assert recon_loss in IMAGE_LOSSES
+        assert consistency_loss in IMAGE_LOSSES
 
         self.recon_loss = recon_loss
         self.consistency_loss = consistency_loss
@@ -96,10 +106,11 @@ class N2RLossComputer(LossComputer):
         pred: torch.Tensor = output["pred"]
         target = output["target"].to(pred.device)
         if self.renormalize_data:
-            mean = output["mean"].to(pred.device)
-            std = output["std"].to(pred.device)
-            output = pred * std + mean
-            target = target * std + mean
+            normalized = self._normalizer.undo(
+                pred, target, mean=input["mean"], std=input["std"]
+            )
+            output = normalized["image"]
+            target = normalized["target"]
         else:
             output = pred
 
@@ -150,4 +161,3 @@ class N2RLossComputer(LossComputer):
 
         metrics["loss"] = loss
         return metrics
-

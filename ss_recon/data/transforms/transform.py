@@ -1,11 +1,92 @@
 """Basic Transforms.
 """
 import torch
+from fvcore.common.registry import Registry
 
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import transforms as T
 
 from .subsample import build_mask_func
+
+
+NORMALIZER_REGISTRY = Registry("NORMALIZER")
+NORMALIZER_REGISTRY.__doc__ = """
+Registry for normalizing images
+"""
+
+def build_normalizer(cfg):
+    cfg = cfg.MODEL.NORMALIZER
+    name = cfg.NAME
+    obj = NORMALIZER_REGISTRY.get(name)(process_target=cfg.PROCESS_TARGET)
+    return obj
+
+
+class Normalizer():
+    def __init__(self, process_target=True):
+        self._process_target = process_target
+
+    def normalize(self, masked_kspace, image=None, target=None, mask=None):
+        pass
+
+    def undo(self, image, target=None, **kwargs):
+        pass
+
+
+@NORMALIZER_REGISTRY.register()
+class NoOpNormalizer(Normalizer):
+    def normalize(self, masked_kspace, image=None, target=None, mask=None):
+        return {
+            "masked_kspace": masked_kspace,
+            "target": target,
+            "mean": torch.tensor([0.0], dtype=torch.float32),
+            "std": torch.tensor([1.0], dtype=torch.float32),
+        }
+
+    def undo(self, image, target=None, **kwargs):
+        return {
+            "image": image,
+            "target": target
+        }
+
+
+@NORMALIZER_REGISTRY.register()
+class TopMagnitudeNormalizer(Normalizer):
+    def __init__(self, process_target = True, percentile=0.05):
+        super().__init__(process_target)
+        self._percentile = percentile
+
+    def normalize(self, masked_kspace, image, target=None, mask=None):
+        magnitude_vals = cplx.abs(image).reshape(-1)
+        k = int(round(self._percentile * magnitude_vals.numel()))
+        scale = torch.min(torch.topk(magnitude_vals, k).values)
+
+        masked_kspace /= scale
+        if self._process_target:
+            target /= scale
+        mean = torch.tensor([0.0], dtype=torch.float32)
+        std = scale.unsqueeze(-1)
+
+        return {
+            "masked_kspace": masked_kspace,
+            "target": target,
+            "mean": mean,
+            "std": std,
+        }
+
+    def undo(self, image, target=None, **kwargs):
+        mean = kwargs["mean"]
+        std = kwargs["std"]
+
+        mean = mean.view(mean.shape + (1,)*(image.ndim - mean.ndim)).to(image.device)
+        std = std.view(std.shape + (1,)*(image.ndim - std.ndim)).to(image.device)
+        image = image * std + mean
+        if target is not None and self._process_target:
+            target = target * std + mean
+
+        return {
+            "image": image,
+            "target": target,
+        }
 
 
 class Subsampler(object):
@@ -53,10 +134,17 @@ class DataTransform:
         # Build subsampler.
         # mask_func = build_mask_func(cfg)
         self._subsampler = Subsampler(self.mask_func)
+        self._normalizer = build_normalizer(cfg)
 
     def __call__(
-        self, kspace, maps, target, fname, slice, is_fixed,
-        acceleration: int = None
+        self, 
+        kspace, 
+        maps, 
+        target, 
+        fname, 
+        slice, 
+        is_fixed,
+        acceleration: int = None,
     ):
         """
         Args:
@@ -103,17 +191,16 @@ class DataTransform:
             kspace, mode="2D", seed=seed, acceleration=acceleration
         )
 
-        # Normalize data...
+        # Zero-filled Sense Recon.
         A = T.SenseModel(maps, weights=mask)
         image = A(masked_kspace, adjoint=True)
-        magnitude_vals = cplx.abs(image).reshape(-1)
-        k = int(round(0.05 * magnitude_vals.numel()))
-        scale = torch.min(torch.topk(magnitude_vals, k).values)
 
-        masked_kspace /= scale
-        target /= scale
-        mean = torch.tensor([0.0], dtype=torch.float32)
-        std = scale.unsqueeze(-1)
+        # Normalize
+        normalized = self._normalizer.normalize(masked_kspace, image, target, mask)
+        masked_kspace = normalized["masked_kspace"]
+        target = normalized["target"]
+        mean = normalized["mean"]
+        std = normalized["std"]
 
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)
