@@ -66,7 +66,7 @@ class BasicLossComputer(LossComputer):
 
         if self.renormalize_data:
             normalized = self._normalizer.undo(
-                pred, target, mean=input["mean"], std=input["std"]
+                image=pred, target=target, mean=input["mean"], std=input["std"]
             )
             output = normalized["image"]
             target = normalized["target"]
@@ -107,7 +107,7 @@ class N2RLossComputer(LossComputer):
         target = output["target"].to(pred.device)
         if self.renormalize_data:
             normalized = self._normalizer.undo(
-                pred, target, mean=input["mean"], std=input["std"]
+                image=pred, target=target, mean=input["mean"], std=input["std"]
             )
             output = normalized["image"]
             target = normalized["target"]

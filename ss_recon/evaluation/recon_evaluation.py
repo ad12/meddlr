@@ -1,12 +1,15 @@
 import copy
 import logging
+import warnings
 from collections import OrderedDict, defaultdict
 
 import numpy as np
 import torch
+from tqdm import tqdm
 from skimage.metrics import structural_similarity
 
 from ss_recon.data.transforms.transform import build_normalizer
+from ss_recon.evaluation.metrics import compute_mse, compute_l2, compute_psnr, compute_nrmse, compute_ssim
 from ss_recon.utils import complex_utils as cplx
 
 from .evaluator import DatasetEvaluator
@@ -62,7 +65,7 @@ class ReconEvaluator(DatasetEvaluator):
 
     def reset(self):
         self._predictions = []
-        self._coco_results = []
+        self._scan_map = defaultdict(dict)
 
     def _tasks_from_config(self, cfg):
         """
@@ -88,12 +91,19 @@ class ReconEvaluator(DatasetEvaluator):
         N = outputs["pred"].shape[0]
 
         normalized = self._normalizer.undo(
-            outputs["pred"], outputs["target"], mean=inputs["mean"], std=inputs["std"]
+            image=outputs["pred"], target=outputs["target"], mean=inputs["mean"], std=inputs["std"]
         )
         preds = normalized["image"].to(self._cpu_device, non_blocking=True)
         targets = normalized["target"].to(self._cpu_device, non_blocking=True)
 
-        self._predictions.extend([{"pred": preds[i], "target": targets[i]} for i in range(N)])
+        self._predictions.extend([
+            {
+                "pred": preds[i], 
+                "target": targets[i], 
+                "metadata": inputs["metadata"][i] if "metadata" in inputs else {}
+            } 
+            for i in range(N)
+        ])
 
         # preds = outputs["pred"].to(self._cpu_device)
         # targets = outputs["target"].to(self._cpu_device)
@@ -111,6 +121,24 @@ class ReconEvaluator(DatasetEvaluator):
 
         #     self._predictions.append(prediction)
 
+    def structure_scans(self):
+        """Structure scans into volumes to be used to evaluation."""
+        self._logger.info("Structuring slices into volumes...")
+        scan_map = defaultdict(dict)
+        for pred in self._predictions:
+            scan_map[pred["metadata"]["scan_id"]][pred["metadata"]["slice_id"]] = pred
+
+        scans = {}
+        for scan_id, slice_idx_to_pred in tqdm(scan_map.items()):
+            min_slice, max_slice = min(slice_idx_to_pred.keys()), max(slice_idx_to_pred.keys())
+            slice_predictions = [slice_idx_to_pred[i] for i in range(min_slice, max_slice+1)]
+            pred = {
+                k: torch.stack([slice_pred[k] for slice_pred in slice_predictions], dim=0) 
+                for k in ("pred", "target")
+            }
+            scans[scan_id] = pred
+        return scans
+
     def evaluate(self):
         if len(self._predictions) == 0:
             self._logger.warning(
@@ -122,7 +150,14 @@ class ReconEvaluator(DatasetEvaluator):
         for pred in self._predictions:
             val = self.evaluate_prediction(pred)
             for k, v in val.items():
-                pred_vals[k].append(v)
+                pred_vals[f"val_{k}"].append(v)
+
+        scans = self.structure_scans()
+        scans = scans.values()
+        for pred in scans:
+            val = self.evaluate_prediction(pred)
+            for k, v in val.items():
+                pred_vals[f"val_{k}_scan"].append(v)
 
         self._results = OrderedDict(
             {k: np.mean(v) for k, v in pred_vals.items()}
@@ -131,6 +166,45 @@ class ReconEvaluator(DatasetEvaluator):
         return copy.deepcopy(self._results)
 
     def evaluate_prediction(self, prediction):
+        output, target = prediction["pred"], prediction["target"]
+
+        # Compute metrics magnitude images
+        abs_error = cplx.abs(output - target)
+        l1 = torch.mean(abs_error).item()
+        l2 = compute_l2(target, output).item()
+        psnr = compute_psnr(target, output).item()
+        ssim_old = compute_ssim(
+            target,
+            output, 
+            data_range="x-range",
+            gaussian_weights=False,
+            use_sample_covariance=True,
+        )
+
+        # Compute ssim following Wang, et al. protocol.
+        # https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf
+        # Both the target and predicted reconstructions are 
+        # normalized by the maximum value of the magnitude of the target
+        ssim_wang = compute_ssim(
+            target,
+            output,
+            data_range="ref-maxval",
+            gaussian_weights=True,
+            use_sample_covariance=False,
+        )
+        nrmse = compute_nrmse(target, output).item()
+
+        return {
+            "l1": l1, "l2": l2, "psnr": psnr, 
+            "ssim_old": ssim_old, "ssim (Wang)": ssim_wang, 
+            "nrmse": nrmse,
+        }
+
+    def evaluate_prediction_old(self, prediction):
+        warnings.warn(
+            "`evaluate_prediction_old` is deprecated and is staged for removal in v0.0.2", 
+            DeprecationWarning
+        )
         output, target = prediction["pred"], prediction["target"]
 
         # Compute metrics magnitude images
@@ -146,4 +220,4 @@ class ReconEvaluator(DatasetEvaluator):
             target, output, data_range=output.max() - output.min()
         )
 
-        return {"val_l1": l1, "val_l2": l2, "val_psnr": psnr, "val_ssim": ssim}
+        return {"l1": l1, "l2": l2, "psnr": psnr, "ssim": ssim}

@@ -65,7 +65,9 @@ _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
 # See ss_recon/data/transforms/transform.py for more details.
 _C.MODEL.NORMALIZER = CN()
 _C.MODEL.NORMALIZER.NAME = "TopMagnitudeNormalizer"
-_C.MODEL.NORMALIZER.PROCESS_TARGET = True
+# Keywords to normalize
+# See ss_recon/data/transforms/transform.py for more details
+_C.MODEL.NORMALIZER.KEYWORDS = ()
 
 # -----------------------------------------------------------------------------
 # UNET model 

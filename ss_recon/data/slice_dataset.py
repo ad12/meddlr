@@ -13,9 +13,20 @@ from typing import Dict, List
 
 import h5py
 from torch.utils.data import Dataset
-from torch.utils.data.dataloader import default_collate
+from torch.utils.data.dataloader import default_collate as _default_collate
 
 __all__ = ["collate_by_supervision", "SliceData"]
+
+
+
+def default_collate(batch: list):
+    metadata = None
+    if any("metadata" in b for b in batch):
+        metadata = [b.pop("metadata", None) for b in batch]
+    out_dict = _default_collate(batch)
+    if metadata is not None:
+        out_dict["metadata"] = metadata
+    return out_dict
 
 
 def collate_by_supervision(batch: list):
@@ -44,7 +55,7 @@ class SliceData(Dataset):
         "target": "target"
     }
 
-    def __init__(self, dataset_dicts: List[Dict], transform, keys=None):
+    def __init__(self, dataset_dicts: List[Dict], transform, keys=None, include_metadata=False):
         """
         Args:
             dataset_dicts (List[Dict]): List of dictionaries. Each dictionary
@@ -53,6 +64,9 @@ class SliceData(Dataset):
                 raw data into appropriate form. The transform function should
                 take 'kspace', 'target', 'attributes', 'filename', and 'slice'
                 as inputs. 'target' may be null for test data.
+            include_metadata (bool, optional): If `True`, includes scan metadata:
+                - "scan_id"
+                - "slice_id"
         """
         self.transform = transform
 
@@ -73,6 +87,7 @@ class SliceData(Dataset):
         self.mapping = dict(self._DEFAULT_MAPPING)
         if keys:
             self.mapping.update(keys)
+        self._include_metadata = include_metadata
 
     def _init_examples(self, dataset_dicts):
         examples = []
@@ -143,6 +158,8 @@ class SliceData(Dataset):
             "norm": norm,
             "is_unsupervised": is_unsupervised,
         }
+        if self._include_metadata:
+            vals["metadata"] = {"scan_id": fname, "slice_id": slice_id}
         if not is_unsupervised:
             vals["target"] = target
         return vals

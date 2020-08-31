@@ -110,9 +110,9 @@ def inference_on_dataset(model, data_loader, evaluator):
     """
     num_devices = get_world_size()
     logger = logging.getLogger(__name__)
-    logger.info("Start inference on {} images".format(len(data_loader)))
 
     total = len(data_loader)  # inference data loader must have a fixed length
+    logger.info(f"Start inference on {total} images")
     evaluator.reset()
 
     num_warmup = min(5, total - 1)
@@ -123,9 +123,11 @@ def inference_on_dataset(model, data_loader, evaluator):
             if idx == num_warmup:
                 start_time = time.perf_counter()
                 total_compute_time = 0
+
             start_compute_time = time.perf_counter()
             outputs = model(inputs)
             total_compute_time += time.perf_counter() - start_compute_time
+
             evaluator.process(inputs, outputs)
 
             iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
