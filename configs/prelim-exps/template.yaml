@@ -43,7 +43,7 @@ SOLVER:
   LR_SCHEDULER_NAME: ""
   TRAIN_BATCH_SIZE: 2
   TEST_BATCH_SIZE: 8
-  MAX_ITER: 80000
+  MAX_ITER: 160000
   GAMMA: 1.0 # do not decrease learning rate.
   STEPS: ()  # ensures learning rate does not decay
   BASE_LR: 1e-4

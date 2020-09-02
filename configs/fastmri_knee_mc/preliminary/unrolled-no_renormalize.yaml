@@ -1,0 +1,10 @@
+_BASE_: "unrolled_8x_feat-128.yaml"
+MODEL:
+  RECON_LOSS:
+    RENORMALIZE_DATA: False
+OUTPUT_DIR: "results://fastmri_knee_mc/preliminary/unrolled-no_renormalize"
+DESCRIPTION:
+  BRIEF: "8x unrolled network, 2 blocks, 128 channels w/o renormalizing before loss"
+  EXP_NAME: "fastmri_knee_mc/preliminary/unrolled-no_renormalize"
+  TAGS: ("fastMRI_knee_mc", "unrolled")
+VERSION: 1

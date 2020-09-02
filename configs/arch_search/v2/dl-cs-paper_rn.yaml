@@ -1,0 +1,8 @@
+# Configuration for DL-CS Paper w/ renormalizing data
+_BASE_: "dl-cs-paper.yaml"
+MODEL:
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: True
+OUTPUT_DIR: "results://arch_search/v2/dl-cs-paper_rn"
+VERSION: 1
