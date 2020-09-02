@@ -9,14 +9,15 @@ from ss_recon.utils import complex_utils as cplx
 from skimage.metrics import structural_similarity
 
 
-def compute_mse(ref: torch.Tensor, x: torch.Tensor):
+def compute_mse(ref: torch.Tensor, x: torch.Tensor, is_batch=False):
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
     squared_err = cplx.abs(x - ref) ** 2
-    return torch.mean(squared_err)
+    shape = (x.shape[0], -1) if is_batch else -1
+    return torch.mean(squared_err.view(shape), dim=-1)
 
 
-def compute_l2(ref: torch.Tensor, x: torch.Tensor):
+def compute_l2(ref: torch.Tensor, x: torch.Tensor, is_batch=False):
     """
     Args:
         ref (torch.Tensor): The target. Shape (...)x2
@@ -24,10 +25,10 @@ def compute_l2(ref: torch.Tensor, x: torch.Tensor):
     """
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
-    return torch.sqrt(compute_mse(ref, x))
+    return torch.sqrt(compute_mse(ref, x, is_batch=is_batch))
 
 
-def compute_psnr(ref: torch.Tensor, x: torch.Tensor):
+def compute_psnr(ref: torch.Tensor, x: torch.Tensor, is_batch=False):
     """Compute peak to signal to noise ratio of magnitude image.
 
     Args:
@@ -41,10 +42,11 @@ def compute_psnr(ref: torch.Tensor, x: torch.Tensor):
     assert x.shape[-1] == 2
 
     l2 = compute_l2(ref, x)
+    shape = (x.shape[0], -1) if is_batch else -1
     return 20 * torch.log10(cplx.abs(ref).max() / l2)
 
 
-def compute_nrmse(ref, x):
+def compute_nrmse(ref, x, is_batch=False):
     """Compute normalized root mean square error.
     The norm of reference is used to normalize the metric.
 
@@ -54,8 +56,9 @@ def compute_nrmse(ref, x):
     """
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
-    rmse = compute_l2(ref, x)
-    norm = torch.sqrt(torch.mean(cplx.abs(ref) ** 2))
+    rmse = compute_l2(ref, x, is_batch=is_batch)
+    shape = (x.shape[0], -1) if is_batch else -1
+    norm = torch.sqrt(torch.mean((cplx.abs(ref) ** 2).view(shape), dim=-1))
 
     return rmse / norm
 
@@ -64,7 +67,8 @@ def compute_ssim(
     ref: torch.Tensor,
     x: torch.Tensor,
     multichannel: bool = False,
-    data_range=None,
+    data_range = None,
+    **kwargs,
 ):
     """Compute structural similarity index metric. Does not preserve autograd.
 
@@ -90,6 +94,10 @@ def compute_ssim(
        https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf,
        :DOI:`10.1109/TIP.2003.819861`
     """
+    gaussian_weights = kwargs.get("gaussian_weights", True)
+    sigma = kwargs.get("sigma", 1.5)
+    use_sample_covariance = kwargs.get("use_sample_covariance", False)
+
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
 
@@ -100,15 +108,24 @@ def compute_ssim(
     x = x.squeeze().numpy()
     ref = ref.squeeze().numpy()
 
-    # if not data_range:
-    #     data_range = ref.max() - ref.min()
+    if data_range in ("range", "ref-range"):
+        data_range = ref.max() - ref.min()
+    elif data_range in ("ref-maxval", "maxval"):
+        data_range = ref.max()
+    elif data_range == "x-range":
+        data_range = x.max() - x.min()
+    elif data_range == "x-maxval":
+        data_range = x.max()
 
     return structural_similarity(
         ref,
         x,
         data_range=data_range,
-        gaussian_weights=True,
-        sigma=1.5,
-        use_sample_covariance=False,
+        gaussian_weights=gaussian_weights,
+        sigma=sigma,
+        use_sample_covariance=use_sample_covariance,
         multichannel=multichannel
     )
+
+
+compute_rmse = compute_l2

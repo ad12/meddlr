@@ -1,0 +1,17 @@
+_BASE_: "../n2r_template.yaml"
+MODEL:
+  CONSISTENCY:
+    AUG:
+      NOISE:
+        STD_DEV: (1,)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    ACCELERATIONS: (6,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (6,)
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_UNDERSAMPLED: 13
+OUTPUT_DIR: "results://prelim-exps/n2r_6x/sub-1_stddev-1"
+VERSION: 1

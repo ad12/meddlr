@@ -1,0 +1,33 @@
+_BASE_: "../templates/4x_template.yaml"
+MODEL:
+  META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 8
+    NUM_RESBLOCKS: 2
+    NUM_FEATURES: 128
+    NUM_EMAPS: 1
+    DROPOUT: 0.
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER: ("act", "conv")
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: True
+SOLVER:
+  LR_SCHEDULER_NAME: "WarmupMultiStepLR"
+  TRAIN_BATCH_SIZE: 2
+  TEST_BATCH_SIZE: 12
+  MAX_ITER: 30
+  GAMMA: 0.7
+  STEPS: (5, 10, 15, 20)  # ensures learning rate does not decay
+  BASE_LR: 1e-4
+  WARMUP_FACTOR: 1.0
+  WARMUP_ITERS: 0
+  GRAD_ACCUM_ITERS: 16
+OUTPUT_DIR: "results://fastmri_knee_mc/preliminary/unrolled_8x_feat-128"
+DESCRIPTION:
+  BRIEF: "8x unrolled network, 2 blocks, 128 channels"
+  EXP_NAME: "fastmri_knee_mc/preliminary/unrolled_8x_feat-128"
+  TAGS: ("fastMRI_knee_mc", "unrolled")
+VERSION: 1

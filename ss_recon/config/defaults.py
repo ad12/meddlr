@@ -65,7 +65,9 @@ _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
 # See ss_recon/data/transforms/transform.py for more details.
 _C.MODEL.NORMALIZER = CN()
 _C.MODEL.NORMALIZER.NAME = "TopMagnitudeNormalizer"
-_C.MODEL.NORMALIZER.PROCESS_TARGET = True
+# Keywords to normalize
+# See ss_recon/data/transforms/transform.py for more details
+_C.MODEL.NORMALIZER.KEYWORDS = ()
 
 # -----------------------------------------------------------------------------
 # UNET model 
@@ -106,6 +108,8 @@ _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL = -1
 # Number of scans out of total to undersample. If NUM_TOTAL is not -1, must be
 # less than NUM_TOTAL.
 _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_UNDERSAMPLED = 0
+# Number of scans with ground truth for validation.
+_C.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL = -1
 # Seed for shuffling data. Should always be deterministic
 _C.DATALOADER.SUBSAMPLE_TRAIN.SEED = 1000
 # Options: "" (defaults to random sampling), "AlternatingSampler"

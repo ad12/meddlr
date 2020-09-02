@@ -7,7 +7,7 @@ import logging
 from torch.utils.data import DataLoader
 import numpy as np
 from .catalog import DatasetCatalog
-from .slice_dataset import SliceData, collate_by_supervision
+from .slice_dataset import SliceData, collate_by_supervision, default_collate
 from .transforms import transform as T
 from .transforms.subsample import build_mask_func
 from .samplers import AlternatingSampler
@@ -99,7 +99,7 @@ def get_recon_dataset_dicts(
     return dataset_dicts
 
 
-def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None):
+def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None, is_eval=False):
     keys = cfg.DATALOADER.DATA_KEYS
     if keys:
         assert all(len(x) == 2 for x in keys), "cfg.DATALOADER.DATA_KEYS should be sequence of tuples of len 2"
@@ -107,7 +107,7 @@ def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None):
 
     if dataset_type is None:
         dataset_type = SliceData
-    return dataset_type(dataset_dicts, data_transform, keys=keys)
+    return dataset_type(dataset_dicts, data_transform, keys=keys, include_metadata=is_eval)
 
 
 def build_recon_train_loader(cfg, dataset_type=None):
@@ -124,7 +124,7 @@ def build_recon_train_loader(cfg, dataset_type=None):
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform, dataset_type)
     is_semi_supervised = len(train_data.get_unsupervised_idxs()) > 0
-    collate_fn = collate_by_supervision if is_semi_supervised else None
+    collate_fn = collate_by_supervision if is_semi_supervised else default_collate
 
     # Build sampler.
     sampler = cfg.DATALOADER.SAMPLER_TRAIN
@@ -160,11 +160,13 @@ def build_recon_val_loader(cfg, dataset_name, as_test: bool = False):
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=[dataset_name],
         filter_by=cfg.DATALOADER.FILTER.BY,
+        num_scans_total=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL,
+        seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
     )
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg, mask_func, is_test=as_test)
 
-    train_data = _build_dataset(cfg, dataset_dicts, data_transform)
+    train_data = _build_dataset(cfg, dataset_dicts, data_transform, is_eval=True)
     train_loader = DataLoader(
         dataset=train_data,
         batch_size=cfg.SOLVER.TEST_BATCH_SIZE,
@@ -172,6 +174,7 @@ def build_recon_val_loader(cfg, dataset_name, as_test: bool = False):
         num_workers=cfg.DATALOADER.NUM_WORKERS,
         drop_last=False,
         pin_memory=True,
+        collate_fn=default_collate,
     )
     return train_loader
 
@@ -203,7 +206,7 @@ def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):
             data_transform = T.DataTransform(
                 cfg, mask_func, is_test=True
             )
-            train_data = _build_dataset(cfg, [dataset_dict], data_transform)
+            train_data = _build_dataset(cfg, [dataset_dict], data_transform, is_eval=True)
             loader = DataLoader(
                 dataset=train_data,
                 batch_size=cfg.SOLVER.TEST_BATCH_SIZE,
@@ -211,6 +214,7 @@ def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):
                 num_workers=cfg.DATALOADER.NUM_WORKERS,
                 drop_last=False,
                 pin_memory=True,
+                collate_fn=default_collate,
             )
             loaders["{}x".format(acc)][dataset_dict["file_name"]] = loader
 

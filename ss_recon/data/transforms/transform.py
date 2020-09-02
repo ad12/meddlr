@@ -17,76 +17,100 @@ Registry for normalizing images
 def build_normalizer(cfg):
     cfg = cfg.MODEL.NORMALIZER
     name = cfg.NAME
-    obj = NORMALIZER_REGISTRY.get(name)(process_target=cfg.PROCESS_TARGET)
+    obj = NORMALIZER_REGISTRY.get(name)(keywords=cfg.KEYWORDS)
     return obj
 
 
-class Normalizer():
-    def __init__(self, process_target=True):
-        self._process_target = process_target
+def normalize_affine(x, bias, scale):
+    return (x - bias) / scale
 
-    def normalize(self, masked_kspace, image=None, target=None, mask=None):
+
+def unnormalize_affine(x, bias, scale):
+    return x * scale + bias
+
+
+class Normalizer():
+    """Template for normalizing and undoing normalization for scans."""
+
+    # Keywords of dictionary keys to process (if they exist)
+    # image: The zero-filled or reconstructed image
+    # target: The target (fully-sampled) image
+    # masked_kspace: The kspace used to calculate the zero-filled image.
+    KEYWORDS = ("image", "target", "masked_kspace")
+
+    def __init__(self, keywords=None):
+        if not keywords:
+            keywords = self.KEYWORDS
+        # Copy the sequence to allow modification down the line.
+        self._keywords = tuple(keywords)
+
+    def normalize(self, **kwargs):
         pass
 
-    def undo(self, image, target=None, **kwargs):
+    def undo(self, **kwargs):
         pass
 
 
 @NORMALIZER_REGISTRY.register()
 class NoOpNormalizer(Normalizer):
-    def normalize(self, masked_kspace, image=None, target=None, mask=None):
-        return {
-            "masked_kspace": masked_kspace,
-            "target": target,
+    def normalize(self, **kwargs):
+        outputs = {k: v for k, v in kwargs.items()}
+        outputs.update({
             "mean": torch.tensor([0.0], dtype=torch.float32),
             "std": torch.tensor([1.0], dtype=torch.float32),
-        }
+        })
+        return outputs
 
-    def undo(self, image, target=None, **kwargs):
-        return {
-            "image": image,
-            "target": target
-        }
+    def undo(self, **kwargs):
+        return {k: v for k, v in kwargs.items()}
 
 
 @NORMALIZER_REGISTRY.register()
 class TopMagnitudeNormalizer(Normalizer):
-    def __init__(self, process_target = True, percentile=0.05):
-        super().__init__(process_target)
+    """Normalizes by percentile of magnitude values."""
+    def __init__(self, keywords=None, percentile=0.95, use_mean=False):
+        super().__init__(keywords)
+        assert 0 < percentile <= 1, "Percentile must be in range (0,1]"
         self._percentile = percentile
+        self._use_mean = use_mean
 
-    def normalize(self, masked_kspace, image, target=None, mask=None):
+    def normalize(self, masked_kspace, image, **kwargs):
         magnitude_vals = cplx.abs(image).reshape(-1)
-        k = int(round(self._percentile * magnitude_vals.numel()))
+        k = int(round((1 - self._percentile) * magnitude_vals.numel()))
         scale = torch.min(torch.topk(magnitude_vals, k).values)
 
-        masked_kspace /= scale
-        if self._process_target:
-            target /= scale
+        outputs = {}
+        outputs["masked_kspace"] = masked_kspace / scale
+        outputs["image"] = image / scale
+        if "target" in self._keywords:
+            outputs["target"] = kwargs["target"] / scale
+
         mean = torch.tensor([0.0], dtype=torch.float32)
         std = scale.unsqueeze(-1)
-
-        return {
-            "masked_kspace": masked_kspace,
-            "target": target,
+        outputs.update({
             "mean": mean,
             "std": std,
-        }
+        })
+        
+        # Add other keys that were not computed.
+        outputs.update({k: v for k, v in kwargs.items() if k not in outputs})
+        return outputs
 
-    def undo(self, image, target=None, **kwargs):
-        mean = kwargs["mean"]
-        std = kwargs["std"]
-
+    def undo(self, mean, std, **kwargs):
+        image = kwargs["image"]
         mean = mean.view(mean.shape + (1,)*(image.ndim - mean.ndim)).to(image.device)
         std = std.view(std.shape + (1,)*(image.ndim - std.ndim)).to(image.device)
-        image = image * std + mean
-        if target is not None and self._process_target:
-            target = target * std + mean
 
-        return {
-            "image": image,
-            "target": target,
-        }
+        outputs = {}
+        for kw in ("image", "target"):
+            if kw in self._keywords:
+                outputs[kw] = unnormalize_affine(kwargs[kw], mean, std)
+        if any("kspace" in k for k in kwargs.keys()):
+            raise ValueError("Currently does not support undoing analysis on kspace")
+
+        # Add other keys that were not computed.
+        outputs.update({k: v for k, v in kwargs.items() if k not in outputs})
+        return outputs
 
 
 class Subsampler(object):
@@ -196,7 +220,12 @@ class DataTransform:
         image = A(masked_kspace, adjoint=True)
 
         # Normalize
-        normalized = self._normalizer.normalize(masked_kspace, image, target, mask)
+        normalized = self._normalizer.normalize(**{
+            "masked_kspace": masked_kspace, 
+            "image": image, 
+            "target": target,
+            "mask": mask,
+        })
         masked_kspace = normalized["masked_kspace"]
         target = normalized["target"]
         mean = normalized["mean"]
