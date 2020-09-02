@@ -165,15 +165,15 @@ _USER_PATHS = {
     },
     "ozt": {
         CLUSTER.HARBIN: (
-            "/home/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/data",
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.MRLEARNING: (
-            "/home/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/data",
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.AUTOFOCUS: (
-            "/home/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/data",
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
     },
