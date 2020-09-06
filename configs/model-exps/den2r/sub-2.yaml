@@ -1,0 +1,7 @@
+# Train with only 2 scans.
+_BASE_: "den2r.yaml"
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 2
+OUTPUT_DIR: "results://den2r-subsampled/sub-2"
+VERSION: 1

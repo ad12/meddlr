@@ -37,7 +37,6 @@ class N2RModel(nn.Module):
         noise = noise_std * torch.randn(inputs['kspace'].size())
         masked_noise = noise * mask
         aug_kspace = kspace + masked_noise
-        #import pdb; pdb.set_trace();
 
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = aug_kspace
