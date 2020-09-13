@@ -2,6 +2,7 @@
 import datetime
 import json
 import logging
+import math
 import os
 import sys
 from collections import defaultdict
@@ -170,14 +171,19 @@ class CommonMetricPrinter(EventWriter):
     yourself.
     """
 
-    def __init__(self, max_iter):
+    def __init__(self, max_iter, eval_period=0):
         """
         Args:
             max_iter (int): the maximum number of iterations to train.
                 Used to compute ETA.
+            eval_period (int): the period for performing evaluation.
+                Specifying this will result in a better ETA estimate.
+                Assumes evaluation will be done at least once when training ends
+                and key "eval_time" recorded in `storage.history`.
         """
         self.logger = logging.getLogger(__name__)
         self._max_iter = max_iter
+        self._eval_period = eval_period
 
     def write(self):
         storage = get_event_storage()
@@ -191,6 +197,11 @@ class CommonMetricPrinter(EventWriter):
             eta_seconds = storage.history("time").median(1000) * (
                 self._max_iter - iteration
             )
+            if self._eval_period and "eval_time" in storage.histories():
+                num_eval_done = (iteration + 1) // self._eval_period
+                num_eval_remaining = math.ceil(self._max_iter / self._eval_period) - num_eval_done
+                eta_seconds += storage.history("eval_time").avg(2) * num_eval_remaining
+
             storage.put_scalar("eta_seconds", eta_seconds, smoothing_hint=False)
             eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
         except KeyError:  # they may not exist in the first few iterations (due to warmup)  # noqa: E501

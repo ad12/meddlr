@@ -291,11 +291,16 @@ class DefaultTrainer(SimpleTrainer):
             ]
 
         """
+        assert self.cfg.TIME_SCALE == "iter" and self.cfg.TEST.EVAL_PERIOD >= 0, (
+            "cfg should be formatted in 'iter' time scale"
+        )
+        eval_period = self.cfg.TEST.EVAL_PERIOD
+
         # Assume the default print/log frequency.
         return [
             # It may not always print what you want to see,
             # since it prints "common" metrics only.
-            CommonMetricPrinter(self.max_iter),
+            CommonMetricPrinter(self.max_iter, eval_period=eval_period),
             JSONWriter(os.path.join(self.cfg.OUTPUT_DIR, "metrics.json")),
             TensorboardXWriter(self.cfg.OUTPUT_DIR),
         ]

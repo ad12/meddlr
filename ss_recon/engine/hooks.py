@@ -346,6 +346,8 @@ class EvalHook(HookBase):
         self._optimizer = optimizer
 
     def _do_eval(self):
+        start_time = time.perf_counter()
+
         results = self._func()
 
         if results:
@@ -368,6 +370,9 @@ class EvalHook(HookBase):
             self.trainer.storage.put_scalars(
                 **flattened_results, smoothing_hint=False
             )
+
+        time_elapsed = time.perf_counter() - start_time  # in seconds
+        self.trainer.storage.put_scalars(eval_time=time_elapsed, smoothing_hint=False)
 
     def after_step(self):
         next_iter = self.trainer.iter + 1
