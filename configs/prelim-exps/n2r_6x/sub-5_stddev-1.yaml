@@ -13,5 +13,9 @@ AUG_TEST:
 DATALOADER:
   SUBSAMPLE_TRAIN:
     NUM_UNDERSAMPLED: 9
+DESCRIPTION:
+  BRIEF: "N2R - 5 subject recon / 9 subjects undersample, 6x undersampling"
+  EXP_NAME: "mridata_knee_2019/n2r_6x/sub-5_stddev-1"
+  TAGS: ("n2r". "mridata_knee_2019", "sub-5")
 OUTPUT_DIR: "results://prelim-exps/n2r_6x/sub-5_stddev-1"
 VERSION: 1

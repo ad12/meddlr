@@ -4,5 +4,9 @@
 _BASE_: "alt_sampler.yaml"
 SOLVER:
   TRAIN_BATCH_SIZE: 2
+DESCRIPTION:
+  BRIEF: "N2R with alternate sampling (train batch size 2)"
+  EXP_NAME: "n2r_search/alt_sampler_bs-2"
+  TAGS: ("n2r". "mridata_knee_2019", "alt_sampler")
 OUTPUT_DIR: "results://n2r-experiments/alt_sampler_bs-2"
 VERSION: 1

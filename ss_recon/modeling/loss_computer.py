@@ -95,7 +95,7 @@ class N2RLossComputer(LossComputer):
         # self.beta = cfg.MODEL.LOSS.BETA
         # self.robust_step_size = cfg.MODEL.LOSS.ROBUST_STEP_SIZE
 
-    def _compute_metrics(self, output, loss):
+    def _compute_metrics(self, input, output, loss):
         """Computes image metrics on prediction and target data.
         """
         if output is None or len(output) == 0:
@@ -144,14 +144,14 @@ class N2RLossComputer(LossComputer):
         loss = 0
         metrics_recon = {
             "recon_{}".format(k): v
-            for k, v in self._compute_metrics(output_recon, self.recon_loss).items()
+            for k, v in self._compute_metrics(input.get("supervised", None), output_recon, self.recon_loss).items()
         }
         if output_recon is not None:
             loss += metrics_recon["recon_loss"]
 
         metrics_consistency = {
             "cons_{}".format(k): v
-            for k, v in self._compute_metrics(output_consistency, self.consistency_loss).items() # noqa
+            for k, v in self._compute_metrics(input.get("unsupervised", None), output_consistency, self.consistency_loss).items() # noqa
         }
         if output_consistency is not None:
             loss += self.consistency_weight * metrics_consistency["cons_loss"]

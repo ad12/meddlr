@@ -5,18 +5,27 @@ import torchvision.utils as tv_utils
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils.events import get_event_storage
 
-from .build import META_ARCH_REGISTRY
-from .unrolled import GeneralizedUnrolledCNN
+from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 
 
 @META_ARCH_REGISTRY.register()
 class N2RModel(nn.Module):
+    _version = 2
+
     def __init__(self, cfg):
         super().__init__()
-        self.unrolled = GeneralizedUnrolledCNN(cfg)
-        self.unrolled.vis_period = -1
 
+        model_cfg = cfg.clone()
+        model_cfg.defrost()
+        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.N2R.META_ARCHITECTURE
+        model_cfg.freeze()
+        self.model = build_model(model_cfg)
+
+        # Visualization done by this model
+        if hasattr(self.model, "vis_period"):
+            self.model.vis_period = -1
         self.vis_period = cfg.VIS_PERIOD
+
         # Keep gradient for base images in transform.
         self.use_base_grad = False
 
@@ -87,7 +96,7 @@ class N2RModel(nn.Module):
                 "unsupervised inputs should not be provided in eval mode"
             )
             inputs = inputs.get("supervised", inputs)
-            return self.unrolled(inputs)
+            return self.model(inputs)
 
         vis_training = False
         if self.training and self.vis_period > 0:
@@ -103,7 +112,7 @@ class N2RModel(nn.Module):
 
         # Recon
         if inputs_supervised is not None:
-            output_dict["recon"] = self.unrolled(
+            output_dict["recon"] = self.model(
                 inputs_supervised, return_pp=True, vis_training=vis_training,
             )
 
@@ -111,8 +120,8 @@ class N2RModel(nn.Module):
         if inputs_unsupervised is not None:
             inputs_us_aug = self.augment(inputs_unsupervised)
             with torch.no_grad():
-                pred_base = self.unrolled(inputs_unsupervised)["pred"]
-            pred_aug = self.unrolled(inputs_us_aug, return_pp=True)
+                pred_base = self.model(inputs_unsupervised)["pred"]
+            pred_aug = self.model(inputs_us_aug, return_pp=True)
             if "target" in pred_aug:
                 del pred_aug["target"]
             pred_aug["target"] = pred_base.detach()
@@ -126,3 +135,12 @@ class N2RModel(nn.Module):
                 )
 
         return output_dict
+
+    def load_state_dict(self, state_dict, strict=True):
+        # TODO: Configure backwards compatibility
+        if any(x.startswith("unrolled") for x in state_dict.keys()):
+            raise ValueError(
+                "`self.unrolled` was renamed to `self.model`. "
+                "Backwards compatibility has not been configured."
+            )
+        super().load_state_dict(state_dict, strict)

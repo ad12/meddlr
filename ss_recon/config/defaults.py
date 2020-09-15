@@ -88,6 +88,13 @@ _C.MODEL.DENOISING.NOISE = CN()
 _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
 
 # -----------------------------------------------------------------------------
+# Noise2Recon (N2R) model 
+# -----------------------------------------------------------------------------
+_C.MODEL.N2R = CN()
+_C.MODEL.N2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+# Use MODEL.CONSISTENCY.AUG.NOISE.STD_DEV to control noise parameters.
+
+# -----------------------------------------------------------------------------
 # Dataset
 # -----------------------------------------------------------------------------
 _C.DATASETS = CN()

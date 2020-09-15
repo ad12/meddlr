@@ -12,8 +12,18 @@
 # Seeds:
 # - General: 1000
 # - DataLoader: 1000
+DESCRIPTION:
+  BRIEF: "Template for N2R experiments"
+  EXP_NAME: ""
+  TAGS: ("n2r". "mridata_knee_2019")
 MODEL:
   META_ARCHITECTURE: "N2RModel"
+  N2R:
+    META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+  CONSISTENCY:
+    AUG:
+      NOISE:
+        NOISE_STD: (1,)
   UNROLLED:
     NUM_UNROLLED_STEPS: 8
     NUM_RESBLOCKS: 2

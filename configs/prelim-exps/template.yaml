@@ -26,7 +26,7 @@ MODEL:
       ORDER: ("act", "conv")
   RECON_LOSS:
     NAME: "l1"
-    RENORMALIZE_DATA: True
+    RENORMALIZE_DATA: False
 DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
   VAL: ("mridata_knee_2019_val",)
@@ -41,8 +41,8 @@ DATALOADER:
 SOLVER:
   OPTIMIZER: "Adam"
   LR_SCHEDULER_NAME: ""
-  TRAIN_BATCH_SIZE: 2
-  TEST_BATCH_SIZE: 8
+  TRAIN_BATCH_SIZE: 1
+  TEST_BATCH_SIZE: 4
   MAX_ITER: 160000
   GAMMA: 1.0 # do not decrease learning rate.
   STEPS: ()  # ensures learning rate does not decay
