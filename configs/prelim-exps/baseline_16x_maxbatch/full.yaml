@@ -1,0 +1,14 @@
+_BASE_: "template.yaml"
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: -1
+DESCRIPTION:
+  BRIEF: "Baseline (acceleration 16x) experiments with mridata.org 3D FSE dataset with maximum batch size - full"
+  EXP_NAME: "mridata_knee_2019/baseline_16x_maxbatch/full"
+  TAGS: ("mridata_knee_2019", "unrolled", "baseline_16x")
+SOLVER:
+  CHECKPOINT_PERIOD: -5  # checkpoint every 5 epochs to reduce checkpointing frequency
+TEST:
+  EVAL_PERIOD: -5  # eval every 5 epochs to reduce eval frequency
+OUTPUT_DIR: "results://prelim_exps/baseline_16x_maxbatch/full"
+VERSION: 1
