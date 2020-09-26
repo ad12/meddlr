@@ -1,6 +1,10 @@
+import logging
+
 from torch.optim.optimizer import Optimizer
 
 __all__ = ["GradAccumOptimizer"]
+
+logger = logging.getLogger(__name__)
 
 
 class GradAccumOptimizer(object):
@@ -11,14 +15,26 @@ class GradAccumOptimizer(object):
         self.step_iters = 0
 
     def state_dict(self):
+        # `step_iters` is not saved because if step_iters > 0, 
+        # gradients were being accumulated. However when the state dict is saved,
+        # there is no way of restoring these gradients.
+        # So a `step_iters`>0 would falsely indicate we have some gradients 
+        # accumulated when we do not.
         return {
             "optimizer": self.optimizer.state_dict(),
-            "accumulation_iters": self.optimizer.state_dict(),
+            "accumulation_iters": self.accumulation_iters,
         }
 
     def load_state_dict(self, state_dict):
-        self.optimizer.load_state_dict(state_dict["optimizer"])
-        self.accumulation_iters = state_dict["accumulation_iters"]
+        if isinstance(state_dict["accumulation_iters"], int):
+            # Needed because of a bug in our saving the state dict
+            self.accumulation_iters = state_dict["accumulation_iters"]
+        else:
+            logger.warning(
+                f"`accumulation_iters` is of the wrong type due to saving issue. "
+                f"Using initialized value of {self.accumulation_iters}."
+            )
+        return self.optimizer.load_state_dict(state_dict["optimizer"])
 
     def zero_grad(self):
         if self.step_iters % self.accumulation_iters == 0:
