@@ -143,4 +143,4 @@ class N2RModel(nn.Module):
                 "`self.unrolled` was renamed to `self.model`. "
                 "Backwards compatibility has not been configured."
             )
-        super().load_state_dict(state_dict, strict)
+        return super().load_state_dict(state_dict, strict)
