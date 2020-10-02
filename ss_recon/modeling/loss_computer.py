@@ -156,8 +156,11 @@ class N2RLossComputer(LossComputer):
         if output_consistency is not None:
             loss += self.consistency_weight * metrics_consistency["cons_loss"]
 
-        metrics_consistency.update(metrics_recon)
-        metrics = metrics_consistency
+        metrics = {}
+        if output_consistency is not None:
+            metrics.update(metrics_consistency)
+        if output_recon is not None:
+            metrics.update(metrics_recon)
 
         metrics["loss"] = loss
         return metrics

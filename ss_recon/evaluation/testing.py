@@ -1,10 +1,14 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+import json
 import logging
 import pprint
+import os
 import sys
 from collections import Mapping, OrderedDict
 
 import numpy as np
+import torch
+from tabulate import tabulate
 
 
 def print_csv_format(results):
@@ -24,6 +28,14 @@ def print_csv_format(results):
     logger.info(
         "copypaste: "
         + ",".join(["{0:.4f}".format(k[1]) for k in important_res])
+    )
+
+    # Additional formatting
+    logger.info(
+        "Metrics (comma delimited): \n{}\n{}".format(
+            ",".join([k[0] for k in important_res]),
+            ",".join(["{0:.4f}".format(k[1]) for k in important_res])
+        )
     )
 
 
@@ -78,3 +90,126 @@ def flatten_results_dict(results):
         else:
             r[k] = v
     return r
+
+
+# Supported validation metrics and the operation to perform on them.
+SUPPORTED_VAL_METRICS = {
+    "l1": "min",
+    "l2": "min",
+    "psnr": "max",
+    "ssim": "max",
+    "iteration": "max",  # find the last checkpoint
+}
+
+def find_weights(cfg, criterion="", iter_limit=None):
+    """Find the best weights based on a validation criterion/metric.
+
+    Args:
+        criterion (str): The criterion that we can select from 
+    """
+    logger = logging.getLogger(__name__)
+
+    ckpt_period = cfg.SOLVER.CHECKPOINT_PERIOD
+    eval_period = cfg.TEST.EVAL_PERIOD
+    if (
+        ckpt_period * eval_period <= 0  # same sign (i.e. same time scale)
+        or abs(eval_period) % abs(ckpt_period) != 0  # checkpoint period is multiple of eval period
+    ):
+        raise ValueError(
+            "Cannot find weights if checkpoint/eval periods "
+            "at different time scales or eval period is not"
+            "a multiple of checkpoint period."
+        )
+
+    if not criterion:
+        criterion = cfg.MODEL.RECON_LOSS.NAME.lower()
+        operation = "min"  # loss is always minimized
+    else:
+        operation = SUPPORTED_VAL_METRICS[criterion]
+
+    assert operation in ["min", "max"]
+    if criterion != "iteration":
+        criterion = "val_{}".format(criterion)
+
+    logger.info("Finding best weights in {} using {}...".format(cfg.OUTPUT_DIR, criterion))
+
+    # Filter metrics to find reporting of real validation metrics.
+    # If metric is wrapped (e.g. "mridata_knee_2019_val/val_l1"), that means
+    # multiple datasets were validated on.
+    # We filter out metrics from datasets that contain the word "test".
+    # The criterion from all other datasets are averaged and used as the
+    # target criterion.
+    metrics_file = os.path.join(cfg.OUTPUT_DIR, "metrics.json")
+    metrics = []
+    with open(metrics_file, "r") as f:
+        metrics = [json.loads(line.strip()) for line in f]
+    metrics = [
+        m for m in metrics 
+        if criterion in m or any(k.endswith(criterion) for k in m.keys())
+    ]
+    is_metric_wrapped = criterion not in metrics[0]
+    if is_metric_wrapped:
+        metrics = [
+            (
+                m["iteration"], 
+                np.mean([
+                    m[k] for k in m 
+                    if k.endswith(criterion) and "test" not in k.split("/")[0]
+                ]).item(),
+            )
+            for m in metrics
+        ]
+    else:
+        metrics = [(m["iteration"], m[criterion]) for m in metrics]
+
+    # Filter out all metrics calculated above iter limit.
+    if iter_limit:
+        metrics = [x for x in metrics if x[0] < iter_limit]
+
+    last_iter = metrics[-1][0]
+
+    # Retraining does not overwrite the metrics file.
+    # We make sure that the metrics correspond only to the most
+    # recent run.
+    metrics_recent_order = metrics[::-1]
+    iterations = [m[0] for m in metrics_recent_order]
+    intervals = np.diff(iterations)
+    if any(intervals > 0):
+        stop_idx = np.argmax(intervals > 0) + 1
+        metrics_recent_order = metrics_recent_order[:stop_idx]
+        metrics = metrics_recent_order[::-1]
+
+    # Note that resuming can sometimes report metrics for the same
+    # iteration. We handle this by taking the most recent metric for the
+    # iteration __after__ filtering out old training runs.
+    metrics = {iteration: value for iteration, value in metrics}
+    metrics = [(k, v) for k, v in metrics.items()]
+    best_iter, best_value = sorted(metrics, key=lambda x: x[1], reverse=operation=="max")[0]
+
+    file_name = "model_{:07d}.pth".format(best_iter)
+    if best_iter == last_iter and not os.path.isfile(os.path.join(cfg.OUTPUT_DIR, file_name)):
+        file_name = "model_final.pth"
+    file_path = os.path.join(cfg.OUTPUT_DIR, file_name)
+
+    if not os.path.isfile(file_path):
+        raise ValueError("Model for iteration {} does not exist".format(best_iter))
+
+    logger.info("Weights: {} - {}: {:0.4f}".format(file_name, criterion, best_value))
+    return file_path
+
+
+def check_consistency(state_dict, model):
+    """Verifies that the proper weights were loaded into the model.
+
+    Related to issue that loading weights from checkpoints of a cuda model
+    does not properly load when model is on cpu. It may also result in
+    warnings for contiguous tensors, but this is not always the case. 
+    https://github.com/pytorch/pytorch/issues/42300
+
+    Args:
+        state_dict (Dict): A model state dict.
+        model (nn.Module): A Pytorch model.
+    """
+    _state_dict = model.state_dict()
+    for k in state_dict:
+        assert torch.equal(state_dict[k], _state_dict[k]), f"Mismatch values: {k}"

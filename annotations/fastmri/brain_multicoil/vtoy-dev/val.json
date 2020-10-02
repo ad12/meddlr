@@ -1,0 +1,18 @@
+{
+  "info": {
+    "contributor": "arjundd",
+    "description": "fastMRI brain_multicoil Dataset - val",
+    "year": "2020",
+    "date_created": "2020-09-30 19-26-45 PDT",
+    "version": "vtoy-dev"
+  },
+  "images": [
+    {
+      "file_name": "file_brain_AXT1POST_201_6002752.h5",
+      "scan_id": "_brain_AXT1POST_201_6002752",
+      "patient_id": "c1e8b4993f228c94034a518786c350fc542b5ae25e6d3c36fa8b781fc368cebb",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    }
+  ]
+}

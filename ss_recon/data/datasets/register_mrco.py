@@ -46,7 +46,7 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
     dataset_dicts = []
     for d in data["images"]:
         dd = dict(d)
-        if image_root is not None and "file_path" not in d:
+        if image_root is not None:
             file_name = PathManager.get_local_path(os.path.join(image_root, d["file_name"]))
         else:
             file_name = PathManager.get_local_path(d["file_path"])

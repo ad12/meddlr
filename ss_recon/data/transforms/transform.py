@@ -1,5 +1,6 @@
 """Basic Transforms.
 """
+import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
@@ -141,7 +142,7 @@ class DataTransform:
     For scans that
     """
 
-    def __init__(self, cfg, mask_func, is_test: bool = False):
+    def __init__(self, cfg, mask_func, is_test: bool = False, add_noise: bool = False):
         """
         Args:
             mask_func (utils.subsample.MaskFunc): A function that can create a
@@ -158,15 +159,20 @@ class DataTransform:
         # Build subsampler.
         # mask_func = build_mask_func(cfg)
         self._subsampler = Subsampler(self.mask_func)
+        self.add_noise = add_noise
+        seed = cfg.SEED if cfg.SEED > -1 else None
+        self.rng = np.random.RandomState(seed)
+        self.noiser = T.NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
+        self.p_noise = cfg.AUG_TRAIN.NOISE_P
         self._normalizer = build_normalizer(cfg)
 
     def __call__(
-        self, 
-        kspace, 
-        maps, 
-        target, 
-        fname, 
-        slice, 
+        self,
+        kspace,
+        maps,
+        target,
+        fname,
+        slice,
         is_fixed,
         acceleration: int = None,
     ):
@@ -230,6 +236,10 @@ class DataTransform:
         target = normalized["target"]
         mean = normalized["mean"]
         std = normalized["std"]
+
+        add_noise = self.add_noise and (self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise))
+        if add_noise:
+            masked_kspace = self.noiser(masked_kspace, mask=mask, seed=seed)
 
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)

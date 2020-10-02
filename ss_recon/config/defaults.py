@@ -155,6 +155,9 @@ _C.AUG_TRAIN.UNDERSAMPLE.NAME = "PoissonDiskMaskFunc"
 _C.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6,)
 _C.AUG_TRAIN.UNDERSAMPLE.CALIBRATION_SIZE = 20
 _C.AUG_TRAIN.UNDERSAMPLE.CENTER_FRACTIONS = ()
+# Augment with noise. See MODEL.CONSISTENCY.AUG.NOISE for parameters. 
+_C.AUG_TRAIN.USE_NOISE = False
+_C.AUG_TRAIN.NOISE_P = 0.2
 
 _C.AUG_TEST = CN()
 _C.AUG_TEST.UNDERSAMPLE = CN()
@@ -221,7 +224,7 @@ _C.TEST.EXPECTED_RESULTS = []
 # Validate with test-like functionality.
 # If True, undersampling masks for every validation scan will be fixed
 # given an acceleration.
-_C.TEST.VAL_AS_TEST = False
+_C.TEST.VAL_AS_TEST = True
 
 # ---------------------------------------------------------------------------- #
 # Misc options

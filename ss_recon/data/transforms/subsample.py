@@ -189,8 +189,11 @@ class RandomMaskFunc1D(MaskFunc):
         num_rows = shape[1]
         num_cols = shape[2]
         if self.center_fractions:
-            choice = np.random.randint(0, len(self.center_fractions))
-            center_fraction = self.center_fractions[choice]
+            if isinstance(self.center_fractions, Sequence):
+                choice = np.random.randint(0, len(self.center_fractions))
+                center_fraction = self.center_fractions[choice]
+            else:
+                center_fraction = self.center_fractions
         else:
             center_fraction = self.calib_size / num_cols
         if acceleration is None:
@@ -211,7 +214,7 @@ class RandomMaskFunc1D(MaskFunc):
         mask = torch.from_numpy(mask)
 
         if seed is not None:
-            np.set_state(np_state)
+            np.random.set_state(np_state)
 
         return mask
 

@@ -120,7 +120,7 @@ def build_recon_train_loader(cfg, dataset_type=None):
         filter_by=cfg.DATALOADER.FILTER.BY,
     )
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(cfg, mask_func, is_test=False)
+    data_transform = T.DataTransform(cfg, mask_func, is_test=False, add_noise=cfg.AUG_TRAIN.USE_NOISE)
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform, dataset_type)
     is_semi_supervised = len(train_data.get_unsupervised_idxs()) > 0
@@ -156,7 +156,7 @@ def build_recon_train_loader(cfg, dataset_type=None):
     return train_loader
 
 
-def build_recon_val_loader(cfg, dataset_name, as_test: bool = False):
+def build_recon_val_loader(cfg, dataset_name, as_test: bool = False, add_noise: bool = False):
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=[dataset_name],
         filter_by=cfg.DATALOADER.FILTER.BY,
@@ -164,7 +164,7 @@ def build_recon_val_loader(cfg, dataset_name, as_test: bool = False):
         seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
     )
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(cfg, mask_func, is_test=as_test)
+    data_transform = T.DataTransform(cfg, mask_func, is_test=as_test, add_noise=add_noise)
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform, is_eval=True)
     train_loader = DataLoader(

@@ -117,6 +117,8 @@ class N2RModel(nn.Module):
             )
 
         # Consistency.
+        # kspace_aug = kspace + U \sigma \mathcal{N}
+        # Loss = L(f(kspace_aug, \theta), f(kspace, \theta))
         if inputs_unsupervised is not None:
             inputs_us_aug = self.augment(inputs_unsupervised)
             with torch.no_grad():

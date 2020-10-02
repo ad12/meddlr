@@ -29,6 +29,7 @@ __all__ = [
     "LRScheduler",
     "AutogradProfiler",
     "EvalHook",
+    "FlushOptimizer",
 ]
 
 
@@ -318,6 +319,19 @@ class AutogradProfiler(HookBase):
                 f.write(content)
 
 
+class FlushOptimizer(HookBase):
+    """Flush optimizer after period(s). Typically done before eval."""
+    def __init__(self, optimizer: GradAccumOptimizer, period):
+        self._period = period
+        self._optimizer = optimizer
+    
+    def after_step(self):
+        next_iter = self.trainer.iter + 1
+        is_final = next_iter == self.trainer.max_iter
+        if is_final or (self._period > 0 and next_iter % self._period == 0):
+            self._optimizer.flush()
+
+
 class EvalHook(HookBase):
     """
     Run an evaluation function periodically, and at the end of training.
@@ -326,14 +340,12 @@ class EvalHook(HookBase):
     iteration.
     """
 
-    def __init__(self, eval_period, eval_function, optimizer: GradAccumOptimizer=None):
+    def __init__(self, eval_period, eval_function):
         """
         Args:
             eval_period (int): the period to run `eval_function`.
             eval_function (callable): a function which takes no arguments, and
                 returns a nested dict of evaluation metrics.
-            optimizer (GradAccumOptimizer, optional): If specified, the optimizer
-                is flushed (i.e. step + zero grad) before evaluation.
 
         Note:
             This hook must be enabled in all or none workers.
@@ -343,7 +355,6 @@ class EvalHook(HookBase):
         self._period = eval_period
         self._func = eval_function
         self._done_eval_at_last = False
-        self._optimizer = optimizer
 
     def _do_eval(self):
         start_time = time.perf_counter()
@@ -378,8 +389,6 @@ class EvalHook(HookBase):
         next_iter = self.trainer.iter + 1
         is_final = next_iter == self.trainer.max_iter
         if is_final or (self._period > 0 and next_iter % self._period == 0):
-            if self._optimizer is not None:
-                self._optimizer.flush()
             self._do_eval()
             if is_final:
                 self._done_eval_at_last = True

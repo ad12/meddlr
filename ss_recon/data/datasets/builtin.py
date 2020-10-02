@@ -44,17 +44,45 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
     ),
 
     "fastMRI_knee_multicoil_v0.0.1_train": (
-        None,
-        "fastmri/knee_multicoil/annotations/v0.0.1-dev/train.json"
+        "fastmri/knee_multicoil/train",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/train.json"
     ),
     "fastMRI_knee_multicoil_v0.0.1_val": (
-        None,
-        "fastmri/knee_multicoil/annotations/v0.0.1-dev/val.json"
+        "fastmri/knee_multicoil/train",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/val.json"
     ),
     "fastMRI_knee_multicoil_v0.0.1_test": (
-        None,
-        "fastmri/knee_multicoil/annotations/v0.0.1-dev/test.json"
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/test.json"
     ),
+
+    "fastMRI_knee_multicoil_mini_v0.0.1_train": (
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/train.json"
+    ),
+    "fastMRI_knee_multicoil_mini_v0.0.1_val": (
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/val.json"
+    ),
+    "fastMRI_knee_multicoil_mini_v0.0.1_test": (
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/test.json"
+    )
+}
+
+_PREDEFINED_SPLITS_MRCO["fastMRI_brain_multicoil"] = {
+    "fastMRI_brain_multicoil_dev_train": (
+        "fastmri/brain_multicoil/train",
+        "ann://fastmri/brain_multicoil/vtoy-dev/train.json"
+    ),
+    "fastMRI_brain_multicoil_dev_val": (
+        "fastmri/brain_multicoil/train",
+        "ann://fastmri/brain_multicoil/vtoy-dev/val.json"
+    ),
+    "fastMRI_brain_multicoil_dev_test": (
+        "fastmri/brain_multicoil/val",
+        "ann://fastmri/brain_multicoil/vtoy-dev/test.json"
+    )
 }
 
 

@@ -26,24 +26,14 @@ class ReconEvaluator(DatasetEvaluator):
     - SSIM (to be implemented)
     """
 
-    def __init__(self, dataset_name, cfg, output_dir=None):
+    def __init__(self, dataset_name, cfg, output_dir=None, group_by_scan=False):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
-                It must have either the following corresponding metadata:
-
-                    "json_file": the path to the COCO format annotation
-
-                Or it must be in detectron2's standard dataset format
-                so it can be converted to COCO format automatically.
             cfg (CfgNode): config instance
-            output_dir (str): optional, an output directory to dump all
-                results predicted on the dataset. The dump contains two files:
-
-                1. "instance_predictions.pth" a file in torch serialization
-                   format that contains all the raw original predictions.
-                2. "coco_instances_results.json" a json file in COCO's result
-                   format.
+            output_dir (str, optional): an output directory to dump all
+                results predicted on the dataset. Currently not used.
+            group_by_scan (bool, optional): If `True`, groups metrics by scan.
         """
         # self._tasks = self._tasks_from_config(cfg)
         self._output_dir = output_dir
@@ -51,6 +41,7 @@ class ReconEvaluator(DatasetEvaluator):
         self._cpu_device = torch.device("cpu")
         self._logger = logging.getLogger(__name__)
         self._normalizer = build_normalizer(cfg)
+        self._group_by_scan = group_by_scan
 
         # TODO: Uncomment when metadata is supported
         # self._metadata = MetadataCatalog.get(dataset_name)
@@ -66,6 +57,7 @@ class ReconEvaluator(DatasetEvaluator):
     def reset(self):
         self._predictions = []
         self._scan_map = defaultdict(dict)
+        self.scans = None
 
     def _tasks_from_config(self, cfg):
         """
@@ -140,6 +132,9 @@ class ReconEvaluator(DatasetEvaluator):
         return scans
 
     def evaluate(self):
+        if self._group_by_scan:
+            return self._evaluate_by_group()
+
         if len(self._predictions) == 0:
             self._logger.warning(
                 "[ReconEvaluator] Did not receive valid predictions."
@@ -153,6 +148,7 @@ class ReconEvaluator(DatasetEvaluator):
                 pred_vals[f"val_{k}"].append(v)
 
         scans = self.structure_scans()
+        self.scans = scans
         scans = scans.values()
         for pred in scans:
             val = self.evaluate_prediction(pred)
@@ -164,6 +160,38 @@ class ReconEvaluator(DatasetEvaluator):
         )
         # Copy so the caller can do whatever with results
         return copy.deepcopy(self._results)
+    
+    def _evaluate_by_group(self):
+        """Keeping this separate for now to avoid breaking existing functionality."""
+        if len(self._predictions) == 0:
+            self._logger.warning(
+                "[ReconEvaluator] Did not receive valid predictions."
+            )
+            return {}
+
+        # Per slice evaluation.
+        pred_vals = defaultdict(lambda: defaultdict(list))
+        for pred in self._predictions:
+            scan_id = pred["metadata"]["scan_id"]
+            val = self.evaluate_prediction(pred)
+            for k, v in val.items():
+                pred_vals[scan_id][f"{k}"].append(v)
+
+        # Full scan evaluation
+        scans = self.structure_scans()
+        for scan_id, pred in scans.items():
+            val = self.evaluate_prediction(pred)
+            for k, v in val.items():
+                pred_vals[scan_id][f"{k}_scan"].append(v)
+
+        self._results = OrderedDict({
+            scan_id: {k: np.mean(v) for k, v in metrics.items()} 
+            for scan_id, metrics in pred_vals.items()
+        })
+
+        # Copy so the caller can do whatever with results
+        return copy.deepcopy(self._results)
+
 
     def evaluate_prediction(self, prediction):
         output, target = prediction["pred"], prediction["target"]

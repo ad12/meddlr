@@ -4,7 +4,9 @@ Copyright (c) Facebook, Inc. and its affiliates.
 This source code is licensed under the MIT license found in the
 LICENSE file in the root directory of this source tree.
 """
+from typing import Sequence, Union
 
+import numpy as np
 import torch
 from torch import nn
 
@@ -41,6 +43,51 @@ class SenseModel(nn.Module):
         else:
             output = self._forward_op(input)
         return output
+
+
+class NoiseModel():
+    """A model that adds additive white noise.
+
+    Note we do not store this as a module or else it would be saved to the model
+    definition, which we dont want.
+    """
+    def __init__(self, std_devs: Union[float, Sequence[float]], seed=None):
+        if not isinstance(std_devs, Sequence):
+            std_devs = (std_devs,)
+        self.std_devs = std_devs
+
+        # For reproducibility.
+        g = torch.Generator()
+        if seed:
+            g = g.manual_seed(seed)
+        self.generator = g
+    
+    def choose_std_dev(self):
+        """Chooses a random acceleration rate given a range.
+        """
+        if not isinstance(self.std_devs, Sequence) or len(self.std_devs) == 1:
+            return self.std_devs[0]
+        assert False, "We should not reach here ever for now"
+        std_range = self.std_devs[1] - self.std_devs[0]
+        std_dev = self.std_devs[0] + std_range * self.generator.rand(1).item()
+        return std_dev
+
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
+
+    def forward(self, kspace, mask=None, seed=None, clone=True) -> torch.Tensor:
+        """Performs augmentation on undersampled kspace mask."""
+        if clone:
+            kspace = kspace.clone()
+        mask = cplx.get_mask(kspace)
+
+        g = self.generator if seed is None else torch.Generator().manual_seed(seed)
+        noise_std = self.choose_std_dev()
+        noise = noise_std * torch.randn(kspace.size(), generator=g)
+        masked_noise = noise * mask
+        aug_kspace = kspace + masked_noise
+
+        return aug_kspace
 
 
 class ArrayToBlocks(nn.Module):

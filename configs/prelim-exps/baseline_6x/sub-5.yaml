@@ -1,17 +1,10 @@
-_BASE_: "../baseline_template.yaml"
-MODEL:
-  CONSISTENCY:
-    AUG:
-      NOISE:
-        STD_DEV: (1,)
-AUG_TRAIN:
-  UNDERSAMPLE:
-    ACCELERATIONS: (6,)
-AUG_TEST:
-  UNDERSAMPLE:
-    ACCELERATIONS: (6,)
+_BASE_: "template.yaml"
 DATALOADER:
   SUBSAMPLE_TRAIN:
     NUM_TOTAL: 5
+DESCRIPTION:
+  BRIEF: "Baseline (acceleration 6x) experiments with mridata.org 3D FSE dataset - 5 subjects"
+  EXP_NAME: "mridata_knee_2019/baseline_6x/sub-5"
+  TAGS: ("mridata_knee_2019", "unrolled", "baseline_6x")
 OUTPUT_DIR: "results://prelim-exps/baseline_6x/sub-5"
 VERSION: 1

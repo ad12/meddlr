@@ -1,0 +1,10 @@
+_BASE_: "config-01.yaml"
+MODEL:
+  RECON_LOSS:
+    RENORMALIZE_DATA: False
+OUTPUT_DIR: "results://fastmri_knee_mc_mini/hyperparam_search/config-02"
+DESCRIPTION:
+  BRIEF: "8x unrolled network, 2 blocks, 128 channels, 2x16 grad accum, 30 epochs, step decay at 10/20 epochs, lr=1e-4, no renormalize data"
+  EXP_NAME: "fastmri_knee_mc_mini/hyperparam_search/config-02"
+  TAGS: ("fastmri_knee_mc_mini", "hyperparameter_search")
+VERSION: 1

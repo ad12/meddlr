@@ -17,9 +17,9 @@ AUG_TRAIN:
     CALIBRATION_SIZE: 0
     CENTER_FRACTIONS: (0.04,)
 DATASETS:
-  TRAIN: ("fastMRI_knee_multicoil_dev_train",)
-  VAL: ("fastMRI_knee_multicoil_dev_val",)
-  TEST: ("fastMRI_knee_multicoil_dev_test",)
+  TRAIN: ("fastMRI_knee_multicoil_v0.0.1_train",)
+  VAL: ("fastMRI_knee_multicoil_v0.0.1_val",)
+  TEST: ("fastMRI_knee_multicoil_v0.0.1_test",)
 DATALOADER:
   NUM_WORKERS: 0  # for debugging purposes
   DATA_KEYS: (("target", "jsense-8/target"), ("maps", "jsense-8/maps"))

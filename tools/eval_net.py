@@ -9,6 +9,7 @@ Supported metrics include:
     - psnr
     - nrmse
 """
+import itertools
 import json
 import logging
 import os
@@ -28,70 +29,29 @@ from ss_recon.engine import (
     default_argument_parser,
     default_setup,
 )
+from ss_recon.engine.defaults import init_wandb_run
 from ss_recon.checkpoint import DetectionCheckpointer
 from ss_recon.evaluation import metrics
-from ss_recon.data.build import build_data_loaders_per_scan
+from ss_recon.evaluation.testing import check_consistency, find_weights, SUPPORTED_VAL_METRICS
+from ss_recon.data.build import build_data_loaders_per_scan, build_recon_val_loader
 from ss_recon.utils.logger import setup_logger, log_every_n_seconds
+from ss_recon.evaluation import ReconEvaluator, DatasetEvaluators, inference_on_dataset
 
 import ss_recon.utils.complex_utils as cplx
 from ss_recon.utils.transforms import SenseModel
 
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
-logger = logging.getLogger(_LOGGER_NAME)
+#logger = logging.getLogger(_LOGGER_NAME)
+logger = None  # initialize in setup()
 
 
-@torch.no_grad()
-def compute_metrics(ref: torch.Tensor, x: torch.Tensor):
-    """Metrics are computed per volume.
-
-    Args:
-        ref (torch.Tensor): The target. Shape (...)x2
-        x (torch.Tensor): The prediction. Same shape as `ref`.
-    """
-    ref = ref.squeeze()
-    x = x.squeeze()
-    psnr = metrics.compute_psnr(ref, x).item()
-    nrmse = metrics.compute_nrmse(ref, x).item()
-
-    ssim = metrics.compute_ssim(ref, x, multichannel=False)
-    ssim_mc = metrics.compute_ssim(ref, x, multichannel=True)
-
-    ssim_slice = [
-        metrics.compute_ssim(ref[i, ...], x[i, ...])
-        for i in range(x.shape[0])
-    ]
-    ssim_slice = torch.Tensor(ssim_slice).mean().item()
-
-    # Average SSIM score for slices, but only compute SSIM for the
-    # center 50% of slices and center 50% of volume.
-    # Noise in reference contributes to the SSIM score.
-    ref_shape = ref.shape[:-1]
-    shape_crop = tuple(
-        slice(int(0.25*ref.shape[i]), int(0.75 * ref_shape[i]) + 1)
-        for i in range(len(ref_shape))
-    )
-
-    ref = ref[shape_crop]
-    x = x[shape_crop]
-
-    ssim_50 = metrics.compute_ssim(ref, x, multichannel=False)
-    ssim_50_mc = metrics.compute_ssim(ref, x, multichannel=True)
-    ssim_50_slice = [
-        metrics.compute_ssim(ref[i, ...], x[i, ...])
-        for i in range(x.shape[0])
-    ]
-    ssim_50_slice = torch.Tensor(ssim_50_slice).mean().item()
-    return {
-        'psnr': psnr,
-        'nrmse': nrmse,
-        'ssim': ssim,
-        "ssim_mc": ssim_mc,
-        "ssim_slice": ssim_slice,
-        "ssim_50": ssim_50,
-        "ssim_50_mc": ssim_50_mc,
-        "ssim_50_slice": ssim_50_slice,
-    }
+class ZFReconEvaluator(ReconEvaluator):
+    """Zero-filled recon evaluator."""
+    def process(self, inputs, outputs):
+        zf_out = {k: outputs[k] for k in ("target", "metadata")}
+        zf_out["pred"] = outputs["zf_pred"]
+        return super().process(inputs, zf_out)
 
 
 def setup(args):
@@ -109,258 +69,96 @@ def setup(args):
     default_setup(cfg, args, save_cfg=False)
 
     # Setup logger for test results
-    if args.renormalize:
-        dirname = "test_results_rn"
-    else:
-        dirname = "test_results"
-    setup_logger(os.path.join(cfg.OUTPUT_DIR, dirname), name=_FILE_NAME)
+    global logger
+    dirname = "test_results"
+    logger = setup_logger(os.path.join(cfg.OUTPUT_DIR, dirname), name=_FILE_NAME)
     return cfg
 
 
 @torch.no_grad()
-def eval(cfg, model, zero_filled: bool = False, renormalize: bool = False):
-    """Evaluate model on per scan metrics with acceleration factors
-    between 6-8x.
+def eval(cfg, model, zero_filled: bool = False, include_noise=False, use_wandb=False):
+    # TODO: Set up W&B configuration.
+    # if use_wandb:
+    #     run = init_wandb_run(cfg, resume=True, job_type="eval", use_api=True)
 
-    Save scan outputs to an h5 file.
-
-    Args:
-        cfg:
-        model:
-        zero_filled (bool, optional): If `True`, calculate metrics
-            for zero-filled reconstruction.
-        renormalize (bool, optional): If `True`, renormalize data w/ mean/std.
-    """
     device = cfg.MODEL.DEVICE
     model = model.to(device)
     model = model.eval()
 
-    if renormalize:
-        output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results_rn")
-    else:
-        output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
-
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
 
     accelerations = cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS
-    results = []
-    for dataset_name in cfg.DATASETS.TEST:
-        loaders = build_data_loaders_per_scan(cfg, dataset_name, accelerations)
-        for acc in loaders:
-            for scan_name, loader in loaders[acc].items():
-                scan_name = os.path.splitext(os.path.basename(scan_name))[0]
-                header = "{} - {} - {}".format(dataset_name, acc, scan_name)
-                zf_images = []
-                targets = []
-                outputs = []
-                num_batches = len(loader)
-                start_time = data_start_time = time.perf_counter()
-                model_time = 0
-                for idx, inputs in enumerate(loader):  # noqa
-                    target = inputs["target"]  # noqa
-                    mean, std = inputs["mean"], inputs["std"]
-                    data_load_time = time.perf_counter() - data_start_time
+    all_results = []
 
-                    recon_start_time = time.perf_counter()
-                    output_dict = model(inputs)
-                    model_time += time.perf_counter() - recon_start_time
+    # Returns average or each scan
+    group_by_scan = True
 
-                    pred = output_dict["pred"]
-                    zf = output_dict["zf_image"]
-                    if renormalize:
-                        # TODO: make this prettier
-                        std = std.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
-                        mean = mean.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
-                        # We have to rescale the target because the dataset
-                        # transforms the target data before returning.
-                        # TODO: Do not transform target in dataset.
-                        target = target * std + mean
+    noise_vals = (0,) + cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV if include_noise else (0,)
+    values = itertools.product(cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals)
+    for dataset_name, acc, noise_level in values:
+        # Assign the current acceleration
+        s_cfg = cfg.clone()
+        s_cfg.defrost()
+        s_cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (acc,)
+        s_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (noise_level,)
+        s_cfg.freeze()
 
-                        std, mean= std.to(pred.device), mean.to(pred.device)
-                        pred = pred * std + mean
-                        zf = zf * std + mean
-                    else:
-                        target = output_dict["target"]
-
-                    targets.append(target.cpu())
-                    outputs.append(pred.cpu())
-                    zf_images.append(zf.cpu())
-
-                    eta = datetime.timedelta(
-                        seconds=int(
-                            (time.perf_counter() - start_time) / (idx + 1) * (num_batches - idx - 1)
-                        )
-                    )
-
-                    log_every_n_seconds(
-                        logging.INFO,
-                        "{}: Processed {}/{} - data_time: {:.6f} - ETA: {}".format(
-                            header, idx+1, num_batches,  data_load_time, eta
-                        ),
-                        n=5,
-                        name=_LOGGER_NAME,
-                    )
-
-                    data_start_time = time.perf_counter()
-
-                recon_time = time.perf_counter() - start_time
-
-                zf_images = torch.cat(zf_images, dim=0)
-                targets = torch.cat(targets, dim=0)
-                outputs = torch.cat(outputs, dim=0)
-
-                logger.info("Computing metrics...")
-                dl_results = compute_metrics(targets, outputs)
-                dl_results["recon_time"] = recon_time
-                dl_results["model_time"] = model_time
-                dl_results = pd.DataFrame([dl_results])
-                dl_results["Method"] = "DL-Recon"
-                if zero_filled:
-                    zf_results = pd.DataFrame([compute_metrics(targets, zf_images)])
-                    zf_results["Method"] = "zero-filled"
-                    scan_results = pd.concat([zf_results, dl_results])
-                else:
-                    scan_results = dl_results
-
-                logger.info("Results:\n{}".format(tabulate(scan_results, headers=scan_results.columns)))
-
-                scan_results["Acceleration"] = acc
-                scan_results["dataset"] = dataset_name
-                scan_results["scan_name"] = scan_name
-                results.append(scan_results)
-
-                logger.info("Saving data...")
-                file_path = os.path.join(output_dir, dataset_name, "{}.h5".format(scan_name))
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                silx_dd.dicttoh5(
-                    {
-                        acc: {
-                            "zf": zf_images.numpy(),
-                            "dl": outputs.numpy(),
-                        },
-                        "fs": targets.numpy()
-                    },
-                    file_path,
-                    mode="a",
-                    overwrite_data = True,
-                )
-
-    results = pd.concat(results, ignore_index=True)
-    results.to_csv(os.path.join(output_dir, "metrics.csv"))
-    logger.info("Summary:\n{}".format(tabulate(results, headers=results.columns)))
-
-
-# Supported validation metrics and the operation to perform on them.
-SUPPORTED_VAL_METRICS = {
-    "l1": "min",
-    "l2": "min",
-    "psnr": "max",
-    "ssim": "max",
-}
-
-
-def find_weights(cfg, criterion=""):
-    """Find the best weights based on a validation criterion/metric.
-
-    Args:
-        criterion (str): The criterion that we can select from 
-    """
-    ckpt_period = cfg.SOLVER.CHECKPOINT_PERIOD
-    eval_period = cfg.TEST.EVAL_PERIOD
-    if (
-        ckpt_period * eval_period <= 0  # same sign (i.e. same time scale)
-        or abs(eval_period) % abs(ckpt_period) != 0  # checkpoint period is multiple of eval period
-    ):
-        raise ValueError(
-            "Cannot find weights if checkpoint/eval periods "
-            "at different time scales or eval period is not"
-            "a multiple of checkpoint period."
+        # Build a recon val loader
+        dataloader = build_recon_val_loader(
+            s_cfg, dataset_name, as_test=True, add_noise=noise_level > 0
         )
 
-    if not criterion:
-        criterion = cfg.MODEL.RECON_LOSS.NAME.lower()
-        operation = "min"  # loss is always minimized
-    else:
-        operation = SUPPORTED_VAL_METRICS[criterion]
+        # Build evaluators
+        evaluators = [ReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan)]
+        # TODO: add support for multiple evaluators.
+        if zero_filled:
+            evaluators.append(ZFReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan))
+        evaluators = DatasetEvaluators(evaluators, as_list=True)
 
-    assert operation in ["min", "max"]
-    criterion = "val_{}".format(criterion)
-
-    logger.info("Finding best weights in {} using {}...".format(cfg.OUTPUT_DIR, criterion))
-
-    # Filter metrics to find reporting of real validation metrics.
-    # If metric is wrapped (e.g. "mridata_knee_2019_val/val_l1"), that means
-    # multiple datasets were validated on.
-    # We filter out metrics from datasets that contain the word "test".
-    # The criterion from all other datasets are averaged and used as the
-    # target criterion.
-    metrics_file = os.path.join(cfg.OUTPUT_DIR, "metrics.json")
-    metrics = []
-    with open(metrics_file) as f:
-        metrics = [json.loads(line.strip()) for line in f]
-    metrics = [
-        m for m in metrics 
-        if criterion in m or any(k.endswith(criterion) for k in m.keys())
-    ]
-    is_metric_wrapped = criterion not in metrics[0]
-    if is_metric_wrapped:
-        metrics = [
-            (
-                m["iteration"], 
-                np.mean([
-                    m[k] for k in m 
-                    if k.endswith(criterion) and "test" not in k.split("/")[0]
-                ]).item(),
-            )
-            for m in metrics
+        results = inference_on_dataset(model, dataloader, evaluators)
+        results = [
+            pd.DataFrame(x).T.reset_index().rename(columns={"index": "scan_name"})
+            for x in results
         ]
-    else:
-        metrics = [(m["iteration"], m[criterion]) for m in metrics]
 
-    last_iter = metrics[-1][0]
+        results[0]["Method"] = s_cfg.MODEL.META_ARCHITECTURE
+        if zero_filled:
+            results[1]["Method"] = "Zero-Filled"
+        scan_results = pd.concat(results, ignore_index=True)
+        scan_results["Acceleration"] = acc
+        scan_results["dataset"] = dataset_name
+        scan_results["Noise Level"] = noise_level
+        logger.info("\n" + tabulate(scan_results, headers=scan_results.columns))
 
-    # Retraining does not overwrite the metrics file.
-    # We make sure that the metrics correspond only to the most
-    # recent run.
-    metrics_recent_order = metrics[::-1]
-    iterations = [m[0] for m in metrics_recent_order]
-    intervals = np.diff(iterations)
-    if any(intervals > 0):
-        stop_idx = np.argmax(intervals > 0) + 1
-        metrics_recent_order = metrics_recent_order[:stop_idx]
-        metrics = metrics_recent_order[::-1]
+        all_results.append(scan_results)
 
-    # Note that resuming can sometimes report metrics for the same
-    # iteration. We handle this by taking the most recent metric for the
-    # iteration __after__ filtering out old training runs.
-    metrics = {iteration: value for iteration, value in metrics}
-    metrics = [(k, v) for k, v in metrics.items()]
-    best_iter, best_value = sorted(metrics, key=lambda x: x[1], reverse=operation=="max")[0]
+        # Currently don't support writing data because it takes too long
+        # logger.info("Saving data...")
+        # file_path = os.path.join(output_dir, dataset_name, "{}.h5".format(scan_name))
+        # os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-    if best_iter == last_iter:
-        file_name = "model_final.pth"
-    else:
-        file_name = "model_{:07d}.pth".format(best_iter)
-    file_path = os.path.join(cfg.OUTPUT_DIR, file_name)
-
-    if not os.path.isfile(file_path):
-        raise ValueError("Model for iteration {} does not exist".format(best_iter))
-
-    logger.info("Weights: {} - {}: {:0.4f}".format(file_name, criterion, best_value))
-    return file_path
+    all_results = pd.concat(all_results, ignore_index=True)
+    all_results.to_csv(os.path.join(output_dir, "metrics.csv"), mode="w")
+    logger.info("Summary:\n{}".format(tabulate(all_results, headers=all_results.columns)))
 
 
 def main(args):
     cfg = setup(args)
     model = DefaultTrainer.build_model(cfg)
-    weights = cfg.MODEL.WEIGHTS if cfg.MODEL.WEIGHTS else find_weights(cfg, args.metric)
+    weights = cfg.MODEL.WEIGHTS if cfg.MODEL.WEIGHTS else find_weights(cfg, args.metric, args.iter_limit)
+    model = model.to(cfg.MODEL.DEVICE)
     DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
         weights, resume=args.resume
     )
+
+    # See https://github.com/pytorch/pytorch/issues/42300
+    logger.info("Checking weights were properly loaded...")
+    check_consistency(torch.load(weights)["model"], model)
+
     logger.info("\n\n==============================")
     logger.info("Loading weights from {}".format(weights))
 
-    eval(cfg, model, args.zero_filled, args.renormalize)
+    eval(cfg, model, args.zero_filled, args.noise)
 
 
 if __name__ == "__main__":
@@ -382,10 +180,16 @@ if __name__ == "__main__":
         help="Calculate metrics for zero-filled images"
     )
     parser.add_argument(
-        "--renormalize",
+        "--noise",
         action="store_true",
-        help="Renormalize images based on std/mean vals"
+        help="Include noise evaluation"
     )
+    parser.add_argument(
+        "--iter-limit", default=None, type=int, help="Iteration limit. Chooses weights below this time point."
+    )
+    # parser.add_argument(
+    #     "--wandb", action="store_true", help="Log to W&B during evaluation"
+    # )
 
     args = parser.parse_args()
     print("Command Line Args:", args)

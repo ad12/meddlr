@@ -59,10 +59,12 @@ class DatasetEvaluator:
 
 
 class DatasetEvaluators(DatasetEvaluator):
-    def __init__(self, evaluators):
+    def __init__(self, evaluators, as_list=False):
         assert len(evaluators)
         super().__init__()
+        evaluators = [x for x in evaluators if x is not None]
         self._evaluators = evaluators
+        self._as_list = as_list
 
     def reset(self):
         for evaluator in self._evaluators:
@@ -73,9 +75,14 @@ class DatasetEvaluators(DatasetEvaluator):
             evaluator.process(input, output)
 
     def evaluate(self):
-        results = OrderedDict()
+        results = [] if self._as_list else OrderedDict()
         for evaluator in self._evaluators:
             result = evaluator.evaluate()
+            if self._as_list:
+                if result is not None:
+                    results.append(result)
+                continue
+
             if result is not None:
                 for k, v in result.items():
                     assert k not in results, (
@@ -112,7 +119,7 @@ def inference_on_dataset(model, data_loader, evaluator):
     logger = logging.getLogger(__name__)
 
     total = len(data_loader)  # inference data loader must have a fixed length
-    logger.info(f"Start inference on {total} images")
+    logger.info(f"Start inference on {total} batches")
     evaluator.reset()
 
     num_warmup = min(5, total - 1)
@@ -169,7 +176,10 @@ def inference_on_dataset(model, data_loader, evaluator):
         )
     )
 
+    eval_start_time = time.perf_counter()
     results = evaluator.evaluate()
+    evaluation_time = time.perf_counter() - eval_start_time
+    logger.info(f"Evaluation Time: {evaluation_time:.6f} s")
     # An evaluator may return None when not in main process.
     # Replace it by an empty dict instead to make it easier
     # for downstream code to handle

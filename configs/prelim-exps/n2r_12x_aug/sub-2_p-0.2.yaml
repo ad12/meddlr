@@ -1,0 +1,9 @@
+_BASE_: "template_sub-2.yaml"
+AUG_TRAIN:
+  NOISE_P: 0.2
+DESCRIPTION:
+  BRIEF: "N2R 12x mridata.org w/ Noise augmentation - 2 subjects"
+  EXP_NAME: "mridata_knee_2019/n2r_12x_aug/sub-2_p-0.2"
+  TAGS: ("mridata_knee_2019", "n2r_12x", "noise_aug")
+OUTPUT_DIR: "results://prelim-exps/n2r_12x_aug/sub-2_p-0.2"
+VERSION: 1

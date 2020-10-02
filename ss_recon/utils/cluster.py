@@ -140,8 +140,16 @@ class ResultsHandler(GeneralPathHandler):
         return CLUSTER.get_path("results_dir")
 
 
+class AnnotationsHandler(GeneralPathHandler):
+    PREFIX = "ann://"
+
+    def _root_dir(self):
+        return os.path.abspath(os.path.join(_REPO_DIR, "annotations"))
+
+
 PathManager.register_handler(DataHandler())
 PathManager.register_handler(ResultsHandler())
+PathManager.register_handler(AnnotationsHandler())
 
 # Paths are in order data, results
 _USER_PATHS = {
@@ -159,7 +167,7 @@ _USER_PATHS = {
             "/share/pi/bah/arjundd/results/ss_recon",
         ),
         CLUSTER.SIENA: (
-            "/bmrNAS/people/arjun/data",
+            "/data/datasets",  # mounted on siena only
             "/bmrNAS/people/arjun/results/ss_recon",
         )
     },

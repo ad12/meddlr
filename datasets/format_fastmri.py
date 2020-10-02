@@ -54,6 +54,7 @@ _FILE_DIR = os.path.dirname(__file__)
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
 
 OUTPUT_DIR = "data://fastmri"
+ANN_DIR = "ann://fastmri"
 RAW_DATA_PATH = "data://fastmri/raw"
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 logger = logging.getLogger(_LOGGER_NAME)
@@ -71,11 +72,17 @@ CHALLENGES = {
         "val": "multicoil_val",
         "test": "multicoil_test_v2",
         "challenge": "multicoil_challenge",
+    },
+    "brain_multicoil": {
+        "train": "multicoil_train",
+        "val": "multicoil_val",
+        "test": "multicoil_test",
+        "challege": None,  # add once challenge dataset is out
     }
 }
 # Defines supported annotation methods
 # dev: Train files are split into train/val, val is used as test set.
-ANN_METHODS = ["dev", "toy-dev"]
+ANN_METHODS = ["dev", "toy-dev", "mini"]
 
 
 def is_valid_file(fpath):
@@ -84,7 +91,7 @@ def is_valid_file(fpath):
     return fname.startswith("file") and fname.endswith(".h5")
 
 
-def get_files(dir_path: str, ignore_missing_dir=False):
+def get_files(dir_path: str, ignore_missing_dir=False, filenames=None):
     if not os.path.isdir(dir_path):
         if ignore_missing_dir:
             return []
@@ -92,7 +99,7 @@ def get_files(dir_path: str, ignore_missing_dir=False):
             raise NotADirectoryError(f"Directory {dir_path} does not exist")
     files = [
         os.path.join(dir_path, x) for x in os.listdir(dir_path)
-        if is_valid_file(x)
+        if is_valid_file(x) and (not filenames or os.path.splitext(x)[0] in filenames)
     ]
     return files
 
@@ -405,7 +412,7 @@ def format_data(args, raw_root, formatted_root):
         logger.info(f"Processing {split} split...")
         logger.info("============================")
         
-        files = get_files(input_dir)
+        files = get_files(input_dir, filenames=args.files)
         if not args.overwrite and not args.recompute:
             files = filter_files(files, output_dir, args.calib_method)
         if len(files) == 0:
@@ -498,7 +505,49 @@ def create_dev_split(files, seed, split_percentages=(0.8, 0.2)):
     return train_files, val_files
 
 
-def format_annotations(args, raw_root, formatted_root):
+def create_mini_split(files, seed, split_percentages=(0.55, 0.15, 0.3)):
+    """Split files into three splits (train/val/test).
+
+    Data is split by patients to avoid overlap of patients between
+    different datasets.
+    
+    Returns:
+        Tuple[List, List]: Train and validation files.
+            Both are sorted by filename
+    """
+    assert len(split_percentages) == 3
+    patient_ids = defaultdict(list)
+    for fpath in files:
+        with h5py.File(fpath, "r") as f:
+            patient_ids[f.attrs["patient_id"]].append(fpath)
+
+    # Weight by the number of files they correspond to.
+    patient_ids_list = sorted(list(patient_ids.keys()))
+    patient_weights = [len(patient_ids[pid]) for pid in patient_ids_list]
+
+    train_patient_ids, val_patient_ids, test_patient_ids = dp.approximately_split_weighted(
+        patient_ids_list, 
+        list(split_percentages),
+        weights=patient_weights,
+        balance="greedy",
+        buffer=0.005,
+        seed=seed,
+    )
+    assert len(set(train_patient_ids) & set(val_patient_ids)) == 0
+    assert len(set(train_patient_ids) & set(test_patient_ids)) == 0
+    assert len(set(val_patient_ids) & set(test_patient_ids)) == 0
+
+    train_files = sorted([x for pid in train_patient_ids for x in patient_ids[pid]])
+    val_files = sorted([x for pid in val_patient_ids for x in patient_ids[pid]])
+    test_files = sorted([x for pid in test_patient_ids for x in patient_ids[pid]])
+    assert len(set(train_files) & set(val_files)) == 0
+    assert len(set(train_files) & set(test_files)) == 0
+    assert len(set(val_files) & set(test_files)) == 0
+
+    return train_files, val_files, test_files
+
+
+def format_annotations(args, raw_root, formatted_root, base_ann_dir):
     ann_method = args.method
 
     # Formatted 1-to-1 files with the original fastMRI repositories.
@@ -506,6 +555,9 @@ def format_annotations(args, raw_root, formatted_root):
     formatted_files = {}
     formatted_to_raw_files = {}
     for split, fastmri_subdir in CHALLENGES[args.challenge].items():
+        if ann_method in ("mini",) and split != "val":
+            # only need val split for mini dataset
+            continue
         formatted_files[split] = sorted(get_files(os.path.join(formatted_root, split), ignore_missing_dir=True))
         # for fpath in formatted_files[split]:
         #     fname = os.path.basename(fpath)
@@ -526,9 +578,17 @@ def format_annotations(args, raw_root, formatted_root):
             "test": test_files,
         }
         version = f"{args.version}-dev"
+    elif ann_method in ("mini",):
+        # Split fastMRI val set into train/val/test. Called the mini split.
+        train_files, val_files, test_files = create_mini_split(formatted_files["val"], args.seed)
+        ann_files = {
+            "train": train_files,
+            "val": val_files,
+            "test": test_files,
+        }
+        version = f"mini-{args.version}"
     else:
         raise ValueError(f"Annotation method {ann_method} is not supported")
-
 
     info_template = {
         "contributor": getpass.getuser(),
@@ -542,7 +602,7 @@ def format_annotations(args, raw_root, formatted_root):
         logger.info(f"Processing {split} split...")
         logger.info("============================")
 
-        ann_file = os.path.join(formatted_root, f"annotations/{version}/{split}.json")
+        ann_file = os.path.join(base_ann_dir, f"{version}/{split}.json")
         ann_dir = os.path.dirname(PathManager.get_local_path(ann_file))
         PathManager.mkdirs(ann_dir)
         image_data = []
@@ -554,7 +614,7 @@ def format_annotations(args, raw_root, formatted_root):
             scan_id = os.path.basename(formatted).split(".h5")[0].split("file")[-1]
             image_data.append({
                 "file_name": os.path.basename(formatted),
-                "file_path": formatted,
+                # "file_path": formatted,
                 "scan_id": scan_id,
                 "patient_id": patient_id,
                 "acquisition": acquisition,
@@ -583,6 +643,7 @@ def add_shared_args(parser: argparse.ArgumentParser):
         choices=tuple(CHALLENGES.keys()),
         help="FastMRI challenge type",
     )
+    # TODO: Update help comments.
     parser.add_argument(
         "--raw",
         default=None,
@@ -620,6 +681,12 @@ def main():
         nargs="*",
         default=SPLITS,
         help="Dataset split(s) (default: {SPLITS})"
+    )
+    format_parser.add_argument(
+        "--files",
+        nargs="*",
+        default=None,
+        help="Specific files to format. This should be the basename of the file"
     )
     format_parser.add_argument(
         "--device",
@@ -687,7 +754,8 @@ def main():
         with open(os.path.join(formatted_root, "failed_cases.txt"), "w") as f:
             f.writelines("{}\n".format(line) for line in failed_cases)
     elif args.subcommand == "annotate":
-        format_annotations(args, raw_root, formatted_root)
+        ann_dir = PathManager.get_local_path(os.path.join(ANN_DIR, args.challenge))
+        format_annotations(args, raw_root, formatted_root, ann_dir)
     else:
         raise ValueError(f"Subcommand {args.subcommand} not valid")
 

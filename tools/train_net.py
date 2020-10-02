@@ -25,6 +25,7 @@ from ss_recon.engine import (
     default_argument_parser,
     default_setup,
 )
+from ss_recon.engine.defaults import init_wandb_run
 from ss_recon.utils.env import supports_wandb
 
 try:
@@ -49,23 +50,13 @@ def setup(args):
 
     default_setup(cfg, args)
 
-    # TODO: Add suppport for resume.
+    # TODO: Change resume=args.resume once functionality is specified.
+    # Currently resuming with the same experiment id overwrites previous data.
+    # So for now, even if you are resuming your experiment, it will be logged
+    # as a separate run in W&B.
     if supports_wandb():
-        exp_name = cfg.DESCRIPTION.EXP_NAME
-        if not exp_name:
-            warnings.warn("DESCRIPTION.EXP_NAME not specified. Defaulting to basename...")
-            exp_name = os.path.basename(cfg.OUTPUT_DIR)
-        wandb.init(
-            project="ss_recon",
-            name=exp_name,
-            config=cfg,
-            sync_tensorboard=True,
-            job_type="training",
-            dir=cfg.OUTPUT_DIR,
-            entity="ss_recon",
-            tags=cfg.DESCRIPTION.TAGS,
-            notes=cfg.DESCRIPTION.BRIEF,
-        )
+        init_wandb_run(cfg, resume=False, job_type="training")
+
     return cfg
 
 
@@ -74,16 +65,6 @@ def main(args):
 
     if args.eval_only:
         raise NotImplementedError("Evaluation is not yet implemented")
-        # model = DefaultTrainer.build_model(cfg)
-        # DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-        #     cfg.MODEL.WEIGHTS, resume=args.resume
-        # )
-        # res = Trainer.test(cfg, model)
-        # if comm.is_main_process():
-        #     verify_results(cfg, res)
-        # if cfg.TEST.AUG.ENABLED:
-        #     res.update(Trainer.test_with_TTA(cfg, model))
-        # return res
 
     trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=args.resume)

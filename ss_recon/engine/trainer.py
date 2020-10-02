@@ -245,6 +245,10 @@ class DefaultTrainer(SimpleTrainer):
         )  # save some memory and time for PreciseBN
 
         ret = [
+            (
+                hooks.FlushOptimizer(self.optimizer, cfg.TEST.EVAL_PERIOD) 
+                if isinstance(self.optimizer, GradAccumOptimizer) else None
+            ),
             hooks.IterationTimer(),
             hooks.LRScheduler(self.optimizer, self.scheduler),
             hooks.PeriodicCheckpointer(
@@ -261,12 +265,12 @@ class DefaultTrainer(SimpleTrainer):
         ret.append(hooks.EvalHook(
             cfg.TEST.EVAL_PERIOD,
             test_and_save_results,
-            optimizer=self.optimizer if isinstance(self.optimizer, GradAccumOptimizer) else None,
         ))
         ret.append(hooks.PeriodicWriter(
             self.build_writers(),
             periods=(20, cfg.TEST.EVAL_PERIOD),
         ))
+        ret = [x for x in ret if x is not None]
         return ret
 
     def build_writers(self):
@@ -328,7 +332,8 @@ class DefaultTrainer(SimpleTrainer):
         """
         model = build_model(cfg)
         logger = logging.getLogger(__name__)
-        logger.info("Model:\n{}".format(model))
+        # printing model doesnt really help
+        # logger.info("Model:\n{}".format(model))
         return model
 
     @classmethod
@@ -367,7 +372,7 @@ class DefaultTrainer(SimpleTrainer):
         return build_recon_train_loader(cfg)
 
     @classmethod
-    def build_test_loader(cls, cfg, dataset_name):
+    def build_test_loader(cls, cfg, dataset_name, is_val=False):
         """
         Returns:
             iterable
@@ -375,7 +380,11 @@ class DefaultTrainer(SimpleTrainer):
         It now calls :func:`detectron2.data.build_detection_test_loader`.
         Overwrite it if you'd like a different data loader.
         """
-        return build_recon_val_loader(cfg, dataset_name, as_test=cfg.TEST.VAL_AS_TEST)
+        if is_val:
+            as_test = cfg.TEST.VAL_AS_TEST
+        else:
+            as_test = True
+        return build_recon_val_loader(cfg, dataset_name, as_test=as_test)
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name):
@@ -438,7 +447,7 @@ class DefaultTrainer(SimpleTrainer):
             results_i = inference_on_dataset(model, data_loader, evaluator)
             results[dataset_name] = results_i
             assert isinstance(results_i, dict), (
-                "Evaluator must return a dict on the main process. "
+                "Evaluator must return a dict or list on the main process. "
                 "Got {} instead.".format(results_i)
             )
             logger.info(
