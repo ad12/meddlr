@@ -15,6 +15,8 @@ import logging
 import os
 import datetime
 import time
+from copy import deepcopy
+from typing import Any, Dict, Sequence
 
 import h5py
 import numpy as np
@@ -39,6 +41,7 @@ from ss_recon.evaluation import ReconEvaluator, DatasetEvaluators, inference_on_
 
 import ss_recon.utils.complex_utils as cplx
 from ss_recon.utils.transforms import SenseModel
+from ss_recon.utils.general import find_experiment_dirs
 
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
@@ -75,9 +78,88 @@ def setup(args):
     return cfg
 
 
+def find_metrics(metrics: pd.DataFrame, params: Dict[str, Any], ignore_missing=False, ignore_case=True):
+    """Find subset of metrics dictionary that matches parameter configuration.
+
+    Args:
+        metrics (pd.DataFrame): Will be filtered based on column values.
+        params (Dict[str, Any]): Parameter values to filter by.
+            Keys should correspond to column names in `metrics`.
+        ignore_missing (bool, optional): If `True`, ignores filtering by
+            columns that are missing. 
+        ignore_case (bool, optional): If `True`, ignores the column casing.
+            Raises `ValueError` if two columns have the same lower case
+            form.
+
+    Returns:
+        df (pd.DataFrame): The remaining dataframe after filtering.
+    """
+
+    df = deepcopy(metrics)
+    if ignore_case:
+        column_map = {x: x.lower() for x in df.columns}
+        df = df.rename(columns=column_map)
+        params = {k.lower(): v for k, v in params.items()}
+
+    for k, v in params.items():
+        if k not in df.columns:
+            if ignore_missing:
+                continue
+            else:
+                raise KeyError(f"No column {k} in `metrics`")
+        df = df[df[k] == v]
+    
+    # Undo matching by lower case.
+    if ignore_case:
+        df = df.rename(columns={v: k for k, v in column_map.items()})
+
+    return df
+
+
+def update_metrics(metrics_new: pd.DataFrame, metrics_old: pd.DataFrame, on: Sequence[str]):
+    """Update a previous metrics version with the new one.
+
+    Metrics that were previously computed, may not be recomputed.
+    To avoid overwriting them when writing to a csv, we want to
+    port over any old metrics that we did not recompute.
+    """
+    # We currently do not support missing columns.
+    missing_cols = [k not in metrics_old.columns for k in on]
+    if any(missing_cols):
+        raise KeyError(f"Column(s) {missing_cols} not found in `metrics_old`")
+    missing_cols = [k not in metrics_new.columns for k in on]
+    if any(missing_cols):
+        raise KeyError(f"Column(s) {missing_cols} not found in `metrics_new`")
+
+    # Find combination of columns to select on that is not
+    # available in the new metrics, but is available in the
+    # old metrics.
+    old_metrics_combos = list(itertools.product(*[metrics_old[k].unique().tolist() for k in on]))
+    new_metrics_combos = list(itertools.product(*[metrics_new[k].unique().tolist() for k in on]))
+
+    to_prepend = []
+    for combo in old_metrics_combos:
+        if combo not in new_metrics_combos:
+            combo_as_dict = {k: v for k, v in zip(on, combo)}
+            to_prepend.append(find_metrics(metrics_old, combo_as_dict))
+    
+    if len(to_prepend) > 0:
+        to_prepend = pd.concat(to_prepend, ignore_index=True)
+        metrics = pd.concat([to_prepend, metrics_new], ignore_index=True)
+    else:
+        metrics = metrics_new
+    return metrics
+
+
 @torch.no_grad()
-def eval(cfg, model, zero_filled: bool = False, include_noise=False, use_wandb=False):
+def eval(cfg, args, model, weights_basename, criterion, best_value):
+    zero_filled = args.zero_filled
+    noise_arg = args.noise.lower()
+    include_noise = noise_arg != "false"
+    noise_sweep_vals = args.sweep_vals
+    overwrite = args.overwrite
     # TODO: Set up W&B configuration.
+    # use_wandb = args.use_wandb
     # if use_wandb:
     #     run = init_wandb_run(cfg, resume=True, job_type="eval", use_api=True)
 
@@ -85,17 +167,48 @@ def eval(cfg, model, zero_filled: bool = False, include_noise=False, use_wandb=F
     model = model.to(device)
     model = model.eval()
 
+    # Get and load metrics file
     output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
-
-    accelerations = cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS
-    all_results = []
+    metrics_file = os.path.join(output_dir, "metrics.csv")
+    if not overwrite and os.path.isfile(metrics_file):
+        metrics = pd.read_csv(metrics_file, index_col=0)
+    else:
+        metrics = None
 
     # Returns average or each scan
     group_by_scan = True
 
-    noise_vals = (0,) + cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV if include_noise else (0,)
+    # Find range of noise values to search
+    if include_noise:
+        noise_vals = [0] + noise_sweep_vals if noise_arg == "sweep" else [0]
+        noise_vals += list(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV)
+        noise_vals = sorted(list(set(noise_vals)))
+    else:
+        noise_vals = [0]
+
+    accelerations = cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS
     values = itertools.product(cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals)
+    all_results = []
     for dataset_name, acc, noise_level in values:
+        # Check if the current configuration already has metrics computed
+        # If so, dont recompute
+        params = {"Acceleration": acc, "dataset": dataset_name, "Noise Level": noise_level, "weights": weights_basename}
+        if metrics is not None:
+            try:
+                existing_metrics = find_metrics(metrics, params)
+            except KeyError:
+                existing_metrics = None
+            if existing_metrics is not None and len(existing_metrics) > 0:
+                logger.info("Metrics for ({}) exist:\n{}".format(
+                    ", ".join([f"{k}: {v}" for k, v in params.items()]),
+                    tabulate(existing_metrics, headers=existing_metrics.columns)
+                ))
+                all_results.append(existing_metrics)
+                continue
+
+        # Add criterion and value after to avoid searching by it.
+        params.update({"Criterion Name": criterion, "Criterion Val": best_value})
+
         # Assign the current acceleration
         s_cfg = cfg.clone()
         s_cfg.defrost()
@@ -125,9 +238,8 @@ def eval(cfg, model, zero_filled: bool = False, include_noise=False, use_wandb=F
         if zero_filled:
             results[1]["Method"] = "Zero-Filled"
         scan_results = pd.concat(results, ignore_index=True)
-        scan_results["Acceleration"] = acc
-        scan_results["dataset"] = dataset_name
-        scan_results["Noise Level"] = noise_level
+        for k, v in params.items():
+            scan_results[k] = v
         logger.info("\n" + tabulate(scan_results, headers=scan_results.columns))
 
         all_results.append(scan_results)
@@ -138,14 +250,27 @@ def eval(cfg, model, zero_filled: bool = False, include_noise=False, use_wandb=F
         # os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     all_results = pd.concat(all_results, ignore_index=True)
-    all_results.to_csv(os.path.join(output_dir, "metrics.csv"), mode="w")
     logger.info("Summary:\n{}".format(tabulate(all_results, headers=all_results.columns)))
+
+    # Try to copy over old metrics information.
+    # TODO: If fails, it automatically saves the old file in a versioned form and prints logging message.
+    if metrics is not None:
+        try:
+            running_results = update_metrics(all_results, metrics, on=["Acceleration", "dataset", "Noise Level", "weights", "Method"])
+        except KeyError as e:
+            logger.error(e)
+            logger.error("Failed to load old metrics information")
+            #raise e
+            running_results = all_results
+    else:
+        running_results = all_results
+    running_results.to_csv(metrics_file, mode="w")
 
 
 def main(args):
     cfg = setup(args)
     model = DefaultTrainer.build_model(cfg)
-    weights = cfg.MODEL.WEIGHTS if cfg.MODEL.WEIGHTS else find_weights(cfg, args.metric, args.iter_limit)
+    weights, criterion, best_value = (cfg.MODEL.WEIGHTS, None, None) if cfg.MODEL.WEIGHTS else find_weights(cfg, args.metric, args.iter_limit)
     model = model.to(cfg.MODEL.DEVICE)
     DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
         weights, resume=args.resume
@@ -158,11 +283,15 @@ def main(args):
     logger.info("\n\n==============================")
     logger.info("Loading weights from {}".format(weights))
 
-    eval(cfg, model, args.zero_filled, args.noise)
+    eval(cfg, args, model, os.path.basename(weights), criterion, best_value)
 
 
 if __name__ == "__main__":
     parser = default_argument_parser()
+    # parser.add_argument(
+    #     "--dir", type=str, default=None,
+    #     help="Process all completed experiment directories under this directory"
+    # )
     parser.add_argument(
         "--metric",
         type=str,
@@ -181,11 +310,24 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--noise",
-        action="store_true",
-        help="Include noise evaluation"
+        default="standard",
+        choices=("false", "standard", "sweep"),
+        help="Include noise evaluation",
+    )
+    parser.add_argument(
+        "--sweep-vals",
+        default=(0, 0.2, 0.4, 0.6, 0.8, 1.0),
+        nargs="*",
+        type=float,
+        help="args to sweep for noise",
     )
     parser.add_argument(
         "--iter-limit", default=None, type=int, help="Iteration limit. Chooses weights below this time point."
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing metrics file",
     )
     # parser.add_argument(
     #     "--wandb", action="store_true", help="Log to W&B during evaluation"

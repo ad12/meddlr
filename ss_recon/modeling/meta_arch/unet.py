@@ -7,9 +7,12 @@ LICENSE file in the root directory of this source tree.
 import torch
 from torch import nn
 from torch.nn import functional as F
+import torchvision.utils as tv_utils
+
 from .build import META_ARCH_REGISTRY
 import ss_recon.utils.complex_utils as cplx
 from ss_recon.utils.transforms import SenseModel
+from ss_recon.utils.events import get_event_storage
 
 __all__ = ["UnetModel"]
 
@@ -145,8 +148,47 @@ class UnetModel(nn.Module):
                 ConvBlock(ch * 2, ch, drop_prob),
                 nn.Conv2d(ch, self.out_chans, kernel_size=1, stride=1),
             )]
+        
+        self.vis_period = cfg.VIS_PERIOD
 
-    def forward(self, input):
+    def visualize_training(self, kspace, zfs, targets, preds):
+            """A function used to visualize reconstructions.
+
+            TODO: Refactor out
+
+            Args:
+                targets: NxHxWx2 tensors of target images.
+                preds: NxHxWx2 tensors of predictions.
+            """
+            storage = get_event_storage()
+            
+            with torch.no_grad():
+                kspace = kspace[0, ..., 0, :].unsqueeze(0).cpu() # calc mask for first coil only
+                targets = targets[0, ...].unsqueeze(0).cpu()
+                preds = preds[0, ...].unsqueeze(0).cpu()
+                zfs = zfs[0, ...].unsqueeze(0).cpu()
+
+                N = preds.shape[0]
+
+                all_images = torch.cat([zfs, preds, targets], dim=2)
+
+                imgs_to_write = {
+                    "phases": cplx.angle(all_images),
+                    "images": cplx.abs(all_images),
+                    "errors": cplx.abs(preds - targets),
+                    "masks": cplx.get_mask(kspace),
+                }
+
+                for name, data in imgs_to_write.items():
+                    data = data.squeeze(-1).unsqueeze(1)
+                    data = tv_utils.make_grid(
+                        data, nrow=1, padding=1, normalize=True, scale_each=True,
+                    )
+                    storage.put_image(
+                        "train/{}".format(name), data.numpy(), data_format="CHW"
+                    )
+
+    def forward(self, input, return_pp=False, vis_training=False):
         """
         Args:
             input (torch.Tensor): Input tensor of shape [batch_size, self.in_chans, height, width]
@@ -186,7 +228,8 @@ class UnetModel(nn.Module):
         # Compute zero-filled image reconstruction
         zf_image = A(kspace, adjoint=True)
         zf_dims = zf_image.size()
-        output = zf_image.view(zf_dims[0],zf_dims[4],zf_dims[1],zf_dims[2]) #a stupid way of reshaping lol
+        output = zf_image.permute(0, 4, 1, 2, 3).squeeze(-1)
+        # output = zf_image.view(zf_dims[0], zf_dims[4],zf_dims[1],zf_dims[2]) #a stupid way of reshaping lol
         ## end
 
         # Apply down-sampling layers
@@ -214,11 +257,22 @@ class UnetModel(nn.Module):
             output = torch.cat([output, downsample_layer], dim=1)
             output = conv(output)
 
-        pred = output.view(zf_dims)
+        # pred = output.view(zf_dims)
+        pred = output.unsqueeze(-1).permute(0, 2, 3, 4, 1)
         output_dict = {
             "pred": pred,  # N x Y x Z x 1 x 2
             "target": target,  # N x Y x Z x 1 x 2
         }
+
+        if return_pp:
+            output_dict.update({
+                k: inputs[k] for k in ["mean", "std", "norm"]
+            })
+
+        if self.training and (vis_training or self.vis_period > 0):
+            storage = get_event_storage()
+            if vis_training or storage.iter % self.vis_period == 0:
+                self.visualize_training(kspace, zf_image, target, pred)
 
         if not self.training:
             output_dict["zf_image"] = zf_image

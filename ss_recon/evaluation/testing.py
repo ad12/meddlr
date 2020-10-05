@@ -195,7 +195,7 @@ def find_weights(cfg, criterion="", iter_limit=None):
         raise ValueError("Model for iteration {} does not exist".format(best_iter))
 
     logger.info("Weights: {} - {}: {:0.4f}".format(file_name, criterion, best_value))
-    return file_path
+    return file_path, criterion, best_value
 
 
 def check_consistency(state_dict, model):

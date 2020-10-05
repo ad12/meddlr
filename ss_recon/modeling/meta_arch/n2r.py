@@ -51,14 +51,14 @@ class N2RModel(nn.Module):
         inputs["kspace"] = aug_kspace
         return inputs
 
-    def visualize_aug_training(self, kspace, kspace_aug, preds, preds_aug):
+    def visualize_aug_training(self, kspace, kspace_aug, preds, preds_base, target=None):
         """Visualize training of augmented data.
 
         Args:
             kspace: The base kspace.
             kspace_aug: The augmented kspace.
-            pred: Reconstruction of base kspace. Shape: NxHxWx2.
-            pred_aug: Reconstruction of augmented kspace. Shape: NxHxWx2.
+            preds: Reconstruction of augmented kspace. Shape: NxHxWx2.
+            preds_base: Reconstruction of base kspace. Shape: NxHxWx2.
         """
         storage = get_event_storage()
 
@@ -67,16 +67,23 @@ class N2RModel(nn.Module):
             kspace = kspace.cpu()[0, ..., 0, :].unsqueeze(0)
             kspace_aug = kspace_aug.cpu()[0, ..., 0, :].unsqueeze(0)
             preds = preds.cpu()[0, ...].unsqueeze(0)
-            preds_aug = preds_aug.cpu()[0, ...].unsqueeze(0)
-            # zfs = zfs.cpu()[0, ...].unsqueeze(0)
+            preds_base = preds_base.cpu()[0, ...].unsqueeze(0)
 
-            all_images = torch.cat([preds, preds_aug], dim=2)
+            all_images = [preds, preds_base]
+            errors = [cplx.abs(preds_base - preds)]
+            if target is not None:
+                target = target.cpu()[0, ...].unsqueeze(0)
+                all_images.append(target)
+                errors.append(cplx.abs(target - preds))
+
+            all_images = torch.cat(all_images, dim=2)
             all_kspace = torch.cat([kspace, kspace_aug], dim=2)
+            errors = torch.cat(errors, dim=2)
 
             imgs_to_write = {
                 "phases": cplx.angle(all_images),
                 "images": cplx.abs(all_images),
-                "errors": cplx.abs(preds_aug - preds),
+                "errors": errors,
                 "masks": cplx.get_mask(kspace),
                 "kspace": cplx.abs(all_kspace),
             }
@@ -122,7 +129,10 @@ class N2RModel(nn.Module):
         if inputs_unsupervised is not None:
             inputs_us_aug = self.augment(inputs_unsupervised)
             with torch.no_grad():
-                pred_base = self.model(inputs_unsupervised)["pred"]
+                pred_base = self.model(inputs_unsupervised)
+                # Target only used for visualization purposes not for loss.
+                target = inputs_unsupervised.get("target", None)
+                pred_base = pred_base["pred"]
             pred_aug = self.model(inputs_us_aug, return_pp=True)
             if "target" in pred_aug:
                 del pred_aug["target"]
@@ -132,8 +142,9 @@ class N2RModel(nn.Module):
                 self.visualize_aug_training(
                     inputs_unsupervised["kspace"],
                     inputs_us_aug["kspace"],
-                    pred_aug["target"],
+                    pred_aug["pred"],
                     pred_base,
+                    target=target,
                 )
 
         return output_dict

@@ -1,6 +1,7 @@
 """Verify experimental configurations (random seeds, etc.)."""
 import unittest
 
+import numpy as np
 from ss_recon.data.build import get_recon_dataset_dicts
 
 
@@ -16,12 +17,13 @@ class TestMRIDataExperiments(unittest.TestCase):
         random seeds can result in the same scans being selected.
         """
         dataset_sizes = [1, 2, 5, 10, 14]
-        overlap_thresholds = [0, 0, 1, 8, None]
+        overlap_thresholds = [0, 1, 3, 8, None]
 
         # Find 3 seeds that work relatively well
         # 1000 is fixed as it is used by most of our runs.
         scans = {}
-        seeds = [1000, 23, 3000, 400, 345]
+        seeds = [1000, 2000, 3000, 9860, 9970] # last two seeds found by random search
+        print(seeds)
         for num_total in dataset_sizes:
             for seed in seeds:
                 dataset_dicts = get_recon_dataset_dicts(
