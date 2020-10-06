@@ -1,0 +1,13 @@
+_BASE_: "template.yaml"
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 10  # 10 training examples
+SOLVER:
+  CHECKPOINT_PERIOD: -10  # checkpoint every 10 epochs
+TEST:
+  EVAL_PERIOD: -10  # checkpoint every 10 epochs
+DESCRIPTION:
+  BRIEF: "fastMRI knee mini baseline 4x 10 subjects"
+  EXP_NAME: "fastmri_knee_mc_mini/unrolled-v1_4x/sub-10"
+  TAGS: ("fastmri_knee", "baseline")
+OUTPUT_DIR: "results://fastmri_knee_mc_mini/unrolled-v1_4x/sub-10"
