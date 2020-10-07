@@ -32,22 +32,22 @@ DATALOADER:
   NUM_WORKERS: 8
 SOLVER:
   OPTIMIZER: "Adam"
-  LR_SCHEDULER_NAME: ""  # do not decrease learning rate.
+  LR_SCHEDULER_NAME: ""
   TRAIN_BATCH_SIZE: 2
   TEST_BATCH_SIZE: 12
-  MAX_ITER: 30
+  MAX_ITER:  60000 
   GAMMA: 1.0 # do not decrease learning rate.
   STEPS: ()  # ensures learning rate does not decay
   BASE_LR: 1e-4
   BIAS_LR_FACTOR: 1.0
   WEIGHT_DECAY: 0.0001
   WEIGHT_DECAY_BIAS: 0.0001
-  CHECKPOINT_PERIOD: 1
-  GRAD_ACCUM_ITERS: 1
+  CHECKPOINT_PERIOD: -1
+  GRAD_ACCUM_ITERS: 4
 TEST:
-  EVAL_PERIOD: 1
-VIS_PERIOD: -400
-TIME_SCALE: "epoch"
+  EVAL_PERIOD: -1
+VIS_PERIOD: 400
+TIME_SCALE: "iter"
 OUTPUT_DIR: ""  # leave empty
 SEED: 1000
 VERSION: 1
