@@ -5,6 +5,10 @@
 # Max Epochs: 30
 # Learning Rate: 1e-4
 # Gradient Accumulation: None
+MODEL:
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
 AUG_TRAIN:
   UNDERSAMPLE:
     NAME: "RandomMaskFunc1D"
@@ -28,9 +32,9 @@ DATALOADER:
   NUM_WORKERS: 8
 SOLVER:
   OPTIMIZER: "Adam"
-  LR_SCHEDULER_NAME: ""
-  TRAIN_BATCH_SIZE: 1
-  TEST_BATCH_SIZE: 4
+  LR_SCHEDULER_NAME: ""  # do not decrease learning rate.
+  TRAIN_BATCH_SIZE: 2
+  TEST_BATCH_SIZE: 12
   MAX_ITER: 30
   GAMMA: 1.0 # do not decrease learning rate.
   STEPS: ()  # ensures learning rate does not decay
