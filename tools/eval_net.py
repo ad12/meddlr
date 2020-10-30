@@ -48,6 +48,10 @@ _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 #logger = logging.getLogger(_LOGGER_NAME)
 logger = None  # initialize in setup()
 
+# Default values for parameters that may not have been initially added.
+_DEFAULT_VALS = {
+    "rescaled": True,
+}
 
 class ZFReconEvaluator(ReconEvaluator):
     """Zero-filled recon evaluator."""
@@ -78,8 +82,39 @@ def setup(args):
     return cfg
 
 
+def add_default_params(metrics: pd.DataFrame, ignore_case=True):
+    """Adds default config parameters (if missing).
+
+    Args:
+        metrics (pd.DataFrame): Will be filtered based on column values.
+        ignore_case (bool, optional): If `True`, ignores the column casing.
+            Raises `ValueError` if two columns have the same lower case
+            form.
+    """
+
+    df = deepcopy(metrics)
+    if ignore_case:
+        column_map = {x: x.lower() for x in df.columns}
+        defaults_keys_map = {k.lower(): k for k in _DEFAULT_VALS.keys()}
+        df = df.rename(columns=column_map)
+    else:
+        defaults_keys_map = {k: k for k in _DEFAULT_VALS.keys()}
+    
+    for fmt_key, real_key in defaults_keys_map.items():
+        if fmt_key not in df.columns:
+            df[real_key] = _DEFAULT_VALS[real_key]
+
+    if ignore_case:
+        df = df.rename(columns={v: k for k, v in column_map.items()})
+
+    return df
+    
+
 def find_metrics(metrics: pd.DataFrame, params: Dict[str, Any], ignore_missing=False, ignore_case=True):
     """Find subset of metrics dictionary that matches parameter configuration.
+
+    Note:
+        Values that are not available will be filled in by _DEFAULT_VALS.
 
     Args:
         metrics (pd.DataFrame): Will be filtered based on column values.
@@ -100,6 +135,15 @@ def find_metrics(metrics: pd.DataFrame, params: Dict[str, Any], ignore_missing=F
         column_map = {x: x.lower() for x in df.columns}
         df = df.rename(columns=column_map)
         params = {k.lower(): v for k, v in params.items()}
+
+    # Fill in with default values if missing.
+    # Note these will always be lower case, so we match based on case.
+    # Fill in default values when the columns are not available.
+    default_keys = set(x.lower() for x in params) & set(x.lower() for x in _DEFAULT_VALS.keys())
+    lowercase_cols = [x.lower() for x in df.columns]
+    for k in default_keys:
+        if k not in lowercase_cols:
+            df[k] = _DEFAULT_VALS[k]
 
     for k, v in params.items():
         if k not in df.columns:
@@ -157,6 +201,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     noise_arg = args.noise.lower()
     include_noise = noise_arg != "false"
     noise_sweep_vals = args.sweep_vals
+    skip_rescale = args.skip_rescale
     overwrite = args.overwrite
     # TODO: Set up W&B configuration.
     # use_wandb = args.use_wandb
@@ -172,6 +217,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     metrics_file = os.path.join(output_dir, "metrics.csv")
     if not overwrite and os.path.isfile(metrics_file):
         metrics = pd.read_csv(metrics_file, index_col=0)
+        # Add default parameters to metrics.
+        metrics = add_default_params(metrics)
     else:
         metrics = None
 
@@ -192,7 +239,10 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     for dataset_name, acc, noise_level in values:
         # Check if the current configuration already has metrics computed
         # If so, dont recompute
-        params = {"Acceleration": acc, "dataset": dataset_name, "Noise Level": noise_level, "weights": weights_basename}
+        params = {
+            "Acceleration": acc, "dataset": dataset_name, "Noise Level": noise_level, 
+            "weights": weights_basename, "rescaled": not skip_rescale
+        }
         if metrics is not None:
             try:
                 existing_metrics = find_metrics(metrics, params)
@@ -222,10 +272,10 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         )
 
         # Build evaluators
-        evaluators = [ReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan)]
+        evaluators = [ReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan, skip_rescale=skip_rescale)]
         # TODO: add support for multiple evaluators.
         if zero_filled:
-            evaluators.append(ZFReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan))
+            evaluators.append(ZFReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan, skip_rescale=skip_rescale))
         evaluators = DatasetEvaluators(evaluators, as_list=True)
 
         results = inference_on_dataset(model, dataloader, evaluators)
@@ -312,7 +362,7 @@ if __name__ == "__main__":
         "--noise",
         default="standard",
         choices=("false", "standard", "sweep"),
-        help="Include noise evaluation",
+        help="Type of noise evaluation",
     )
     parser.add_argument(
         "--sweep-vals",
@@ -328,6 +378,11 @@ if __name__ == "__main__":
         "--overwrite",
         action="store_true",
         help="Overwrite existing metrics file",
+    )
+    parser.add_argument(
+        "--skip-rescale",
+        action="store_true",
+        help="Skip rescaling when evaluating"
     )
     # parser.add_argument(
     #     "--wandb", action="store_true", help="Log to W&B during evaluation"

@@ -26,7 +26,7 @@ class ReconEvaluator(DatasetEvaluator):
     - SSIM (to be implemented)
     """
 
-    def __init__(self, dataset_name, cfg, output_dir=None, group_by_scan=False):
+    def __init__(self, dataset_name, cfg, output_dir=None, group_by_scan=False, skip_rescale=False):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
@@ -34,6 +34,8 @@ class ReconEvaluator(DatasetEvaluator):
             output_dir (str, optional): an output directory to dump all
                 results predicted on the dataset. Currently not used.
             group_by_scan (bool, optional): If `True`, groups metrics by scan.
+            skip_rescale (bool, optional): If `True`, skips rescaling the output and target
+                by the mean/std.
         """
         # self._tasks = self._tasks_from_config(cfg)
         self._output_dir = output_dir
@@ -42,6 +44,7 @@ class ReconEvaluator(DatasetEvaluator):
         self._logger = logging.getLogger(__name__)
         self._normalizer = build_normalizer(cfg)
         self._group_by_scan = group_by_scan
+        self._skip_rescale = skip_rescale
 
         # TODO: Uncomment when metadata is supported
         # self._metadata = MetadataCatalog.get(dataset_name)
@@ -82,11 +85,16 @@ class ReconEvaluator(DatasetEvaluator):
         """
         N = outputs["pred"].shape[0]
 
-        normalized = self._normalizer.undo(
-            image=outputs["pred"], target=outputs["target"], mean=inputs["mean"], std=inputs["std"]
-        )
-        preds = normalized["image"].to(self._cpu_device, non_blocking=True)
-        targets = normalized["target"].to(self._cpu_device, non_blocking=True)
+        if self._skip_rescale:
+            # Do not rescale the outputs
+            preds = outputs["pred"].to(self._cpu_device, non_blocking=True)
+            targets = outputs["target"].to(self._cpu_device, non_blocking=True)
+        else:
+            normalized = self._normalizer.undo(
+                image=outputs["pred"], target=outputs["target"], mean=inputs["mean"], std=inputs["std"]
+            )
+            preds = normalized["image"].to(self._cpu_device, non_blocking=True)
+            targets = normalized["target"].to(self._cpu_device, non_blocking=True)
 
         self._predictions.extend([
             {

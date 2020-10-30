@@ -54,6 +54,8 @@ class NoiseModel():
     def __init__(self, std_devs: Union[float, Sequence[float]], seed=None):
         if not isinstance(std_devs, Sequence):
             std_devs = (std_devs,)
+        elif len(std_devs) > 2:
+            raise ValueError("`std_devs` must have 2 or fewer values")
         self.std_devs = std_devs
 
         # For reproducibility.
@@ -65,11 +67,13 @@ class NoiseModel():
     def choose_std_dev(self):
         """Chooses a random acceleration rate given a range.
         """
-        if not isinstance(self.std_devs, Sequence) or len(self.std_devs) == 1:
+        if not isinstance(self.std_devs, Sequence):
+            return self.std_devs
+        elif len(self.std_devs) == 1:
             return self.std_devs[0]
-        assert False, "We should not reach here ever for now"
+
         std_range = self.std_devs[1] - self.std_devs[0]
-        std_dev = self.std_devs[0] + std_range * self.generator.rand(1).item()
+        std_dev = self.std_devs[0] + std_range * torch.rand(1, generator=self.generator).item()
         return std_dev
 
     def __call__(self, *args, **kwargs):

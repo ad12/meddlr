@@ -6,6 +6,7 @@ from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils.events import get_event_storage
 
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
+from ss_recon.utils.transforms import NoiseModel
 
 
 @META_ARCH_REGISTRY.register()
@@ -29,23 +30,14 @@ class N2RModel(nn.Module):
         # Keep gradient for base images in transform.
         self.use_base_grad = False
 
-        noise_std_dev = cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV
-        assert len(noise_std_dev) == 1, (
-            "Noise std dev currently only supports one value."
-        )
-        self.noise_std_dev = noise_std_dev[0]
+        self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV)
 
     def augment(self, inputs):
         """Noise augmentation module.
         TODO: Perform the augmentation here.
         """
         kspace = inputs["kspace"].clone()
-        mask = cplx.get_mask(kspace)
-
-        noise_std = self.noise_std_dev
-        noise = noise_std * torch.randn(inputs['kspace'].size())
-        masked_noise = noise * mask
-        aug_kspace = kspace + masked_noise
+        aug_kspace = self.noiser(kspace, clone=False)
 
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = aug_kspace
