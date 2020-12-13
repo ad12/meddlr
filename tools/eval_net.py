@@ -15,6 +15,7 @@ import logging
 import os
 import datetime
 import time
+import warnings
 from copy import deepcopy
 from typing import Any, Dict, Sequence
 
@@ -203,6 +204,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     noise_sweep_vals = args.sweep_vals
     skip_rescale = args.skip_rescale
     overwrite = args.overwrite
+    save_scans = args.save_scans
     # TODO: Set up W&B configuration.
     # use_wandb = args.use_wandb
     # if use_wandb:
@@ -235,14 +237,22 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
     accelerations = cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS
     values = itertools.product(cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals)
+    values = list(values)
     all_results = []
-    for dataset_name, acc, noise_level in values:
+    if len(values) > 1 and save_scans:
+        warnings.warn("Found multiple evaluation configurations. Only outputs from last configuration will be saved...")
+
+    for exp_idx, (dataset_name, acc, noise_level) in enumerate(values):
         # Check if the current configuration already has metrics computed
         # If so, dont recompute
         params = {
             "Acceleration": acc, "dataset": dataset_name, "Noise Level": noise_level, 
             "weights": weights_basename, "rescaled": not skip_rescale
         }
+        logger.info("=="*30)
+        logger.info("Experiment ({}/{})".format(exp_idx + 1, len(values)))
+        logger.info(", ".join([f"{k}: {v}" for k, v in params.items()]))
+        logger.info("=="*30)
         if metrics is not None:
             try:
                 existing_metrics = find_metrics(metrics, params)
@@ -271,8 +281,15 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             s_cfg, dataset_name, as_test=True, add_noise=noise_level > 0
         )
 
-        # Build evaluators
-        evaluators = [ReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan, skip_rescale=skip_rescale)]
+        # Build evaluators. Only save reconstructions for last scan.
+        _save_scans = (exp_idx == len(values) - 1) if save_scans else False
+        evaluators = [ReconEvaluator(
+            dataset_name, s_cfg, 
+            group_by_scan=group_by_scan, skip_rescale=skip_rescale, 
+            save_scans=_save_scans,
+            output_dir=os.path.join(output_dir, dataset_name) if _save_scans else None,
+            # output_dir=os.path.join(output_dir, f"{dataset_name}-acc={acc}-noise={noise_level}")
+        )]
         # TODO: add support for multiple evaluators.
         if zero_filled:
             evaluators.append(ZFReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan, skip_rescale=skip_rescale))
@@ -293,7 +310,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         logger.info("\n" + tabulate(scan_results, headers=scan_results.columns))
 
         all_results.append(scan_results)
-
+        del evaluators
+        del dataloader
         # Currently don't support writing data because it takes too long
         # logger.info("Saving data...")
         # file_path = os.path.join(output_dir, dataset_name, "{}.h5".format(scan_name))
@@ -306,7 +324,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     # TODO: If fails, it automatically saves the old file in a versioned form and prints logging message.
     if metrics is not None:
         try:
-            running_results = update_metrics(all_results, metrics, on=["Acceleration", "dataset", "Noise Level", "weights", "Method"])
+            running_results = update_metrics(all_results, metrics, on=["Acceleration", "dataset", "Noise Level", "weights", "Method", "rescaled"])
         except KeyError as e:
             logger.error(e)
             logger.error("Failed to load old metrics information")
@@ -366,7 +384,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sweep-vals",
-        default=(0, 0.2, 0.4, 0.6, 0.8, 1.0),
+        default=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
         nargs="*",
         type=float,
         help="args to sweep for noise",
@@ -383,6 +401,11 @@ if __name__ == "__main__":
         "--skip-rescale",
         action="store_true",
         help="Skip rescaling when evaluating"
+    )
+    parser.add_argument(
+        "--save-scans",
+        action="store_true",
+        help="Save reconstruction outputs"
     )
     # parser.add_argument(
     #     "--wandb", action="store_true", help="Log to W&B during evaluation"

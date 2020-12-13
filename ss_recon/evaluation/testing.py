@@ -98,6 +98,8 @@ SUPPORTED_VAL_METRICS = {
     "l2": "min",
     "psnr": "max",
     "ssim": "max",
+    "ssim_old": "max",
+    "ssim (Wang)": "max",
     "iteration": "max",  # find the last checkpoint
 }
 

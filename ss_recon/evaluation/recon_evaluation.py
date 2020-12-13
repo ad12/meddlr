@@ -1,5 +1,6 @@
 import copy
 import logging
+import os
 import warnings
 from collections import OrderedDict, defaultdict
 
@@ -26,7 +27,7 @@ class ReconEvaluator(DatasetEvaluator):
     - SSIM (to be implemented)
     """
 
-    def __init__(self, dataset_name, cfg, output_dir=None, group_by_scan=False, skip_rescale=False):
+    def __init__(self, dataset_name, cfg, output_dir=None, group_by_scan=False, skip_rescale=False, save_scans=False):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
@@ -36,15 +37,19 @@ class ReconEvaluator(DatasetEvaluator):
             group_by_scan (bool, optional): If `True`, groups metrics by scan.
             skip_rescale (bool, optional): If `True`, skips rescaling the output and target
                 by the mean/std.
+            save_scans (bool, optional): If `True`, saves predictions to .npy file.
         """
         # self._tasks = self._tasks_from_config(cfg)
         self._output_dir = output_dir
+        if self._output_dir:
+            os.makedirs(self._output_dir, exist_ok=True)
 
         self._cpu_device = torch.device("cpu")
         self._logger = logging.getLogger(__name__)
         self._normalizer = build_normalizer(cfg)
         self._group_by_scan = group_by_scan
         self._skip_rescale = skip_rescale
+        self._save_scans = save_scans
 
         # TODO: Uncomment when metadata is supported
         # self._metadata = MetadataCatalog.get(dataset_name)
@@ -179,7 +184,7 @@ class ReconEvaluator(DatasetEvaluator):
 
         # Per slice evaluation.
         pred_vals = defaultdict(lambda: defaultdict(list))
-        for pred in self._predictions:
+        for pred in tqdm(self._predictions, desc="Slice metrics"):
             scan_id = pred["metadata"]["scan_id"]
             val = self.evaluate_prediction(pred)
             for k, v in val.items():
@@ -187,18 +192,32 @@ class ReconEvaluator(DatasetEvaluator):
 
         # Full scan evaluation
         scans = self.structure_scans()
-        for scan_id, pred in scans.items():
+        for scan_id, pred in tqdm(scans.items(), desc="Scan metrics"):
             val = self.evaluate_prediction(pred)
             for k, v in val.items():
                 pred_vals[scan_id][f"{k}_scan"].append(v)
+        
+        if self._save_scans:
+            self._logger.info("Saving data...")
+            assert self._output_dir
+            for scan_id, pred in tqdm(scans.items()):
+                np.save(os.path.join(self._output_dir, f"{scan_id}.npy"), pred["pred"])
 
         self._results = OrderedDict({
             scan_id: {k: np.mean(v) for k, v in metrics.items()} 
             for scan_id, metrics in pred_vals.items()
         })
 
+        results = copy.deepcopy(self._results)
+
+        # if self._output_dir:
+        #     output_file = os.path.join(self._output_dir, "results.pt")
+        #     _results = {"results": results, "pred_vals": pred_vals}
+        #     import pdb; pdb.set_trace()
+        #     torch.save(_results, output_file)
+
         # Copy so the caller can do whatever with results
-        return copy.deepcopy(self._results)
+        return results
 
 
     def evaluate_prediction(self, prediction):
