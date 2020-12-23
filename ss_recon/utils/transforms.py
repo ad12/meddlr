@@ -8,11 +8,13 @@ from typing import Sequence, Union
 
 import numpy as np
 import torch
-import torch.fft
 from torch import nn
 
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import env
+
+if env._PT_VERSION >= [1,6]:
+    import torch.fft
 
 
 class SenseModel(nn.Module):
