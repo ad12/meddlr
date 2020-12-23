@@ -46,36 +46,6 @@ from ss_recon.utils.env import seed_all_rng
 from ss_recon.utils.logger import setup_logger
 
 
-# Initialize config
-cfg = get_cfg()
-cfg.defrost()
-cfg.MODEL.META_ARCH = "GeneralizedUnrolledCNN"
-cfg.OUTPUT_DIR = PathManager.get_local_path("results://tests/verify_val")
-cfg.DATASETS.TRAIN = ("mridata_knee_2019_train",)
-cfg.DATASETS.VAL = ("mridata_knee_2019_val",)
-cfg.DATASETS.TEST = ()
-cfg.SOLVER.MAX_ITER = 80
-cfg.SOLVER.CHECKPOINT_PERIOD = 80
-cfg.TEST.EVAL_PERIOD = 80
-cfg.TIME_SCALE = "iter"
-cfg.SOLVER.TRAIN_BATCH_SIZE = 1
-cfg.SOLVER.TEST_BATCH_SIZE = 8
-cfg.DEVICE = "cuda"
-cfg.DATALOADER.NUM_WORKERS = 12  # ensure deterministic
-cfg.SEED = 0  # ensure deterministic
-cfg.freeze()
-
-# Initialize args namespace. 
-# Serve as corollary for ss_recon.engine.defaults.default_argument_parser
-args = Namespace(
-    debug=True,
-    resume=False,
-    num_gpus=1,
-    devices=None,
-    eval_only=False,  # for eval, set this to true.
-)
-
-
 class ComparisonEvaluator(ReconEvaluator):
     def __init__(self, dataset_name, cfg, output_dir, group_by_scan=False):
         super().__init__(
@@ -164,7 +134,7 @@ def train_and_val():
     return trainer.train(), trainer.model.cpu()
 
 
-def test(run_setup=False, weights=""):
+def _test(run_setup=False, weights=""):
     """This does testing."""
     eval_args = deepcopy(args)
     eval_args.eval_only = True
@@ -190,7 +160,6 @@ def test(run_setup=False, weights=""):
     init_model = init_model.cuda()
     DetectionCheckpointer(init_model, save_dir=cfg.OUTPUT_DIR).resume_or_load(weights, resume=False)
 
-    import pdb; pdb.set_trace()
     # Compare models at the beginning.
     # If these are not the same, there is a pytorch bug.
     if compare_models(model, init_model):
@@ -267,5 +236,34 @@ def compare_outputs():
 # compare_outputs()
 # print("All outputs between val and test are the same")
 
-test_results, test_model = test(True, weights="/bmrNAS/people/arjun/results/ss_recon/prelim_exps/baseline_12x_maxbatch/sub-1/model_0151999.pth")
-print(test_results)
+if __name__ == "__main__":
+    # Initialize config
+    cfg = get_cfg()
+    cfg.defrost()
+    cfg.MODEL.META_ARCH = "GeneralizedUnrolledCNN"
+    cfg.OUTPUT_DIR = PathManager.get_local_path("results://tests/verify_val")
+    cfg.DATASETS.TRAIN = ("mridata_knee_2019_train",)
+    cfg.DATASETS.VAL = ("mridata_knee_2019_val",)
+    cfg.DATASETS.TEST = ()
+    cfg.SOLVER.MAX_ITER = 80
+    cfg.SOLVER.CHECKPOINT_PERIOD = 80
+    cfg.TEST.EVAL_PERIOD = 80
+    cfg.TIME_SCALE = "iter"
+    cfg.SOLVER.TRAIN_BATCH_SIZE = 1
+    cfg.SOLVER.TEST_BATCH_SIZE = 8
+    cfg.DEVICE = "cuda"
+    cfg.DATALOADER.NUM_WORKERS = 12  # ensure deterministic
+    cfg.SEED = 0  # ensure deterministic
+    cfg.freeze()
+
+    # Initialize args namespace. 
+    # Serve as corollary for ss_recon.engine.defaults.default_argument_parser
+    args = Namespace(
+        debug=True,
+        resume=False,
+        num_gpus=1,
+        devices=None,
+        eval_only=False,  # for eval, set this to true.
+    )
+    test_results, test_model = _test(True, weights="/bmrNAS/people/arjun/results/ss_recon/prelim_exps/baseline_12x_maxbatch/sub-1/model_0151999.pth")
+    print(test_results)

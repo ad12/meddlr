@@ -6,6 +6,7 @@ import random
 import subprocess
 import sys
 from datetime import datetime
+from typing import List
 
 import numpy as np
 import torch
@@ -194,6 +195,13 @@ def supports_wandb():
     return "wandb" in sys.modules and not is_debug()
 
 
+def pt_version(dtype=int) -> List:
+    version = [x for x in _PT_VERSION.split(".")]
+    if not issubclass(dtype, str):
+        version = [dtype(x) for x in version]
+    return version
+
+
 def supports_cplx_tensor() -> bool:
     """Returns `True` if complex tensors supported.
 
@@ -208,8 +216,8 @@ def supports_cplx_tensor() -> bool:
         bool: `True` if complex tensors are supported.
     """
     env_var = os.environ.get("SSRECON_ENABLE_CPLX_TENSORS", "auto")
-    is_min_version = [int(x) for x in _PT_VERSION.split(".")] >= [1,6]
-    is_auto_version = [int(x) for x in _PT_VERSION.split(".")] >= [1,7]
+    is_min_version = pt_version() >= [1,6]
+    is_auto_version = pt_version() >= [1,7]
 
     if env_var == "auto":
         env_var = str(is_auto_version)

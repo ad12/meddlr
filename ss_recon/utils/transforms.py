@@ -13,7 +13,7 @@ from torch import nn
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import env
 
-if env._PT_VERSION >= [1,6]:
+if env.pt_version() >= [1,6]:
     import torch.fft
 
 
