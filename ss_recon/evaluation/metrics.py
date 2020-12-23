@@ -9,26 +9,37 @@ from ss_recon.utils import complex_utils as cplx
 from skimage.metrics import structural_similarity
 
 
-def compute_mse(ref: torch.Tensor, x: torch.Tensor, is_batch=False):
+def compute_mse(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=False):
+    if cplx.is_complex(ref):
+        ref = torch.view_as_real(ref)
+        x = torch.view_as_real(x)
+
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
-    squared_err = cplx.abs(x - ref) ** 2
+    if magnitude:
+        squared_err = torch.abs(cplx.abs(x) - cplx.abs(ref)) ** 2
+    else:
+        squared_err = cplx.abs(x - ref) ** 2
     shape = (x.shape[0], -1) if is_batch else -1
     return torch.mean(squared_err.view(shape), dim=-1)
 
 
-def compute_l2(ref: torch.Tensor, x: torch.Tensor, is_batch=False):
+def compute_l2(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=False):
     """
     Args:
         ref (torch.Tensor): The target. Shape (...)x2
         x (torch.Tensor): The prediction. Same shape as `ref`.
     """
+    if cplx.is_complex(ref):
+        ref = torch.view_as_real(ref)
+        x = torch.view_as_real(x)
+
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
-    return torch.sqrt(compute_mse(ref, x, is_batch=is_batch))
+    return torch.sqrt(compute_mse(ref, x, is_batch=is_batch, magnitude=magnitude))
 
 
-def compute_psnr(ref: torch.Tensor, x: torch.Tensor, is_batch=False):
+def compute_psnr(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=False):
     """Compute peak to signal to noise ratio of magnitude image.
 
     Args:
@@ -38,10 +49,14 @@ def compute_psnr(ref: torch.Tensor, x: torch.Tensor, is_batch=False):
     Returns:
         Tensor: Scalar in db
     """
+    if cplx.is_complex(ref):
+        ref = torch.view_as_real(ref)
+        x = torch.view_as_real(x)
+
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
 
-    l2 = compute_l2(ref, x)
+    l2 = compute_l2(ref, x, magnitude=magnitude)
     shape = (x.shape[0], -1) if is_batch else -1
     return 20 * torch.log10(cplx.abs(ref).max() / l2)
 
@@ -54,6 +69,10 @@ def compute_nrmse(ref, x, is_batch=False):
         ref (torch.Tensor): The target. Shape (...)x2
         x (torch.Tensor): The prediction. Same shape as `ref`.
     """
+    if cplx.is_complex(ref):
+        ref = torch.view_as_real(ref)
+        x = torch.view_as_real(x)
+
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
     rmse = compute_l2(ref, x, is_batch=is_batch)
@@ -97,6 +116,10 @@ def compute_ssim(
     gaussian_weights = kwargs.get("gaussian_weights", True)
     sigma = kwargs.get("sigma", 1.5)
     use_sample_covariance = kwargs.get("use_sample_covariance", False)
+
+    if cplx.is_complex(ref):
+        ref = torch.view_as_real(ref)
+        x = torch.view_as_real(x)
 
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2

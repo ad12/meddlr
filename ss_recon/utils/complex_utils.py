@@ -1,9 +1,25 @@
 """
 Utilities for doing complex-valued operations.
 """
-
+import os
 import numpy as np
 import torch
+import warnings
+
+from ss_recon.utils.env import supports_cplx_tensor
+
+
+def is_complex(x):
+    """Wrapper around torch.is_complex() for PyTorch<1.7"""
+    return supports_cplx_tensor() and torch.is_complex(x)
+
+
+def is_complex_as_real(x):
+    """Returns `True` if the tensor is real-view convention for complex numbers.
+
+    The real-view of a complex tensor has the shape [..., 2]
+    """
+    return x.size(-1) == 2
 
 
 def conj(x):
@@ -11,12 +27,13 @@ def conj(x):
     Computes the complex conjugate of complex-valued input tensor (x).
     i.e. conj(a + ib) = a - ib
     """
-    assert x.size(-1) == 2
-
-    real = x[..., 0]
-    imag = x[..., 1]
-
-    return torch.stack((real, -1.0 * imag), dim=-1)
+    assert is_complex_as_real(x) or is_complex(x)
+    if is_complex(x):
+        return x.conj()
+    else:
+        real = x[..., 0]
+        imag = x[..., 1]
+        return torch.stack((real, -1.0 * imag), dim=-1)
 
 
 def mul(x, y):
@@ -37,32 +54,41 @@ def mul(x, y):
 
     #return torch.stack((real, imag), dim=-1)
 
-    assert x.size(-1) == 2
-    assert y.size(-1) == 2
-    # note: using select() makes sure that another copy is not made.
-    # real = a*c - b*d
-    real = x.select(-1, 0) * y.select(-1, 0)  # a*c
-    real -= x.select(-1, 1) * y.select(-1, 1)  # b*d
-    # imag = a*d + b*c
-    imag = x.select(-1, 0) * y.select(-1, 1)  # a*d
-    imag += x.select(-1, 1) * y.select(-1, 0)  # b*c
-    return torch.stack((real, imag), dim=-1)
+    assert is_complex_as_real(x) or is_complex(x)
+    assert is_complex_as_real(y) or is_complex(y)
+    if is_complex(x):
+        return x * y
+    else:
+        # note: using select() makes sure that another copy is not made.
+        # real = a*c - b*d
+        real = x.select(-1, 0) * y.select(-1, 0)  # a*c
+        real -= x.select(-1, 1) * y.select(-1, 1)  # b*d
+        # imag = a*d + b*c
+        imag = x.select(-1, 0) * y.select(-1, 1)  # a*d
+        imag += x.select(-1, 1) * y.select(-1, 0)  # b*c
+        return torch.stack((real, imag), dim=-1)
 
 
 def abs(x):
     """
     Computes the absolute value of a complex-valued input tensor (x).
     """
-    assert x.size(-1) == 2
-    return (x ** 2).sum(dim=-1).sqrt()
+    assert is_complex_as_real(x) or is_complex(x)
+    if is_complex(x):
+        return x.abs()
+    else:
+        return (x ** 2).sum(dim=-1).sqrt()
 
 
 def angle(x, eps=1e-11):
     """
     Computes the phase of a complex-valued input tensor (x).
     """
-    assert x.size(-1) == 2
-    return torch.atan(x[..., 1] / (x[..., 0] + eps))
+    assert is_complex_as_real(x) or is_complex(x)
+    if is_complex(x):
+        return x.angle()
+    else:
+        return torch.atan(x[..., 1] / (x[..., 0] + eps))
 
 
 def from_polar(magnitude, phase):
@@ -80,34 +106,44 @@ def get_mask(x, eps=1e-11):
       - 0, if both real and imaginary components are zero.
       - 1, if either real and imaginary components are non-zero.
     """
+    unsqueeze = True
+    if is_complex(x):
+        unsqueeze = False
+        x = torch.view_as_real(x)
     assert x.size(-1) == 2
     absx = abs(x)  # squashes last dimension
     mask = torch.where(
         absx > eps, torch.ones_like(absx), torch.zeros_like(absx)
     )
-    return mask.unsqueeze(-1)
+    if unsqueeze:
+        mask = mask.unsqueeze(-1)
+    return mask
 
 
 def matmul(X, Y):
     """
     Computes complex-valued matrix product of X and Y.
     """
-    assert X.size(-1) == 2
-    assert Y.size(-1) == 2
-
-    A = X[..., 0]
-    B = X[..., 1]
-    C = Y[..., 0]
-    D = Y[..., 1]
-    real = torch.matmul(A, C) - torch.matmul(B, D)
-    imag = torch.matmul(A, D) + torch.matmul(B, C)
-    return torch.stack((real, imag), dim=-1)
+    assert is_complex_as_real(X) or is_complex(X)
+    assert is_complex_as_real(Y) or is_complex(Y)
+    if is_complex(X):
+        return torch.matmul(X, Y)
+    else:
+        A = X[..., 0]
+        B = X[..., 1]
+        C = Y[..., 0]
+        D = Y[..., 1]
+        real = torch.matmul(A, C) - torch.matmul(B, D)
+        imag = torch.matmul(A, D) + torch.matmul(B, C)
+        return torch.stack((real, imag), dim=-1)
 
 
 def power_method(X, num_iter=10, eps=1e-6):
     """
     Iteratively computes first singular value of X using power method.
     """
+    if is_complex_as_real(X) or is_complex(X):
+        X = torch.view_as_real(X)
     assert X.size(-1) == 2
 
     # get data dimensions
@@ -140,6 +176,8 @@ def svd(X, compute_uv=True):
     Returns:
         U, S, V (tuple)
     """
+    if is_complex_as_real(X) or is_complex(X):
+        X = torch.view_as_real(X)
     assert X.size(-1) == 2
 
     # Get data dimensions
@@ -174,14 +212,18 @@ def to_numpy(x):
     """
     Convert real-valued PyTorch tensor to complex-valued numpy array.
     """
-    assert x.size(-1) == 2
-    x = x.numpy()
-    return x[..., 0] + 1j * x[..., 1]
+    assert is_complex_as_real(x) or is_complex(x)
+    if is_complex(x):
+        return x.clone().numpy()  # previously returned copy
+    else:
+        x = x.numpy()
+        return x[..., 0] + 1j * x[..., 1]
 
 
-def to_tensor(x):
+def to_tensor(x: np.ndarray):
     """
     Convert complex-valued numpy array to real-valued PyTorch tensor.
     """
-    x = np.stack((x.real, x.imag), axis=-1)
+    if not supports_cplx_tensor():
+        x = np.stack((x.real, x.imag), axis=-1)
     return torch.from_numpy(x)

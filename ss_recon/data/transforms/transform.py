@@ -124,15 +124,17 @@ class Subsampler(object):
         data_shape = tuple(data.shape)
         assert mode in ["2D", "3D"]
         if mode == "2D":
-            mask_shape = (1,) + data_shape[1:3] + (1, 1)
+            extra_dims = data.ndim - 3
+            mask_shape = (1,) + data_shape[1:3] + (1,) * extra_dims
         elif mode == "3D":
-            mask_shape = (1,) + data_shape[1:4] + (1, 1)
+            extra_dims = data.ndim - 4
+            mask_shape = (1,) + data_shape[1:4] + (1,) * extra_dims
         else:
             raise ValueError(
                 "Only 2D and 3D undersampling masks are supported."
             )
         mask = self.mask_func(mask_shape, seed, acceleration)
-        return torch.where(mask == 0, torch.Tensor([0]), data), mask
+        return torch.where(mask == 0, torch.tensor([0], dtype=data.dtype), data), mask
 
 
 class DataTransform:

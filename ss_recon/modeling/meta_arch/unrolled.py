@@ -172,7 +172,8 @@ class GeneralizedUnrolledCNN(nn.Module):
         mask = inputs.get("mask", None)
         A = inputs.get("signal_model", None)
         maps = inputs["maps"]
-        if self.num_emaps != maps.size()[-2]:
+        num_maps_dim = -2 if target.shape[-1] == 2 else -1
+        if self.num_emaps != maps.size()[num_maps_dim]:
             raise ValueError(
                 "Incorrect number of ESPIRiT maps! Re-prep data..."
             )
@@ -200,7 +201,9 @@ class GeneralizedUnrolledCNN(nn.Module):
             # dc update
             grad_x = A(A(image), adjoint=True) - zf_image
             image = image + step_size * grad_x
-
+            use_cplx = cplx.is_complex(image)
+            if use_cplx:
+                image = torch.view_as_real(image)
             # prox update
             image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(
                 0, 3, 1, 2
@@ -210,6 +213,8 @@ class GeneralizedUnrolledCNN(nn.Module):
             image = image.permute(0, 2, 3, 1).reshape(
                 dims[0:3] + (self.num_emaps, 2)
             )
+            if use_cplx:
+                image = torch.view_as_complex(image)
 
         output_dict = {
             "pred": image,  # N x Y x Z x 1 x 2

@@ -235,6 +235,9 @@ class DenoisingModel(nn.Module):
             # dc update
             grad_x = A(A(image), adjoint=True) - zf_image
             image = image + step_size * grad_x
+            use_cplx = cplx.is_complex(image)
+            if use_cplx:
+                image = torch.view_as_real(image)
 
             # prox update
             image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(
@@ -245,6 +248,8 @@ class DenoisingModel(nn.Module):
             image = image.permute(0, 2, 3, 1).reshape(
                 dims[0:3] + (self.num_emaps, 2)
             )
+            if use_cplx:
+                image = torch.view_as_complex(image)
 
         output_dict = {
             "pred": image,  # N x Y x Z x 1 x 2

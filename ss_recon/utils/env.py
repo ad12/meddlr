@@ -17,6 +17,8 @@ except:
 
 __all__ = []
 
+_PT_VERSION = torch.__version__
+
 
 def seed_all_rng(seed=None):
     """
@@ -190,3 +192,37 @@ def is_debug() -> bool:
 
 def supports_wandb():
     return "wandb" in sys.modules and not is_debug()
+
+
+def supports_cplx_tensor() -> bool:
+    """Returns `True` if complex tensors supported.
+
+    This can be controlled by the environment variable
+    "SSRECON_ENABLE_CPLX_TENSORS", which should be set to
+    "True", "False", or "auto". Defaults to "auto" functionality,
+    which enables complex tensors if PyTorch>=1.7.0.
+    While complex tensors were introduced in PyTorch 1.6, there were
+    known bugs. Enhanced complex tensor support offered in PyTorch >=1.7.0.
+
+    Returns:
+        bool: `True` if complex tensors are supported.
+    """
+    env_var = os.environ.get("SSRECON_ENABLE_CPLX_TENSORS", "auto")
+    is_min_version = [int(x) for x in _PT_VERSION.split(".")] >= [1,6]
+    is_auto_version = [int(x) for x in _PT_VERSION.split(".")] >= [1,7]
+
+    if env_var == "auto":
+        env_var = str(is_auto_version)
+
+    if env_var.lower() == "false":
+        return False
+    elif env_var.lower() == "true":
+        if not is_min_version:
+            raise RuntimeError(f"Complex tensors not supported in PyTorch {_PT_VERSION}")
+        if not is_auto_version:
+            warnings.warn("Complex tensor support has known breaking bugs for PyTorch <1.7")
+        return True
+    else:
+        raise ValueError(f"Unknown environment value: {env_var}")
+        
+

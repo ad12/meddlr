@@ -8,9 +8,11 @@ from typing import Sequence, Union
 
 import numpy as np
 import torch
+import torch.fft
 from torch import nn
 
 from ss_recon.utils import complex_utils as cplx
+from ss_recon.utils import env
 
 
 class SenseModel(nn.Module):
@@ -28,13 +30,33 @@ class SenseModel(nn.Module):
             self.weights = weights
 
     def _adjoint_op(self, kspace):
+        """
+        Args:
+            kspace: Shape (B,H,W,#coils,[2])
+        Returns:
+            image: Shape (B,H,W,#maps,[2])
+        """
         image = ifft2(self.weights * kspace)
-        image = cplx.mul(image.unsqueeze(-2), cplx.conj(self.maps))
-        return image.sum(-3)
+        if cplx.is_complex_as_real(kspace):
+            image = cplx.mul(image.unsqueeze(-2), cplx.conj(self.maps))  # [B,...,#coils,#maps,2]
+            return image.sum(-3)
+        else:
+            image = cplx.mul(image.unsqueeze(-1), cplx.conj(self.maps))  # [B,...,#coils,#maps,1]
+            return image.sum(-2)
 
     def _forward_op(self, image):
-        kspace = cplx.mul(image.unsqueeze(-3), self.maps)
-        kspace = self.weights * fft2(kspace.sum(-2))
+        """
+        Args:
+            image: Shape (B,H,W,#maps,[2])
+        Returns:
+            kspace: Shape (B,H,W,#coils,[2])
+        """
+        if cplx.is_complex_as_real(image):
+            kspace = cplx.mul(image.unsqueeze(-3), self.maps)  # [B,...,1,#maps,2]
+            kspace = self.weights * fft2(kspace.sum(-2))  # [B,...,#coils,2]
+        else:
+            kspace = cplx.mul(image.unsqueeze(-2), self.maps)
+            kspace = self.weights * fft2(kspace.sum(-1))
         return kspace
 
     def forward(self, input, adjoint=False):
@@ -260,7 +282,18 @@ def fft2(data):
     Returns:
         torch.Tensor: The FFT of the input.
     """
-    assert data.size(-1) == 2
+    assert data.size(-1) == 2 or env.supports_cplx_tensor()
+    if data.size(-1) != 2:
+        # Complex tensors supported
+        assert env.supports_cplx_tensor(), torch.__version__  # torch.__version__ >= 1.7
+        ndims = len(list(data.size()))
+        dims = (1, 2)
+
+        data = ifftshift(data, dim=dims)
+        data = torch.fft.fftn(data, dim=dims, norm="ortho")
+        data = fftshift(data, dim=dims)
+        return data
+
     ndims = len(list(data.size()))
 
     if ndims == 5:
@@ -271,7 +304,7 @@ def fft2(data):
         raise ValueError("fft2: ndims > 6 not supported!")
 
     data = ifftshift(data, dim=(-3, -2))
-    data = torch.fft(data, 2, normalized=True)
+    data = torch.Tensor.fft(data, 2, normalized=True)
     data = fftshift(data, dim=(-3, -2))
 
     if ndims == 5:
@@ -296,9 +329,20 @@ def ifft2(data):
     Returns:
         torch.Tensor: The IFFT of the input.
     """
-    assert data.size(-1) == 2
-    ndims = len(list(data.size()))
+    assert data.size(-1) == 2 or env.supports_cplx_tensor()
+    if data.size(-1) != 2:
+        # Complex tensors supported
+        assert env.supports_cplx_tensor(), torch.__version__  # torch.__version__ >= 1.7
+        ndims = len(list(data.size()))
+        dims = (1, 2)
 
+        data = ifftshift(data, dim=dims)
+        data = torch.fft.ifftn(data, dim=dims, norm="ortho")
+        data = fftshift(data, dim=dims)
+        return data
+
+    ndims = len(list(data.size()))
+    
     if ndims == 5:
         data = data.permute(0, 3, 1, 2, 4)
     elif ndims == 6:
