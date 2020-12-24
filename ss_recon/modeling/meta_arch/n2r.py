@@ -56,7 +56,11 @@ class N2RModel(nn.Module):
 
         with torch.no_grad():
             # calc mask for first coil only
+            if cplx.is_complex(kspace):
+                kspace = torch.view_as_real(kspace)
             kspace = kspace.cpu()[0, ..., 0, :].unsqueeze(0)
+            if cplx.is_complex(kspace_aug):
+                kspace_aug = torch.view_as_real(kspace_aug)
             kspace_aug = kspace_aug.cpu()[0, ..., 0, :].unsqueeze(0)
             preds = preds.cpu()[0, ...].unsqueeze(0)
             preds_base = preds_base.cpu()[0, ...].unsqueeze(0)

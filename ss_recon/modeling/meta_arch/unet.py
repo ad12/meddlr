@@ -161,8 +161,10 @@ class UnetModel(nn.Module):
                 preds: NxHxWx2 tensors of predictions.
             """
             storage = get_event_storage()
-            
+
             with torch.no_grad():
+                if cplx.is_complex(kspace):
+                    kspace = torch.view_as_real(kspace)
                 kspace = kspace[0, ..., 0, :].unsqueeze(0).cpu() # calc mask for first coil only
                 targets = targets[0, ...].unsqueeze(0).cpu()
                 preds = preds[0, ...].unsqueeze(0).cpu()

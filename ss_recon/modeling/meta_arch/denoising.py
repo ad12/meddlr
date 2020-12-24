@@ -138,6 +138,8 @@ class DenoisingModel(nn.Module):
         storage = get_event_storage()
         
         with torch.no_grad():
+            if cplx.is_complex(kspace):
+                kspace = torch.view_as_real(kspace)
             kspace = kspace[0, ..., 0, :].unsqueeze(0).cpu() # calc mask for first coil only
             targets = targets[0, ...].unsqueeze(0).cpu()
             preds = preds[0, ...].unsqueeze(0).cpu()
@@ -203,7 +205,8 @@ class DenoisingModel(nn.Module):
         mask = inputs.get("mask", None)
         A = inputs.get("signal_model", None)
         maps = inputs["maps"]
-        if self.num_emaps != maps.size()[-2]:
+        num_maps_dim = -2 if cplx.is_complex_as_real(maps) else -1
+        if self.num_emaps != maps.size()[num_maps_dim]:
             raise ValueError(
                 "Incorrect number of ESPIRiT maps! Re-prep data..."
             )
