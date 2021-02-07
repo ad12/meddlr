@@ -6,6 +6,7 @@ from fvcore.common.registry import Registry
 from ss_recon.data.transforms.transform import build_normalizer
 from ss_recon.evaluation.metrics import compute_nrmse
 from ss_recon.utils import complex_utils as cplx
+from ss_recon.utils import transforms as T
 
 
 LOSS_COMPUTER_REGISTRY = Registry("LOSS_COMPUTER")  # noqa F401 isort:skip
@@ -18,6 +19,7 @@ and expected to return a LossComputer object.
 
 EPS = 1e-11
 IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse"]
+KSPACE_LOSSES = ["k_l1", "k_l1_normalized"]
 
 
 def build_loss_computer(cfg, name):
@@ -45,8 +47,18 @@ class LossComputer(ABC):
         nrmse = l2 / torch.sqrt(torch.mean(tgt_mag ** 2, dim=1))
 
         metrics_dict = {"l1": l1, "l2": l2.mean(), "psnr": psnr.mean(), "nrmse": nrmse.mean()}
-        loss = metrics_dict[loss_name]
-        metrics_dict["loss"] = loss
+        if loss_name in KSPACE_LOSSES:
+            target, output = T.fft2(target), T.fft2(output)
+            abs_error = cplx.abs(target - output)
+            if loss_name == "k_l1":
+                metrics_dict["loss"] = torch.mean(abs_error)
+            elif loss_name == "k_l1_normalized":
+                metrics_dict["loss"] = torch.mean(abs_error / cplx.abs(target))
+            else:
+                assert False  # should not reach here
+        else:
+            loss = metrics_dict[loss_name]
+            metrics_dict["loss"] = loss
 
         return metrics_dict
 
@@ -56,7 +68,7 @@ class BasicLossComputer(LossComputer):
     def __init__(self, cfg):
         super().__init__(cfg)
         loss_name = cfg.MODEL.RECON_LOSS.NAME
-        assert loss_name in IMAGE_LOSSES
+        assert loss_name in IMAGE_LOSSES or loss_name in KSPACE_LOSSES
         self.loss = loss_name
         self.renormalize_data = cfg.MODEL.RECON_LOSS.RENORMALIZE_DATA
 
@@ -84,8 +96,8 @@ class N2RLossComputer(LossComputer):
         recon_loss = cfg.MODEL.RECON_LOSS.NAME
         consistency_loss = cfg.MODEL.CONSISTENCY.LOSS_NAME
 
-        assert recon_loss in IMAGE_LOSSES
-        assert consistency_loss in IMAGE_LOSSES
+        assert recon_loss in IMAGE_LOSSES or recon_loss in KSPACE_LOSSES
+        assert consistency_loss in IMAGE_LOSSES or consistency_loss in KSPACE_LOSSES
 
         self.recon_loss = recon_loss
         self.consistency_loss = consistency_loss

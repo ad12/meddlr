@@ -165,6 +165,9 @@ class UnetModel(nn.Module):
             with torch.no_grad():
                 if cplx.is_complex(kspace):
                     kspace = torch.view_as_real(kspace)
+                if cplx.is_complex(targets) and not cplx.is_complex(zfs):
+                    # Zero-filled needs to be manually converted.
+                    zfs = torch.view_as_complex(zfs)
                 kspace = kspace[0, ..., 0, :].unsqueeze(0).cpu() # calc mask for first coil only
                 targets = targets[0, ...].unsqueeze(0).cpu()
                 preds = preds[0, ...].unsqueeze(0).cpu()
@@ -208,13 +211,11 @@ class UnetModel(nn.Module):
         mask = inputs["mask"].to(device) if "mask" in inputs else None
         A = inputs["signal_model"].to(device) if "signal_model" in inputs else None
         maps = inputs["maps"].to(device)
-        #if self.num_emaps != maps.size()[-2]:
-         #   raise ValueError(
-          #      "Incorrect number of ESPIRiT maps! Re-prep data..."
-           # )
-
-        # Move step sizes to the right device.
-        #step_sizes = [x.to(device) for x in self.step_sizes]
+        num_maps_dim = -2 if cplx.is_complex_as_real(maps) else -1
+        # if self.num_emaps != maps.size()[num_maps_dim]:
+        #     raise ValueError(
+        #         "Incorrect number of ESPIRiT maps! Re-prep data..."
+        #     )
         
         if mask is None:
             mask = cplx.get_mask(kspace)
@@ -229,7 +230,9 @@ class UnetModel(nn.Module):
 
         # Compute zero-filled image reconstruction
         zf_image = A(kspace, adjoint=True)
-        zf_dims = zf_image.size()
+        use_cplx = cplx.is_complex(zf_image)
+        if use_cplx:
+            zf_image = torch.view_as_real(zf_image)
         output = zf_image.permute(0, 4, 1, 2, 3).squeeze(-1)
         # output = zf_image.view(zf_dims[0], zf_dims[4],zf_dims[1],zf_dims[2]) #a stupid way of reshaping lol
         ## end
@@ -261,9 +264,13 @@ class UnetModel(nn.Module):
 
         # pred = output.view(zf_dims)
         pred = output.unsqueeze(-1).permute(0, 2, 3, 4, 1)
+
+        if use_cplx:
+            pred = torch.view_as_complex(pred.contiguous())
+
         output_dict = {
-            "pred": pred,  # N x Y x Z x 1 x 2
-            "target": target,  # N x Y x Z x 1 x 2
+            "pred": pred,  # N x Y x Z x 1 (x 2)
+            "target": target,  # N x Y x Z x 1 (x 2)
         }
 
         if return_pp:
