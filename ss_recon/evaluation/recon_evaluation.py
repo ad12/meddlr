@@ -138,7 +138,7 @@ class ReconEvaluator(DatasetEvaluator):
             min_slice, max_slice = min(slice_idx_to_pred.keys()), max(slice_idx_to_pred.keys())
             slice_predictions = [slice_idx_to_pred[i] for i in range(min_slice, max_slice+1)]
             pred = {
-                k: torch.stack([slice_pred[k] for slice_pred in slice_predictions], dim=0) 
+                k: torch.stack([slice_pred[k] for slice_pred in slice_predictions], dim=0).contiguous()
                 for k in ("pred", "target")
             }
             scans[scan_id] = pred
@@ -228,6 +228,7 @@ class ReconEvaluator(DatasetEvaluator):
         l1 = torch.mean(abs_error).item()
         l2 = compute_l2(target, output).item()
         psnr = compute_psnr(target, output).item()
+        psnr_mag = compute_psnr(target, output, magnitude=True).item()
         ssim_old = compute_ssim(
             target,
             output, 
@@ -248,11 +249,12 @@ class ReconEvaluator(DatasetEvaluator):
             use_sample_covariance=False,
         )
         nrmse = compute_nrmse(target, output).item()
+        nrmse_mag = compute_nrmse(target, output, magnitude=True).item()
 
         return {
             "l1": l1, "l2": l2, "psnr": psnr, 
             "ssim_old": ssim_old, "ssim (Wang)": ssim_wang, 
-            "nrmse": nrmse,
+            "nrmse": nrmse, "psnr_mag": psnr_mag, "nrmse_mag": nrmse_mag
         }
 
     def evaluate_prediction_old(self, prediction):

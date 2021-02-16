@@ -107,19 +107,20 @@ def default_setup(cfg, args, save_cfg: bool = True):
             )
         )
 
-    if args.devices:
-        gpus = args.devices
-        if not isinstance(gpus, Sequence):
-            gpus = [gpus]
-    else:
-        gpus = get_available_gpus(args.num_gpus)
+    if "CUDA_VISIBLE_DEVICES" not in os.environ:
+        if args.devices:
+            gpus = args.devices
+            if not isinstance(gpus, Sequence):
+                gpus = [gpus]
+        else:
+            gpus = get_available_gpus(args.num_gpus)
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(x) for x in gpus])
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(x) for x in gpus])
 
-    # TODO: Remove this and find a better way to launch the script
-    # with the desired gpus.
-    if gpus[0] >= 0:
-        torch.cuda.set_device(gpus[0])
+        # TODO: Remove this and find a better way to launch the script
+        # with the desired gpus.
+        if gpus[0] >= 0:
+            torch.cuda.set_device(gpus[0])
 
     logger.info("Running with full config:\n{}".format(cfg))
     if output_dir and save_cfg:

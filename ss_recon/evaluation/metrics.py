@@ -61,7 +61,7 @@ def compute_psnr(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=F
     return 20 * torch.log10(cplx.abs(ref).max() / l2)
 
 
-def compute_nrmse(ref, x, is_batch=False):
+def compute_nrmse(ref, x, is_batch=False, magnitude=False):
     """Compute normalized root mean square error.
     The norm of reference is used to normalize the metric.
 
@@ -75,7 +75,7 @@ def compute_nrmse(ref, x, is_batch=False):
 
     assert ref.shape[-1] == 2
     assert x.shape[-1] == 2
-    rmse = compute_l2(ref, x, is_batch=is_batch)
+    rmse = compute_l2(ref, x, is_batch=is_batch, magnitude=magnitude)
     shape = (x.shape[0], -1) if is_batch else -1
     norm = torch.sqrt(torch.mean((cplx.abs(ref) ** 2).view(shape), dim=-1))
 
@@ -127,6 +127,11 @@ def compute_ssim(
     if not multichannel:
         ref = cplx.abs(ref)
         x = cplx.abs(x)
+
+    if not x.is_contiguous():
+        x = x.contiguous()
+    if not ref.is_contiguous():
+        ref = ref.contiguous()
 
     x = x.squeeze().numpy()
     ref = ref.squeeze().numpy()
