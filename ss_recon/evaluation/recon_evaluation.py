@@ -206,7 +206,6 @@ class ReconEvaluator(DatasetEvaluator):
         # Full scan evaluation
         scans = self.structure_scans()
         for scan_id, pred in tqdm(scans.items(), desc="Scan metrics"):
-            import pdb; pdb.set_trace()
             val = self.evaluate_prediction(pred, self._scan_metrics)
             for k, v in val.items():
                 pred_vals[scan_id][f"{k}_scan"].append(v)
