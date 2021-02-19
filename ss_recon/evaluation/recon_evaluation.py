@@ -27,7 +27,7 @@ class ReconEvaluator(DatasetEvaluator):
     - SSIM (to be implemented)
     """
 
-    def __init__(self, dataset_name, cfg, output_dir=None, group_by_scan=False, skip_rescale=False, save_scans=False):
+    def __init__(self, dataset_name, cfg, output_dir=None, group_by_scan=False, skip_rescale=False, save_scans=False, metrics=None):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
@@ -38,6 +38,16 @@ class ReconEvaluator(DatasetEvaluator):
             skip_rescale (bool, optional): If `True`, skips rescaling the output and target
                 by the mean/std.
             save_scans (bool, optional): If `True`, saves predictions to .npy file.
+            metrics (Sequence[str], optional): Defaults to all supported recon metrics.
+                To process metrics on the full scan, append ``'_scan'`` to the metric name
+                (e.g. `'psnr_scan'`). Supported metrics include:
+                * 'psnr': Complex peak signal-to-noise ratio
+                * 'psnr_mag': Magnitude peak signal-to-noise ratio
+                * 'ssim_old': Old calculation for SSIM
+                * 'ssim (Wang)': SSIM following Wang, et al. protocol.
+                    https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf
+                * 'nrmse': Complex normalized root-mean-squared-error
+                * 'nrmse_mag': Magnitude normalized root-mean-squared-error.
         """
         # self._tasks = self._tasks_from_config(cfg)
         self._output_dir = output_dir
@@ -50,6 +60,9 @@ class ReconEvaluator(DatasetEvaluator):
         self._group_by_scan = group_by_scan
         self._skip_rescale = skip_rescale
         self._save_scans = save_scans
+
+        self._slice_metrics = [m for m in metrics if not m.endswith("_scan")] if metrics else None
+        self._scan_metrics = [m[:-5] for m in metrics if m.endswith("_scan")] if metrics else None
 
         # TODO: Uncomment when metadata is supported
         # self._metadata = MetadataCatalog.get(dataset_name)
@@ -156,7 +169,7 @@ class ReconEvaluator(DatasetEvaluator):
 
         pred_vals = defaultdict(list)
         for pred in self._predictions:
-            val = self.evaluate_prediction(pred)
+            val = self.evaluate_prediction(pred, self._slice_metrics)
             for k, v in val.items():
                 pred_vals[f"val_{k}"].append(v)
 
@@ -164,7 +177,7 @@ class ReconEvaluator(DatasetEvaluator):
         self.scans = scans
         scans = scans.values()
         for pred in scans:
-            val = self.evaluate_prediction(pred)
+            val = self.evaluate_prediction(pred, self._scan_metrics)
             for k, v in val.items():
                 pred_vals[f"val_{k}_scan"].append(v)
 
@@ -186,14 +199,15 @@ class ReconEvaluator(DatasetEvaluator):
         pred_vals = defaultdict(lambda: defaultdict(list))
         for pred in tqdm(self._predictions, desc="Slice metrics"):
             scan_id = pred["metadata"]["scan_id"]
-            val = self.evaluate_prediction(pred)
+            val = self.evaluate_prediction(pred, self._slice_metrics)
             for k, v in val.items():
                 pred_vals[scan_id][f"{k}"].append(v)
 
         # Full scan evaluation
         scans = self.structure_scans()
         for scan_id, pred in tqdm(scans.items(), desc="Scan metrics"):
-            val = self.evaluate_prediction(pred)
+            import pdb; pdb.set_trace()
+            val = self.evaluate_prediction(pred, self._scan_metrics)
             for k, v in val.items():
                 pred_vals[scan_id][f"{k}_scan"].append(v)
         
@@ -220,42 +234,58 @@ class ReconEvaluator(DatasetEvaluator):
         return results
 
 
-    def evaluate_prediction(self, prediction):
+    def evaluate_prediction(self, prediction, metric_names=None):
         output, target = prediction["pred"], prediction["target"]
+        metric_names = list(metric_names) if metric_names is not None else None
+        metrics = {}
 
         # Compute metrics magnitude images
         abs_error = cplx.abs(output - target)
-        l1 = torch.mean(abs_error).item()
-        l2 = compute_l2(target, output).item()
-        psnr = compute_psnr(target, output).item()
-        psnr_mag = compute_psnr(target, output, magnitude=True).item()
-        ssim_old = compute_ssim(
-            target,
-            output, 
-            data_range="x-range",
-            gaussian_weights=False,
-            use_sample_covariance=True,
-        )
+        metrics["l1"] = torch.mean(abs_error).item()
+        metrics["l2"] = compute_l2(target, output).item()
+        if metric_names is None or "psnr" in metric_names:
+            metrics["psnr"] = compute_psnr(target, output).item()
+        if metric_names is None or "psnr_mag" in metric_names:
+            metrics["psnr_mag"] = compute_psnr(target, output, magnitude=True).item()
+        if metric_names is None or "ssim_old" in metric_names:
+            metrics["ssim_old"] = compute_ssim(
+                target,
+                output, 
+                data_range="x-range",
+                gaussian_weights=False,
+                use_sample_covariance=True,
+            )
 
         # Compute ssim following Wang, et al. protocol.
         # https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf
         # Both the target and predicted reconstructions are 
         # normalized by the maximum value of the magnitude of the target
-        ssim_wang = compute_ssim(
-            target,
-            output,
-            data_range="ref-maxval",
-            gaussian_weights=True,
-            use_sample_covariance=False,
-        )
-        nrmse = compute_nrmse(target, output).item()
-        nrmse_mag = compute_nrmse(target, output, magnitude=True).item()
+        if metric_names is None or "ssim (Wang)" in metric_names:
+            metrics["ssim (Wang)"] = compute_ssim(
+                target,
+                output,
+                data_range="ref-maxval",
+                gaussian_weights=True,
+                use_sample_covariance=False,
+            )
+        if metric_names is None or "nrmse" in metric_names:
+            metrics["nrmse"] = compute_nrmse(target, output).item()
+        if metric_names is None or "nrmse_mag" in metric_names:
+            metrics["nrmse_mag"] = compute_nrmse(target, output, magnitude=True).item()
 
-        return {
-            "l1": l1, "l2": l2, "psnr": psnr, 
-            "ssim_old": ssim_old, "ssim (Wang)": ssim_wang, 
-            "nrmse": nrmse, "psnr_mag": psnr_mag, "nrmse_mag": nrmse_mag
-        }
+        # Make sure all metrics are handled.
+        if metric_names is None:
+            metric_names = ()
+        remaining = set(metric_names) - set(metrics.keys())
+        if len(remaining) > 0:
+            raise ValueError(f"Cannot handle metrics {remaining}")
+
+        return metrics
+        # return {
+        #     "l1": l1, "l2": l2, "psnr": psnr, 
+        #     "ssim_old": ssim_old, "ssim (Wang)": ssim_wang, 
+        #     "nrmse": nrmse, "psnr_mag": psnr_mag, "nrmse_mag": nrmse_mag
+        # }
 
     def evaluate_prediction_old(self, prediction):
         warnings.warn(

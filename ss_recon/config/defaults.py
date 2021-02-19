@@ -225,6 +225,9 @@ _C.TEST.EXPECTED_RESULTS = []
 # If True, undersampling masks for every validation scan will be fixed
 # given an acceleration.
 _C.TEST.VAL_AS_TEST = True
+# Validation metrics.
+_C.TEST.VAL_METRICS = CN()
+_C.TEST.VAL_METRICS.RECON = ()
 
 # ---------------------------------------------------------------------------- #
 # Misc options

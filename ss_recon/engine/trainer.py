@@ -387,14 +387,18 @@ class DefaultTrainer(SimpleTrainer):
         return build_recon_val_loader(cfg, dataset_name, as_test=as_test)
 
     @classmethod
-    def build_evaluator(cls, cfg, dataset_name):
+    def build_evaluator(cls, cfg, dataset_name, is_val=False):
         """
         Returns:
             DatasetEvaluator
 
         It is not implemented by default.
         """
-        return ReconEvaluator(dataset_name, cfg)
+        if is_val and len(cfg.TEST.VAL_METRICS.RECON) > 0:
+            metrics = cfg.TEST.VAL_METRICS.RECON
+        else:
+            metrics = None
+        return ReconEvaluator(dataset_name, cfg, metrics=metrics)
 
     @classmethod
     def test(cls, cfg, model, evaluators=None, use_val: bool = False):
@@ -435,7 +439,7 @@ class DefaultTrainer(SimpleTrainer):
                 evaluator = evaluators[idx]
             else:
                 try:
-                    evaluator = cls.build_evaluator(cfg, dataset_name)
+                    evaluator = cls.build_evaluator(cfg, dataset_name, is_val=use_val)
                 except NotImplementedError:
                     logger.warning(
                         "No evaluator found. "
