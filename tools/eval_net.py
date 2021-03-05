@@ -242,6 +242,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     if len(values) > 1 and save_scans:
         warnings.warn("Found multiple evaluation configurations. Only outputs from last configuration will be saved...")
 
+    default_metrics = ReconEvaluator.default_metrics()
+
     for exp_idx, (dataset_name, acc, noise_level) in enumerate(values):
         # Check if the current configuration already has metrics computed
         # If so, dont recompute
@@ -249,22 +251,28 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             "Acceleration": acc, "dataset": dataset_name, "Noise Level": noise_level, 
             "weights": weights_basename, "rescaled": not skip_rescale
         }
+        eval_metrics = default_metrics
+
         logger.info("=="*30)
         logger.info("Experiment ({}/{})".format(exp_idx + 1, len(values)))
         logger.info(", ".join([f"{k}: {v}" for k, v in params.items()]))
         logger.info("=="*30)
+
+        existing_metrics = None
         if metrics is not None:
             try:
                 existing_metrics = find_metrics(metrics, params)
             except KeyError:
                 existing_metrics = None
             if existing_metrics is not None and len(existing_metrics) > 0:
-                logger.info("Metrics for ({}) exist:\n{}".format(
-                    ", ".join([f"{k}: {v}" for k, v in params.items()]),
-                    tabulate(existing_metrics, headers=existing_metrics.columns)
-                ))
-                all_results.append(existing_metrics)
-                continue
+                eval_metrics = list(set(eval_metrics) - set(existing_metrics.columns))
+                if len(eval_metrics) == 0:
+                    logger.info("Metrics for ({}) exist:\n{}".format(
+                        ", ".join([f"{k}: {v}" for k, v in params.items()]),
+                        tabulate(existing_metrics, headers=existing_metrics.columns)
+                    ))
+                    all_results.append(existing_metrics)
+                    continue
 
         # Add criterion and value after to avoid searching by it.
         params.update({"Criterion Name": criterion, "Criterion Val": best_value})
@@ -288,6 +296,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             group_by_scan=group_by_scan, skip_rescale=skip_rescale, 
             save_scans=_save_scans,
             output_dir=os.path.join(output_dir, dataset_name) if _save_scans else None,
+            metrics=eval_metrics,
             # output_dir=os.path.join(output_dir, f"{dataset_name}-acc={acc}-noise={noise_level}")
         )]
         # TODO: add support for multiple evaluators.
@@ -305,8 +314,13 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         if zero_filled:
             results[1]["Method"] = "Zero-Filled"
         scan_results = pd.concat(results, ignore_index=True)
-        for k, v in params.items():
-            scan_results[k] = v
+
+        if existing_metrics is not None and len(existing_metrics) > 0:
+            scan_results = existing_metrics.merge(scan_results, on=["scan_name", "Method"], suffixes=("", "_y"))
+            scan_results = scan_results.drop(scan_results.filter(regex="_y$").columns.tolist(), axis=1)
+        else:
+            for k, v in params.items():
+                scan_results[k] = v
         logger.info("\n" + tabulate(scan_results, headers=scan_results.columns))
 
         all_results.append(scan_results)
