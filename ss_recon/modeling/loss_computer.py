@@ -18,7 +18,7 @@ and expected to return a LossComputer object.
 """
 
 EPS = 1e-11
-IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse"]
+IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse", "mag_l1"]
 KSPACE_LOSSES = ["k_l1", "k_l1_normalized"]
 
 
@@ -37,7 +37,9 @@ class LossComputer(ABC):
     def _get_metrics(self, target: torch.Tensor, output: torch.Tensor, loss_name):
         # Compute metrics
         abs_error = cplx.abs(output - target)
+        abs_mag_error = torch.abs(cplx.abs(output) - cplx.abs(target))
         l1 = torch.mean(abs_error)
+        mag_l1 = torch.mean(abs_mag_error)
         N = target.shape[0]
 
         abs_error = abs_error.view(N, -1)
@@ -46,14 +48,17 @@ class LossComputer(ABC):
         psnr = 20 * torch.log10(tgt_mag.max(dim=1)[0] / (l2 + EPS))
         nrmse = l2 / torch.sqrt(torch.mean(tgt_mag ** 2, dim=1))
 
-        metrics_dict = {"l1": l1, "l2": l2.mean(), "psnr": psnr.mean(), "nrmse": nrmse.mean()}
+        metrics_dict = {
+            "l1": l1, "l2": l2.mean(), "psnr": psnr.mean(), "nrmse": nrmse.mean(),
+            "mag_l1": mag_l1,
+        }
         if loss_name in KSPACE_LOSSES:
             target, output = T.fft2(target), T.fft2(output)
             abs_error = cplx.abs(target - output)
             if loss_name == "k_l1":
                 metrics_dict["loss"] = torch.mean(abs_error)
             elif loss_name == "k_l1_normalized":
-                metrics_dict["loss"] = torch.mean(abs_error / cplx.abs(target))
+                metrics_dict["loss"] = torch.mean(abs_error / (cplx.abs(target) + EPS))
             else:
                 assert False  # should not reach here
         else:

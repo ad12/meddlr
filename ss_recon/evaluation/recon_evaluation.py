@@ -75,6 +75,13 @@ class ReconEvaluator(DatasetEvaluator):
         #     self._metadata.json_file = cache_path
         #     convert_to_coco_json(dataset_name, cache_path)
 
+    @classmethod
+    def default_metrics(cls):
+        """The default metrics processed by this class."""
+        metrics = ["psnr", "psnr_mag", "ssim_old", "ssim (Wang)", "nrmse", "nrmse_mag"]
+        metrics.extend([f"{x}_scan" for x in metrics])
+        return metrics
+
     def reset(self):
         self._predictions = []
         self._scan_map = defaultdict(dict)

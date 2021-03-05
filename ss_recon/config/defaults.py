@@ -92,6 +92,7 @@ _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
 # -----------------------------------------------------------------------------
 _C.MODEL.N2R = CN()
 _C.MODEL.N2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
 # Use MODEL.CONSISTENCY.AUG.NOISE.STD_DEV to control noise parameters.
 
 # -----------------------------------------------------------------------------

@@ -29,6 +29,8 @@ class N2RModel(nn.Module):
 
         # Keep gradient for base images in transform.
         self.use_base_grad = False
+        # Use supervised examples for consistency
+        self.use_supervised_consistency = cfg.MODEL.N2R.USE_SUPERVISED_CONSISTENCY
 
         self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV)
 
@@ -122,22 +124,32 @@ class N2RModel(nn.Module):
         # Consistency.
         # kspace_aug = kspace + U \sigma \mathcal{N}
         # Loss = L(f(kspace_aug, \theta), f(kspace, \theta))
+        inputs_consistency = []
         if inputs_unsupervised is not None:
-            inputs_us_aug = self.augment(inputs_unsupervised)
+            inputs_consistency.append(inputs_unsupervised)
+        if self.use_supervised_consistency and inputs_supervised is not None:
+            inputs_consistency.append({k: v for k,v in inputs_supervised.items() if k != "target"})
+
+        if len(inputs_consistency) > 0:
+            if len(inputs_consistency) > 1:
+                inputs_consistency = {k: torch.cat([x[k] for x in inputs_consistency], dim=0) for k in inputs_consistency[0].keys()}
+            else:
+                inputs_consistency = inputs_consistency[0]
+            inputs_consistency_aug = self.augment(inputs_consistency)
             with torch.no_grad():
-                pred_base = self.model(inputs_unsupervised)
+                pred_base = self.model(inputs_consistency)
                 # Target only used for visualization purposes not for loss.
                 target = inputs_unsupervised.get("target", None)
                 pred_base = pred_base["pred"]
-            pred_aug = self.model(inputs_us_aug, return_pp=True)
+            pred_aug = self.model(inputs_consistency_aug, return_pp=True)
             if "target" in pred_aug:
                 del pred_aug["target"]
             pred_aug["target"] = pred_base.detach()
             output_dict["consistency"] = pred_aug
             if vis_training:
                 self.visualize_aug_training(
-                    inputs_unsupervised["kspace"],
-                    inputs_us_aug["kspace"],
+                    inputs_consistency["kspace"],
+                    inputs_consistency_aug["kspace"],
                     pred_aug["pred"],
                     pred_base,
                     target=target,
