@@ -1,0 +1,704 @@
+{
+  "info": {
+    "contributor": "bgunel",
+    "description": "fastMRI knee_multicoil dataset - FS only val",
+    "year": "2021",
+    "date_created": "2021-03-29",
+    "version": "v0.0.1-dev-fs"
+  },
+  "images": [
+    {
+      "file_name": "file1000002.h5",
+      "scan_id": "1000002",
+      "patient_id": "eb7618a8d0fe9c3d61f073296ec71e5fe7cf643fe14a81a45ff6480c3d037d83",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1000015.h5",
+      "scan_id": "1000015",
+      "patient_id": "bb1040a06de5f44bc4dd20af75090352322f7a238c430f55d5e29b3b31c9d156",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1000027.h5",
+      "scan_id": "1000027",
+      "patient_id": "ba2e156d50fee920a3f3fa719d4d3377f8300e9a7cdb614a33e46e3d56508e7d",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1000070.h5",
+      "scan_id": "1000070",
+      "patient_id": "a9fe128676afab56772352c2a995a55ab1ece6fd5885d24b03205cdc0c3edfe2",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1000123.h5",
+      "scan_id": "1000123",
+      "patient_id": "427d44b8e4eb0c037da16c747e13cd0a53c3cfc225e6268b6f2849c95bc3f675",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 33
+    },
+    {
+      "file_name": "file1000143.h5",
+      "scan_id": "1000143",
+      "patient_id": "90f9bca53a5edb24e08a6ba1b77fcf3fcb7c10f6ad9359df109f51565c1e57ce",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 33
+    },
+    {
+      "file_name": "file1000154.h5",
+      "scan_id": "1000154",
+      "patient_id": "4c7c7f104e9665c16865847249e4ddf148b5175857e2787ccd11300c6d9c3deb",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1000236.h5",
+      "scan_id": "1000236",
+      "patient_id": "24e5f79568a5b3de783c8d7fb277f531c28d670193f8067e775b6b22377dca6f",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1000246.h5",
+      "scan_id": "1000246",
+      "patient_id": "e69f35ed4abf568974fe6cd55605e2985101f7125f1801a85ae75e924b1b5d87",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 40
+    },
+    {
+      "file_name": "file1000275.h5",
+      "scan_id": "1000275",
+      "patient_id": "6999a1ffb63756b29125b8779ce2c956620ff82c62700fe687d4a0d823b066b8",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1000321.h5",
+      "scan_id": "1000321",
+      "patient_id": "2dc5589e29350c44b1286990be03839979407aba7e0d9fdf9ce0cd9b7d2c6c48",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1000363.h5",
+      "scan_id": "1000363",
+      "patient_id": "c9f459b429fb7b083ebaa6e9388317230c67bc92aaf125b23d84e4db9264ad3f",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1000376.h5",
+      "scan_id": "1000376",
+      "patient_id": "4c355308cd0e4d87dc7787754a675ce60b1d2fc275e9293ae1047d9cac913bc6",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1000403.h5",
+      "scan_id": "1000403",
+      "patient_id": "ac65d37f64e80fb454ad96f641e592835bd2ef3873238584a7f8f11c5026b27c",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 40
+    },
+    {
+      "file_name": "file1000420.h5",
+      "scan_id": "1000420",
+      "patient_id": "dd86983d7e8bccd466bb4808fa234fbe07fdb37c9353c6b8ef981e2db83e93a5",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1000424.h5",
+      "scan_id": "1000424",
+      "patient_id": "2e18651bfce62619429c97301f5f02e98f69f03358a84cdb4916b4e67dfc2f72",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1000448.h5",
+      "scan_id": "1000448",
+      "patient_id": "b0f3e92017c64a54728ffb909ecb66e9e0bf8ca08f7f5aa710add1a56a0905dd",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1000452.h5",
+      "scan_id": "1000452",
+      "patient_id": "bba1020adb810520323c391cae52139669b082197cb1d5bf852fb06e6d0fb041",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1000475.h5",
+      "scan_id": "1000475",
+      "patient_id": "cef87454039cb6da65793a3cecd1ef397541b683069965b4f33df4e7acc96909",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1000486.h5",
+      "scan_id": "1000486",
+      "patient_id": "e60d20dfa3bfeb39651ee966626c7c27499c8060385b4b4833114de48dc62908",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1000501.h5",
+      "scan_id": "1000501",
+      "patient_id": "6297e7f33473bc97496c45ee8ee7fd7152d18d7f85d17fe09443ce1d19a9e945",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1000510.h5",
+      "scan_id": "1000510",
+      "patient_id": "4cf1f74ed53d0cefd8706d1f0851175c62e6c68c3bc4ecda1fc623137f440691",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 33
+    },
+    {
+      "file_name": "file1000511.h5",
+      "scan_id": "1000511",
+      "patient_id": "dfe3083c1a3dba7502d028f9efc19fb7ea0e61cc449a8cd7418fe0bda4dd5868",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1000514.h5",
+      "scan_id": "1000514",
+      "patient_id": "86b4d39a48d0b800da7566b1d438c53c4da1a9d1550d21518521a0142ecc6742",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1000535.h5",
+      "scan_id": "1000535",
+      "patient_id": "1b9c0474e6f4e55e218fe9a1b43f7e576565d2c9669afc950fc20859c40c5ec7",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1000568.h5",
+      "scan_id": "1000568",
+      "patient_id": "f0935fd9878b43c04896679f137d01f6f0b2a3bc14f3875e9384b1cc1715b706",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 29
+    },
+    {
+      "file_name": "file1000583.h5",
+      "scan_id": "1000583",
+      "patient_id": "bf5cf981adaea4cab5ffb880b18ab4c1e9ed5af459c6a5ccb86ec4e7d15e9fab",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 33
+    },
+    {
+      "file_name": "file1000612.h5",
+      "scan_id": "1000612",
+      "patient_id": "7a030f688bf16ce82f73c9cfc7c16091da6eb0b3745f2ed01c16cdc2ab1fe665",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 45
+    },
+    {
+      "file_name": "file1000632.h5",
+      "scan_id": "1000632",
+      "patient_id": "080aaac23fc2eb9f0f01192c4abffa97ce2d2e5ab1c39d83be5090e299a085e6",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 37
+    },
+    {
+      "file_name": "file1000639.h5",
+      "scan_id": "1000639",
+      "patient_id": "349d016d4f049c0371492208f8b18b34f10922a12897a8034d19804f90e44005",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1000658.h5",
+      "scan_id": "1000658",
+      "patient_id": "7eb70d4a7c626850494abb3e3bb34c5b267e660bde0e9f97ab773582f5ac09dd",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 30
+    },
+    {
+      "file_name": "file1000721.h5",
+      "scan_id": "1000721",
+      "patient_id": "fc9ba06af2ce78b8a98da566d38d76135f18724bd8b62695b670e6907cc322f1",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1000743.h5",
+      "scan_id": "1000743",
+      "patient_id": "ce38a8e1190044bc8b586cad5feef15ef4cc0699f6225728e439d2aa3198969d",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1000750.h5",
+      "scan_id": "1000750",
+      "patient_id": "d3a710c1cffbf4a129710b9db5b0da8e099e19976396055ad16f2423c90f147b",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 37
+    },
+    {
+      "file_name": "file1000760.h5",
+      "scan_id": "1000760",
+      "patient_id": "188c786007d7bcd4be7713f45e6c9feac4f66b248d92238e4e50963ed866631c",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 43
+    },
+    {
+      "file_name": "file1000762.h5",
+      "scan_id": "1000762",
+      "patient_id": "ad0946382eab234b2856825bf4892953e458b6c36adef9c94b7408dc83d121ce",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 40
+    },
+    {
+      "file_name": "file1000829.h5",
+      "scan_id": "1000829",
+      "patient_id": "7667a08723e7b535b189624413a2ab0e1a308cb2a211eb9944047982a7901c53",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1000865.h5",
+      "scan_id": "1000865",
+      "patient_id": "a2ef5b156c06e8bef583e4439949d2967c31219747282c1c8b6249a836166a36",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 30
+    },
+    {
+      "file_name": "file1000941.h5",
+      "scan_id": "1000941",
+      "patient_id": "74125d6a744e29191ac8aa5a9f9141ce748c0ed46bc9358417e9612abbacbdfd",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1000985.h5",
+      "scan_id": "1000985",
+      "patient_id": "349d016d4f049c0371492208f8b18b34f10922a12897a8034d19804f90e44005",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1001106.h5",
+      "scan_id": "1001106",
+      "patient_id": "0b781771fd147e5f8c155045abe07184cc63644e1cdf34591b2d6bb6c4f05e56",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 42
+    },
+    {
+      "file_name": "file1001109.h5",
+      "scan_id": "1001109",
+      "patient_id": "17d40754b785ff1f7dad1f77d63d03b8a36b300d37056f5ea7905145f33ecd02",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 37
+    },
+    {
+      "file_name": "file1001114.h5",
+      "scan_id": "1001114",
+      "patient_id": "49ada6bb2d49c18eab2d755be3c5b3745fcccaa50226ba8778f3ae125433c8b1",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 42
+    },
+    {
+      "file_name": "file1001222.h5",
+      "scan_id": "1001222",
+      "patient_id": "04c9b54f5bc7aba4601fa12e02a4cc5aa4d9a7461168bd7822237ab6bb4ee617",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1001226.h5",
+      "scan_id": "1001226",
+      "patient_id": "7de16e9a93168303cc1d8d0f55fff00d50f12db46b53ad5bf739a9c0a71d968e",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 33
+    },
+    {
+      "file_name": "file1001246.h5",
+      "scan_id": "1001246",
+      "patient_id": "6592ee293138967d9c3e02500ab3c69f8825c87aabea1f7eafc25e511bb357db",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1001296.h5",
+      "scan_id": "1001296",
+      "patient_id": "8bb1c24efb50b468539e144d82350076d547df2c29845b8376d78e99edd053bf",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1001319.h5",
+      "scan_id": "1001319",
+      "patient_id": "6d9196eba6b6b8c48cbf883047289c4b6869a97811801b2030caecbf2ab49e69",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1001355.h5",
+      "scan_id": "1001355",
+      "patient_id": "5b27417ceda4bd2367cee583385cfd993b80014120842d2382ee3cea7a8ae6d2",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1001413.h5",
+      "scan_id": "1001413",
+      "patient_id": "f204ad17f40f0657906ec904023b97be8178d15b085bc73edb0edc49cccd1ffe",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1001425.h5",
+      "scan_id": "1001425",
+      "patient_id": "79991a42a1ddbd43a00a638e14b310c84e80ed356c5460aab8724392f3e41bc9",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1001503.h5",
+      "scan_id": "1001503",
+      "patient_id": "9e979669a81117bfcbfdb28d53e8be0fe07c1211d8385d475bee552eee3d7f92",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 30
+    },
+    {
+      "file_name": "file1001511.h5",
+      "scan_id": "1001511",
+      "patient_id": "eb3255a2f33422fae1cef58a220bd151474b0e8f490c2242f41883e3e1a3b09c",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1001521.h5",
+      "scan_id": "1001521",
+      "patient_id": "fbd06f23831f5e8d74b35e425b6eae68187bad5947305f41c7c2c4209b1aa06e",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 33
+    },
+    {
+      "file_name": "file1001588.h5",
+      "scan_id": "1001588",
+      "patient_id": "5783a08a14f2cdb32178e5e8545ccf0f3087c375e5d4e187ce80126ee325e3c7",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 37
+    },
+    {
+      "file_name": "file1001599.h5",
+      "scan_id": "1001599",
+      "patient_id": "771ae4d980f2e1bab4b069976b32eb82690174236302bf6158aa9201062e4054",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1001616.h5",
+      "scan_id": "1001616",
+      "patient_id": "4dd76cdecb0e4c36dace436da0b1b85d122be4a170e01d9c8493d9df4c558689",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 42
+    },
+    {
+      "file_name": "file1001642.h5",
+      "scan_id": "1001642",
+      "patient_id": "c24441437e3c92905a80ab5a1f8dc7a08c34a0c2c927b85c0ce1c803304305da",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1001672.h5",
+      "scan_id": "1001672",
+      "patient_id": "62b889296b644ba9037b2226be0a12bac2124fd7e64ddc80f5ed93372f21a226",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 43
+    },
+    {
+      "file_name": "file1001711.h5",
+      "scan_id": "1001711",
+      "patient_id": "c9f459b429fb7b083ebaa6e9388317230c67bc92aaf125b23d84e4db9264ad3f",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1001723.h5",
+      "scan_id": "1001723",
+      "patient_id": "c36be0d6d8b94937995cc416578eed6de089548608148613ed96b77c0b515906",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 37
+    },
+    {
+      "file_name": "file1001752.h5",
+      "scan_id": "1001752",
+      "patient_id": "62b889296b644ba9037b2226be0a12bac2124fd7e64ddc80f5ed93372f21a226",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 43
+    },
+    {
+      "file_name": "file1001765.h5",
+      "scan_id": "1001765",
+      "patient_id": "16dcf81c35fae0af4567549ea009ec501f941f546c824cd08a0729f9760f6cbf",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1001770.h5",
+      "scan_id": "1001770",
+      "patient_id": "6b994c264a93f87a4df98b1ad686866d91764ac5a8140071703e1d018d226a62",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 39
+    },
+    {
+      "file_name": "file1001783.h5",
+      "scan_id": "1001783",
+      "patient_id": "dd86983d7e8bccd466bb4808fa234fbe07fdb37c9353c6b8ef981e2db83e93a5",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1001795.h5",
+      "scan_id": "1001795",
+      "patient_id": "be95ae34738b4d3e9533fcd536a850305a16bb8127f25aeb463a5fce31715b0d",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1001806.h5",
+      "scan_id": "1001806",
+      "patient_id": "c16414bf96d85d5cd657d4fb07664aeb62f6cfdea73c4824b684d37998a0fae4",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 37
+    },
+    {
+      "file_name": "file1001858.h5",
+      "scan_id": "1001858",
+      "patient_id": "07fd649142753c5de4e55411028ea9c5a31f92b2c7ee07ec0dbd4629181f7b39",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 30
+    },
+    {
+      "file_name": "file1001860.h5",
+      "scan_id": "1001860",
+      "patient_id": "edadbb31be7911ca28012270e462cca7b5ffff71b8429308c0c0097a9c16969a",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1001866.h5",
+      "scan_id": "1001866",
+      "patient_id": "bb04e3b15e94daa7da8c3fc398551f0dad4ecebeaed9099ec9288dc1d86b4f01",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1001892.h5",
+      "scan_id": "1001892",
+      "patient_id": "e772772f00c7acf4ff73c67200a89fdb0dafeb5cfc86d3eb02e838112499fddb",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1001901.h5",
+      "scan_id": "1001901",
+      "patient_id": "4769076f590c6acfb092f24a405b2aa0c459c3fa93a5ed39755d68cbb54d4669",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1001912.h5",
+      "scan_id": "1001912",
+      "patient_id": "b29f0e79469798afd530bd67b3575627fec649a7c2cddc4c50abfaf3f9b802b4",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1001942.h5",
+      "scan_id": "1001942",
+      "patient_id": "94574c0eb75b1cca2f1325471e5521a28895ea3dd1dbdf738ee0417aa175ccd8",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 40
+    },
+    {
+      "file_name": "file1001948.h5",
+      "scan_id": "1001948",
+      "patient_id": "242495ba9a0e0017a0a4678082aaad706a3997d64ef97199ee292610c554ce17",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 32
+    },
+    {
+      "file_name": "file1001969.h5",
+      "scan_id": "1001969",
+      "patient_id": "6f9bf17c3a1e7cc79da9974de4395f7f54c1f3cc08fe42db6bec6d9db66cbb6a",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 31
+    },
+    {
+      "file_name": "file1002001.h5",
+      "scan_id": "1002001",
+      "patient_id": "840a207529cda39066cf1f51274787d898ea30e37269237659dd367d1ea104c5",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1002045.h5",
+      "scan_id": "1002045",
+      "patient_id": "a5198335b5db929f6f7402af2ea7740ee63c0487d2c3325a08fc858cb26fa01f",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    },
+    {
+      "file_name": "file1002046.h5",
+      "scan_id": "1002046",
+      "patient_id": "3ff9c14654698118265049c44b1f1d62ea46e7a9053552d5fb60da6793308276",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 42
+    },
+    {
+      "file_name": "file1002048.h5",
+      "scan_id": "1002048",
+      "patient_id": "fb47772f0da694e13a994cedb3da64795242326071b0ebb013f5ee39fdc9fd73",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1002049.h5",
+      "scan_id": "1002049",
+      "patient_id": "029273ca34e575bad70dc5ea3e60dcb46179346c286da7c508f0938c7218e904",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1002093.h5",
+      "scan_id": "1002093",
+      "patient_id": "014741596e1eca1215f6b6cc3fa82bcd0b73d52b617a876faddd99d4ac4cfd78",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 42
+    },
+    {
+      "file_name": "file1002098.h5",
+      "scan_id": "1002098",
+      "patient_id": "a2bc8df413b58baed4167de1c546e6afcbf54415b07518bcb8e1abdba77d7b3d",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 40
+    },
+    {
+      "file_name": "file1002117.h5",
+      "scan_id": "1002117",
+      "patient_id": "99320e3c7e98a466310ab6b98deeea078f44710b997258153bc4fc85cc3e68a6",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1002151.h5",
+      "scan_id": "1002151",
+      "patient_id": "0801cb33e8886b39d38626f8169f387337d52173d4d8152d0720a9e50bed9038",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 37
+    },
+    {
+      "file_name": "file1002163.h5",
+      "scan_id": "1002163",
+      "patient_id": "340c6167e35937ccea2ad42b28366b2a2173b090fcad59d605ee27f1776105e8",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1002185.h5",
+      "scan_id": "1002185",
+      "patient_id": "6e4c3fcdc6bd4407601fc3e792a3c772a83b35b428fe86b999bcb2a5ea125f7b",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1002190.h5",
+      "scan_id": "1002190",
+      "patient_id": "edc89b244e2eed0cb252fd2c4d591a85740544c0071d01f2679e6fe525bb3d20",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1002211.h5",
+      "scan_id": "1002211",
+      "patient_id": "1522ff3dc4290010d6cf88d7b555960ac0b677fccb138e7d7aff849f8a06357a",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 30
+    },
+    {
+      "file_name": "file1002228.h5",
+      "scan_id": "1002228",
+      "patient_id": "a127fcb14670ef23305d28a664475c392d0bd11b856d9381344bf7989d578939",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1002243.h5",
+      "scan_id": "1002243",
+      "patient_id": "f710a87f0eb020b8ac35511051f4e8a38f945ae173b00b3de34fffca8ad05d04",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 39
+    },
+    {
+      "file_name": "file1002262.h5",
+      "scan_id": "1002262",
+      "patient_id": "6f195b7cc814fc5ddffb000f237a941763174b8847084155e669102d8982e72c",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 42
+    },
+    {
+      "file_name": "file1002343.h5",
+      "scan_id": "1002343",
+      "patient_id": "38df0db2ec83fa342ea01540689de2ba877eadc8fa5a641b055a5d7bc0b3f160",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 30
+    },
+    {
+      "file_name": "file1002366.h5",
+      "scan_id": "1002366",
+      "patient_id": "72de95044d7249fe11ebaa6148c873d8b5d08f8d838c6730f7bf856a5dd4c559",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 37
+    },
+    {
+      "file_name": "file1002369.h5",
+      "scan_id": "1002369",
+      "patient_id": "07e385159a022b7d22dc873f1360df7b532a3741bbdff3418fb4d6c280a20abb",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 33
+    },
+    {
+      "file_name": "file1002432.h5",
+      "scan_id": "1002432",
+      "patient_id": "05aeee98ce4e85619036fe047cba7d33b845176fc197373b6e9d7e40cf5957fb",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 34
+    },
+    {
+      "file_name": "file1002456.h5",
+      "scan_id": "1002456",
+      "patient_id": "58e34b46b1bb81f725806fed994d5fb378e7a0fe008c72a4727b2193c7c79977",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 38
+    },
+    {
+      "file_name": "file1002481.h5",
+      "scan_id": "1002481",
+      "patient_id": "8687fc3222901182231528d366509c7ad78997319d3fdf9686b0073672235da1",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 35
+    },
+    {
+      "file_name": "file1002545.h5",
+      "scan_id": "1002545",
+      "patient_id": "0e24e5a3c71e6272b69cde5d55dda24bfd687d1fc4f6f1cf50b15d181f6a2653",
+      "acquisition": "CORPDFS_FBK",
+      "num_slices": 36
+    }
+  ]
+}

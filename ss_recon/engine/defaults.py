@@ -176,7 +176,7 @@ def find_wandb_exp_id(cfg):
     return exp_id
     
 
-def init_wandb_run(cfg, exp_id=None, resume=False, project="ss_recon", entity="ss_recon", job_type="training", use_api=False):
+def init_wandb_run(cfg, exp_id=None, resume=False, project=None, entity="ss_recon", job_type="training", use_api=False):
     import wandb
     logger = logging.getLogger(__name__)
     
@@ -192,6 +192,15 @@ def init_wandb_run(cfg, exp_id=None, resume=False, project="ss_recon", entity="s
             raise ValueError("No experiment id found.")
         api = wandb.Api()
         return api.run(f"{project}/{entity}/{exp_id}")
+
+    if project is None:
+        project = cfg.DESCRIPTION.PROJECT_NAME
+    else:
+        warnings.warn(
+            "Setting project name with `project` is deprecated. "
+            "Use DESCRIPTION.PROJECT_NAME in config instead.",
+            DeprecationWarning
+        )
 
     # Keyword args to share between resumed and new runs.
     wandb_kwargs = dict(

@@ -67,7 +67,35 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
     "fastMRI_knee_multicoil_mini_v0.0.1_test": (
         "fastmri/knee_multicoil/val",
         "ann://fastmri/knee_multicoil/mini-v0.0.1/test.json"
-    )
+    ),
+
+    # fastMRI knee multicoil - fat-suppressed
+    "fastMRI_knee_multicoil_v0.0.1_fs_train": (
+        "fastmri/knee_multicoil/train",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/train.json"
+    ),
+    "fastMRI_knee_multicoil_v0.0.1_fs_val": (
+        "fastmri/knee_multicoil/train",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/val.json"
+    ),
+    "fastMRI_knee_multicoil_v0.0.1_fs_test": (
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/test.json"
+    ),
+    
+    # fastMRI knee multicoil - 3T fat-suppressed 
+    "fastMRI_knee_multicoil_v0.0.1_fs_3t_train": (
+        "fastmri/knee_multicoil/train",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/train.json"
+    ),
+    "fastMRI_knee_multicoil_v0.0.1_fs_3t_val": (
+        "fastmri/knee_multicoil/train",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/val.json"
+    ),
+    "fastMRI_knee_multicoil_v0.0.1_fs_3t_test": (
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/test.json"
+    ),
 }
 
 _PREDEFINED_SPLITS_MRCO["fastMRI_brain_multicoil"] = {
@@ -86,19 +114,38 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_brain_multicoil"] = {
 }
 
 
+_PREDEFINED_SPLITS_MRCO["stanford_qDESS_knee_2020"] = {
+    # 2D qDESS reconstruction dataset
+    # Calibration size: 24x24
+    # Note: This dataset is not yet configured for general use.
+    "stanford_qDESS_knee_2020_v0.1.0_c24_train": (
+        "stanford_qdess_2020/files_recon_calib-24/",
+        "stanford_qdess_2020/annotations/v0.1.0/train.json",
+    ),
+    "stanford_qDESS_knee_2020_v0.1.0_c24_val": (
+        "stanford_qdess_2020/files_recon_calib-24/",
+        "stanford_qdess_2020/annotations/v0.1.0/val.json",
+    ),
+    "stanford_qDESS_knee_2020_v0.1.0_c24_test": (
+        "stanford_qdess_2020/files_recon_calib-24/",
+        "stanford_qdess_2020/annotations/v0.1.0/test.json",
+    )
+}
+
+
 def register_all_mrco(root="data://"):
     for dataset_name, splits_per_dataset in _PREDEFINED_SPLITS_MRCO.items():
-        for key, (image_root, json_file) in splits_per_dataset.items():
+        for key, data in splits_per_dataset.items():
             # Assume pre-defined datasets live in `./datasets`.
+            image_root, json_file = data
+
+            json_file = os.path.join(root, json_file) if "://" not in json_file else json_file
+            image_root = os.path.join(root, image_root) if image_root is not None else None
             register_mrco_scans(
                 key,
                 {},  # TODO: add metadata
-                os.path.join(root, json_file)
-                if "://" not in json_file
-                else json_file,  # noqa
-                os.path.join(root, image_root)
-                if image_root is not None
-                else None,
+                json_file,  # noqa
+                image_root,
             )
 
 

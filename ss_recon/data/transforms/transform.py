@@ -117,23 +117,44 @@ class TopMagnitudeNormalizer(Normalizer):
 class Subsampler(object):
     def __init__(self, mask_func):
         self.mask_func = mask_func
+        self.zip2_padding = None
 
-    def __call__(
-        self, data, mode: str = "2D", seed: int = None, acceleration: int = None
-    ):
-        data_shape = tuple(data.shape)
-        assert mode in ["2D", "3D"]
+    def _get_mask_shape(self, data_shape, mode: str):
+        """Returns the shape of the mask based on the data shape.
+
+        Args:
+            data_shape (tuple[int]): The data shape.
+            mode: Either ``"2D"`` or ``"3D"``
+        """
         if mode == "2D":
-            extra_dims = data.ndim - 3
+            extra_dims = len(data_shape) - 3
             mask_shape = (1,) + data_shape[1:3] + (1,) * extra_dims
         elif mode == "3D":
-            extra_dims = data.ndim - 4
+            extra_dims = len(data_shape) - 4
             mask_shape = (1,) + data_shape[1:4] + (1,) * extra_dims
         else:
             raise ValueError(
                 "Only 2D and 3D undersampling masks are supported."
             )
+        return mask_shape
+
+    def __call__(
+        self, data, mode: str = "2D", seed: int = None, acceleration: int = None
+    ):
+        assert mode in ["2D", "3D"]
+        data_shape = tuple(data.shape)
+        if self.zip2_padding:
+            data_shape = data_shape[:1] + tuple(
+                s - 2*p if p is not None else s
+                for s, p in zip(data_shape[1:], self.zip2_padding)
+            ) + data_shape[len(self.zip2_padding)+1:]
+        
+        mask_shape = self._get_mask_shape(data_shape, mode)
         mask = self.mask_func(mask_shape, seed, acceleration)
+        if self.zip2_padding:
+            padded_mask_shape = self._get_mask_shape(tuple(data.shape), mode)
+            padded_mask_shape = padded_mask_shape[1:len(self.zip2_padding)+1]
+            mask = T.zero_pad(mask, padded_mask_shape)
         return torch.where(mask == 0, torch.tensor([0], dtype=data.dtype), data), mask
 
 

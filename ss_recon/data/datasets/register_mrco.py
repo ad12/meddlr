@@ -4,6 +4,11 @@ import os
 import logging
 import json
 import time
+from typing import Sequence, Union
+
+import h5py
+import pandas as pd
+
 from fvcore.common.file_io import PathManager
 from ss_recon.data import DatasetCatalog, MetadataCatalog
 
@@ -24,6 +29,8 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
             exist.
         dataset_name (str): The name of the dataset
             (e.g. mridata_knee_2019_train).
+        cipher_kwargs (Dict[str, Any]): Keyword arguments for loading metadata from
+            cipher(s). See :func:`merge_ciphers_with_dataset_dicts`.
 
     Returns:
         List[Dict]: A list of dicts in SSRecon standard format.
@@ -51,7 +58,15 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
         else:
             file_name = PathManager.get_local_path(d["file_path"])
         dd["file_name"] = file_name
+        
+        # TODO: Clean this up
+        if any(dataset_name.startswith(x) for x in ["stanford_qDESS_knee_2020"]):
+            with h5py.File(dd["file_name"], "r") as f:
+                dd["kspace_shape"] = f['kspace'].shape
+
         dataset_dicts.append(dd)
+
+
     return dataset_dicts
 
 

@@ -256,6 +256,8 @@ _C.CUDNN_BENCHMARK = False
 _C.DESCRIPTION = CN()
 # Brief description about config 
 _C.DESCRIPTION.BRIEF = ""
+# Project name for logging to Weights & Biases
+_C.DESCRIPTION.PROJECT_NAME = "ss_recon"
 # Experiment name for logging to Weights & Biases
 _C.DESCRIPTION.EXP_NAME = ""
 # Tags associated with experiment.

@@ -1,3 +1,4 @@
+import os
 import numba as nb
 import numpy as np
 import sigpy.mri
@@ -217,6 +218,44 @@ class RandomMaskFunc1D(MaskFunc):
             np.random.set_state(np_state)
 
         return mask
+
+
+class MaskLoader(MaskFunc):
+    """Loads masks from predefined file format instead of computing on the fly."""
+
+    def __init__(self, accelerations, masks_path, mask_type: str = "poisson", mode="train"):
+        assert isinstance(accelerations, (int, float)) or len(accelerations) == 1
+        assert mode in ["train", "eval"]
+        if isinstance(accelerations, (int, float)):
+            accelerations = (accelerations,)
+        super().__init__(accelerations)
+
+        accel = float(self.accelerations[0])
+        self.train_masks = None
+        self.eval_data = torch.load(os.path.join(
+            masks_path,
+            f"{mask_type}_{accel}x_eval.pt"
+        ))
+        if mode == "train":
+            self.train_masks = np.load(os.path.join(masks_path, f"{mask_type}_{accel}x.npy"))
+
+    def __call__(self, out_shape, seed=None, acceleration=None):
+        if acceleration is not None and acceleration not in self.accelerations:
+            raise RuntimeError(
+                "MaskLoader.__call__ does not currently support ``acceleration`` argument"
+            )
+
+        if seed is None:
+            # Randomly select from the masks we have
+            idx = np.random.choice(len(self.train_masks))
+            mask = self.train_masks[idx]
+        else:
+            data = self.eval_data
+            masks = self.eval_data["masks"]
+            mask = masks[data["seeds"].index(seed)]
+        
+        mask = mask.reshape(out_shape)
+        return torch.from_numpy(mask)
 
 
 # ================================================================ #

@@ -9,11 +9,18 @@ This code was adapted from Facebook's fastMRI Challenge codebase:
 https://github.com/facebookresearch/fastMRI
 """
 import os
+import random
+from collections import defaultdict
 from typing import Dict, List
 
 import h5py
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, dataset
 from torch.utils.data.dataloader import default_collate as _default_collate
+
+from ss_recon.data.transforms.transform import Subsampler
+from ss_recon.data.transforms.subsample import MaskLoader
+from ss_recon.utils.cluster import CLUSTER, Cluster
+
 
 __all__ = ["collate_by_supervision", "SliceData"]
 
@@ -179,3 +186,48 @@ class SliceData(Dataset):
         supervised_idxs = self.get_supervised_idxs()
         unsupervised_idxs = set(range(len(self))) - set(supervised_idxs)
         return sorted(list(unsupervised_idxs))
+
+
+class qDESSSliceDataset(SliceData):
+    """Dataset for Stanford qDESS 2020 dataset.
+
+    Currently only trains with the first echo.
+
+    TODO:
+        Refactor plumbing mask loader, etc.
+
+    Note:
+        This dataset/class is not ready for general use. Do not use this dataset yet.
+    """
+    def __init__(self, dataset_dicts: List[Dict], transform, keys, include_metadata):
+        # ZIP2 pad kz direction from 80 -> 160 (zero pad 40 both sides)
+        if CLUSTER == Cluster.SIENA:
+            masks_path = "/data/datasets/stanford_qdess_2020/masks"
+        elif CLUSTER in (Cluster.ROMA, Cluster.VIGATA):
+            masks_path = "/bmrNAS/people/arjun/data/stanford_qdess_2020/masks"
+        else:
+            raise ValueError(f"Cluster {CLUSTER} not supported")
+        mask_func = MaskLoader(
+            transform.mask_func.accelerations,
+            masks_path=masks_path,
+            mask_type="poisson",
+            mode="eval" if transform._is_test else "train"
+        )
+        transform.mask_func = mask_func
+        transform._subsampler = Subsampler(mask_func)
+        transform._subsampler.zip2_padding = (None, 40)
+        super().__init__(dataset_dicts, transform, keys=keys, include_metadata=include_metadata)
+
+    def _load_data(self, example, idx):
+        file_path = example["file_name"]
+        slice_id = example["slice_id"]
+        with h5py.File(file_path, "r") as data:
+            kspace = data[self.mapping["kspace"]][slice_id, ..., 0, :]
+            maps = data[self.mapping["maps"]][slice_id]
+            target = data[self.mapping["target"]][slice_id, ..., 0, :]
+
+        return {
+            "kspace": kspace,
+            "maps": maps,
+            "target": target,
+        }

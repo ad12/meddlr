@@ -175,7 +175,7 @@ class ReconEvaluator(DatasetEvaluator):
             return {}
 
         pred_vals = defaultdict(list)
-        for pred in self._predictions:
+        for pred in tqdm(self._predictions, desc="Slice metrics"):
             val = self.evaluate_prediction(pred, self._slice_metrics)
             for k, v in val.items():
                 pred_vals[f"val_{k}"].append(v)
@@ -183,7 +183,7 @@ class ReconEvaluator(DatasetEvaluator):
         scans = self.structure_scans()
         self.scans = scans
         scans = scans.values()
-        for pred in scans:
+        for pred in tqdm(scans, desc="Scan Metrics"):
             val = self.evaluate_prediction(pred, self._scan_metrics)
             for k, v in val.items():
                 pred_vals[f"val_{k}_scan"].append(v)
@@ -211,7 +211,10 @@ class ReconEvaluator(DatasetEvaluator):
                 pred_vals[scan_id][f"{k}"].append(v)
 
         # Full scan evaluation
-        scans = self.structure_scans()
+        if self._scan_metrics or self._save_scans:
+            scans = self.structure_scans()
+        else:
+            scans = {}
         for scan_id, pred in tqdm(scans.items(), desc="Scan metrics"):
             val = self.evaluate_prediction(pred, self._scan_metrics)
             for k, v in val.items():

@@ -7,7 +7,7 @@ import logging
 from torch.utils.data import DataLoader
 import numpy as np
 from .catalog import DatasetCatalog
-from .slice_dataset import SliceData, collate_by_supervision, default_collate
+from .slice_dataset import SliceData, collate_by_supervision, default_collate, qDESSSliceDataset
 from .transforms import transform as T
 from .transforms.subsample import build_mask_func
 from .samplers import AlternatingSampler
@@ -60,8 +60,18 @@ def get_recon_dataset_dicts(
     if filter_by:
         for k, v in filter_by:
             num_before = len(dataset_dicts)
-            if not isinstance(v, Sequence):
+            if not isinstance(v, (list, tuple)):
                 v = (v,)
+            else:
+                # This helps us ignore casting differences between
+                # list and tuple.
+                extra_v = []
+                for _v in v:
+                    if isinstance(_v, list):
+                        extra_v.append(tuple(_v))
+                    elif isinstance(_v, tuple):
+                        extra_v.append(list(_v))
+                v = list(v) + extra_v
             dataset_dicts = [dd for dd in dataset_dicts if dd[k] in v]
             num_after = len(dataset_dicts)
             logger.info(
@@ -69,13 +79,14 @@ def get_recon_dataset_dicts(
                 f"{num_after} scans remaining"
             )
 
+    num_after_filter = len(dataset_dicts)
     if num_scans_total > 0:
         dataset_dicts = dataset_dicts[:num_scans_total]
 
     num_after = len(dataset_dicts)
     logger.info(
         "Dropped {} scans. {} scans remaining".format(
-            num_before - num_after, num_after
+            num_after_filter - num_after, num_after
         )
     )
 
@@ -110,6 +121,16 @@ def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None, is_eva
     return dataset_type(dataset_dicts, data_transform, keys=keys, include_metadata=is_eval)
 
 
+def _get_default_dataset_type(dataset_name):
+    """Returns the default dataset type based on the dataset name.
+
+    TODO: This function and its call hierarchy need to be refactored.
+    """
+    if "stanford_qDESS" in dataset_name:
+        return qDESSSliceDataset
+    return SliceData
+
+
 def build_recon_train_loader(cfg, dataset_type=None):
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=cfg.DATASETS.TRAIN,
@@ -119,6 +140,9 @@ def build_recon_train_loader(cfg, dataset_type=None):
         accelerations=cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS,
         filter_by=cfg.DATALOADER.FILTER.BY,
     )
+    if dataset_type is None:
+        dataset_type = _get_default_dataset_type(cfg.DATASETS.TRAIN[0])
+
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg, mask_func, is_test=False, add_noise=cfg.AUG_TRAIN.USE_NOISE)
 
@@ -156,17 +180,20 @@ def build_recon_train_loader(cfg, dataset_type=None):
     return train_loader
 
 
-def build_recon_val_loader(cfg, dataset_name, as_test: bool = False, add_noise: bool = False):
+def build_recon_val_loader(cfg, dataset_name, as_test: bool = False, add_noise: bool = False, dataset_type=None):
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=[dataset_name],
         filter_by=cfg.DATALOADER.FILTER.BY,
         num_scans_total=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL,
         seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
     )
+    if dataset_type is None:
+        dataset_type = _get_default_dataset_type(cfg.DATASETS.TRAIN[0])
+
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg, mask_func, is_test=as_test, add_noise=add_noise)
 
-    train_data = _build_dataset(cfg, dataset_dicts, data_transform, is_eval=True)
+    train_data = _build_dataset(cfg, dataset_dicts, data_transform, is_eval=True, dataset_type=dataset_type)
     train_loader = DataLoader(
         dataset=train_data,
         batch_size=cfg.SOLVER.TEST_BATCH_SIZE,

@@ -8,6 +8,7 @@ from typing import Sequence, Union
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch import nn
 
 from ss_recon.utils import complex_utils as cplx
@@ -112,10 +113,10 @@ class NoiseModel():
         g = self.generator if seed is None else torch.Generator().manual_seed(seed)
         noise_std = self.choose_std_dev()
         if cplx.is_complex(kspace):
-            noise = noise_std * torch.randn(kspace.shape + (2,), generator=g)
+            noise = noise_std * torch.randn(kspace.shape + (2,), generator=g, device=kspace.device)
             noise = torch.view_as_complex(noise)
         else:
-            noise = noise_std * torch.randn(kspace.shape, generator=g)
+            noise = noise_std * torch.randn(kspace.shape, generator=g, device=kspace.device)
         masked_noise = noise * mask
         aug_kspace = kspace + masked_noise
 
@@ -526,3 +527,37 @@ def ifftshift(x, dim=None):
     else:
         shift = [(x.shape[i] + 1) // 2 for i in dim]
     return roll(x, shift, dim)
+
+
+def pad(x: torch.Tensor, shape: Sequence[int], mode="constant", value=0):
+    """
+    Args:
+        x: Input tensor of shape (B, ...)
+        shape: Shape to zero pad to. Use `None` to skip padding certain dimensions.
+    Returns:
+    """
+    x_shape = x.shape[1:1+len(shape)]
+    assert all(x_shape[i] <= shape[i] or shape[i] is None for i in range(len(shape))), (
+        f"Tensor spatial dimensions {x_shape} smaller than zero pad dimensions"
+    )
+
+    total_padding = tuple(
+        desired - current if desired is not None else 0
+        for current, desired in zip(x_shape, shape)
+    )
+    # Adding no padding for terminal dimensions.
+    # torch.nn.functional.pad pads dimensions in reverse order.
+    total_padding += (0,) * (len(x.shape) - 1 - len(x_shape))
+    total_padding = total_padding[::-1]
+
+    pad = []
+    for padding in total_padding:
+        pad1 = padding // 2
+        pad2 = padding - pad1
+        pad.extend([pad1, pad2])
+
+    return F.pad(x, pad, mode=mode, value=value)
+
+
+def zero_pad(x: torch.Tensor, shape: Sequence[int]):
+    return pad(x, shape, mode="constant", value=0)
