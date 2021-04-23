@@ -143,7 +143,7 @@ _C.DATALOADER.FILTER = CN()
 # Paired tuple of key and values for filtering. Multiple values should be specified as tuple.
 # e.g. (("num_slices", 30),) will only keep data with number of slices = 30
 # Field must appear in all dataset dicts.
-# Both training and validation data is filtered by this field
+# Training, validation, and testing data is filtered by this field.
 _C.DATALOADER.FILTER.BY = ()
 
 
@@ -256,6 +256,8 @@ _C.CUDNN_BENCHMARK = False
 _C.DESCRIPTION = CN()
 # Brief description about config 
 _C.DESCRIPTION.BRIEF = ""
+# The entity (team/individual) account for logging to Weights & Biases
+_C.DESCRIPTION.ENTITY_NAME = "ss_recon"
 # Project name for logging to Weights & Biases
 _C.DESCRIPTION.PROJECT_NAME = "ss_recon"
 # Experiment name for logging to Weights & Biases

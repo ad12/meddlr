@@ -176,7 +176,7 @@ def find_wandb_exp_id(cfg):
     return exp_id
     
 
-def init_wandb_run(cfg, exp_id=None, resume=False, project=None, entity="ss_recon", job_type="training", use_api=False):
+def init_wandb_run(cfg, exp_id=None, resume=False, project=None, entity=None, job_type="training", use_api=False):
     import wandb
     logger = logging.getLogger(__name__)
     
@@ -199,6 +199,14 @@ def init_wandb_run(cfg, exp_id=None, resume=False, project=None, entity="ss_reco
         warnings.warn(
             "Setting project name with `project` is deprecated. "
             "Use DESCRIPTION.PROJECT_NAME in config instead.",
+            DeprecationWarning
+        )
+    if entity is None:
+        entity = cfg.DESCRIPTION.ENTITY_NAME
+    else:
+        warnings.warn(
+            "Setting entity name with `entity` is deprecated. "
+            "Use DESCRIPTION.ENTITY_NAME in config instead.",
             DeprecationWarning
         )
 
