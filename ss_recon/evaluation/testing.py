@@ -100,10 +100,13 @@ SUPPORTED_VAL_METRICS = {
     "ssim": "max",
     "ssim_old": "max",
     "ssim (Wang)": "max",
+    "l1_scan": "min",
+    "l2_scan": "min",
+    "psnr_scan": "max",
     "iteration": "max",  # find the last checkpoint
 }
 
-def find_weights(cfg, criterion="", iter_limit=None):
+def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
     """Find the best weights based on a validation criterion/metric.
 
     Args:
@@ -186,18 +189,28 @@ def find_weights(cfg, criterion="", iter_limit=None):
     # iteration __after__ filtering out old training runs.
     metrics = {iteration: value for iteration, value in metrics}
     metrics = [(k, v) for k, v in metrics.items()]
-    best_iter, best_value = sorted(metrics, key=lambda x: x[1], reverse=operation=="max")[0]
+    best_iter_and_values = sorted(metrics, key=lambda x: x[1], reverse=operation=="max")[:top_k]
 
-    file_name = "model_{:07d}.pth".format(best_iter)
-    if best_iter == last_iter and not os.path.isfile(os.path.join(cfg.OUTPUT_DIR, file_name)):
-        file_name = "model_final.pth"
-    file_path = os.path.join(cfg.OUTPUT_DIR, file_name)
+    all_filepaths = []
+    all_values = []
+    for best_iter, best_value in best_iter_and_values:
+        file_name = "model_{:07d}.pth".format(best_iter)
+        if best_iter == last_iter and not os.path.isfile(os.path.join(cfg.OUTPUT_DIR, file_name)):
+            file_name = "model_final.pth"
+        file_path = os.path.join(cfg.OUTPUT_DIR, file_name)
 
-    if not os.path.isfile(file_path):
-        raise ValueError("Model for iteration {} does not exist".format(best_iter))
+        if not os.path.isfile(file_path):
+            raise ValueError("Model for iteration {} does not exist".format(best_iter))
 
-    logger.info("Weights: {} - {}: {:0.4f}".format(file_name, criterion, best_value))
-    return file_path, criterion, best_value
+        all_filepaths.append(file_path)
+        all_values.append(best_value)
+
+        logger.info("Weights: {} - {}: {:0.4f}".format(file_name, criterion, best_value))
+    
+    if top_k == 1:
+        return all_filepaths[0], criterion, all_values[0]
+    else:
+        return all_filepaths, criterion, all_values
 
 
 def check_consistency(state_dict, model):
