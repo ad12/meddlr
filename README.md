@@ -19,7 +19,7 @@ conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
 pip install cupy-cuda101
 
 # Install as package in virtual environment (recommended):
-git clone https://github.com/ad12/MedSegPy.git
+git clone https://github.com/ad12/dl-ss-recon.git
 cd dl-ss-recon && python -m pip install -e .
 ```
 
