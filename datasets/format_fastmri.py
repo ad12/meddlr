@@ -16,11 +16,16 @@ Multicoil Knee Dataset::
     python format_fastmri annotate --challenge knee_multicoil --method toy-dev --version vtoy
     python format_fastmri annotate --challenge knee_multicoil --method dev --version v0.0.1
     ```
+
+TODOs:
+
+    - Make checking more efficient
 """
 import argparse
 from collections import defaultdict
 import datetime
 import functools
+import itertools
 import logging
 import multiprocessing as mp
 import os
@@ -49,6 +54,8 @@ from utils import data_partition as dp
 from ss_recon.utils.logger import setup_logger
 from ss_recon.utils import transforms as T
 from ss_recon.utils import complex_utils as cplx
+from ss_recon.utils.env import seed_all_rng
+
 
 _FILE_DIR = os.path.dirname(__file__)
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -59,7 +66,7 @@ RAW_DATA_PATH = "data://fastmri/raw"
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 logger = logging.getLogger(_LOGGER_NAME)
 
-CENTER_FRACTION = 0.04
+SEED = 49
 NUM_EMAPS = 1
 RECON_METHODS = ("espirit", "jsense", "jsense-8", "jsense-12")
 
@@ -83,6 +90,12 @@ CHALLENGES = {
 # Defines supported annotation methods
 # dev: Train files are split into train/val, val is used as test set.
 ANN_METHODS = ["dev", "toy-dev", "mini"]
+
+def seed_everything(device=None):
+    seed_all_rng(SEED)
+    if device is not None:
+        with device:
+            device.xp.random.seed(SEED)
 
 
 def is_valid_file(fpath):
@@ -122,6 +135,11 @@ def preprocess_slice(kspace, im_shape):
     # test/challenge images as scans in these datasets are undersampled.
     kspace = np.expand_dims(kspace, 0)
     kspace_tensor = cplx.to_tensor(kspace)  # (1, 640, 372, 15, 2)
+    if cplx.is_complex(kspace_tensor):
+        # If using pytorch>=1.7, complex tensors are now supported.
+        # This small fix allows for minimal change in code without
+        # a significant computational overhead.
+        kspace_tensor = torch.view_as_real(kspace_tensor)
     image_tensor = T.ifft2(kspace_tensor)
     image_tensor = image_tensor.permute(0, 3, 1, 2, 4)  # (1, 15, 640, 372, 2)
     image_tensor = T.complex_center_crop_2d(image_tensor, im_shape)
@@ -190,6 +208,9 @@ def process_slice(
     else:
         device = sp.Device(device)
 
+    # Seed everything before processing the slice.
+    seed_everything(device)
+
     # compute sensitivity maps (BART)
     # cmd = f'ecalib -d 0 -S -m {nmaps} -c {crop_value} -r {calib_size}'
     # maps = bart.bart(1, cmd, kspace[:,:,0,None,:])
@@ -244,6 +265,7 @@ def format_train_file(
     save_dir: str,
     calib_method="jsense",
     device: int=-1,
+    center_fraction=0.04,
     recompute: bool=False,
     overwrite: bool=False,
 ):
@@ -268,21 +290,22 @@ def format_train_file(
 
     file_name = os.path.basename(file_path)
     out_file = os.path.join(save_dir, file_name)
+    group_name = f"{calib_method}-cf={int(center_fraction*100)}"
 
     skip_recon = False
     recon_data = None
     if not overwrite and not recompute and PathManager.isfile(out_file):
         with h5py.File(out_file, "r") as f:
             skip_recon = (
-                calib_method in f.keys() and 
-                "maps" in f[calib_method].keys() and 
-                "target" in f[calib_method].keys()
+                group_name in f.keys() and 
+                "maps" in f[group_name].keys() and 
+                "target" in f[group_name].keys()
             )
 
     if not skip_recon:
         num_slices, num_coils, ky, kx = kspace_orig.shape
         # yres, xres = image_rss.shape[1:3]  # matrix size
-        calib_size = int(round(CENTER_FRACTION * xres))
+        calib_size = int(round(center_fraction * xres))
 
         im_shape = (xres, yres)
         maps = np.zeros(
@@ -305,7 +328,7 @@ def format_train_file(
                 im_truth[sl] = im_slice
 
         recon_data = {
-            calib_method: {
+            group_name: {
                 "maps": maps,
                 "target": im_truth
             },
@@ -401,20 +424,22 @@ def format_data(args, raw_root, formatted_root):
     input_root = raw_root
     output_root = formatted_root
     if args.recompute and args.overwrite:
-        warnings.warn("Ignorning `--recompute` flag. Overwriting all data")
+        logger.warn("Ignorning `--recompute` flag. Overwriting all data")
+
+    all_setups = list(itertools.product(args.split, args.calib_method, args.center_fraction))
 
     failed_cases = []
-    for split in args.split:
+    for idx, (split, calib_method, center_fraction) in enumerate(all_setups):
         input_dir = os.path.join(input_root, CHALLENGES[args.challenge][split])
         output_dir = os.path.join(output_root, split)
         PathManager.mkdirs(output_dir)
 
-        logger.info(f"Processing {split} split...")
-        logger.info("============================")
+        logger.info(f"({idx}/{len(all_setups)}) Processing {split} split, {calib_method} method, {center_fraction} center fraction ...")
+        logger.info("=======================================================================================")
         
         files = get_files(input_dir, filenames=args.files)
         if not args.overwrite and not args.recompute:
-            files = filter_files(files, output_dir, args.calib_method)
+            files = filter_files(files, output_dir, calib_method)
         if len(files) == 0:
             continue
         reg_files, oversized_files = split_files(files)
@@ -457,8 +482,9 @@ def format_data(args, raw_root, formatted_root):
                     format_train_file(
                         data,
                         output_dir,
-                        calib_method=args.calib_method,
+                        calib_method=calib_method,
                         device=args.device,
+                        center_fraction=center_fraction,
                         recompute=args.recompute,
                         overwrite=args.overwrite,
                     )
@@ -672,15 +698,24 @@ def main():
     format_parser.add_argument(
         "--calib-method",
         choices=RECON_METHODS,
-        default="jsense-8",
+        nargs="*",
+        default=["jsense-8"],
         help="Sensitivity map estimation method (default: espirit)",
+    )
+    format_parser.add_argument(
+        "--center-fraction",
+        choices=[0.04, 0.08],
+        nargs="*",
+        default=[0.04],
+        type=float,
+        help="Center fraction for computing sensitivity maps",
     )
     format_parser.add_argument(
         "--split",
         choices=SPLITS,
         nargs="*",
         default=SPLITS,
-        help="Dataset split(s) (default: {SPLITS})"
+        help=f"Dataset split(s) (default: {SPLITS})"
     )
     format_parser.add_argument(
         "--files",
