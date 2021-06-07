@@ -6,7 +6,7 @@ from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils.events import get_event_storage
 
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
-from ss_recon.utils.transforms import NoiseModel
+from ss_recon.data.transforms.noise import NoiseModel
 
 
 @META_ARCH_REGISTRY.register()
@@ -32,7 +32,7 @@ class N2RModel(nn.Module):
         # Use supervised examples for consistency
         self.use_supervised_consistency = cfg.MODEL.N2R.USE_SUPERVISED_CONSISTENCY
 
-        self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV)
+        self.noiser = NoiseModel.from_cfg(cfg)
 
     def augment(self, inputs):
         """Noise augmentation module.

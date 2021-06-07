@@ -18,7 +18,7 @@ and expected to return a LossComputer object.
 """
 
 EPS = 1e-11
-IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse", "mag_l1"]
+IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse", "mag_l1", "perp_loss"]
 KSPACE_LOSSES = ["k_l1", "k_l1_normalized"]
 
 
@@ -52,6 +52,10 @@ class LossComputer(ABC):
             "l1": l1, "l2": l2.mean(), "psnr": psnr.mean(), "nrmse": nrmse.mean(),
             "mag_l1": mag_l1,
         }
+
+        if loss_name == "perp_loss":
+            metrics_dict.update(perp_loss(output, target))
+
         if loss_name in KSPACE_LOSSES:
             target, output = T.fft2(target), T.fft2(output)
             abs_error = cplx.abs(target - output)
@@ -181,3 +185,30 @@ class N2RLossComputer(LossComputer):
 
         metrics["loss"] = loss
         return metrics
+
+
+def perp_loss(yhat, y):
+    """Implementation of the perpendicular loss.
+
+    Args:
+        yhat: Predicted reconstruction. Must be complex.
+        y: Target reconstruction. Must be complex.
+    
+    Returns:
+        Dict[str, scalar]:
+
+    References:
+        Terpstra, et al. "Rethinking complex image reconstruction: 
+        ⟂-loss for improved complex image reconstruction with deep learning."
+        International Society of Magnetic Resonance in Medicine Annual Meeting
+        2021.
+    """
+    if cplx.is_complex(yhat):
+        yhat = torch.view_as_real(yhat)
+    if cplx.is_complex(y):
+        y = torch.view_as_real(y)
+    
+    P = torch.abs(yhat[..., 0] * y[..., 1] - yhat[..., 1] * y[..., 0]) / cplx.abs(y)
+    l1 = torch.abs(cplx.abs(y) - cplx.abs(yhat))
+
+    return {"p_perp_loss": torch.mean(P), "perp_loss": torch.mean(P + l1)}

@@ -89,6 +89,9 @@ def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int):
         cfg.TEST.EVAL_PERIOD, iters_per_epoch, time_scale
     )
     cfg.VIS_PERIOD = format_as_iter(cfg.VIS_PERIOD, iters_per_epoch, time_scale)
+    cfg.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS = format_as_iter(
+        cfg.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS, iters_per_epoch, time_scale
+    )
     cfg.TIME_SCALE = "iter"
     cfg.freeze()
     return cfg

@@ -1,0 +1,29 @@
+{
+  "info": {
+    "contributor": "arjundd",
+    "description": "2019 MRIData.org Knee Dataset - val",
+    "year": "2020",
+    "date_created": "2020-06-11 19-12-06 PDT",
+    "version": "v1.0.0"
+  },
+  "images": [
+    {
+      "file_name": "d089cbe0-48b3-4ae2-9475-53ca89ee90fe.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "dd969854-ec56-4ccc-b7ac-ff4cd7735095.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    }
+  ]
+}

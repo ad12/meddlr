@@ -1,0 +1,38 @@
+{
+  "info": {
+    "contributor": "arjundd",
+    "description": "2019 MRIData.org Knee Dataset - test",
+    "year": "2020",
+    "date_created": "2020-06-11 19-24-42 PDT",
+    "version": "v1.0.0"
+  },
+  "images": [
+    {
+      "file_name": "ec00945c-ad90-46b7-8c38-a69e9e801074.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "ee2efe48-1e9d-480e-9364-e53db01532d4.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "efa383b6-9446-438a-9901-1fe951653dbd.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    }
+  ]
+}

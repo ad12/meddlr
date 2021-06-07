@@ -41,6 +41,7 @@ class Cluster(Enum):
     MRLEARNING = 7, ["mrlearning"]
     AUTOFOCUS = 8, ["autofocus"]
     SIENA = 9, ["siena"]
+    TORINO = 10, ["torino"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -168,6 +169,10 @@ _USER_PATHS = {
         ),
         CLUSTER.SIENA: (
             "/data/datasets",  # mounted on siena only
+            "/bmrNAS/people/arjun/results/ss_recon",
+        ),
+        CLUSTER.TORINO: (
+            "/dataNAS/people/arjun/data",
             "/bmrNAS/people/arjun/results/ss_recon",
         )
     },

@@ -7,6 +7,7 @@ from fvcore.common.registry import Registry
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import transforms as T
 
+from .noise import NoiseModel
 from .subsample import build_mask_func
 
 
@@ -185,7 +186,11 @@ class DataTransform:
         self.add_noise = add_noise
         seed = cfg.SEED if cfg.SEED > -1 else None
         self.rng = np.random.RandomState(seed)
-        self.noiser = T.NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
+        if is_test:
+            # When we test we dont want to initialize with certain parameters (e.g. scheduler).
+            self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
+        else:
+            self.noiser = NoiseModel.from_cfg(cfg, seed=seed)
         self.p_noise = cfg.AUG_TRAIN.NOISE_P
         self._normalizer = build_normalizer(cfg)
 

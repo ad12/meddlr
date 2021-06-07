@@ -60,6 +60,10 @@ _C.MODEL.CONSISTENCY.AUG = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
+# Noise scheduler
+_C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER = CN()
+_C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_METHOD = ""
+_C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS = 0
 
 # Image normalization options.
 # See ss_recon/data/transforms/transform.py for more details.
