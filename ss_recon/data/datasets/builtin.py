@@ -107,6 +107,19 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_brain_multicoil"] = {
         "fastmri/brain_multicoil/val",
         "ann://fastmri/brain_multicoil/vtoy-dev/test.json",
     ),
+    # Mini split
+    "fastMRI_brain_multicoil_mini_v0.0.1_train": (
+        "fastmri/brain_multicoil/val",
+        "ann://fastmri/brain_multicoil/mini-v0.0.1/train.json",
+    ),
+    "fastMRI_brain_multicoil_mini_v0.0.1_val": (
+        "fastmri/brain_multicoil/val",
+        "ann://fastmri/brain_multicoil/mini-v0.0.1/val.json",
+    ),
+    "fastMRI_brain_multicoil_mini_v0.0.1_test": (
+        "fastmri/brain_multicoil/val",
+        "ann://fastmri/brain_multicoil/mini-v0.0.1/test.json",
+    ),
 }
 
 

@@ -110,9 +110,13 @@ def _load_metadata(metadata_file, dataset_dicts):
             This key maps to the dictionary of metadata.
     """
     metadata = pd.read_csv(PathManager.get_local_path(metadata_file))
+    metadata = metadata.loc[:, ~metadata.columns.str.contains("^Unnamed")]
+
     for dd in dataset_dicts:
         dd_metadata = metadata[metadata["fname"] == os.path.basename(dd["file_name"])]
         assert len(dd_metadata) == 1
-        dd["_metadata"] = dd_metadata.to_dict()
+        dd_metadata = dd_metadata.to_dict("index")
+        dd_metadata = dd_metadata[list(dd_metadata.keys())[0]]
+        dd["_metadata"] = dd_metadata
 
     return dataset_dicts
