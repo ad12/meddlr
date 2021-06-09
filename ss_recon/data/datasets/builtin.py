@@ -16,15 +16,15 @@ _PREDEFINED_SPLITS_MRCO = {}
 _PREDEFINED_SPLITS_MRCO["mridata_knee_2019"] = {
     "mridata_knee_2019_train": (
         "mridata_knee_2019/train",
-        "mridata_knee_2019/annotations/train.json",
+        "ann://mridata_knee_2019/train.json",
     ),
     "mridata_knee_2019_val": (
         "mridata_knee_2019/val",
-        "mridata_knee_2019/annotations/val.json",
+        "ann://mridata_knee_2019/val.json",
     ),
     "mridata_knee_2019_test": (
         "mridata_knee_2019/test",
-        "mridata_knee_2019/annotations/test.json",
+        "ann://mridata_knee_2019/test.json",
     ),
 }
 
@@ -133,8 +133,16 @@ _PREDEFINED_SPLITS_MRCO["stanford_qDESS_knee_2020"] = {
 }
 
 
+_METADATA_FILES = {
+    "mridata_knee_2019": "ann://mridata_knee_2019/metadata.csv",
+    "fastMRI_knee_multicoil": "ann://fastmri/knee_multicoil/fastmri_knee_multicoil_metadata.csv",
+    "fastMRI_brain_multicoil": "ann://fastmri/brain_multicoil/fastmri_brain_multicoil_metadata.csv",
+}
+
+
 def register_all_mrco(root="data://"):
     for dataset_name, splits_per_dataset in _PREDEFINED_SPLITS_MRCO.items():
+        metadata_file = _METADATA_FILES.get(dataset_name, None)
         for key, data in splits_per_dataset.items():
             # Assume pre-defined datasets live in `./datasets`.
             image_root, json_file = data
@@ -143,7 +151,7 @@ def register_all_mrco(root="data://"):
             image_root = os.path.join(root, image_root) if image_root is not None else None
             register_mrco_scans(
                 key,
-                {},  # TODO: add metadata
+                {"metadata_file": metadata_file},  # TODO: add metadata
                 json_file,  # noqa
                 image_root,
             )

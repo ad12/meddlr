@@ -66,6 +66,10 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
 
         dataset_dicts.append(dd)
 
+    # Load metadata from metadata file.
+    metadata_file = MetadataCatalog.get(dataset_name).metadata_file
+    if metadata_file:
+        dataset_dicts = _load_metadata(metadata_file, dataset_dicts)
 
     return dataset_dicts
 
@@ -100,3 +104,23 @@ def register_mrco_scans(name, metadata, json_file, image_root: str = None):
         evaluator_type="coco",
         **metadata
     )
+
+
+def _load_metadata(metadata_file, dataset_dicts):
+    """Loads metadata in csv file into dataset dictionaries.
+
+    Args:
+        metadata_file (str): A csv file with metadata.
+        dataset_dicts (List[Dict]): List of dataset dictionaries.
+    
+    Returns:
+        dataset_dicts: The dataset dictionaries with "_metadata" key.
+            This key maps to the dictionary of metadata.
+    """
+    metadata = pd.read_csv(PathManager.get_local_path(metadata_file))
+    for dd in dataset_dicts:
+        dd_metadata = metadata[metadata["fname"] == os.path.basename(dd["file_name"])]
+        assert len(dd_metadata) == 1
+        dd["_metadata"] = dd_metadata.to_dict()
+
+    return dataset_dicts

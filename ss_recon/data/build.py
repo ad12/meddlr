@@ -72,7 +72,10 @@ def get_recon_dataset_dicts(
                     elif isinstance(_v, tuple):
                         extra_v.append(list(_v))
                 v = list(v) + extra_v
-            dataset_dicts = [dd for dd in dataset_dicts if dd[k] in v]
+            dataset_dicts = [
+                dd for dd in dataset_dicts
+                if dd.get(k, None) in v or dd.get("_metadata", {}).get(k, None) in v
+            ]
             num_after = len(dataset_dicts)
             logger.info(
                 f"Filtered by {k}: Dropped {num_before - num_after} scans. "
