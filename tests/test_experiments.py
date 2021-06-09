@@ -1,7 +1,6 @@
 """Verify experimental configurations (random seeds, etc.)."""
 import unittest
 
-import numpy as np
 from ss_recon.data.build import get_recon_dataset_dicts
 
 
@@ -22,7 +21,7 @@ class TestMRIDataExperiments(unittest.TestCase):
         # Find 3 seeds that work relatively well
         # 1000 is fixed as it is used by most of our runs.
         scans = {}
-        seeds = [1000, 2000, 3000, 9860, 9970] # last two seeds found by random search
+        seeds = [1000, 2000, 3000, 9860, 9970]  # last two seeds found by random search
         print(seeds)
         for num_total in dataset_sizes:
             for seed in seeds:
@@ -33,12 +32,11 @@ class TestMRIDataExperiments(unittest.TestCase):
                 selected_scans = [dd["file_name"] for dd in dataset_dicts]
                 assert len(set(selected_scans)) == num_total
                 scans[(num_total, seed)] = selected_scans
-        
+
         # For a fixed seed, set of scans must be supersets
         for seed in seeds:
             seed_scans = {
-                num_total: _scans for (num_total, _seed), _scans in scans.items() 
-                if seed == _seed
+                num_total: _scans for (num_total, _seed), _scans in scans.items() if seed == _seed
             }
             ordered_scans = [seed_scans[x] for x in dataset_sizes]
             for idx, (x, y) in enumerate(zip(ordered_scans[:-1], ordered_scans[1:])):
@@ -57,18 +55,15 @@ class TestMRIDataExperiments(unittest.TestCase):
                 if _num_total == num_total
             ]
             for idx, (seed1, scans1) in enumerate(scan_names):
-                for seed2, scans2 in scan_names[idx+1:]:
+                for seed2, scans2 in scan_names[idx + 1 :]:
                     overlap_scans = scans1 & scans2
                     num_same = len(overlap_scans)
-                    assert num_same <= overlap_thresh, (
-                        "Seeds {} and {} have the same "
-                        "{}/{} scan(s):\n{}".format(
-                            seed1, seed2, num_same, num_total,
-                            "\n".join(sorted(list(overlap_scans)))
-                        )
+                    assert (
+                        num_same <= overlap_thresh
+                    ), "Seeds {} and {} have the same " "{}/{} scan(s):\n{}".format(
+                        seed1, seed2, num_same, num_total, "\n".join(sorted(overlap_scans))
                     )
                     print(f"{seed1} - {seed2}: {num_same}/{num_total}")
-
 
 
 if __name__ == "__main__":

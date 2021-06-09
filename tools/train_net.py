@@ -1,9 +1,8 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
-Detection Training Script.
+Recon Training Script.
 
 This scripts reads a given config file and runs the training or evaluation.
-It is an entry point that is made to train standard models in detectron2.
+It is an entry point that is made to train standard models in ss_recon.
 
 In order to let one script support training of many models,
 this script contains logic that are specific to these built-in models and
@@ -15,23 +14,12 @@ this file as an example of how to use the library.
 You may want to write your own script with your datasets and other
 customizations.
 """
-import os
-import sys
-import warnings
 
 from ss_recon.config import get_cfg
-from ss_recon.engine import (
-    DefaultTrainer,
-    default_argument_parser,
-    default_setup,
-)
+from ss_recon.engine import DefaultTrainer, default_argument_parser, default_setup
 from ss_recon.engine.defaults import init_wandb_run
 from ss_recon.utils.env import supports_wandb
 
-try:
-    import wandb
-except:
-    pass
 
 def setup(args):
     """
@@ -44,7 +32,7 @@ def setup(args):
         opts = opts[1:]
     cfg.merge_from_list(opts)
     cfg.freeze()
-    
+
     if not cfg.OUTPUT_DIR:
         raise ValueError("OUTPUT_DIR not specified")
 

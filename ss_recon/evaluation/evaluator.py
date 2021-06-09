@@ -85,10 +85,9 @@ class DatasetEvaluators(DatasetEvaluator):
 
             if result is not None:
                 for k, v in result.items():
-                    assert k not in results, (
-                        "Different evaluators produce results "
-                        "with the same key {}".format(k)
-                    )
+                    assert (
+                        k not in results
+                    ), "Different evaluators produce results " "with the same key {}".format(k)
                     results[k] = v
         return results
 
@@ -164,9 +163,7 @@ def inference_on_dataset(model, data_loader, evaluator):
             total_time_str, total_time / (total - num_warmup), num_devices
         )
     )
-    total_compute_time_str = str(
-        datetime.timedelta(seconds=int(total_compute_time))
-    )
+    total_compute_time_str = str(datetime.timedelta(seconds=int(total_compute_time)))
     logger.info(
         "Total inference pure compute time: "
         "{} ({:.6f} s / batch on {} devices)".format(

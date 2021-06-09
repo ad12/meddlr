@@ -10,43 +10,26 @@ Supported metrics include:
     - nrmse
 """
 import itertools
-import json
-import logging
 import os
-import datetime
-import time
 import warnings
 from copy import deepcopy
 from typing import Any, Dict, Sequence
 
-import h5py
-import numpy as np
 import pandas as pd
-import silx.io.dictdump as silx_dd
-from tabulate import tabulate
 import torch
+from tabulate import tabulate
 
-from ss_recon.config import get_cfg
-from ss_recon.engine import (
-    DefaultTrainer,
-    default_argument_parser,
-    default_setup,
-)
-from ss_recon.engine.defaults import init_wandb_run
 from ss_recon.checkpoint import DetectionCheckpointer
-from ss_recon.evaluation import metrics
-from ss_recon.evaluation.testing import check_consistency, find_weights, SUPPORTED_VAL_METRICS
-from ss_recon.data.build import build_data_loaders_per_scan, build_recon_val_loader
-from ss_recon.utils.logger import setup_logger, log_every_n_seconds
-from ss_recon.evaluation import ReconEvaluator, DatasetEvaluators, inference_on_dataset
-
-import ss_recon.utils.complex_utils as cplx
-from ss_recon.utils.transforms import SenseModel
-from ss_recon.utils.general import find_experiment_dirs
+from ss_recon.config import get_cfg
+from ss_recon.data.build import build_recon_val_loader
+from ss_recon.engine import DefaultTrainer, default_argument_parser, default_setup
+from ss_recon.evaluation import DatasetEvaluators, ReconEvaluator, inference_on_dataset
+from ss_recon.evaluation.testing import SUPPORTED_VAL_METRICS, check_consistency, find_weights
+from ss_recon.utils.logger import setup_logger
 
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
-#logger = logging.getLogger(_LOGGER_NAME)
+# logger = logging.getLogger(_LOGGER_NAME)
 logger = None  # initialize in setup()
 
 # Default values for parameters that may not have been initially added.
@@ -54,8 +37,10 @@ _DEFAULT_VALS = {
     "rescaled": True,
 }
 
+
 class ZFReconEvaluator(ReconEvaluator):
     """Zero-filled recon evaluator."""
+
     def process(self, inputs, outputs):
         zf_out = {k: outputs[k] for k in ("target", "metadata")}
         zf_out["pred"] = outputs["zf_pred"]
@@ -100,7 +85,7 @@ def add_default_params(metrics: pd.DataFrame, ignore_case=True):
         df = df.rename(columns=column_map)
     else:
         defaults_keys_map = {k: k for k in _DEFAULT_VALS.keys()}
-    
+
     for fmt_key, real_key in defaults_keys_map.items():
         if fmt_key not in df.columns:
             df[real_key] = _DEFAULT_VALS[real_key]
@@ -109,9 +94,11 @@ def add_default_params(metrics: pd.DataFrame, ignore_case=True):
         df = df.rename(columns={v: k for k, v in column_map.items()})
 
     return df
-    
 
-def find_metrics(metrics: pd.DataFrame, params: Dict[str, Any], ignore_missing=False, ignore_case=True):
+
+def find_metrics(
+    metrics: pd.DataFrame, params: Dict[str, Any], ignore_missing=False, ignore_case=True
+):
     """Find subset of metrics dictionary that matches parameter configuration.
 
     Note:
@@ -122,7 +109,7 @@ def find_metrics(metrics: pd.DataFrame, params: Dict[str, Any], ignore_missing=F
         params (Dict[str, Any]): Parameter values to filter by.
             Keys should correspond to column names in `metrics`.
         ignore_missing (bool, optional): If `True`, ignores filtering by
-            columns that are missing. 
+            columns that are missing.
         ignore_case (bool, optional): If `True`, ignores the column casing.
             Raises `ValueError` if two columns have the same lower case
             form.
@@ -140,7 +127,7 @@ def find_metrics(metrics: pd.DataFrame, params: Dict[str, Any], ignore_missing=F
     # Fill in with default values if missing.
     # Note these will always be lower case, so we match based on case.
     # Fill in default values when the columns are not available.
-    default_keys = set(x.lower() for x in params) & set(x.lower() for x in _DEFAULT_VALS.keys())
+    default_keys = {x.lower() for x in params} & {x.lower() for x in _DEFAULT_VALS.keys()}
     lowercase_cols = [x.lower() for x in df.columns]
     for k in default_keys:
         if k not in lowercase_cols:
@@ -153,7 +140,7 @@ def find_metrics(metrics: pd.DataFrame, params: Dict[str, Any], ignore_missing=F
             else:
                 raise KeyError(f"No column {k} in `metrics`")
         df = df[df[k] == v]
-    
+
     # Undo matching by lower case.
     if ignore_case:
         df = df.rename(columns={v: k for k, v in column_map.items()})
@@ -187,7 +174,7 @@ def update_metrics(metrics_new: pd.DataFrame, metrics_old: pd.DataFrame, on: Seq
         if combo not in new_metrics_combos:
             combo_as_dict = {k: v for k, v in zip(on, combo)}
             to_prepend.append(find_metrics(metrics_old, combo_as_dict))
-    
+
     if len(to_prepend) > 0:
         to_prepend = pd.concat(to_prepend, ignore_index=True)
         metrics = pd.concat([to_prepend, metrics_new], ignore_index=True)
@@ -231,16 +218,19 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     if include_noise:
         noise_vals = [0] + noise_sweep_vals if noise_arg == "sweep" else [0]
         noise_vals += list(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV)
-        noise_vals = sorted(list(set(noise_vals)))
+        noise_vals = sorted(set(noise_vals))
     else:
         noise_vals = [0]
 
-    accelerations = cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS
-    values = itertools.product(cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals)
+    values = itertools.product(
+        cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals
+    )
     values = list(values)
     all_results = []
     if len(values) > 1 and save_scans:
-        warnings.warn("Found multiple evaluation configurations. Only outputs from last configuration will be saved...")
+        warnings.warn(
+            "Found multiple evaluation configurations. Only outputs from last configuration will be saved..."
+        )
 
     default_metrics = ReconEvaluator.default_metrics()
 
@@ -248,15 +238,18 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         # Check if the current configuration already has metrics computed
         # If so, dont recompute
         params = {
-            "Acceleration": acc, "dataset": dataset_name, "Noise Level": noise_level, 
-            "weights": weights_basename, "rescaled": not skip_rescale
+            "Acceleration": acc,
+            "dataset": dataset_name,
+            "Noise Level": noise_level,
+            "weights": weights_basename,
+            "rescaled": not skip_rescale,
         }
         eval_metrics = default_metrics
 
-        logger.info("=="*30)
+        logger.info("==" * 30)
         logger.info("Experiment ({}/{})".format(exp_idx + 1, len(values)))
         logger.info(", ".join([f"{k}: {v}" for k, v in params.items()]))
-        logger.info("=="*30)
+        logger.info("==" * 30)
 
         existing_metrics = None
         if metrics is not None:
@@ -267,10 +260,12 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             if existing_metrics is not None and len(existing_metrics) > 0:
                 eval_metrics = list(set(eval_metrics) - set(existing_metrics.columns))
                 if len(eval_metrics) == 0:
-                    logger.info("Metrics for ({}) exist:\n{}".format(
-                        ", ".join([f"{k}: {v}" for k, v in params.items()]),
-                        tabulate(existing_metrics, headers=existing_metrics.columns)
-                    ))
+                    logger.info(
+                        "Metrics for ({}) exist:\n{}".format(
+                            ", ".join([f"{k}: {v}" for k, v in params.items()]),
+                            tabulate(existing_metrics, headers=existing_metrics.columns),
+                        )
+                    )
                     all_results.append(existing_metrics)
                     continue
 
@@ -291,23 +286,30 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
         # Build evaluators. Only save reconstructions for last scan.
         _save_scans = (exp_idx == len(values) - 1) if save_scans else False
-        evaluators = [ReconEvaluator(
-            dataset_name, s_cfg, 
-            group_by_scan=group_by_scan, skip_rescale=skip_rescale, 
-            save_scans=_save_scans,
-            output_dir=os.path.join(output_dir, dataset_name) if _save_scans else None,
-            metrics=eval_metrics,
-            # output_dir=os.path.join(output_dir, f"{dataset_name}-acc={acc}-noise={noise_level}")
-        )]
+        evaluators = [
+            ReconEvaluator(
+                dataset_name,
+                s_cfg,
+                group_by_scan=group_by_scan,
+                skip_rescale=skip_rescale,
+                save_scans=_save_scans,
+                output_dir=os.path.join(output_dir, dataset_name) if _save_scans else None,
+                metrics=eval_metrics,
+                # output_dir=os.path.join(output_dir, f"{dataset_name}-acc={acc}-noise={noise_level}")
+            )
+        ]
         # TODO: add support for multiple evaluators.
         if zero_filled:
-            evaluators.append(ZFReconEvaluator(dataset_name, s_cfg, group_by_scan=group_by_scan, skip_rescale=skip_rescale))
+            evaluators.append(
+                ZFReconEvaluator(
+                    dataset_name, s_cfg, group_by_scan=group_by_scan, skip_rescale=skip_rescale
+                )
+            )
         evaluators = DatasetEvaluators(evaluators, as_list=True)
 
         results = inference_on_dataset(model, dataloader, evaluators)
         results = [
-            pd.DataFrame(x).T.reset_index().rename(columns={"index": "scan_name"})
-            for x in results
+            pd.DataFrame(x).T.reset_index().rename(columns={"index": "scan_name"}) for x in results
         ]
 
         results[0]["Method"] = s_cfg.MODEL.META_ARCHITECTURE
@@ -316,8 +318,12 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         scan_results = pd.concat(results, ignore_index=True)
 
         if existing_metrics is not None and len(existing_metrics) > 0:
-            scan_results = existing_metrics.merge(scan_results, on=["scan_name", "Method"], suffixes=("", "_y"))
-            scan_results = scan_results.drop(scan_results.filter(regex="_y$").columns.tolist(), axis=1)
+            scan_results = existing_metrics.merge(
+                scan_results, on=["scan_name", "Method"], suffixes=("", "_y")
+            )
+            scan_results = scan_results.drop(
+                scan_results.filter(regex="_y$").columns.tolist(), axis=1
+            )
         else:
             for k, v in params.items():
                 scan_results[k] = v
@@ -338,11 +344,15 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     # TODO: If fails, it automatically saves the old file in a versioned form and prints logging message.
     if metrics is not None:
         try:
-            running_results = update_metrics(all_results, metrics, on=["Acceleration", "dataset", "Noise Level", "weights", "Method", "rescaled"])
+            running_results = update_metrics(
+                all_results,
+                metrics,
+                on=["Acceleration", "dataset", "Noise Level", "weights", "Method", "rescaled"],
+            )
         except KeyError as e:
             logger.error(e)
             logger.error("Failed to load old metrics information")
-            #raise e
+            # raise e
             running_results = all_results
     else:
         running_results = all_results
@@ -352,7 +362,11 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 def main(args):
     cfg = setup(args)
     model = DefaultTrainer.build_model(cfg)
-    weights, criterion, best_value = (cfg.MODEL.WEIGHTS, None, None) if cfg.MODEL.WEIGHTS else find_weights(cfg, args.metric, args.iter_limit)
+    weights, criterion, best_value = (
+        (cfg.MODEL.WEIGHTS, None, None)
+        if cfg.MODEL.WEIGHTS
+        else find_weights(cfg, args.metric, args.iter_limit)
+    )
     model = model.to(cfg.MODEL.DEVICE)
     DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
         weights, resume=args.resume
@@ -386,9 +400,7 @@ if __name__ == "__main__":
         choices=list(SUPPORTED_VAL_METRICS.keys()),
     )
     parser.add_argument(
-        "--zero-filled",
-        action="store_true",
-        help="Calculate metrics for zero-filled images"
+        "--zero-filled", action="store_true", help="Calculate metrics for zero-filled images"
     )
     parser.add_argument(
         "--noise",
@@ -404,7 +416,10 @@ if __name__ == "__main__":
         help="args to sweep for noise",
     )
     parser.add_argument(
-        "--iter-limit", default=None, type=int, help="Iteration limit. Chooses weights below this time point."
+        "--iter-limit",
+        default=None,
+        type=int,
+        help="Iteration limit. Chooses weights below this time point.",
     )
     parser.add_argument(
         "--overwrite",
@@ -412,15 +427,9 @@ if __name__ == "__main__":
         help="Overwrite existing metrics file",
     )
     parser.add_argument(
-        "--skip-rescale",
-        action="store_true",
-        help="Skip rescaling when evaluating"
+        "--skip-rescale", action="store_true", help="Skip rescaling when evaluating"
     )
-    parser.add_argument(
-        "--save-scans",
-        action="store_true",
-        help="Save reconstruction outputs"
-    )
+    parser.add_argument("--save-scans", action="store_true", help="Save reconstruction outputs")
     # parser.add_argument(
     #     "--wandb", action="store_true", help="Log to W&B during evaluation"
     # )

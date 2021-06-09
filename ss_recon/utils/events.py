@@ -4,7 +4,6 @@ import json
 import logging
 import math
 import os
-import sys
 from collections import defaultdict
 from contextlib import contextmanager
 
@@ -16,7 +15,7 @@ from ss_recon.utils.env import supports_wandb
 
 try:
     import wandb
-except:
+except ImportError:
     pass
 
 _CURRENT_STORAGE_STACK = []
@@ -29,8 +28,7 @@ def get_event_storage():
         Throws an error if no :class`EventStorage` is currently enabled.
     """
     assert len(_CURRENT_STORAGE_STACK), (
-        "get_event_storage() has to be called inside a "
-        "'with EventStorage(...)' context!"
+        "get_event_storage() has to be called inside a " "'with EventStorage(...)' context!"
     )
     return _CURRENT_STORAGE_STACK[-1]
 
@@ -143,22 +141,16 @@ class TensorboardXWriter(EventWriter):
 
     def write(self):
         storage = get_event_storage()
-        for k, v in storage.latest_with_smoothing_hint(
-            self._window_size
-        ).items():
+        for k, v in storage.latest_with_smoothing_hint(self._window_size).items():
             self._writer.add_scalar(k, v, storage.iter)
 
         if len(storage.vis_data) >= 1:
             for img_name, img, step_num, data_format in storage.vis_data:
-                self._writer.add_image(
-                    img_name, img, step_num, dataformats=data_format
-                )
+                self._writer.add_image(img_name, img, step_num, dataformats=data_format)
             storage.clear_images()
 
     def close(self):
-        if hasattr(
-            self, "_writer"
-        ):  # doesn't exist when the code fails at import
+        if hasattr(self, "_writer"):  # doesn't exist when the code fails at import
             self._writer.close()
 
 
@@ -194,9 +186,7 @@ class CommonMetricPrinter(EventWriter):
         try:
             data_time = storage.history("data_time").avg(20)
             time = storage.history("time").global_avg()
-            eta_seconds = storage.history("time").median(1000) * (
-                self._max_iter - iteration
-            )
+            eta_seconds = storage.history("time").median(1000) * (self._max_iter - iteration)
             if self._eval_period and "eval_time" in storage.histories():
                 num_eval_done = (iteration + 1) // self._eval_period
                 num_eval_remaining = math.ceil(self._max_iter / self._eval_period) - num_eval_done
@@ -228,19 +218,17 @@ lr: {lr}  {memory}\
                 iter=iteration,
                 losses="  ".join(
                     [
-                        ("{}: {:.3%s}" % ('f' if v.median(20) >= 0.0005 else 'e')).format(k, v.median(20))
+                        ("{}: {:.3%s}" % ("f" if v.median(20) >= 0.0005 else "e")).format(
+                            k, v.median(20)
+                        )
                         for k, v in storage.histories().items()
                         if "loss" in k
                     ]
                 ),
                 time="time: {:.4f}".format(time) if time is not None else "",
-                data_time="data_time: {:.4f}".format(data_time)
-                if data_time is not None
-                else "",
+                data_time="data_time: {:.4f}".format(data_time) if data_time is not None else "",
                 lr=lr,
-                memory="max_mem: {:.0f}M".format(max_mem_mb)
-                if max_mem_mb is not None
-                else "",
+                memory="max_mem: {:.0f}M".format(max_mem_mb) if max_mem_mb is not None else "",
             )
         )
 
@@ -253,7 +241,7 @@ class WandBWriter(EventWriter):
     Therefore, you would only need to log to tensorboard and it would be copied over.
 
     Note there is a bug related to tensorboard step/iteration count not corresponding with
-    W&B steps/iteration count 
+    W&B steps/iteration count
     """
 
     def __init__(self, window_size=20):
@@ -396,11 +384,7 @@ class EventStorage:
         """
         result = {}
         for k, v in self._latest_scalars.items():
-            result[k] = (
-                self._history[k].median(window_size)
-                if self._smoothing_hints[k]
-                else v
-            )
+            result[k] = self._history[k].median(window_size) if self._smoothing_hints[k] else v
         return result
 
     def smoothing_hints(self):

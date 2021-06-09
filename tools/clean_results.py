@@ -19,10 +19,10 @@ from typing import Collection, Sequence, Union
 import pandas as pd
 from tabulate import tabulate
 
-from ss_recon.utils import cluster  # noqa
-from ss_recon.evaluation.testing import find_weights
-from ss_recon.utils.general import find_experiment_dirs
 from ss_recon.config import get_cfg
+from ss_recon.evaluation.testing import find_weights
+from ss_recon.utils import cluster  # noqa
+from ss_recon.utils.general import find_experiment_dirs
 
 
 def clean_results(
@@ -65,7 +65,9 @@ def clean_results(
                 _metric = None
             if str(_iter_limit).lower() == "none":
                 _iter_limit = None
-            filepaths, criterion, best_vals = find_weights(cfg, criterion=_metric, iter_limit=_iter_limit, top_k=top_k)
+            filepaths, criterion, best_vals = find_weights(
+                cfg, criterion=_metric, iter_limit=_iter_limit, top_k=top_k
+            )
             if isinstance(filepaths, (str, Path)):
                 filepaths = [filepaths]
                 best_vals = [best_vals]
@@ -73,28 +75,35 @@ def clean_results(
             data["iter_limit"].extend([str(_iter_limit)] * len(filepaths))
             data["filepath"].extend(filepaths)
             data["criterion_val"].extend(best_vals)
-        
+
         data = pd.DataFrame(data)
         print(tabulate(data, headers=data.columns))
 
-        filepaths_to_keep = set(data["filepath"].tolist()) | {os.path.join(exp_path, "model_final.pth")}
-        all_model_paths = set([
+        filepaths_to_keep = set(data["filepath"].tolist()) | {
+            os.path.join(exp_path, "model_final.pth")
+        }
+        all_model_paths = {
             os.path.abspath(os.path.join(exp_path, x))
-            for x in os.listdir(exp_path) if x.endswith(".pth")
-        ])
+            for x in os.listdir(exp_path)
+            if x.endswith(".pth")
+        }
         remove_files = all_model_paths - filepaths_to_keep
 
-        print("Found {}/{} files to remove from {}:\n\t{}".format(
-            len(remove_files), len(all_model_paths), exp_path, "\n\t".join(remove_files)
-        ))
+        print(
+            "Found {}/{} files to remove from {}:\n\t{}".format(
+                len(remove_files), len(all_model_paths), exp_path, "\n\t".join(remove_files)
+            )
+        )
         if interactive:
             if remove:
-                key = input("Remove {}/{} files? (y|[n]) ".format(len(remove_files), len(all_model_paths)))
+                key = input(
+                    "Remove {}/{} files? (y|[n]) ".format(len(remove_files), len(all_model_paths))
+                )
                 if key not in ["y"]:
                     sys.exit(0)
             else:
                 key = input("Press any key to continue")
-        
+
         if remove:
             for fp in remove_files:
                 os.remove(fp)
@@ -102,7 +111,9 @@ def clean_results(
 
 def main():
     parser = argparse.ArgumentParser("Clean out results folder")
-    parser.add_argument("--dir", help="Results directory to recursively search", required=True, type=str)
+    parser.add_argument(
+        "--dir", help="Results directory to recursively search", required=True, type=str
+    )
     parser.add_argument("--top_k", help="Top k weights to store", required=True, type=int)
     parser.add_argument("--iter_limit", help="Iteration limits", default=None, nargs="*")
     parser.add_argument("--metrics", help="Metrics to use", default=None, nargs="*")
@@ -112,7 +123,9 @@ def main():
     args = parser.parse_args()
 
     clean_results(
-        args.dir, args.top_k, args.metrics,
+        args.dir,
+        args.top_k,
+        args.metrics,
         iter_limit=args.iter_limit,
         interactive=args.interactive,
         remove=args.remove,

@@ -1,15 +1,14 @@
 """Functions to register a MRCO-format dataset to the DatasetCatalog.
 """
-import os
-import logging
 import json
+import logging
+import os
 import time
-from typing import Sequence, Union
 
 import h5py
 import pandas as pd
-
 from fvcore.common.file_io import PathManager
+
 from ss_recon.data import DatasetCatalog, MetadataCatalog
 
 logger = logging.getLogger(__name__)
@@ -44,9 +43,7 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
     with open(json_file, "r") as f:
         data = json.load(f)
     logger.info(
-        "Loading {} takes {:.2f} seconds".format(
-            json_file, time.perf_counter() - start_time
-        )
+        "Loading {} takes {:.2f} seconds".format(json_file, time.perf_counter() - start_time)
     )
 
     # TODO: Add any relevant metadata.
@@ -58,14 +55,18 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
         else:
             file_name = PathManager.get_local_path(d["file_path"])
         dd["file_name"] = file_name
-        
+
         # TODO: Clean this up
         if any(dataset_name.startswith(x) for x in ["stanford_qDESS_knee_2020"]):
             with h5py.File(dd["file_name"], "r") as f:
-                dd["kspace_shape"] = f['kspace'].shape
+                dd["kspace_shape"] = f["kspace"].shape
 
         dataset_dicts.append(dd)
 
+    # Load metadata from metadata file.
+    metadata_file = MetadataCatalog.get(dataset_name).metadata_file
+    if metadata_file:
+        dataset_dicts = _load_metadata(metadata_file, dataset_dicts)
 
     return dataset_dicts
 
@@ -88,15 +89,30 @@ def register_mrco_scans(name, metadata, json_file, image_root: str = None):
         image_root (str): directory which contains all the images.
     """
     # 1. register a function which returns dicts
-    DatasetCatalog.register(
-        name, lambda: load_mrco_json(json_file, image_root, name)
-    )
+    DatasetCatalog.register(name, lambda: load_mrco_json(json_file, image_root, name))
 
     # 2. Optionally, add metadata about this dataset,
     # since they might be useful in evaluation, visualization or logging
     MetadataCatalog.get(name).set(
-        json_file=json_file,
-        image_root=image_root,
-        evaluator_type="coco",
-        **metadata
+        json_file=json_file, image_root=image_root, evaluator_type="coco", **metadata
     )
+
+
+def _load_metadata(metadata_file, dataset_dicts):
+    """Loads metadata in csv file into dataset dictionaries.
+
+    Args:
+        metadata_file (str): A csv file with metadata.
+        dataset_dicts (List[Dict]): List of dataset dictionaries.
+
+    Returns:
+        dataset_dicts: The dataset dictionaries with "_metadata" key.
+            This key maps to the dictionary of metadata.
+    """
+    metadata = pd.read_csv(PathManager.get_local_path(metadata_file))
+    for dd in dataset_dicts:
+        dd_metadata = metadata[metadata["fname"] == os.path.basename(dd["file_name"])]
+        assert len(dd_metadata) == 1
+        dd["_metadata"] = dd_metadata.to_dict()
+
+    return dataset_dicts

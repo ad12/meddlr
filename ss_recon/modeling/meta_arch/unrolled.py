@@ -13,16 +13,16 @@ Implementation is based on:
     Magazine, 2020.
 """
 import torch
-from torch import nn
 import torchvision.utils as tv_utils
+from torch import nn
 
-from ss_recon.utils.general import move_to_device
 import ss_recon.utils.complex_utils as cplx
+from ss_recon.utils.events import get_event_storage
+from ss_recon.utils.general import move_to_device
 from ss_recon.utils.transforms import SenseModel
 
 from ..layers.layers2D import ResNet
 from .build import META_ARCH_REGISTRY
-from ss_recon.utils.events import get_event_storage
 
 __all__ = ["GeneralizedUnrolledCNN"]
 
@@ -77,23 +77,18 @@ class GeneralizedUnrolledCNN(nn.Module):
 
         # Declare ResNets and RNNs for each unrolled iteration
         if share_weights:
-            self.resnets = nn.ModuleList(
-                [ResNet(**resnet_params)] * num_grad_steps
-            )
+            self.resnets = nn.ModuleList([ResNet(**resnet_params)] * num_grad_steps)
         else:
-            self.resnets = nn.ModuleList(
-                [ResNet(**resnet_params) for _ in range(num_grad_steps)]
-            )
+            self.resnets = nn.ModuleList([ResNet(**resnet_params) for _ in range(num_grad_steps)])
 
         # Declare step sizes for each iteration
         init_step_size = torch.tensor([-2.0], dtype=torch.float32)
         if fix_step_size:
             self.step_sizes = [init_step_size] * num_grad_steps
         else:
-            self.step_sizes = nn.ParameterList([
-                torch.nn.Parameter(init_step_size)
-                for _ in range(num_grad_steps)
-            ])
+            self.step_sizes = nn.ParameterList(
+                [torch.nn.Parameter(init_step_size) for _ in range(num_grad_steps)]
+            )
 
         self.vis_period = cfg.VIS_PERIOD
 
@@ -105,16 +100,14 @@ class GeneralizedUnrolledCNN(nn.Module):
             preds: NxHxWx2 tensors of predictions.
         """
         storage = get_event_storage()
-        
+
         with torch.no_grad():
             if cplx.is_complex(kspace):
                 kspace = torch.view_as_real(kspace)
-            kspace = kspace[0, ..., 0, :].unsqueeze(0).cpu() # calc mask for first coil only
+            kspace = kspace[0, ..., 0, :].unsqueeze(0).cpu()  # calc mask for first coil only
             targets = targets[0, ...].unsqueeze(0).cpu()
             preds = preds[0, ...].unsqueeze(0).cpu()
             zfs = zfs[0, ...].unsqueeze(0).cpu()
-
-            N = preds.shape[0]
 
             all_images = torch.cat([zfs, preds, targets], dim=2)
 
@@ -128,11 +121,13 @@ class GeneralizedUnrolledCNN(nn.Module):
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
                 data = tv_utils.make_grid(
-                    data, nrow=1, padding=1, normalize=True, scale_each=True,
+                    data,
+                    nrow=1,
+                    padding=1,
+                    normalize=True,
+                    scale_each=True,
                 )
-                storage.put_image(
-                    "train/{}".format(name), data.numpy(), data_format="CHW"
-                )
+                storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
 
     def forward(self, inputs, return_pp=False, vis_training=False):
         """
@@ -163,9 +158,7 @@ class GeneralizedUnrolledCNN(nn.Module):
                     Added when model is in eval mode.
         """
         if vis_training and not self.training:
-            raise ValueError(
-                "vis_training is only applicable in training mode."
-            )
+            raise ValueError("vis_training is only applicable in training mode.")
         # Need to fetch device at runtime for proper data transfer.
         device = self.resnets[0].final_layer.weight.device
         inputs = move_to_device(inputs, device)
@@ -176,9 +169,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         maps = inputs["maps"]
         num_maps_dim = -2 if cplx.is_complex_as_real(maps) else -1
         if self.num_emaps != maps.size()[num_maps_dim]:
-            raise ValueError(
-                "Incorrect number of ESPIRiT maps! Re-prep data..."
-            )
+            raise ValueError("Incorrect number of ESPIRiT maps! Re-prep data...")
 
         # Move step sizes to the right device.
         step_sizes = [x.to(device) for x in self.step_sizes]
@@ -207,14 +198,10 @@ class GeneralizedUnrolledCNN(nn.Module):
             if use_cplx:
                 image = torch.view_as_real(image)
             # prox update
-            image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(
-                0, 3, 1, 2
-            )
+            image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(0, 3, 1, 2)
 
             image = resnet(image)
-            image = image.permute(0, 2, 3, 1).reshape(
-                dims[0:3] + (self.num_emaps, 2)
-            )
+            image = image.permute(0, 2, 3, 1).reshape(dims[0:3] + (self.num_emaps, 2))
             if use_cplx:
                 image = torch.view_as_complex(image)
 
@@ -224,9 +211,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         }
 
         if return_pp:
-            output_dict.update({
-                k: inputs[k] for k in ["mean", "std", "norm"]
-            })
+            output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"]})
 
         if self.training and (vis_training or self.vis_period > 0):
             storage = get_event_storage()

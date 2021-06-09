@@ -16,15 +16,15 @@ _PREDEFINED_SPLITS_MRCO = {}
 _PREDEFINED_SPLITS_MRCO["mridata_knee_2019"] = {
     "mridata_knee_2019_train": (
         "mridata_knee_2019/train",
-        "mridata_knee_2019/annotations/train.json",
+        "ann://mridata_knee_2019/train.json",
     ),
     "mridata_knee_2019_val": (
         "mridata_knee_2019/val",
-        "mridata_knee_2019/annotations/val.json",
+        "ann://mridata_knee_2019/val.json",
     ),
     "mridata_knee_2019_test": (
         "mridata_knee_2019/test",
-        "mridata_knee_2019/annotations/test.json",
+        "ann://mridata_knee_2019/test.json",
     ),
 }
 
@@ -32,85 +32,81 @@ _PREDEFINED_SPLITS_MRCO["mridata_knee_2019"] = {
 _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
     "fastMRI_knee_multicoil_dev_train": (
         None,
-        "fastmri/knee_multicoil/annotations/vtoy-dev/train.json"
+        "fastmri/knee_multicoil/annotations/vtoy-dev/train.json",
     ),
     "fastMRI_knee_multicoil_dev_val": (
         None,
-        "fastmri/knee_multicoil/annotations/vtoy-dev/val.json"
+        "fastmri/knee_multicoil/annotations/vtoy-dev/val.json",
     ),
     "fastMRI_knee_multicoil_dev_test": (
         None,
-        "fastmri/knee_multicoil/annotations/vtoy-dev/test.json"
+        "fastmri/knee_multicoil/annotations/vtoy-dev/test.json",
     ),
-
     "fastMRI_knee_multicoil_v0.0.1_train": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev/train.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/train.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_val": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev/val.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/val.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_test": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev/test.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/test.json",
     ),
-
     "fastMRI_knee_multicoil_mini_v0.0.1_train": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/mini-v0.0.1/train.json"
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/train.json",
     ),
     "fastMRI_knee_multicoil_mini_v0.0.1_val": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/mini-v0.0.1/val.json"
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/val.json",
     ),
     "fastMRI_knee_multicoil_mini_v0.0.1_test": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/mini-v0.0.1/test.json"
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/test.json",
     ),
-
     # fastMRI knee multicoil - fat-suppressed
     "fastMRI_knee_multicoil_v0.0.1_fs_train": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/train.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/train.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_fs_val": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/val.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/val.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_fs_test": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/test.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/test.json",
     ),
-    
-    # fastMRI knee multicoil - 3T fat-suppressed 
+    # fastMRI knee multicoil - 3T fat-suppressed
     "fastMRI_knee_multicoil_v0.0.1_fs_3t_train": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/train.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/train.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_fs_3t_val": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/val.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/val.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_fs_3t_test": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/test.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/test.json",
     ),
 }
 
 _PREDEFINED_SPLITS_MRCO["fastMRI_brain_multicoil"] = {
     "fastMRI_brain_multicoil_dev_train": (
         "fastmri/brain_multicoil/train",
-        "ann://fastmri/brain_multicoil/vtoy-dev/train.json"
+        "ann://fastmri/brain_multicoil/vtoy-dev/train.json",
     ),
     "fastMRI_brain_multicoil_dev_val": (
         "fastmri/brain_multicoil/train",
-        "ann://fastmri/brain_multicoil/vtoy-dev/val.json"
+        "ann://fastmri/brain_multicoil/vtoy-dev/val.json",
     ),
     "fastMRI_brain_multicoil_dev_test": (
         "fastmri/brain_multicoil/val",
-        "ann://fastmri/brain_multicoil/vtoy-dev/test.json"
-    )
+        "ann://fastmri/brain_multicoil/vtoy-dev/test.json",
+    ),
 }
 
 
@@ -129,12 +125,20 @@ _PREDEFINED_SPLITS_MRCO["stanford_qDESS_knee_2020"] = {
     "stanford_qDESS_knee_2020_v0.1.0_c24_test": (
         "stanford_qdess_2020/files_recon_calib-24/",
         "stanford_qdess_2020/annotations/v0.1.0/test.json",
-    )
+    ),
+}
+
+
+_METADATA_FILES = {
+    "mridata_knee_2019": "ann://mridata_knee_2019/metadata.csv",
+    "fastMRI_knee_multicoil": "ann://fastmri/knee_multicoil/fastmri_knee_multicoil_metadata.csv",
+    "fastMRI_brain_multicoil": "ann://fastmri/brain_multicoil/fastmri_brain_multicoil_metadata.csv",
 }
 
 
 def register_all_mrco(root="data://"):
     for dataset_name, splits_per_dataset in _PREDEFINED_SPLITS_MRCO.items():
+        metadata_file = _METADATA_FILES.get(dataset_name, None)
         for key, data in splits_per_dataset.items():
             # Assume pre-defined datasets live in `./datasets`.
             image_root, json_file = data
@@ -143,7 +147,7 @@ def register_all_mrco(root="data://"):
             image_root = os.path.join(root, image_root) if image_root is not None else None
             register_mrco_scans(
                 key,
-                {},  # TODO: add metadata
+                {"metadata_file": metadata_file},  # TODO: add metadata
                 json_file,  # noqa
                 image_root,
             )

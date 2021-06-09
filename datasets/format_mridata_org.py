@@ -20,30 +20,27 @@ Usage::
 import argparse
 import datetime
 import functools
+import getpass
+import json
 import logging
 import multiprocessing as mp
 import os
-import json
-import getpass
 import time
 
-from fvcore.common.file_io import PathManager
 import h5py
-import torch
-from tqdm import tqdm
-
-import mridata
 import ismrmrd
+import mridata
 import numpy as np
 import sigpy as sp
+import torch
+from fvcore.common.file_io import PathManager
 from sigpy.mri import app
-
+from tqdm import tqdm
 from utils import fftc
 
-from ss_recon.utils.logger import setup_logger
-from ss_recon.utils import transforms as T
 from ss_recon.utils import complex_utils as cplx
-
+from ss_recon.utils import transforms as T
+from ss_recon.utils.logger import setup_logger
 
 _FILE_DIR = os.path.dirname(__file__)
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -54,9 +51,7 @@ _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 logger = logging.getLogger(_LOGGER_NAME)
 
 
-def download_mridata_org_dataset(
-    file_name, dir_output, overwrite: bool = False
-):
+def download_mridata_org_dataset(file_name, dir_output, overwrite: bool = False):
     """Download datasets from mridata.org.
 
     Args:
@@ -66,15 +61,11 @@ def download_mridata_org_dataset(
     """
     if os.path.isdir(dir_output):
         logger.warning(
-            "Downloading data mridata.org to existing directory {}...".format(
-                dir_output
-            )
+            "Downloading data mridata.org to existing directory {}...".format(dir_output)
         )
     else:
         os.makedirs(dir_output)
-        logger.info(
-            "Downloading data from mridata.org to {}...".format(dir_output)
-        )
+        logger.info("Downloading data from mridata.org to {}...".format(dir_output))
 
     uuids = open(file_name).read().splitlines()
     for uuid in uuids:
@@ -100,9 +91,7 @@ def ismrmrd_to_np(filename):
     except Exception:
         rec_weight = np.ones(num_channels)
     opt_mat = np.diag(rec_weight)
-    kspace = np.zeros(
-        [num_channels, num_slices, num_ky, num_kx], dtype=np.complex64
-    )
+    kspace = np.zeros([num_channels, num_slices, num_ky, num_kx], dtype=np.complex64)
     num_acq = dataset.number_of_acquisitions()
 
     for i in tqdm(range(num_acq)):
@@ -122,9 +111,7 @@ def ismrmrd_to_np(filename):
 def ismrmrd_to_npy(dir_input, dir_output, overwrite: bool = False):
     """Convert ISMRMRD files to npy files"""
     if os.path.isdir(dir_output):
-        logger.warning(
-            "Writing npy data to existing directory {}...".format(dir_output)
-        )
+        logger.warning("Writing npy data to existing directory {}...".format(dir_output))
     else:
         os.makedirs(dir_output)
         logger.info("Writing npy data to {}...".format(dir_output))
@@ -141,9 +128,7 @@ def ismrmrd_to_npy(dir_input, dir_output, overwrite: bool = False):
             np.save(file_output, kspace.astype(np.complex64))
 
 
-def process_slice(
-    kspace, calib_method="jsense", calib_size: int = 20, device: int = -1
-):
+def process_slice(kspace, calib_method="jsense", calib_size: int = 20, device: int = -1):
     # get data dimensions
     nky, nkz, ncoils = kspace.shape
 
@@ -163,17 +148,13 @@ def process_slice(
     # compute sensitivity maps (SigPy)
     ksp = np.transpose(kspace, [2, 1, 0])  # #coils x Kz x Ky
     if calib_method == "espirit":
-        maps = app.EspiritCalib(
-            ksp, calib_width=calib_size, device=device, show_pbar=False
-        ).run()
+        maps = app.EspiritCalib(ksp, calib_width=calib_size, device=device, show_pbar=False).run()
     elif calib_method == "jsense":
         maps = app.JsenseRecon(
             ksp, ksp_calib_width=calib_size, device=device, show_pbar=False
         ).run()
     else:
-        raise ValueError(
-            "%s calibration method not implemented..." % calib_method
-        )
+        raise ValueError("%s calibration method not implemented..." % calib_method)
     maps = np.reshape(np.transpose(maps, [2, 1, 0]), (nky, nkz, ncoils, nmaps))
 
     # Convert everything to tensors
@@ -223,17 +204,13 @@ def convert_to_h5(
         h5_file = os.path.join(dir_output, "{}.h5".format(fname))
         if os.path.isfile(h5_file) and not overwrite:
             logger.info(
-                "Skipping [{}/{}] {} - hdf5 file found".format(
-                    idx + 1, len(file_paths), fp
-                )
+                "Skipping [{}/{}] {} - hdf5 file found".format(idx + 1, len(file_paths), fp)
             )
             continue
 
         if idx > 0:
             eta = datetime.timedelta(
-                seconds=int(
-                    (time.perf_counter() - start_time) / idx * (num_files - idx)
-                )
+                seconds=int((time.perf_counter() - start_time) / idx * (num_files - idx))
             )
         logger.info(
             "Processing [{}/{}] {} {}".format(
@@ -259,12 +236,8 @@ def convert_to_h5(
 
         kspace = np.transpose(kspace, (3, 2, 1, 0))  # X x Y x Z x C
 
-        images = np.zeros(
-            (shape_x, shape_y, shape_z, num_maps), dtype=np.complex64
-        )
-        maps = np.zeros(
-            (shape_x, shape_y, shape_z, num_coils, num_maps), dtype=np.complex64
-        )
+        images = np.zeros((shape_x, shape_y, shape_z, num_maps), dtype=np.complex64)
+        maps = np.zeros((shape_x, shape_y, shape_z, num_coils, num_maps), dtype=np.complex64)
         with torch.no_grad():
             if num_workers > 0:
                 kspace_sliced = [kspace[x] for x in range(shape_x)]
@@ -331,9 +304,7 @@ if __name__ == "__main__":
         help="Root directory (default: datasets/data/mridata_knee_2019)",
     )
     parser.add_argument("--random_seed", default=1000, help="Random seed")
-    parser.add_argument(
-        "--redownload", action="store_true", help="Redownload raw dataset"
-    )
+    parser.add_argument("--redownload", action="store_true", help="Redownload raw dataset")
     parser.add_argument(
         "--recompute",
         action="store_true",
@@ -364,9 +335,7 @@ if __name__ == "__main__":
 
     # Download raw mridata.org knee datasets
     dir_mridata_org = os.path.join(root_dir, "raw/ismrmrd")
-    download_mridata_org_dataset(
-        args.mridata_txt, dir_mridata_org, args.redownload
-    )
+    download_mridata_org_dataset(args.mridata_txt, dir_mridata_org, args.redownload)
 
     # Save files as numpy files.
     # kspace is only recalculated if files are redownloaded.
@@ -391,9 +360,7 @@ if __name__ == "__main__":
     test_files = file_paths[val_idx:]
 
     # Write h5 files.
-    for split, files in zip(
-        ["train", "val", "test"], [train_files, val_files, test_files]
-    ):
+    for split, files in zip(["train", "val", "test"], [train_files, val_files, test_files]):
         logger.info("Processing {} split...".format(split))
         dir_h5_data = os.path.join(root_dir, split)
         convert_to_h5(
@@ -406,9 +373,7 @@ if __name__ == "__main__":
         )
 
         # Save annotation files.
-        ann_file = os.path.join(
-            root_dir, "annotations", "{}.json".format(split)
-        )
+        ann_file = os.path.join(root_dir, "annotations", "{}.json".format(split))
         ann_dir = os.path.dirname(PathManager.get_local_path(ann_file))
         os.makedirs(ann_dir, exist_ok=True)
         write_ann_file(ann_file, dir_h5_data, split)

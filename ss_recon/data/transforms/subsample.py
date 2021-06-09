@@ -1,10 +1,10 @@
 import os
+from typing import Sequence
+
 import numba as nb
 import numpy as np
-import sigpy.mri
 import torch
 from fvcore.common.registry import Registry
-from typing import Sequence
 
 MASK_FUNC_REGISTRY = Registry("MASK_FUNC")
 MASK_FUNC_REGISTRY.__doc__ = """
@@ -76,7 +76,7 @@ class RandomMaskFunc(MaskFunc):
         rand_kwargs = {"dtype": torch.float32}
         if seed is not None:
             rand_kwargs["generator"] = torch.Generator().manual_seed(seed)
-        
+
         mask = torch.rand([nky, nkz], **rand_kwargs)
         mask = torch.where(mask < prob, torch.Tensor([1]), torch.Tensor([0]))
 
@@ -182,7 +182,7 @@ class RandomMaskFunc1D(MaskFunc):
             torch.Tensor: A mask of the specified shape.
         """
         if len(shape) < 3:
-            raise ValueError('Shape should have 3 or more dimensions')
+            raise ValueError("Shape should have 3 or more dimensions")
 
         if seed is not None:
             np_state = np.random.get_state()
@@ -205,13 +205,13 @@ class RandomMaskFunc1D(MaskFunc):
         prob = (num_cols / acceleration - num_low_freqs) / (num_cols - num_low_freqs)
         mask = np.random.uniform(size=num_cols) < prob
         pad = (num_cols - num_low_freqs + 1) // 2
-        mask[pad:pad + num_low_freqs] = True
+        mask[pad : pad + num_low_freqs] = True
 
         # Reshape the mask
         mask_shape = [1 for _ in shape]
         mask_shape[2] = num_cols
         mask = mask.reshape(*mask_shape).astype(np.float32)
-        mask = np.concatenate([mask]*num_rows, axis=1)
+        mask = np.concatenate([mask] * num_rows, axis=1)
         mask = torch.from_numpy(mask)
 
         if seed is not None:
@@ -232,10 +232,7 @@ class MaskLoader(MaskFunc):
 
         accel = float(self.accelerations[0])
         self.train_masks = None
-        self.eval_data = torch.load(os.path.join(
-            masks_path,
-            f"{mask_type}_{accel}x_eval.pt"
-        ))
+        self.eval_data = torch.load(os.path.join(masks_path, f"{mask_type}_{accel}x_eval.pt"))
         if mode == "train":
             self.train_masks = np.load(os.path.join(masks_path, f"{mask_type}_{accel}x.npy"))
 
@@ -253,7 +250,7 @@ class MaskLoader(MaskFunc):
             data = self.eval_data
             masks = self.eval_data["masks"]
             mask = masks[data["seeds"].index(seed)]
-        
+
         mask = mask.reshape(out_shape)
         return torch.from_numpy(mask)
 
@@ -264,8 +261,16 @@ class MaskLoader(MaskFunc):
 # TODO: Remove once https://github.com/mikgroup/sigpy/issues/54 is
 # solved and added to release.
 # ================================================================ #
-def poisson(img_shape, accel, K=30, calib=[0, 0], dtype=np.complex,
-            crop_corner=True, return_density=False, seed=0):
+def poisson(
+    img_shape,
+    accel,
+    K=30,
+    calib=(0, 0),
+    dtype=np.complex,
+    crop_corner=True,
+    return_density=False,
+    seed=0,
+):
     """Generate Poisson-disc sampling pattern
 
     Args:
@@ -286,7 +291,7 @@ def poisson(img_shape, accel, K=30, calib=[0, 0], dtype=np.complex,
         SIGGRAPH sketches. 2007.
 
     """
-    y, x = np.mgrid[:img_shape[-2], :img_shape[-1]]
+    y, x = np.mgrid[: img_shape[-2], : img_shape[-1]]
     x = np.maximum(abs(x - img_shape[-1] / 2) - calib[-1] / 2, 0)
     x /= x.max()
     y = np.maximum(abs(y - img_shape[-2] / 2) - calib[-2] / 2, 0)
@@ -299,7 +304,7 @@ def poisson(img_shape, accel, K=30, calib=[0, 0], dtype=np.complex,
         rand_state = np.random.get_state()
     while slope_min < slope_max:
         slope = (slope_max + slope_min) / 2.0
-        R = (1.0 + r * slope)
+        R = 1.0 + r * slope
         mask = _poisson(img_shape[-1], img_shape[-2], K, R, calib, seed)
         if crop_corner:
             mask *= r < 1
@@ -336,7 +341,7 @@ def _poisson(nx, ny, K, R, calib, seed=None):
     pxs[0] = np.random.randint(0, nx)
     pys[0] = np.random.randint(0, ny)
     m = 1
-    while (m > 0):
+    while m > 0:
 
         i = np.random.randint(0, m)
         px = pxs[i]
@@ -349,7 +354,7 @@ def _poisson(nx, ny, K, R, calib, seed=None):
         while not done and k < K:
 
             # Generate point randomly from R and 2R
-            rd = rad * (np.random.random() * 3 + 1)**0.5
+            rd = rad * (np.random.random() * 3 + 1) ** 0.5
             t = 2 * np.pi * np.random.random()
             qx = px + rd * np.cos(t)
             qy = py + rd * f * np.sin(t)
@@ -365,9 +370,9 @@ def _poisson(nx, ny, K, R, calib, seed=None):
                 done = True
                 for x in range(startx, endx):
                     for y in range(starty, endy):
-                        if (mask[y, x] == 1
-                            and (((qx - x) / R[y, x]) ** 2 +
-                                 ((qy - y) / (R[y, x] * f)) ** 2 < 1)):
+                        if mask[y, x] == 1 and (
+                            ((qx - x) / R[y, x]) ** 2 + ((qy - y) / (R[y, x] * f)) ** 2 < 1
+                        ):
                             done = False
                             break
 
@@ -388,7 +393,9 @@ def _poisson(nx, ny, K, R, calib, seed=None):
             m -= 1
 
     # Add calibration region
-    mask[int(ny / 2 - calib[-2] / 2):int(ny / 2 + calib[-2] / 2),
-         int(nx / 2 - calib[-1] / 2):int(nx / 2 + calib[-1] / 2)] = 1
+    mask[
+        int(ny / 2 - calib[-2] / 2) : int(ny / 2 + calib[-2] / 2),
+        int(nx / 2 - calib[-1] / 2) : int(nx / 2 + calib[-1] / 2),
+    ] = 1
 
     return mask

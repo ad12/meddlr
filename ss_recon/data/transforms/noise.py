@@ -6,16 +6,17 @@ from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import env
 from ss_recon.utils.events import get_event_storage
 
-if env.pt_version() >= [1,6]:
+if env.pt_version() >= [1, 6]:
     import torch.fft
 
 
-class NoiseModel():
+class NoiseModel:
     """A model that adds additive white noise.
 
     Note we do not store this as a module or else it would be saved to the model
     definition, which we dont want.
     """
+
     def __init__(self, std_devs: Union[float, Sequence[float]], scheduler=None, seed=None):
         if not isinstance(std_devs, Sequence):
             std_devs = (std_devs,)
@@ -34,10 +35,9 @@ class NoiseModel():
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
-    
+
     def choose_std_dev(self):
-        """Chooses a random acceleration rate given a range.
-        """
+        """Chooses a random acceleration rate given a range."""
         if not isinstance(self.std_devs, Sequence):
             return self.std_devs
         elif len(self.std_devs) == 1:

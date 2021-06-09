@@ -8,7 +8,7 @@ from torch.nn import DataParallel
 
 from ss_recon.checkpoint import DetectionCheckpointer
 from ss_recon.config import CfgNode
-from ss_recon.data import build_recon_val_loader, build_recon_train_loader
+from ss_recon.data import build_recon_train_loader, build_recon_val_loader
 from ss_recon.engine import SimpleTrainer, hooks
 from ss_recon.evaluation import (
     DatasetEvaluator,
@@ -17,23 +17,15 @@ from ss_recon.evaluation import (
     print_csv_format,
     verify_results,
 )
-from ss_recon.modeling import BasicLossComputer, build_model, build_loss_computer
-from ss_recon.solver import build_lr_scheduler, build_optimizer, GradAccumOptimizer
-from ss_recon.utils.events import (
-    CommonMetricPrinter,
-    JSONWriter,
-    TensorboardXWriter,
-    WandBWriter,
-)
-from ss_recon.utils.env import supports_wandb
+from ss_recon.modeling import build_loss_computer, build_model
+from ss_recon.solver import GradAccumOptimizer, build_lr_scheduler, build_optimizer
+from ss_recon.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
 from ss_recon.utils.logger import setup_logger
 
 __all__ = ["DefaultTrainer"]
 
 
-def format_as_iter(
-    vals: Union[int, Sequence[int]], iters_per_epoch: int, time_scale: str
-):
+def format_as_iter(vals: Union[int, Sequence[int]], iters_per_epoch: int, time_scale: str):
     """Format data to be at iteration time scale.
 
     If values are negative, they correspond to the opposite time scale.
@@ -54,9 +46,9 @@ def format_as_iter(
     if single_value:
         vals = [vals]
 
-    epoch_convention = (
-        time_scale == "epoch" and all(x >= 0 for x in vals)
-    ) or (time_scale == "iter" and all(x <= 0 for x in vals))
+    epoch_convention = (time_scale == "epoch" and all(x >= 0 for x in vals)) or (
+        time_scale == "iter" and all(x <= 0 for x in vals)
+    )
 
     if epoch_convention:
         vals = type(vals)([iters_per_epoch * abs(x) for x in vals])
@@ -70,24 +62,17 @@ def format_as_iter(
 
 
 def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int):
-    """Convert all config time-related parameters to iterations.
-    """
+    """Convert all config time-related parameters to iterations."""
     cfg = cfg.clone()
     cfg.defrost()
 
     time_scale = cfg.TIME_SCALE
-    cfg.SOLVER.MAX_ITER = format_as_iter(
-        cfg.SOLVER.MAX_ITER, iters_per_epoch, time_scale
-    )
-    cfg.SOLVER.STEPS = format_as_iter(
-        cfg.SOLVER.STEPS, iters_per_epoch, time_scale
-    )
+    cfg.SOLVER.MAX_ITER = format_as_iter(cfg.SOLVER.MAX_ITER, iters_per_epoch, time_scale)
+    cfg.SOLVER.STEPS = format_as_iter(cfg.SOLVER.STEPS, iters_per_epoch, time_scale)
     cfg.SOLVER.CHECKPOINT_PERIOD = format_as_iter(
         cfg.SOLVER.CHECKPOINT_PERIOD, iters_per_epoch, time_scale
     )
-    cfg.TEST.EVAL_PERIOD = format_as_iter(
-        cfg.TEST.EVAL_PERIOD, iters_per_epoch, time_scale
-    )
+    cfg.TEST.EVAL_PERIOD = format_as_iter(cfg.TEST.EVAL_PERIOD, iters_per_epoch, time_scale)
     cfg.VIS_PERIOD = format_as_iter(cfg.VIS_PERIOD, iters_per_epoch, time_scale)
     cfg.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS = format_as_iter(
         cfg.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS, iters_per_epoch, time_scale
@@ -149,16 +134,12 @@ class DefaultTrainer(SimpleTrainer):
             cfg (CfgNode):
         """
         logger = logging.getLogger("ss_recon")
-        if not logger.isEnabledFor(
-            logging.INFO
-        ):  # setup_logger is not called for d2
+        if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for d2
             setup_logger()
 
         # Assume these objects must be constructed in this order.
         data_loader = self.build_train_loader(cfg)
-        num_iter_per_epoch = (
-            len(data_loader.dataset) / cfg.SOLVER.TRAIN_BATCH_SIZE
-        )
+        num_iter_per_epoch = len(data_loader.dataset) / cfg.SOLVER.TRAIN_BATCH_SIZE
         if cfg.DATALOADER.DROP_LAST:
             num_iter_per_epoch = int(num_iter_per_epoch)
         else:
@@ -207,9 +188,7 @@ class DefaultTrainer(SimpleTrainer):
         logger = logging.getLogger(__name__)
         logger.info("Loading fine-tune weights")
         if not os.path.isfile(fine_tune_weights):
-            raise FileNotFoundError(
-                "weights not found: {}".format(fine_tune_weights)
-            )
+            raise FileNotFoundError("weights not found: {}".format(fine_tune_weights))
 
         temp_checkpointer = DetectionCheckpointer(self.model)
         temp_checkpointer.load(fine_tune_weights)
@@ -227,9 +206,9 @@ class DefaultTrainer(SimpleTrainer):
         # thus we start at the next iteration
         # (or iter zero if there's no checkpoint).
         self.start_iter = (
-            self.checkpointer.resume_or_load(
-                self.cfg.MODEL.WEIGHTS, resume=resume
-            ).get("iteration", -1)
+            self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume).get(
+                "iteration", -1
+            )
             + 1
         )
 
@@ -243,20 +222,17 @@ class DefaultTrainer(SimpleTrainer):
         """
         cfg = self.cfg.clone()
         cfg.defrost()
-        cfg.DATALOADER.NUM_WORKERS = (
-            0
-        )  # save some memory and time for PreciseBN
+        cfg.DATALOADER.NUM_WORKERS = 0  # save some memory and time for PreciseBN
 
         ret = [
             (
-                hooks.FlushOptimizer(self.optimizer, cfg.TEST.EVAL_PERIOD) 
-                if isinstance(self.optimizer, GradAccumOptimizer) else None
+                hooks.FlushOptimizer(self.optimizer, cfg.TEST.EVAL_PERIOD)
+                if isinstance(self.optimizer, GradAccumOptimizer)
+                else None
             ),
             hooks.IterationTimer(),
             hooks.LRScheduler(self.optimizer, self.scheduler),
-            hooks.PeriodicCheckpointer(
-                self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD
-            ),
+            hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD),
         ]
 
         def test_and_save_results():
@@ -265,14 +241,18 @@ class DefaultTrainer(SimpleTrainer):
 
         # Do evaluation after checkpointer, because then if it fails,
         # we can use the saved checkpoint to debug.
-        ret.append(hooks.EvalHook(
-            cfg.TEST.EVAL_PERIOD,
-            test_and_save_results,
-        ))
-        ret.append(hooks.PeriodicWriter(
-            self.build_writers(),
-            periods=(20, cfg.TEST.EVAL_PERIOD),
-        ))
+        ret.append(
+            hooks.EvalHook(
+                cfg.TEST.EVAL_PERIOD,
+                test_and_save_results,
+            )
+        )
+        ret.append(
+            hooks.PeriodicWriter(
+                self.build_writers(),
+                periods=(20, cfg.TEST.EVAL_PERIOD),
+            )
+        )
         ret = [x for x in ret if x is not None]
         return ret
 
@@ -298,9 +278,9 @@ class DefaultTrainer(SimpleTrainer):
             ]
 
         """
-        assert self.cfg.TIME_SCALE == "iter" and self.cfg.TEST.EVAL_PERIOD >= 0, (
-            "cfg should be formatted in 'iter' time scale"
-        )
+        assert (
+            self.cfg.TIME_SCALE == "iter" and self.cfg.TEST.EVAL_PERIOD >= 0
+        ), "cfg should be formatted in 'iter' time scale"
         eval_period = self.cfg.TEST.EVAL_PERIOD
 
         # Assume the default print/log frequency.
@@ -334,14 +314,16 @@ class DefaultTrainer(SimpleTrainer):
         Overwrite it if you'd like a different model.
         """
         model = build_model(cfg)
-        logger = logging.getLogger(__name__)
+        # logger = logging.getLogger(__name__)
         # printing model doesnt really help
         # logger.info("Model:\n{}".format(model))
         return model
 
     @classmethod
     def build_loss_computer(cls, cfg):
-        loss_computer = "N2RLossComputer" if cfg.MODEL.META_ARCHITECTURE == "N2RModel" else "BasicLossComputer"
+        loss_computer = (
+            "N2RLossComputer" if cfg.MODEL.META_ARCHITECTURE == "N2RModel" else "BasicLossComputer"
+        )
         return build_loss_computer(cfg, loss_computer)
 
     @classmethod
@@ -457,9 +439,7 @@ class DefaultTrainer(SimpleTrainer):
                 "Evaluator must return a dict or list on the main process. "
                 "Got {} instead.".format(results_i)
             )
-            logger.info(
-                "Evaluation results for {} in csv format:".format(dataset_name)
-            )
+            logger.info("Evaluation results for {} in csv format:".format(dataset_name))
             print_csv_format(results_i)
 
         # if len(results) == 1:

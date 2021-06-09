@@ -9,9 +9,7 @@ import time
 from collections import Counter
 
 import torch
-from fvcore.common.checkpoint import (
-    PeriodicCheckpointer as _PeriodicCheckpointer,
-)
+from fvcore.common.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
 from fvcore.common.file_io import PathManager
 from fvcore.common.timer import Timer
 
@@ -43,14 +41,7 @@ class CallbackHook(HookBase):
     Create a hook using callback functions provided by the user.
     """
 
-    def __init__(
-        self,
-        *,
-        before_train=None,
-        after_train=None,
-        before_step=None,
-        after_step=None
-    ):
+    def __init__(self, *, before_train=None, after_train=None, before_step=None, after_step=None):
         """
         Each argument is a function that takes one argument: the trainer.
         """
@@ -112,9 +103,7 @@ class IterationTimer(HookBase):
         total_time_minus_hooks = self._total_timer.seconds()
         hook_time = total_time - total_time_minus_hooks
 
-        num_iter = (
-            self.trainer.iter + 1 - self.trainer.start_iter - self._warmup_iter
-        )
+        num_iter = self.trainer.iter + 1 - self.trainer.start_iter - self._warmup_iter
 
         if num_iter > 0 and total_time_minus_hooks > 0:
             # Speed is meaningful only after warmup
@@ -123,9 +112,7 @@ class IterationTimer(HookBase):
                 "Overall training speed: "
                 "{} iterations in {} ({:.4f} s / it)".format(
                     num_iter,
-                    str(
-                        datetime.timedelta(seconds=int(total_time_minus_hooks))
-                    ),
+                    str(datetime.timedelta(seconds=int(total_time_minus_hooks))),
                     total_time_minus_hooks / num_iter,
                 )
             )
@@ -291,9 +278,7 @@ class AutogradProfiler(HookBase):
 
     def before_step(self):
         if self._enable_predicate(self.trainer):
-            self._profiler = torch.autograd.profiler.profile(
-                use_cuda=self._use_cuda
-            )
+            self._profiler = torch.autograd.profiler.profile(use_cuda=self._use_cuda)
             self._profiler.__enter__()
         else:
             self._profiler = None
@@ -321,10 +306,11 @@ class AutogradProfiler(HookBase):
 
 class FlushOptimizer(HookBase):
     """Flush optimizer after period(s). Typically done before eval."""
+
     def __init__(self, optimizer: GradAccumOptimizer, period):
         self._period = period
         self._optimizer = optimizer
-    
+
     def after_step(self):
         next_iter = self.trainer.iter + 1
         is_final = next_iter == self.trainer.max_iter
@@ -364,9 +350,7 @@ class EvalHook(HookBase):
         if results:
             assert isinstance(
                 results, dict
-            ), "Eval function must return a dict. Got {} instead.".format(
-                results
-            )
+            ), "Eval function must return a dict. Got {} instead.".format(results)
 
             flattened_results = flatten_results_dict(results)
             for k, v in flattened_results.items():
@@ -378,9 +362,7 @@ class EvalHook(HookBase):
                         "a nested dict of float. "
                         "Got '{}: {}' instead.".format(k, v)
                     )
-            self.trainer.storage.put_scalars(
-                **flattened_results, smoothing_hint=False
-            )
+            self.trainer.storage.put_scalars(**flattened_results, smoothing_hint=False)
 
         time_elapsed = time.perf_counter() - start_time  # in seconds
         self.trainer.storage.put_scalars(eval_time=time_elapsed, smoothing_hint=False)

@@ -5,8 +5,9 @@ Both should be tensors with the last dimension equal to 2 (real/imaginary
 channels).
 """
 import torch
-from ss_recon.utils import complex_utils as cplx
 from skimage.metrics import structural_similarity
+
+from ss_recon.utils import complex_utils as cplx
 
 
 def compute_mse(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=False):
@@ -57,7 +58,7 @@ def compute_psnr(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=F
     assert x.shape[-1] == 2
 
     l2 = compute_l2(ref, x, magnitude=magnitude)
-    shape = (x.shape[0], -1) if is_batch else -1
+    # shape = (x.shape[0], -1) if is_batch else -1
     return 20 * torch.log10(cplx.abs(ref).max() / l2)
 
 
@@ -86,7 +87,7 @@ def compute_ssim(
     ref: torch.Tensor,
     x: torch.Tensor,
     multichannel: bool = False,
-    data_range = None,
+    data_range=None,
     **kwargs,
 ):
     """Compute structural similarity index metric. Does not preserve autograd.
@@ -152,7 +153,7 @@ def compute_ssim(
         gaussian_weights=gaussian_weights,
         sigma=sigma,
         use_sample_covariance=use_sample_covariance,
-        multichannel=multichannel
+        multichannel=multichannel,
     )
 
 

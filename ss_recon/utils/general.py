@@ -26,7 +26,10 @@ def move_to_device(obj, device, non_blocking=False):
     if isinstance(obj, torch.Tensor):
         return obj.to(device, non_blocking=non_blocking)  # type: ignore
     elif isinstance(obj, dict):
-        return {key: move_to_device(value, device, non_blocking=non_blocking) for key, value in obj.items()}
+        return {
+            key: move_to_device(value, device, non_blocking=non_blocking)
+            for key, value in obj.items()
+        }
     elif isinstance(obj, list):
         return [move_to_device(item, device, non_blocking=non_blocking) for item in obj]
     elif isinstance(obj, tuple):
@@ -42,10 +45,11 @@ def find_experiment_dirs(dirpath, completed=True) -> List[str]:
         dirpath (str): The directory under which to search.
         completed (bool, optional): If `True`, filter directories where runs
             are completed.
-    
+
     Returns:
         exp_dirs (List[str]): A list of experiment directories.
     """
+
     def _find_exp_dirs(_dirpath):
         # Directories with "config.yaml" are considered experiment directories.
         if os.path.isfile(os.path.join(_dirpath, "config.yaml")):
@@ -59,7 +63,7 @@ def find_experiment_dirs(dirpath, completed=True) -> List[str]:
         for dp in subdirs:
             exp_dirs.extend(_find_exp_dirs(dp))
         return exp_dirs
-    
+
     dirpath = PathManager.get_local_path(dirpath)
     exp_dirs = _find_exp_dirs(dirpath)
     if completed:

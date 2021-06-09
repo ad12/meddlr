@@ -5,10 +5,9 @@ by Christopher M. Sandino (sandino@stanford.edu), 2019.
 
 """
 
-import torch
 from torch import nn
 
-from utils.transforms import center_crop
+from ss_recon.utils.transforms import center_crop
 
 
 class SeparableConv3d(nn.Module):
@@ -41,9 +40,7 @@ class SeparableConv3d(nn.Module):
             # Force number of spatial features, such that the total number of
             # parameters is the same as a nn.Conv3D(in_chans, out_chans)
             spatial_chans = (kernel_size ** 3) * in_chans * out_chans
-            spatial_chans /= (
-                kernel_size ** 2
-            ) * in_chans + kernel_size * out_chans
+            spatial_chans /= (kernel_size ** 2) * in_chans + kernel_size * out_chans
             spatial_chans = int(spatial_chans)
 
         # Define each layer in SeparableConv3d block
@@ -61,14 +58,10 @@ class SeparableConv3d(nn.Module):
         )
 
         # Define choices for intermediate activation layer
-        activations = nn.ModuleDict(
-            [["none", nn.Identity()]["relu", nn.ReLU()]]
-        )
+        activations = nn.ModuleDict([["none", nn.Identity()]["relu", nn.ReLU()]])
 
         # Define the forward pass
-        self.layers = nn.Sequential(
-            spatial_conv, activations[act_type], temporal_conv
-        )
+        self.layers = nn.Sequential(spatial_conv, activations[act_type], temporal_conv)
 
     def forward(self, input):
         """
@@ -85,7 +78,7 @@ class ConvBlock(nn.Module):
     """
     A 3D Convolutional Block that consists of Norm -> ReLU -> Dropout -> Conv
 
-    Based on implementation described by: 
+    Based on implementation described by:
         K He, et al. "Identity Mappings in Deep Residual Networks" arXiv:1603.05027
     """
 
@@ -119,21 +112,15 @@ class ConvBlock(nn.Module):
                 ["batch", nn.BatchNorm3d(in_chans, affine=False)],
             ]
         )
-        activations = nn.ModuleDict(
-            [["relu", nn.ReLU()], ["leaky_relu", nn.LeakyReLU()]]
-        )
+        activations = nn.ModuleDict([["relu", nn.ReLU()], ["leaky_relu", nn.LeakyReLU()]])
         dropout = nn.Dropout3d(p=drop_prob, inplace=True)
 
         # Note: don't use ModuleDict here. Otherwise, the parameters for the un-selected
         # convolution type will still be initialized and added to model.parameters()
-        if conv_type is "conv3d":
-            convolution = nn.Conv3d(
-                in_chans, out_chans, kernel_size=kernel_size, padding=1
-            )
+        if conv_type == "conv3d":
+            convolution = nn.Conv3d(in_chans, out_chans, kernel_size=kernel_size, padding=1)
         else:
-            convolution = SeparableConv3d(
-                in_chans, out_chans, kernel_size=kernel_size, padding=1
-            )
+            convolution = SeparableConv3d(in_chans, out_chans, kernel_size=kernel_size, padding=1)
 
         # Define forward pass
         self.layers = nn.Sequential(
@@ -213,25 +200,19 @@ class ResNet(nn.Module):
         drop_prob,
         circular_pad=True,
     ):
-        """
-
-        """
+        """ """
         super().__init__()
 
         self.circular_pad = circular_pad
         self.pad_size = 2 * num_resblocks + 1
 
         # Declare ResBlock layers
-        self.res_blocks = nn.ModuleList(
-            [ResBlock(in_chans, chans, kernel_size, drop_prob)]
-        )
+        self.res_blocks = nn.ModuleList([ResBlock(in_chans, chans, kernel_size, drop_prob)])
         for _ in range(num_resblocks - 1):
             self.res_blocks += [ResBlock(chans, chans, kernel_size, drop_prob)]
 
         # Declare final conv layer (down-sample to original in_chans)
-        self.final_layer = nn.Conv3d(
-            chans, in_chans, kernel_size=kernel_size, padding=1
-        )
+        self.final_layer = nn.Conv3d(chans, in_chans, kernel_size=kernel_size, padding=1)
 
     def forward(self, input):
         """
@@ -244,9 +225,7 @@ class ResNet(nn.Module):
 
         orig_shape = input.shape
         if self.circular_pad:
-            input = nn.functional.pad(
-                input, (0, 0, 0, 0) + 2 * (self.pad_size,), mode="circular"
-            )
+            input = nn.functional.pad(input, (0, 0, 0, 0) + 2 * (self.pad_size,), mode="circular")
             # input = nn.functional.pad(input, 4*(self.pad_size,) + (0,0), mode='replicate')
 
         # Perform forward pass through the network

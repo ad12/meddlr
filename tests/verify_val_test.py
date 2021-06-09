@@ -1,6 +1,6 @@
 """Verify that validation works like it is supposed to.'
 
-There was an issue where the performance at validation time 
+There was an issue where the performance at validation time
 was different than at test time even though the same evaluator
 was being used.
 
@@ -14,7 +14,8 @@ Note:
 Findings:
     1. In a single run, performance across same dataset is the same (EXECPTED)
     2. Running testing multiple times with the same weights file has same performance (EXPECTED)
-    3. Val / Test performance and models are the same for the last iteration w/ cudnn.deterministic=True (EXPECTED)
+    3. Val / Test performance and models are the same for the last iteration
+        w/ cudnn.deterministic=True (EXPECTED)
 
 To verify:
     1. Val / Test performance and models are the same for the last iteration w/ cudnn.deterministic=False
@@ -31,26 +32,23 @@ import torch
 from fvcore.common.file_io import PathManager
 from tqdm import tqdm
 
+import ss_recon.utils.complex_utils as cplx
+from ss_recon.checkpoint.detection_checkpoint import DetectionCheckpointer
+from ss_recon.config import get_cfg
+from ss_recon.engine import DefaultTrainer, default_setup
+from ss_recon.evaluation.recon_evaluation import ReconEvaluator
+from ss_recon.evaluation.testing import find_weights
+from ss_recon.utils.logger import setup_logger
+
 # Set seed and cuda deterministic to true to be able to reproduce.
 SEED = 0
 # torch.backends.cudnn.deterministic = True
 # torch.backends.cudnn.benchmark = False
 
-import ss_recon.utils.complex_utils as cplx
-from ss_recon.engine import DefaultTrainer, default_setup
-from ss_recon.evaluation.recon_evaluation import ReconEvaluator
-from ss_recon.evaluation.testing import find_weights
-from ss_recon.checkpoint.detection_checkpoint import DetectionCheckpointer
-from ss_recon.config import get_cfg
-from ss_recon.utils.env import seed_all_rng
-from ss_recon.utils.logger import setup_logger
-
 
 class ComparisonEvaluator(ReconEvaluator):
     def __init__(self, dataset_name, cfg, output_dir, group_by_scan=False):
-        super().__init__(
-            dataset_name, cfg, output_dir=output_dir, group_by_scan=group_by_scan
-        )
+        super().__init__(dataset_name, cfg, output_dir=output_dir, group_by_scan=group_by_scan)
 
     def structure_scans(self):
         """Structure scans into volumes to be used to evaluation."""
@@ -62,14 +60,14 @@ class ComparisonEvaluator(ReconEvaluator):
         scans = {}
         for scan_id, slice_idx_to_pred in tqdm(scan_map.items()):
             min_slice, max_slice = min(slice_idx_to_pred.keys()), max(slice_idx_to_pred.keys())
-            slice_predictions = [slice_idx_to_pred[i] for i in range(min_slice, max_slice+1)]
+            slice_predictions = [slice_idx_to_pred[i] for i in range(min_slice, max_slice + 1)]
             pred = {
-                k: torch.stack([slice_pred[k] for slice_pred in slice_predictions], dim=0) 
+                k: torch.stack([slice_pred[k] for slice_pred in slice_predictions], dim=0)
                 for k in ("pred", "target", "mask", "kspace")
             }
             scans[scan_id] = pred
         return scans
-    
+
     def process(self, inputs, outputs):
         """
         Args:
@@ -86,17 +84,19 @@ class ComparisonEvaluator(ReconEvaluator):
         preds = normalized["image"].to(self._cpu_device, non_blocking=True)
         targets = normalized["target"].to(self._cpu_device, non_blocking=True)
 
-        self._predictions.extend([
-            {
-                "kspace": inputs["kspace"][i],
-                "mask": cplx.get_mask(inputs["kspace"][i]),
-                "pred": preds[i], 
-                "target": targets[i], 
-                "metadata": inputs["metadata"][i] if "metadata" in inputs else {}
-            } 
-            for i in range(N)
-        ])
-    
+        self._predictions.extend(
+            [
+                {
+                    "kspace": inputs["kspace"][i],
+                    "mask": cplx.get_mask(inputs["kspace"][i]),
+                    "pred": preds[i],
+                    "target": targets[i],
+                    "metadata": inputs["metadata"][i] if "metadata" in inputs else {},
+                }
+                for i in range(N)
+            ]
+        )
+
     def evaluate(self):
         results = super().evaluate()
 
@@ -123,7 +123,7 @@ class ComparisonTrainer(DefaultTrainer):
 
 def train_and_val():
     """This does training and validation."""
-    train_args = deepcopy(args)
+    # train_args = deepcopy(args)
     default_setup(cfg, args, save_cfg=True)
 
     # Set again for completeness.
@@ -150,7 +150,7 @@ def _test(run_setup=False, weights=""):
     # Get metrics for the last checkpoint.
     if not weights:
         weights = find_weights(cfg, criterion="iteration", iter_limit=None)
-    data = torch.load(weights)
+    # data = torch.load(weights)
 
     model = model.to(cfg.DEVICE)
     DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(weights, resume=False)
@@ -173,10 +173,10 @@ def _test(run_setup=False, weights=""):
     os.makedirs(output_dir, exist_ok=True)
     evaluator = ComparisonEvaluator(cfg.DATASETS.VAL[0], cfg, output_dir)
     results = ComparisonTrainer.test(cfg, model, evaluators=evaluator, use_val=True)
-    #results = None
+    # results = None
     # Check that model that was loaded and model after eval are the same
     assert compare_models(init_model, model)  # model changed during eval
-    
+
     return results, model.cpu()
 
 
@@ -188,14 +188,14 @@ def compare_models(model_1, model_2):
             pass
         else:
             models_differ += 1
-            if (key_item_1[0] == key_item_2[0]):
-                print('Mismtach found at', key_item_1[0])
+            if key_item_1[0] == key_item_2[0]:
+                print("Mismtach found at", key_item_1[0])
                 print(f"{key_item_1[1]} vs {key_item_2[1]}")
                 return False
             else:
                 raise Exception
     if models_differ == 0:
-        print('Models match perfectly! :)')
+        print("Models match perfectly! :)")
         return True
     else:
         return False
@@ -215,7 +215,6 @@ def compare_outputs():
         assert torch.equal(val["kspace"], test["kspace"])
         assert torch.equal(val["target"], test["target"])
         assert torch.equal(val["pred"], test["pred"])
-
 
 
 # # train_results, trained_model = train_and_val()
@@ -256,7 +255,7 @@ if __name__ == "__main__":
     cfg.SEED = 0  # ensure deterministic
     cfg.freeze()
 
-    # Initialize args namespace. 
+    # Initialize args namespace.
     # Serve as corollary for ss_recon.engine.defaults.default_argument_parser
     args = Namespace(
         debug=True,
@@ -265,5 +264,8 @@ if __name__ == "__main__":
         devices=None,
         eval_only=False,  # for eval, set this to true.
     )
-    test_results, test_model = _test(True, weights="/bmrNAS/people/arjun/results/ss_recon/prelim_exps/baseline_12x_maxbatch/sub-1/model_0151999.pth")
+    test_results, test_model = _test(
+        True,
+        weights="/bmrNAS/people/arjun/results/ss_recon/prelim_exps/baseline_12x_maxbatch/sub-1/model_0151999.pth",  # noqa: B950
+    )
     print(test_results)

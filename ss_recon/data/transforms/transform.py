@@ -8,13 +8,12 @@ from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import transforms as T
 
 from .noise import NoiseModel
-from .subsample import build_mask_func
-
 
 NORMALIZER_REGISTRY = Registry("NORMALIZER")
 NORMALIZER_REGISTRY.__doc__ = """
 Registry for normalizing images
 """
+
 
 def build_normalizer(cfg):
     cfg = cfg.MODEL.NORMALIZER
@@ -31,7 +30,7 @@ def unnormalize_affine(x, bias, scale):
     return x * scale + bias
 
 
-class Normalizer():
+class Normalizer:
     """Template for normalizing and undoing normalization for scans."""
 
     # Keywords of dictionary keys to process (if they exist)
@@ -57,10 +56,12 @@ class Normalizer():
 class NoOpNormalizer(Normalizer):
     def normalize(self, **kwargs):
         outputs = {k: v for k, v in kwargs.items()}
-        outputs.update({
-            "mean": torch.tensor([0.0], dtype=torch.float32),
-            "std": torch.tensor([1.0], dtype=torch.float32),
-        })
+        outputs.update(
+            {
+                "mean": torch.tensor([0.0], dtype=torch.float32),
+                "std": torch.tensor([1.0], dtype=torch.float32),
+            }
+        )
         return outputs
 
     def undo(self, **kwargs):
@@ -70,6 +71,7 @@ class NoOpNormalizer(Normalizer):
 @NORMALIZER_REGISTRY.register()
 class TopMagnitudeNormalizer(Normalizer):
     """Normalizes by percentile of magnitude values."""
+
     def __init__(self, keywords=None, percentile=0.95, use_mean=False):
         super().__init__(keywords)
         assert 0 < percentile <= 1, "Percentile must be in range (0,1]"
@@ -89,19 +91,21 @@ class TopMagnitudeNormalizer(Normalizer):
 
         mean = torch.tensor([0.0], dtype=torch.float32)
         std = scale.unsqueeze(-1)
-        outputs.update({
-            "mean": mean,
-            "std": std,
-        })
-        
+        outputs.update(
+            {
+                "mean": mean,
+                "std": std,
+            }
+        )
+
         # Add other keys that were not computed.
         outputs.update({k: v for k, v in kwargs.items() if k not in outputs})
         return outputs
 
     def undo(self, mean, std, **kwargs):
         image = kwargs["image"]
-        mean = mean.view(mean.shape + (1,)*(image.ndim - mean.ndim)).to(image.device)
-        std = std.view(std.shape + (1,)*(image.ndim - std.ndim)).to(image.device)
+        mean = mean.view(mean.shape + (1,) * (image.ndim - mean.ndim)).to(image.device)
+        std = std.view(std.shape + (1,) * (image.ndim - std.ndim)).to(image.device)
 
         outputs = {}
         for kw in ("image", "target"):
@@ -134,27 +138,27 @@ class Subsampler(object):
             extra_dims = len(data_shape) - 4
             mask_shape = (1,) + data_shape[1:4] + (1,) * extra_dims
         else:
-            raise ValueError(
-                "Only 2D and 3D undersampling masks are supported."
-            )
+            raise ValueError("Only 2D and 3D undersampling masks are supported.")
         return mask_shape
 
-    def __call__(
-        self, data, mode: str = "2D", seed: int = None, acceleration: int = None
-    ):
+    def __call__(self, data, mode: str = "2D", seed: int = None, acceleration: int = None):
         assert mode in ["2D", "3D"]
         data_shape = tuple(data.shape)
         if self.zip2_padding:
-            data_shape = data_shape[:1] + tuple(
-                s - 2*p if p is not None else s
-                for s, p in zip(data_shape[1:], self.zip2_padding)
-            ) + data_shape[len(self.zip2_padding)+1:]
-        
+            data_shape = (
+                data_shape[:1]
+                + tuple(
+                    s - 2 * p if p is not None else s
+                    for s, p in zip(data_shape[1:], self.zip2_padding)
+                )
+                + data_shape[len(self.zip2_padding) + 1 :]
+            )
+
         mask_shape = self._get_mask_shape(data_shape, mode)
         mask = self.mask_func(mask_shape, seed, acceleration)
         if self.zip2_padding:
             padded_mask_shape = self._get_mask_shape(tuple(data.shape), mode)
-            padded_mask_shape = padded_mask_shape[1:len(self.zip2_padding)+1]
+            padded_mask_shape = padded_mask_shape[1 : len(self.zip2_padding) + 1]
             mask = T.zero_pad(mask, padded_mask_shape)
         return torch.where(mask == 0, torch.tensor([0], dtype=data.dtype), data), mask
 
@@ -227,9 +231,7 @@ class DataTransform:
                 norm (float): L2 norm of the entire volume.
         """
         if is_fixed and not acceleration:
-            raise ValueError(
-                "Accelerations must be specified for undersampled scans"
-            )
+            raise ValueError("Accelerations must be specified for undersampled scans")
 
         # Convert everything from numpy arrays to tensors
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
@@ -254,18 +256,22 @@ class DataTransform:
         image = A(masked_kspace, adjoint=True)
 
         # Normalize
-        normalized = self._normalizer.normalize(**{
-            "masked_kspace": masked_kspace, 
-            "image": image, 
-            "target": target,
-            "mask": mask,
-        })
+        normalized = self._normalizer.normalize(
+            **{
+                "masked_kspace": masked_kspace,
+                "image": image,
+                "target": target,
+                "mask": mask,
+            }
+        )
         masked_kspace = normalized["masked_kspace"]
         target = normalized["target"]
         mean = normalized["mean"]
         std = normalized["std"]
 
-        add_noise = self.add_noise and (self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise))
+        add_noise = self.add_noise and (
+            self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise)
+        )
         if add_noise:
             masked_kspace = self.noiser(masked_kspace, mask=mask, seed=seed)
 

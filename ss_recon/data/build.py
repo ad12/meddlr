@@ -1,16 +1,17 @@
 import itertools
-from typing import Sequence
-from collections import defaultdict
-import random
 import logging
+import random
+from collections import defaultdict
+from typing import Sequence
 
-from torch.utils.data import DataLoader
 import numpy as np
+from torch.utils.data import DataLoader
+
 from .catalog import DatasetCatalog
+from .samplers import AlternatingSampler
 from .slice_dataset import SliceData, collate_by_supervision, default_collate, qDESSSliceDataset
 from .transforms import transform as T
 from .transforms.subsample import build_mask_func
-from .samplers import AlternatingSampler
 
 
 def get_recon_dataset_dicts(
@@ -18,7 +19,7 @@ def get_recon_dataset_dicts(
     num_scans_total: int = -1,
     num_scans_subsample: int = 0,
     seed: int = 1000,
-    accelerations = (),
+    accelerations=(),
     filter_by=(),
 ):
     """Get recon datasets and perform filtering.
@@ -42,9 +43,7 @@ def get_recon_dataset_dicts(
             undersampling of the unsupervised subset of scans.
     """
     assert len(dataset_names)
-    dataset_dicts = [
-        DatasetCatalog.get(dataset_name) for dataset_name in dataset_names
-    ]
+    dataset_dicts = [DatasetCatalog.get(dataset_name) for dataset_name in dataset_names]
     dataset_dicts = list(itertools.chain.from_iterable(dataset_dicts))
     num_before = len(dataset_dicts)
 
@@ -72,7 +71,11 @@ def get_recon_dataset_dicts(
                     elif isinstance(_v, tuple):
                         extra_v.append(list(_v))
                 v = list(v) + extra_v
-            dataset_dicts = [dd for dd in dataset_dicts if dd[k] in v]
+            dataset_dicts = [
+                dd
+                for dd in dataset_dicts
+                if dd.get(k, None) in v or dd.get("_metadata", {}).get(k, None) in v
+            ]
             num_after = len(dataset_dicts)
             logger.info(
                 f"Filtered by {k}: Dropped {num_before - num_after} scans. "
@@ -85,9 +88,7 @@ def get_recon_dataset_dicts(
 
     num_after = len(dataset_dicts)
     logger.info(
-        "Dropped {} scans. {} scans remaining".format(
-            num_after_filter - num_after, num_after
-        )
+        "Dropped {} scans. {} scans remaining".format(num_after_filter - num_after, num_after)
     )
 
     num_scans_subsample = max(0, num_scans_subsample)
@@ -113,7 +114,9 @@ def get_recon_dataset_dicts(
 def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None, is_eval=False):
     keys = cfg.DATALOADER.DATA_KEYS
     if keys:
-        assert all(len(x) == 2 for x in keys), "cfg.DATALOADER.DATA_KEYS should be sequence of tuples of len 2"
+        assert all(
+            len(x) == 2 for x in keys
+        ), "cfg.DATALOADER.DATA_KEYS should be sequence of tuples of len 2"
         keys = {k: v for k, v in keys}
 
     if dataset_type is None:
@@ -144,7 +147,9 @@ def build_recon_train_loader(cfg, dataset_type=None):
         dataset_type = _get_default_dataset_type(cfg.DATASETS.TRAIN[0])
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(cfg, mask_func, is_test=False, add_noise=cfg.AUG_TRAIN.USE_NOISE)
+    data_transform = T.DataTransform(
+        cfg, mask_func, is_test=False, add_noise=cfg.AUG_TRAIN.USE_NOISE
+    )
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform, dataset_type)
     is_semi_supervised = len(train_data.get_unsupervised_idxs()) > 0
@@ -180,7 +185,9 @@ def build_recon_train_loader(cfg, dataset_type=None):
     return train_loader
 
 
-def build_recon_val_loader(cfg, dataset_name, as_test: bool = False, add_noise: bool = False, dataset_type=None):
+def build_recon_val_loader(
+    cfg, dataset_name, as_test: bool = False, add_noise: bool = False, dataset_type=None
+):
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=[dataset_name],
         filter_by=cfg.DATALOADER.FILTER.BY,
@@ -193,7 +200,9 @@ def build_recon_val_loader(cfg, dataset_name, as_test: bool = False, add_noise: 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg, mask_func, is_test=as_test, add_noise=add_noise)
 
-    train_data = _build_dataset(cfg, dataset_dicts, data_transform, is_eval=True, dataset_type=dataset_type)
+    train_data = _build_dataset(
+        cfg, dataset_dicts, data_transform, is_eval=True, dataset_type=dataset_type
+    )
     train_loader = DataLoader(
         dataset=train_data,
         batch_size=cfg.SOLVER.TEST_BATCH_SIZE,
@@ -218,9 +227,9 @@ def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):
         accelerations = cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS
         accelerations = list(np.arange(accelerations[0], accelerations[1]))
 
-    assert len(cfg.AUG_TRAIN.UNDERSAMPLE.CENTER_FRACTIONS) <= 1, (
-        "Currently only support single center fraction during testing"
-    )
+    assert (
+        len(cfg.AUG_TRAIN.UNDERSAMPLE.CENTER_FRACTIONS) <= 1
+    ), "Currently only support single center fraction during testing"
 
     loaders = defaultdict(dict)
     for acc in accelerations:
@@ -230,9 +239,7 @@ def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):
         aug_cfg.freeze()
         for dataset_dict in dataset_dicts:
             mask_func = build_mask_func(aug_cfg)
-            data_transform = T.DataTransform(
-                cfg, mask_func, is_test=True
-            )
+            data_transform = T.DataTransform(cfg, mask_func, is_test=True)
             train_data = _build_dataset(cfg, [dataset_dict], data_transform, is_eval=True)
             loader = DataLoader(
                 dataset=train_data,

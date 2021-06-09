@@ -1,9 +1,9 @@
-from collections import defaultdict
 import unittest
+from collections import defaultdict
 
-from ss_recon.data import build_recon_train_loader, build_recon_val_loader
-from ss_recon.data.slice_dataset import SliceData
 from ss_recon.config import get_cfg
+from ss_recon.data import build_recon_train_loader
+from ss_recon.data.slice_dataset import SliceData
 
 
 class MockSliceData(SliceData):
@@ -36,7 +36,7 @@ class TestBuildTrainLoader(unittest.TestCase):
         scans_to_slices = defaultdict(list)
         for x in dataset.examples:
             scans_to_slices[x["file_name"]].append(x["slice_id"])
-        for x, slice_nums in scans_to_slices.items():
+        for _x, slice_nums in scans_to_slices.items():
             assert set(slice_nums) == set(range(0, 320))
 
     def test_data_loader(self):
@@ -54,7 +54,7 @@ class TestBuildTrainLoader(unittest.TestCase):
             for fname, s_id in zip(fnames, slice_ids):
                 scans_to_slices[fname].append(s_id)
 
-        for x, slice_nums in scans_to_slices.items():
+        for _x, slice_nums in scans_to_slices.items():
             assert set(slice_nums) == set(range(0, 320))
         assert len(scans_to_slices) == self._NUM_SCANS
 

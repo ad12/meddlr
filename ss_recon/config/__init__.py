@@ -1,1 +1,1 @@
-from .config import CfgNode, get_cfg
+from .config import CfgNode, get_cfg  # noqa

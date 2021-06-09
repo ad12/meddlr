@@ -21,7 +21,7 @@ import torch
 from fvcore.common.file_io import PathManager
 
 from ss_recon.utils.collect_env import collect_env_info
-from ss_recon.utils.env import get_available_gpus, seed_all_rng, supports_wandb
+from ss_recon.utils.env import get_available_gpus, seed_all_rng
 from ss_recon.utils.logger import setup_logger
 
 __all__ = [
@@ -39,17 +39,13 @@ def default_argument_parser():
         argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(description="Detectron2 Training")
-    parser.add_argument(
-        "--config-file", default="", metavar="FILE", help="path to config file"
-    )
+    parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
     parser.add_argument(
         "--resume",
         action="store_true",
         help="whether to attempt to resume from the checkpoint directory",
     )
-    parser.add_argument(
-        "--eval-only", action="store_true", help="perform evaluation only"
-    )
+    parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
     parser.add_argument(
         "--num-gpus",
         type=int,
@@ -57,9 +53,7 @@ def default_argument_parser():
         help="number of gpus. overrided by --devices",
     )
     parser.add_argument("--devices", type=int, nargs="*", default=None)
-    parser.add_argument(
-        "--debug", action="store_true", help="use debug mode"
-    )
+    parser.add_argument("--debug", action="store_true", help="use debug mode")
 
     parser.add_argument(
         "opts",
@@ -163,29 +157,27 @@ def find_wandb_exp_id(cfg):
     # Note this may not be robust as `wandb` may change their folder structure.
     base_dir = os.path.join(cfg.OUTPUT_DIR, "wandb", "latest-run")
     if os.path.isdir(base_dir):
-        run_files = [
-            x for x in os.listdir(base_dir) if os.path.isfile(os.path.join(base_dir, x))
-        ]
-        assert len(run_files) == 1, (
-            "Found multiple ({}) W&B run files:\n\t{}".format(
-                len(run_files),
-                '\n\t'.join(run_files)
-            )
+        run_files = [x for x in os.listdir(base_dir) if os.path.isfile(os.path.join(base_dir, x))]
+        assert len(run_files) == 1, "Found multiple ({}) W&B run files:\n\t{}".format(
+            len(run_files), "\n\t".join(run_files)
         )
         exp_id = os.path.splitext(run_files[0])[0].split("-")[1]
     return exp_id
-    
 
-def init_wandb_run(cfg, exp_id=None, resume=False, project=None, entity=None, job_type="training", use_api=False):
+
+def init_wandb_run(
+    cfg, exp_id=None, resume=False, project=None, entity=None, job_type="training", use_api=False
+):
     import wandb
+
     logger = logging.getLogger(__name__)
-    
+
     is_eval = job_type.lower() in ("eval", "evaluation")
 
     # Find last run if `exp_id` not specified.
     if (resume or is_eval) and not exp_id:
         exp_id = find_wandb_exp_id(cfg)
-    
+
     # If evaluation, do not run wandb.init. Just return run.
     if use_api:
         if not exp_id:
@@ -199,7 +191,7 @@ def init_wandb_run(cfg, exp_id=None, resume=False, project=None, entity=None, jo
         warnings.warn(
             "Setting project name with `project` is deprecated. "
             "Use DESCRIPTION.PROJECT_NAME in config instead.",
-            DeprecationWarning
+            DeprecationWarning,
         )
     if entity is None:
         entity = cfg.DESCRIPTION.ENTITY_NAME
@@ -207,7 +199,7 @@ def init_wandb_run(cfg, exp_id=None, resume=False, project=None, entity=None, jo
         warnings.warn(
             "Setting entity name with `entity` is deprecated. "
             "Use DESCRIPTION.ENTITY_NAME in config instead.",
-            DeprecationWarning
+            DeprecationWarning,
         )
 
     # Keyword args to share between resumed and new runs.
@@ -236,7 +228,7 @@ def init_wandb_run(cfg, exp_id=None, resume=False, project=None, entity=None, jo
     exp_id = wandb.util.generate_id()
     with open(os.path.join(cfg.OUTPUT_DIR, "wandb_id"), "w") as f:
         f.write(exp_id)
-    
+
     wandb.init(
         id=exp_id,
         name=exp_name,

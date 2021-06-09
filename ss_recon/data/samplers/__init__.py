@@ -1,1 +1,1 @@
-from .sampler import AlternatingSampler
+from .sampler import AlternatingSampler  # noqa

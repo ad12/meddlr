@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from ss_recon.data.slice_dataset import SliceData
 from ss_recon.data import AlternatingSampler
+from ss_recon.data.slice_dataset import SliceData
 
 
 class MockSliceDataset(SliceData):
@@ -25,7 +25,7 @@ class TestAlternatingSampler(unittest.TestCase):
             {
                 "file_name": "scan{}".format(idx),
                 "kspace_size": (num_slices, 320, 256, 4, 2),
-                "_is_unsupervised": idx < num_unsupervised
+                "_is_unsupervised": idx < num_unsupervised,
             }
             for idx in range(num_scans)
         ]
@@ -46,9 +46,9 @@ class TestAlternatingSampler(unittest.TestCase):
         sampler = AlternatingSampler(dataset, T_s, T_us, seed=0)
         assert len(sampler) == 16
 
-        idxs = np.asarray([i for i in iter(sampler)])
+        idxs = np.asarray(list(iter(sampler)))
         assert len(idxs) == len(sampler)
-        idxs = idxs.reshape((-1, T_s+T_us))
+        idxs = idxs.reshape((-1, T_s + T_us))
         supervised_idxs = idxs[:, 0:T_s].flatten()
         unsupervised_idxs = idxs[:, T_s:].flatten()
 
@@ -70,9 +70,9 @@ class TestAlternatingSampler(unittest.TestCase):
         sampler = AlternatingSampler(dataset, T_s, T_us, seed=0)
         assert len(sampler) == 24
 
-        idxs = np.asarray([i for i in iter(sampler)])
+        idxs = np.asarray(list(iter(sampler)))
         assert len(idxs) == len(sampler)
-        idxs = idxs.reshape((-1, T_s+T_us))
+        idxs = idxs.reshape((-1, T_s + T_us))
         supervised_idxs = idxs[:, 0:T_s].flatten()
         unsupervised_idxs = idxs[:, T_s:].flatten()
 
@@ -99,9 +99,9 @@ class TestAlternatingSampler(unittest.TestCase):
         sampler = AlternatingSampler(dataset, T_s, T_us, seed=0)
         assert len(sampler) == 32
 
-        idxs = np.asarray([i for i in iter(sampler)])
+        idxs = np.asarray(list(iter(sampler)))
         assert len(idxs) == len(sampler)
-        idxs = idxs.reshape((-1, T_s+T_us))
+        idxs = idxs.reshape((-1, T_s + T_us))
         supervised_idxs = set(idxs[:, 0:T_s].flatten())
         unsupervised_idxs = set(idxs[:, T_s:].flatten())
 
@@ -124,9 +124,9 @@ class TestAlternatingSampler(unittest.TestCase):
         sampler = AlternatingSampler(dataset, T_s, T_us, seed=0)
         assert len(sampler) == 32
 
-        idxs = np.asarray([i for i in iter(sampler)])
+        idxs = np.asarray(list(iter(sampler)))
         assert len(idxs) == len(sampler)
-        idxs = idxs.reshape((-1, T_s+T_us))
+        idxs = idxs.reshape((-1, T_s + T_us))
         supervised_idxs = set(idxs[:, 0:T_s].flatten())
         unsupervised_idxs = set(idxs[:, T_s:].flatten())
 
@@ -153,7 +153,7 @@ class TestAlternatingSampler(unittest.TestCase):
         sampler = AlternatingSampler(dataset, T_s, T_us, seed=0)
         assert len(sampler) == 16 + 32
 
-        idxs = np.asarray([i for i in iter(sampler)])
+        idxs = np.asarray(list(iter(sampler)))
         assert len(idxs) == len(sampler)
         idxs = idxs.reshape((-1, T_s + T_us))
         supervised_idxs = set(idxs[:, 0:T_s].flatten())

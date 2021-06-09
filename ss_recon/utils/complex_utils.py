@@ -1,10 +1,8 @@
 """
 Utilities for doing complex-valued operations.
 """
-import os
 import numpy as np
 import torch
-import warnings
 
 from ss_recon.utils.env import supports_cplx_tensor
 
@@ -52,7 +50,7 @@ def mul(x, y):
     # real = a * c - b * d
     # imag = a * d + b * c
 
-    #return torch.stack((real, imag), dim=-1)
+    # return torch.stack((real, imag), dim=-1)
 
     assert is_complex_as_real(x) or is_complex(x)
     assert is_complex_as_real(y) or is_complex(y)
@@ -112,9 +110,7 @@ def get_mask(x, eps=1e-11):
         x = torch.view_as_real(x)
     assert x.size(-1) == 2
     absx = abs(x)  # squashes last dimension
-    mask = torch.where(
-        absx > eps, torch.ones_like(absx), torch.zeros_like(absx)
-    )
+    mask = torch.where(absx > eps, torch.ones_like(absx), torch.zeros_like(absx))
     if unsqueeze:
         mask = mask.unsqueeze(-1)
     return mask
@@ -158,7 +154,7 @@ def power_method(X, num_iter=10, eps=1e-6):
         v = torch.FloatTensor(batch_size, n, 1, 2).uniform_()
     # v = torch.rand(batch_size, n, 1, 2).to(X.device) # slow way
 
-    for i in range(num_iter):
+    for _i in range(num_iter):
         v = matmul(XhX, v)
         eigenvals = (abs(v) ** 2).sum(1).sqrt()
         v = v / (eigenvals.reshape(batch_size, 1, 1, 1) + eps)
