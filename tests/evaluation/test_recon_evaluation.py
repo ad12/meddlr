@@ -34,8 +34,11 @@ class TestReconEvaluator(unittest.TestCase):
             "ssim": "ssim_old",
         }
 
-        assert all(np.allclose(vals[key_mapping[k]], expected[k]) for k in expected.keys()), (
-            "\n".join("{}\tValue: {:.6f}\tExpected: {:.6f}".format(k, vals[key_mapping[k]], expected[k]) for k in expected)
+        assert all(
+            np.allclose(vals[key_mapping[k]], expected[k]) for k in expected.keys()
+        ), "\n".join(
+            "{}\tValue: {:.6f}\tExpected: {:.6f}".format(k, vals[key_mapping[k]], expected[k])
+            for k in expected
         )
 
 

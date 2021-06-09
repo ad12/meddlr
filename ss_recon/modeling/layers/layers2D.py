@@ -1,12 +1,9 @@
 """Implementation of 2D base layers.
 """
 
-from typing import Sequence, Tuple, Union
+from typing import Tuple, Union
 
-import torch
 from torch import nn
-
-from ss_recon.utils.transforms import center_crop
 
 
 def _get_same_padding(kernel_size: Union[int, Tuple[int, int]]):
@@ -15,9 +12,7 @@ def _get_same_padding(kernel_size: Union[int, Tuple[int, int]]):
     else:
         assert len(kernel_size) == 2
     if not all(k % 2 == 1 for k in kernel_size):
-        raise ValueError(
-            "Kernel size must be odd - got {}".format(kernel_size)
-        )
+        raise ValueError("Kernel size must be odd - got {}".format(kernel_size))
     padding = tuple(k // 2 for k in kernel_size)
 
     return padding
@@ -27,7 +22,7 @@ class ConvBlock(nn.Module):
     """
     A 2D Convolutional Block that consists of Norm -> ReLU -> Dropout -> Conv
 
-    Based on implementation described by: 
+    Based on implementation described by:
         K He, et al. "Identity Mappings in Deep Residual Networks" arXiv:1603.05027
     """
 
@@ -59,9 +54,7 @@ class ConvBlock(nn.Module):
         else:
             assert len(kernel_size) == 2
         if not all(k % 2 == 1 for k in kernel_size):
-            raise ValueError(
-                "Kernel size must be odd - got {}".format(kernel_size)
-            )
+            raise ValueError("Kernel size must be odd - got {}".format(kernel_size))
 
         padding = tuple(k // 2 for k in kernel_size)
 
@@ -75,13 +68,9 @@ class ConvBlock(nn.Module):
                 ["batch", nn.BatchNorm2d(norm_channels, affine=norm_affine)],
             ]
         )
-        activations = nn.ModuleDict(
-            [["relu", nn.ReLU()], ["leaky_relu", nn.LeakyReLU()]]
-        )
+        activations = nn.ModuleDict([["relu", nn.ReLU()], ["leaky_relu", nn.LeakyReLU()]])
         dropout = nn.Dropout2d(p=drop_prob)
-        convolution = nn.Conv2d(
-            in_chans, out_chans, kernel_size=kernel_size, padding=padding
-        )
+        convolution = nn.Conv2d(in_chans, out_chans, kernel_size=kernel_size, padding=padding)
 
         layer_dict = {
             "conv": convolution,
@@ -89,12 +78,10 @@ class ConvBlock(nn.Module):
             "act": activations[act_type],
             "norm": normalizations[norm_type] if norm_type in normalizations else nn.Identity(),
         }
-        layers = [layer_dict[l] for l in order]
+        layers = [layer_dict[lyr] for lyr in order]
 
         # Define forward pass
-        self.layers = nn.Sequential(
-            *layers
-        )
+        self.layers = nn.Sequential(*layers)
 
     def forward(self, input):
         """
@@ -192,9 +179,7 @@ class ResNet(nn.Module):
         norm_affine: bool = False,
         order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
     ):
-        """
-
-        """
+        """ """
         super().__init__()
 
         if circular_pad:
@@ -206,7 +191,7 @@ class ResNet(nn.Module):
         self.pad_size = 2 * num_resblocks + 1
 
         resblock_params = {
-            "act_type": act_type, 
+            "act_type": act_type,
             "norm_type": norm_type,
             "norm_affine": norm_affine,
             "order": order,
@@ -214,17 +199,13 @@ class ResNet(nn.Module):
             "drop_prob": drop_prob,
         }
         # Declare ResBlock layers
-        self.res_blocks = nn.ModuleList(
-            [ResBlock(in_chans, chans, **resblock_params)]
-        )
+        self.res_blocks = nn.ModuleList([ResBlock(in_chans, chans, **resblock_params)])
         for _ in range(num_resblocks - 1):
             self.res_blocks += [ResBlock(chans, chans, **resblock_params)]
 
         # Declare final conv layer (down-sample to original in_chans)
         padding = _get_same_padding(kernel_size)
-        self.final_layer = nn.Conv2d(
-            chans, in_chans, kernel_size=kernel_size, padding=padding
-        )
+        self.final_layer = nn.Conv2d(chans, in_chans, kernel_size=kernel_size, padding=padding)
 
     def forward(self, input):
         """
@@ -235,7 +216,7 @@ class ResNet(nn.Module):
             (torch.Tensor): Output tensor of shape [batch_size, self.in_chans, depth, width, height]
         """
 
-        orig_shape = input.shape
+        # orig_shape = input.shape
         # if self.circular_pad:
         #     input = nn.functional.pad(
         #         input, 2 * (self.pad_size,) + (0, 0), mode="circular"

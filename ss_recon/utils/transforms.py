@@ -4,9 +4,8 @@ Copyright (c) Facebook, Inc. and its affiliates.
 This source code is licensed under the MIT license found in the
 LICENSE file in the root directory of this source tree.
 """
-from typing import Sequence, Union
+from typing import Sequence
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -14,7 +13,7 @@ from torch import nn
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import env
 
-if env.pt_version() >= [1,6]:
+if env.pt_version() >= [1, 6]:
     import torch.fft
 
 
@@ -91,8 +90,7 @@ class ArrayToBlocks(nn.Module):
             # Use Hanning window to reduce blocking artifacts
             win1d = torch.hann_window(block_size, dtype=torch.float32) ** 0.5
             self.win = (
-                win1d[None, :, None, None, None, None]
-                * win1d[None, None, :, None, None, None]
+                win1d[None, :, None, None, None, None] * win1d[None, None, :, None, None, None]
             )
         else:
             block_stride = self.block_size
@@ -107,31 +105,21 @@ class ArrayToBlocks(nn.Module):
         ny_pad = self.ny + 2 * self.pad_y
 
         # Compute total number of blocks
-        num_blocks_x = (
-            self.nx - self.block_size + 2 * self.pad_x
-        ) / block_stride + 1
-        num_blocks_y = (
-            self.ny - self.block_size + 2 * self.pad_y
-        ) / block_stride + 1
+        num_blocks_x = (self.nx - self.block_size + 2 * self.pad_x) / block_stride + 1
+        num_blocks_y = (self.ny - self.block_size + 2 * self.pad_y) / block_stride + 1
         self.num_blocks = int(num_blocks_x * num_blocks_y)
 
         # Set fold params
-        self.fold_params = dict(
-            kernel_size=2 * (block_size,), stride=block_stride
-        )
+        self.fold_params = dict(kernel_size=2 * (block_size,), stride=block_stride)
         self.unfold_op = nn.Unfold(**self.fold_params)
         self.fold_op = nn.Fold(output_size=(ny_pad, nx_pad), **self.fold_params)
 
     def extract(self, images):
         # Re-shape into a 4D array because nn.Unfold requires it >:(
-        images = images.reshape(
-            [1, self.nx, self.ny, self.nt * self.ne * 2]
-        ).permute(0, 3, 2, 1)
+        images = images.reshape([1, self.nx, self.ny, self.nt * self.ne * 2]).permute(0, 3, 2, 1)
 
         # Pad array
-        images = nn.functional.pad(
-            images, 2 * (self.pad_x,) + 2 * (self.pad_y,), mode="constant"
-        )
+        images = nn.functional.pad(images, 2 * (self.pad_x,) + 2 * (self.pad_y,), mode="constant")
 
         # Unfold array into vectorized blocks
         blocks = self.unfold_op(images)  # [1, nt*ne*2*bx*by, n]
@@ -158,9 +146,7 @@ class ArrayToBlocks(nn.Module):
 
         # Reshape back into nn.Fold format
         blocks = blocks.permute(3, 4, 5, 2, 1, 0)
-        blocks = blocks.reshape(
-            (1, self.nt * self.ne * 2 * self.block_size ** 2, self.num_blocks)
-        )
+        blocks = blocks.reshape((1, self.nt * self.ne * 2 * self.block_size ** 2, self.num_blocks))
 
         # Fold blocks back into array
         images = self.fold_op(blocks)  # [1, nt*ne*2, ny, nx]
@@ -182,9 +168,7 @@ class ArrayToBlocks(nn.Module):
         return output
 
 
-def decompose_LR(
-    images, num_basis, block_size=16, overlapping=False, block_op=None
-):
+def decompose_LR(images, num_basis, block_size=16, overlapping=False, block_op=None):
     """
     Decomposes spatio-temporal data into spatial and temporal basis functions
     (L, R)
@@ -195,9 +179,7 @@ def decompose_LR(
 
     # Initialize ArrayToBlocks op if it hasn't been initialized already
     if block_op is None:
-        block_op = ArrayToBlocks(
-            block_size, images.shape, overlapping=overlapping
-        )
+        block_op = ArrayToBlocks(block_size, images.shape, overlapping=overlapping)
 
     # Extract spatial blocks across images
     blocks = block_op(images)
@@ -296,7 +278,7 @@ def ifft2(data):
         return data
 
     ndims = len(list(data.size()))
-    
+
     if ndims == 5:
         data = data.permute(0, 3, 1, 2, 4)
     elif ndims == 6:
@@ -332,9 +314,7 @@ def time_average(data, dim, eps=1e-6, keepdim=True):
     Computes time average across a specified axis.
     """
     mask = cplx.get_mask(data)
-    return data.sum(dim, keepdim=keepdim) / (
-        mask.sum(dim, keepdim=keepdim) + eps
-    )
+    return data.sum(dim, keepdim=keepdim) / (mask.sum(dim, keepdim=keepdim) + eps)
 
 
 def sliding_window(data, dim, window_size):
@@ -412,17 +392,17 @@ def normalize(data, mean, stddev, eps=0.0):
 
 def normalize_instance(data, eps=0.0):
     """
-        Normalize the given tensor using:
-            (data - mean) / (stddev + eps)
-        where mean and stddev are computed from the data itself.
+    Normalize the given tensor using:
+        (data - mean) / (stddev + eps)
+    where mean and stddev are computed from the data itself.
 
-        Args:
-            data (torch.Tensor): Input data to be normalized
-            eps (float): Added to stddev to prevent dividing by zero
+    Args:
+        data (torch.Tensor): Input data to be normalized
+        eps (float): Added to stddev to prevent dividing by zero
 
-        Returns:
-            torch.Tensor: Normalized tensor
-        """
+    Returns:
+        torch.Tensor: Normalized tensor
+    """
     mean = data.mean()
     std = data.std()
     return normalize(data, mean, std, eps), mean, std
@@ -483,14 +463,13 @@ def pad(x: torch.Tensor, shape: Sequence[int], mode="constant", value=0):
         shape: Shape to zero pad to. Use `None` to skip padding certain dimensions.
     Returns:
     """
-    x_shape = x.shape[1:1+len(shape)]
-    assert all(x_shape[i] <= shape[i] or shape[i] is None for i in range(len(shape))), (
-        f"Tensor spatial dimensions {x_shape} smaller than zero pad dimensions"
-    )
+    x_shape = x.shape[1 : 1 + len(shape)]
+    assert all(
+        x_shape[i] <= shape[i] or shape[i] is None for i in range(len(shape))
+    ), f"Tensor spatial dimensions {x_shape} smaller than zero pad dimensions"
 
     total_padding = tuple(
-        desired - current if desired is not None else 0
-        for current, desired in zip(x_shape, shape)
+        desired - current if desired is not None else 0 for current, desired in zip(x_shape, shape)
     )
     # Adding no padding for terminal dimensions.
     # torch.nn.functional.pad pads dimensions in reverse order.

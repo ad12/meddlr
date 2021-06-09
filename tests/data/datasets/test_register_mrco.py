@@ -1,6 +1,6 @@
 import unittest
+
 from ss_recon.data import DatasetCatalog
-from ss_recon.data.build import get_recon_dataset_dicts
 
 
 def test_load_metadata_from_csv():

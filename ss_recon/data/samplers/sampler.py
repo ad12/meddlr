@@ -1,6 +1,4 @@
 """Implementation of different dataset samplers."""
-import random
-
 import numpy as np
 import torch
 from torch.utils.data import Sampler
@@ -16,8 +14,13 @@ class AlternatingSampler(Sampler):
     Currently, periods `T_s` and `T_us` must be perfect divisors of the number
     of supervised_idxs and unsupervised_idxs.
     """
+
     def __init__(
-        self, dataset, T_s: int, T_us: int, seed: int = None,
+        self,
+        dataset,
+        T_s: int,
+        T_us: int,
+        seed: int = None,
     ):
         """
         Args:
@@ -41,9 +44,7 @@ class AlternatingSampler(Sampler):
             raise ValueError(
                 "Period T_s must be a perfect divisor of "
                 "the number of supervised indices. "
-                "Got {} supervised indices, and T_s={}".format(
-                    len(self._supervised_idxs), T_s
-                )
+                "Got {} supervised indices, and T_s={}".format(len(self._supervised_idxs), T_s)
             )
         if len(self._unsupervised_idxs) % T_s != 0:
             raise ValueError(
@@ -68,10 +69,7 @@ class AlternatingSampler(Sampler):
         # num_blocks = num_examples / num_period
         num_blocks_supervised = int(len(self._supervised_idxs) / T_s)
         num_blocks_unsupervised = int(len(self._unsupervised_idxs) / T_us)
-        self._lcm = int(np.lcm(
-            num_blocks_supervised,
-            num_blocks_unsupervised
-        ))
+        self._lcm = int(np.lcm(num_blocks_supervised, num_blocks_unsupervised))
         # The sampler is determined by how many blocks of each data type
         # (supervised/unsupervised) are returned.
         # Number of passes indicates how many times we have to go through
@@ -85,12 +83,8 @@ class AlternatingSampler(Sampler):
         return self._num_samples_sup + self._num_samples_unsup
 
     def __iter__(self):
-        s_idxs = self._build_idx(
-            self._supervised_idxs, self.T_s, self._num_samples_sup
-        )
-        us_idxs = self._build_idx(
-            self._unsupervised_idxs, self.T_us, self._num_samples_unsup
-        )
+        s_idxs = self._build_idx(self._supervised_idxs, self.T_s, self._num_samples_sup)
+        us_idxs = self._build_idx(self._unsupervised_idxs, self.T_us, self._num_samples_unsup)
 
         # TODO: Add parameter to choose whether to start with supervised or
         # unsupervised data.
@@ -101,10 +95,9 @@ class AlternatingSampler(Sampler):
         assert num_samples % len(idxs) == 0
         num_passes = int(num_samples / len(idxs))
 
-        perm_idxs = torch.cat([
-            torch.randperm(len(idxs), generator=self._rng)
-            for _ in range(num_passes)
-        ])
+        perm_idxs = torch.cat(
+            [torch.randperm(len(idxs), generator=self._rng) for _ in range(num_passes)]
+        )
 
         idxs = idxs[perm_idxs].reshape(-1, T)
         return idxs

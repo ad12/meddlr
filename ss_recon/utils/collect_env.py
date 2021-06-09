@@ -73,9 +73,7 @@ def collect_env_info():
         data.append(
             (
                 "detectron2",
-                detectron2.__version__
-                + " @"
-                + os.path.dirname(detectron2.__file__),
+                detectron2.__version__ + " @" + os.path.dirname(detectron2.__file__),
             )
         )
         data.append(("detectron2 compiler", _C.get_compiler_version()))
@@ -89,9 +87,7 @@ def collect_env_info():
             )
 
     data.append(get_env_module())
-    data.append(
-        ("PyTorch", torch.__version__ + " @" + os.path.dirname(torch.__file__))
-    )
+    data.append(("PyTorch", torch.__version__ + " @" + os.path.dirname(torch.__file__)))
     data.append(("PyTorch debug build", torch.version.debug))
 
     data.append(("CUDA available", has_cuda))
@@ -109,9 +105,7 @@ def collect_env_info():
         if CUDA_HOME is not None and os.path.isdir(CUDA_HOME):
             try:
                 nvcc = os.path.join(CUDA_HOME, "bin", "nvcc")
-                nvcc = subprocess.check_output(
-                    "'{}' -V | tail -n1".format(nvcc), shell=True
-                )
+                nvcc = subprocess.check_output("'{}' -V | tail -n1".format(nvcc), shell=True)
                 nvcc = nvcc.decode("utf-8").strip()
             except subprocess.SubprocessError:
                 nvcc = "Not Available"
@@ -126,16 +120,12 @@ def collect_env_info():
         data.append(
             (
                 "torchvision",
-                str(torchvision.__version__)
-                + " @"
-                + os.path.dirname(torchvision.__file__),
+                str(torchvision.__version__) + " @" + os.path.dirname(torchvision.__file__),
             )
         )
         if has_cuda:
             try:
-                torchvision_C = importlib.util.find_spec(
-                    "torchvision._C"
-                ).origin
+                torchvision_C = importlib.util.find_spec("torchvision._C").origin
                 msg = detect_compute_compatibility(CUDA_HOME, torchvision_C)
                 data.append(("torchvision arch flags", msg))
             except ImportError:

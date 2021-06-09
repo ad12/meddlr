@@ -22,12 +22,8 @@ class CfgNode(_CfgNode):
     """
 
     # Note that the default value of allow_unsafe is changed to True
-    def merge_from_file(
-        self, cfg_filename: str, allow_unsafe: bool = True
-    ) -> None:
-        loaded_cfg = _CfgNode.load_yaml_with_base(
-            cfg_filename, allow_unsafe=allow_unsafe
-        )
+    def merge_from_file(self, cfg_filename: str, allow_unsafe: bool = True) -> None:
+        loaded_cfg = _CfgNode.load_yaml_with_base(cfg_filename, allow_unsafe=allow_unsafe)
         loaded_cfg = type(self)(loaded_cfg)
 
         # defaults.py needs to import CfgNode
@@ -35,8 +31,7 @@ class CfgNode(_CfgNode):
 
         latest_ver = _C.VERSION
         assert latest_ver == self.VERSION, (
-            "CfgNode.merge_from_file is only allowed on a config "
-            "object of latest version!"
+            "CfgNode.merge_from_file is only allowed on a config " "object of latest version!"
         )
 
         logger = logging.getLogger(__name__)
@@ -46,9 +41,7 @@ class CfgNode(_CfgNode):
             from .compat import guess_version
 
             loaded_ver = guess_version(loaded_cfg, cfg_filename)
-        assert (
-            loaded_ver <= self.VERSION
-        ), "Cannot merge a v{} config into a v{} config.".format(
+        assert loaded_ver <= self.VERSION, "Cannot merge a v{} config into a v{} config.".format(
             loaded_ver, self.VERSION
         )
 
@@ -56,15 +49,13 @@ class CfgNode(_CfgNode):
             self.merge_from_other_cfg(loaded_cfg)
         else:
             # compat.py needs to import CfgNode
-            from .compat import upgrade_config, downgrade_config
+            from .compat import downgrade_config, upgrade_config
 
             logger.warning(
                 "Loading an old v{} config file '{}' by "
                 "automatically upgrading to v{}. "
                 "See docs/CHANGELOG.md for instructions to "
-                "update your files.".format(
-                    loaded_ver, cfg_filename, self.VERSION
-                )
+                "update your files.".format(loaded_ver, cfg_filename, self.VERSION)
             )
             # To convert, first obtain a full config at an old version
             old_self = downgrade_config(self, to_version=loaded_ver)

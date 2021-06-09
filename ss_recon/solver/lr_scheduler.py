@@ -13,6 +13,7 @@ import torch
 # FIXME: ideally this would be achieved with a CombinedLRScheduler, separating
 # MultiStepLR with WarmupLR but the current LRScheduler design doesn't allow it.
 
+
 class NoOpLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(self, optimizer, last_epoch=-1):
         super().__init__(optimizer, last_epoch)
@@ -56,9 +57,7 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
             self.warmup_factor,
         )
         return [
-            base_lr
-            * warmup_factor
-            * self.gamma ** bisect_right(self.milestones, self.last_epoch)
+            base_lr * warmup_factor * self.gamma ** bisect_right(self.milestones, self.last_epoch)
             for base_lr in self.base_lrs
         ]
 

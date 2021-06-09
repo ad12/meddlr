@@ -3,7 +3,8 @@
 # File:
 
 
-from .detection_checkpoint import DetectionCheckpointer
 from fvcore.common.checkpoint import Checkpointer, PeriodicCheckpointer
+
+from .detection_checkpoint import DetectionCheckpointer
 
 __all__ = ["Checkpointer", "PeriodicCheckpointer", "DetectionCheckpointer"]

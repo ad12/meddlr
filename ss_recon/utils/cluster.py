@@ -70,9 +70,7 @@ class Cluster(Enum):
 
         return cls.UNKNOWN
 
-    def register_user(
-        self, user_id: str, data_dir: str = "", results_dir: str = ""
-    ):
+    def register_user(self, user_id: str, data_dir: str = "", results_dir: str = ""):
         """Register user preferences for paths.
 
         Args:
@@ -174,7 +172,7 @@ _USER_PATHS = {
         CLUSTER.TORINO: (
             "/dataNAS/people/arjun/data",
             "/bmrNAS/people/arjun/results/ss_recon",
-        )
+        ),
     },
     "ozt": {
         CLUSTER.HARBIN: (

@@ -32,85 +32,81 @@ _PREDEFINED_SPLITS_MRCO["mridata_knee_2019"] = {
 _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
     "fastMRI_knee_multicoil_dev_train": (
         None,
-        "fastmri/knee_multicoil/annotations/vtoy-dev/train.json"
+        "fastmri/knee_multicoil/annotations/vtoy-dev/train.json",
     ),
     "fastMRI_knee_multicoil_dev_val": (
         None,
-        "fastmri/knee_multicoil/annotations/vtoy-dev/val.json"
+        "fastmri/knee_multicoil/annotations/vtoy-dev/val.json",
     ),
     "fastMRI_knee_multicoil_dev_test": (
         None,
-        "fastmri/knee_multicoil/annotations/vtoy-dev/test.json"
+        "fastmri/knee_multicoil/annotations/vtoy-dev/test.json",
     ),
-
     "fastMRI_knee_multicoil_v0.0.1_train": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev/train.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/train.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_val": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev/val.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/val.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_test": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev/test.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev/test.json",
     ),
-
     "fastMRI_knee_multicoil_mini_v0.0.1_train": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/mini-v0.0.1/train.json"
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/train.json",
     ),
     "fastMRI_knee_multicoil_mini_v0.0.1_val": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/mini-v0.0.1/val.json"
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/val.json",
     ),
     "fastMRI_knee_multicoil_mini_v0.0.1_test": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/mini-v0.0.1/test.json"
+        "ann://fastmri/knee_multicoil/mini-v0.0.1/test.json",
     ),
-
     # fastMRI knee multicoil - fat-suppressed
     "fastMRI_knee_multicoil_v0.0.1_fs_train": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/train.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/train.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_fs_val": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/val.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/val.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_fs_test": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/test.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs/test.json",
     ),
-    
-    # fastMRI knee multicoil - 3T fat-suppressed 
+    # fastMRI knee multicoil - 3T fat-suppressed
     "fastMRI_knee_multicoil_v0.0.1_fs_3t_train": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/train.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/train.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_fs_3t_val": (
         "fastmri/knee_multicoil/train",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/val.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/val.json",
     ),
     "fastMRI_knee_multicoil_v0.0.1_fs_3t_test": (
         "fastmri/knee_multicoil/val",
-        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/test.json"
+        "ann://fastmri/knee_multicoil/v0.0.1-dev-fs-3t/test.json",
     ),
 }
 
 _PREDEFINED_SPLITS_MRCO["fastMRI_brain_multicoil"] = {
     "fastMRI_brain_multicoil_dev_train": (
         "fastmri/brain_multicoil/train",
-        "ann://fastmri/brain_multicoil/vtoy-dev/train.json"
+        "ann://fastmri/brain_multicoil/vtoy-dev/train.json",
     ),
     "fastMRI_brain_multicoil_dev_val": (
         "fastmri/brain_multicoil/train",
-        "ann://fastmri/brain_multicoil/vtoy-dev/val.json"
+        "ann://fastmri/brain_multicoil/vtoy-dev/val.json",
     ),
     "fastMRI_brain_multicoil_dev_test": (
         "fastmri/brain_multicoil/val",
-        "ann://fastmri/brain_multicoil/vtoy-dev/test.json"
-    )
+        "ann://fastmri/brain_multicoil/vtoy-dev/test.json",
+    ),
 }
 
 
@@ -129,7 +125,7 @@ _PREDEFINED_SPLITS_MRCO["stanford_qDESS_knee_2020"] = {
     "stanford_qDESS_knee_2020_v0.1.0_c24_test": (
         "stanford_qdess_2020/files_recon_calib-24/",
         "stanford_qdess_2020/annotations/v0.1.0/test.json",
-    )
+    ),
 }
 
 

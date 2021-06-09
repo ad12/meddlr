@@ -1,1 +1,1 @@
-from . import cluster
+from . import cluster  # noqa: F401

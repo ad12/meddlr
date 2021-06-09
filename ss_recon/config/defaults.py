@@ -74,7 +74,7 @@ _C.MODEL.NORMALIZER.NAME = "TopMagnitudeNormalizer"
 _C.MODEL.NORMALIZER.KEYWORDS = ()
 
 # -----------------------------------------------------------------------------
-# UNET model 
+# UNET model
 # -----------------------------------------------------------------------------
 _C.MODEL.UNET = CN()
 _C.MODEL.UNET.OUT_CHANNELS = 2
@@ -84,7 +84,7 @@ _C.MODEL.UNET.NUM_POOL_LAYERS = 4
 _C.MODEL.UNET.DROPOUT = 0.0
 
 # -----------------------------------------------------------------------------
-# Denoising model 
+# Denoising model
 # -----------------------------------------------------------------------------
 _C.MODEL.DENOISING = CN()
 _C.MODEL.DENOISING.NOISE = CN()
@@ -92,7 +92,7 @@ _C.MODEL.DENOISING.NOISE = CN()
 _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
 
 # -----------------------------------------------------------------------------
-# Noise2Recon (N2R) model 
+# Noise2Recon (N2R) model
 # -----------------------------------------------------------------------------
 _C.MODEL.N2R = CN()
 _C.MODEL.N2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
@@ -160,7 +160,7 @@ _C.AUG_TRAIN.UNDERSAMPLE.NAME = "PoissonDiskMaskFunc"
 _C.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6,)
 _C.AUG_TRAIN.UNDERSAMPLE.CALIBRATION_SIZE = 20
 _C.AUG_TRAIN.UNDERSAMPLE.CENTER_FRACTIONS = ()
-# Augment with noise. See MODEL.CONSISTENCY.AUG.NOISE for parameters. 
+# Augment with noise. See MODEL.CONSISTENCY.AUG.NOISE for parameters.
 _C.AUG_TRAIN.USE_NOISE = False
 _C.AUG_TRAIN.NOISE_P = 0.2
 
@@ -245,7 +245,7 @@ _C.OUTPUT_DIR = ""
 _C.SEED = -1
 # The period (in terms of steps) for minibatch visualization at train time.
 # Set to 0 to disable. Currently not functional.
-# This will always be in number of iterations. 
+# This will always be in number of iterations.
 _C.VIS_PERIOD = 0
 # The scale when referring to time generally in the config.
 # Note that there are certain fields, which are explicitly at the iteration
@@ -258,7 +258,7 @@ _C.CUDNN_BENCHMARK = False
 # Config Description
 # ---------------------------------------------------------------------------- #
 _C.DESCRIPTION = CN()
-# Brief description about config 
+# Brief description about config
 _C.DESCRIPTION.BRIEF = ""
 # The entity (team/individual) account for logging to Weights & Biases
 _C.DESCRIPTION.ENTITY_NAME = "ss_recon"

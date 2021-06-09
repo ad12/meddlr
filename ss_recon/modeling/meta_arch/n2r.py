@@ -1,12 +1,11 @@
 import torch
-from torch import nn
 import torchvision.utils as tv_utils
+from torch import nn
 
+from ss_recon.data.transforms.noise import NoiseModel
+from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils.events import get_event_storage
-
-from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
-from ss_recon.data.transforms.noise import NoiseModel
 
 
 @META_ARCH_REGISTRY.register()
@@ -89,17 +88,19 @@ class N2RModel(nn.Module):
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
                 data = tv_utils.make_grid(
-                    data, nrow=1, padding=1, normalize=True, scale_each=True,
+                    data,
+                    nrow=1,
+                    padding=1,
+                    normalize=True,
+                    scale_each=True,
                 )
-                storage.put_image(
-                    "train_aug/{}".format(name), data.numpy(), data_format="CHW"
-                )
+                storage.put_image("train_aug/{}".format(name), data.numpy(), data_format="CHW")
 
     def forward(self, inputs):
         if not self.training:
-            assert "unsupervised" not in inputs, (
-                "unsupervised inputs should not be provided in eval mode"
-            )
+            assert (
+                "unsupervised" not in inputs
+            ), "unsupervised inputs should not be provided in eval mode"
             inputs = inputs.get("supervised", inputs)
             return self.model(inputs)
 
@@ -118,7 +119,9 @@ class N2RModel(nn.Module):
         # Recon
         if inputs_supervised is not None:
             output_dict["recon"] = self.model(
-                inputs_supervised, return_pp=True, vis_training=vis_training,
+                inputs_supervised,
+                return_pp=True,
+                vis_training=vis_training,
             )
 
         # Consistency.
@@ -128,11 +131,14 @@ class N2RModel(nn.Module):
         if inputs_unsupervised is not None:
             inputs_consistency.append(inputs_unsupervised)
         if self.use_supervised_consistency and inputs_supervised is not None:
-            inputs_consistency.append({k: v for k,v in inputs_supervised.items() if k != "target"})
+            inputs_consistency.append({k: v for k, v in inputs_supervised.items() if k != "target"})
 
         if len(inputs_consistency) > 0:
             if len(inputs_consistency) > 1:
-                inputs_consistency = {k: torch.cat([x[k] for x in inputs_consistency], dim=0) for k in inputs_consistency[0].keys()}
+                inputs_consistency = {
+                    k: torch.cat([x[k] for x in inputs_consistency], dim=0)
+                    for k in inputs_consistency[0].keys()
+                }
             else:
                 inputs_consistency = inputs_consistency[0]
             inputs_consistency_aug = self.augment(inputs_consistency)

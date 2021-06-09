@@ -9,16 +9,17 @@ logger = logging.getLogger(__name__)
 
 class GradAccumOptimizer(object):
     """Zero grad must be called before step."""
+
     def __init__(self, optimizer: Optimizer, accumulation_iters: int):
         self.optimizer = optimizer
         self.accumulation_iters = accumulation_iters
         self.step_iters = 0
 
     def state_dict(self):
-        # `step_iters` is not saved because if step_iters > 0, 
+        # `step_iters` is not saved because if step_iters > 0,
         # gradients were being accumulated. However when the state dict is saved,
         # there is no way of restoring these gradients.
-        # So a `step_iters`>0 would falsely indicate we have some gradients 
+        # So a `step_iters`>0 would falsely indicate we have some gradients
         # accumulated when we do not.
         return {
             "optimizer": self.optimizer.state_dict(),
@@ -40,12 +41,12 @@ class GradAccumOptimizer(object):
         if self.step_iters % self.accumulation_iters == 0:
             self.optimizer.zero_grad()
 
-    def step(self, closure = None):
+    def step(self, closure=None):
         self.step_iters += 1
         if self.step_iters % self.accumulation_iters == 0:
             self._step(closure)
 
-    def flush(self, closure = None):
+    def flush(self, closure=None):
         if self.step_iters > 0:
             self._step(closure)
         self.optimizer.zero_grad()
@@ -58,4 +59,3 @@ class GradAccumOptimizer(object):
     def __getattr__(self, item):
         if hasattr(self.optimizer, item):
             return getattr(self.optimizer, item)
-    

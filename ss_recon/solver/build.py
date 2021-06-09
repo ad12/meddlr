@@ -9,9 +9,7 @@ from .lr_scheduler import NoOpLR, WarmupCosineLR, WarmupMultiStepLR
 from .optimizer import GradAccumOptimizer
 
 
-def build_optimizer(
-    cfg: CfgNode, model: torch.nn.Module
-) -> torch.optim.Optimizer:
+def build_optimizer(cfg: CfgNode, model: torch.nn.Module) -> torch.optim.Optimizer:
     """
     Build an optimizer from config.
     """
@@ -39,9 +37,7 @@ def build_optimizer(
 def _build_opt(params, cfg):
     optim = cfg.SOLVER.OPTIMIZER
     if optim == "SGD":
-        optimizer = torch.optim.SGD(
-            params, cfg.SOLVER.BASE_LR, momentum=cfg.SOLVER.MOMENTUM
-        )
+        optimizer = torch.optim.SGD(params, cfg.SOLVER.BASE_LR, momentum=cfg.SOLVER.MOMENTUM)
     elif optim == "Adam":
         optimizer = torch.optim.Adam(params, cfg.SOLVER.BASE_LR)
     else:

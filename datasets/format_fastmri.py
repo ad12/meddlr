@@ -5,13 +5,15 @@ Multicoil Knee Dataset::
     ```bash
     # 1. Format train/validation datasets. Can be run simultaneously.
 
-    python format_fastmri format --challenge knee_multicoil --split train --device <GPU DEVICE ID> --num_workers <NUM WORKERS>
-    python format_fastmri format --challenge knee_multicoil --split val --device <GPU DEVICE ID> --num_workers <NUM WORKERS>
-    
+    python format_fastmri format --challenge knee_multicoil \
+        --split train --device <GPU DEVICE ID> --num_workers <NUM WORKERS>
+    python format_fastmri format --challenge knee_multicoil \
+        --split val --device <GPU DEVICE ID> --num_workers <NUM WORKERS>
+
     # 2. Create annotation files detailing train/val/test splits.
     # For "dev" split method, the train is split into train/val and val is used for testing.
     # This is because fastMRI test dataset does not have ground truth (i.e. fully sampled scans).
-    
+
     # Format toy dev datasets (only uses 5 scans -> 4 train, 1 val). Useful for debugging.
     python format_fastmri annotate --challenge knee_multicoil --method toy-dev --version vtoy
     python format_fastmri annotate --challenge knee_multicoil --method dev --version v0.0.1
@@ -22,46 +24,37 @@ TODOs:
     - Make checking more efficient
 """
 import argparse
-from collections import defaultdict
 import datetime
-import functools
+import getpass
 import itertools
+import json
 import logging
-import multiprocessing as mp
 import os
 import random
-import json
-import getpass
 import time
+from collections import defaultdict
 from typing import Sequence
 
-from fvcore.common.file_io import PathManager
 import h5py
-import torch
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-import silx.io.dictdump as silx_dd
-
-import mridata
-import ismrmrd
 import numpy as np
 import sigpy as sp
+import silx.io.dictdump as silx_dd
+import torch
+from fvcore.common.file_io import PathManager
 from sigpy.mri import app
-
-from utils import fftc
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 from utils import data_partition as dp
 
-from ss_recon.utils.logger import setup_logger
-from ss_recon.utils import transforms as T
 from ss_recon.utils import complex_utils as cplx
-from ss_recon.utils.env import seed_all_rng
+from ss_recon.utils import transforms as T
 
 try:
     import cupy as cp
 except ImportError:
     cp = None
 
+from ss_recon.utils.logger import setup_logger
 
 _FILE_DIR = os.path.dirname(__file__)
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -91,11 +84,12 @@ CHALLENGES = {
         "val": "multicoil_val",
         "test": "multicoil_test",
         "challege": None,  # add once challenge dataset is out
-    }
+    },
 }
 # Defines supported annotation methods
 # dev: Train files are split into train/val, val is used as test set.
 ANN_METHODS = ["dev", "toy-dev", "mini"]
+
 
 def seed_everything(device=None):
     np.random.seed(SEED)
@@ -124,8 +118,10 @@ def get_files(dir_path: str, ignore_missing_dir=False, filenames=None):
         else:
             raise NotADirectoryError(f"Directory {dir_path} does not exist")
     files = [
-        os.path.join(dir_path, x) for x in os.listdir(dir_path)
-        if is_valid_file(x) and (not filenames or x in filenames or os.path.splitext(x)[0] in filenames)
+        os.path.join(dir_path, x)
+        for x in os.listdir(dir_path)
+        if is_valid_file(x)
+        and (not filenames or x in filenames or os.path.splitext(x)[0] in filenames)
     ]
     return files
 
@@ -164,6 +160,7 @@ def preprocess_slice(kspace, im_shape):
 
 class FastMRIDataset(Dataset):
     """Wrapper dataset to take advantage of PyTorch multi-worker loading."""
+
     def __init__(self, files):
         self.files = files
 
@@ -176,9 +173,7 @@ class FastMRIDataset(Dataset):
             ismrmrd_header = f["ismrmrd_header"][()]
 
         num_slices, num_coils, num_kx, num_ky = kspace_orig.shape
-        kspace = np.zeros(
-            (num_slices, xres, yres, num_coils), dtype=np.complex64
-        )
+        kspace = np.zeros((num_slices, xres, yres, num_coils), dtype=np.complex64)
         im_shape = (xres, yres)
 
         for sl in range(num_slices):
@@ -221,7 +216,7 @@ def process_slice(
         calib_size (int): The calibration size.
         device (int): The device to perform computation on. ``-1`` indicates CPU.
         nmaps (int): Number of maps to create.
-    
+
     Returns:
         image (np.ndarray): The coil-combined image(s). Shape ``(Ky, Kz, #maps)``.
         maps (np.ndarray): The maps. Shape ``(Ky, Kz, #coils, #maps)``
@@ -247,7 +242,10 @@ def process_slice(
     ksp = np.transpose(kspace, [2, 1, 0])  # #coils x Kz x Ky
     if calib_method == "espirit":
         maps = app.EspiritCalib(
-            ksp, calib_width=calib_size, device=device, show_pbar=False,
+            ksp,
+            calib_width=calib_size,
+            device=device,
+            show_pbar=False,
             crop=0.1,
         ).run()
         # import pdb; pdb.set_trace()
@@ -266,9 +264,7 @@ def process_slice(
             ksp, mps_ker_width=12, ksp_calib_width=calib_size, device=device, show_pbar=False
         ).run()
     else:
-        raise ValueError(
-            "%s calibration method not implemented..." % calib_method
-        )
+        raise ValueError("%s calibration method not implemented..." % calib_method)
     maps = np.reshape(np.transpose(maps, [2, 1, 0]), (nky, nkz, ncoils, nmaps))
 
     # Convert everything to tensors
@@ -289,10 +285,10 @@ def format_train_file(
     data,
     save_dir: str,
     calib_method="jsense",
-    device: int=-1,
+    device: int = -1,
     center_fraction=0.04,
-    recompute: bool=False,
-    overwrite: bool=False,
+    recompute: bool = False,
+    overwrite: bool = False,
 ):
     # Seed everything before processing the slice.
     seed_everything(device)
@@ -325,9 +321,9 @@ def format_train_file(
     if not overwrite and not recompute and PathManager.isfile(out_file):
         with h5py.File(out_file, "r") as f:
             skip_recon = (
-                group_name in f.keys() and 
-                "maps" in f[group_name].keys() and 
-                "target" in f[group_name].keys()
+                group_name in f.keys()
+                and "maps" in f[group_name].keys()
+                and "target" in f[group_name].keys()
             )
 
     if not skip_recon:
@@ -336,30 +332,21 @@ def format_train_file(
         calib_size = int(round(center_fraction * xres))
 
         im_shape = (xres, yres)
-        maps = np.zeros(
-            (num_slices, xres, yres, num_coils, NUM_EMAPS), dtype=np.complex64
-        )
-        im_truth = np.zeros(
-            (num_slices, xres, yres, NUM_EMAPS), dtype=np.complex64
-        )
+        maps = np.zeros((num_slices, xres, yres, num_coils, NUM_EMAPS), dtype=np.complex64)
+        im_truth = np.zeros((num_slices, xres, yres, NUM_EMAPS), dtype=np.complex64)
 
         with torch.no_grad():
             # Make this parallelized on the gpu.
             for sl in tqdm(range(num_slices)):
                 kspace_slice = kspace[sl]
 
-                im_slice, maps_slice = process_slice(
-                    kspace_slice, calib_method, calib_size, device
-                )
+                im_slice, maps_slice = process_slice(kspace_slice, calib_method, calib_size, device)
 
                 maps[sl] = maps_slice
                 im_truth[sl] = im_slice
 
         recon_data = {
-            group_name: {
-                "maps": maps,
-                "target": im_truth
-            },
+            group_name: {"maps": maps, "target": im_truth},
         }
     else:
         logger.info(f"Skipped: {calib_method} reconstruction found")
@@ -377,8 +364,8 @@ def format_train_file(
 
 def filter_files(files: Sequence[str], save_dir: str, calib_method: str):
     """Filter out files that have already been processed.
-    
-    If the expected output h5df file has keys 
+
+    If the expected output h5df file has keys
     "{calib_method}/maps" and "{calib_method}/target",
     the file is assumed to be processed.
 
@@ -390,7 +377,7 @@ def filter_files(files: Sequence[str], save_dir: str, calib_method: str):
     Returns:
         Sequence[str]: Files that still need to be processed.
     """
-    logger.info(f"Filtering out processed files...")
+    logger.info("Filtering out processed files...")
     filtered_files = []
     for file_path in tqdm(files):
         file_name = os.path.basename(file_path)
@@ -400,9 +387,9 @@ def filter_files(files: Sequence[str], save_dir: str, calib_method: str):
         if PathManager.isfile(out_file):
             with h5py.File(out_file, "r") as f:
                 skip_recon = (
-                    calib_method in f.keys() and 
-                    "maps" in f[calib_method].keys() and 
-                    "target" in f[calib_method].keys()
+                    calib_method in f.keys()
+                    and "maps" in f[calib_method].keys()
+                    and "target" in f[calib_method].keys()
                 )
         if not skip_recon:
             filtered_files.append(file_path)
@@ -431,19 +418,19 @@ def split_files(files: Sequence[str]):
     sizes = []
     for file_path in tqdm(files):
         with h5py.File(file_path, "r") as f:
-            sizes.append(np.prod(f['kspace'].shape))
+            sizes.append(np.prod(f["kspace"].shape))
 
     CONSTANT = 1.7
     ref_size = np.median(sizes)
-    reg_files = [file_path for size, file_path in zip(sizes, files) if size <= CONSTANT*ref_size]
-    oversized_files = [file_path for size, file_path in zip(sizes, files) if size > CONSTANT*ref_size]
+    reg_files = [file_path for size, file_path in zip(sizes, files) if size <= CONSTANT * ref_size]
+    oversized_files = [
+        file_path for size, file_path in zip(sizes, files) if size > CONSTANT * ref_size
+    ]
 
     assert len(set(reg_files) & set(oversized_files)) == 0
     assert len(reg_files) + len(oversized_files) == len(files)
 
-    logger.info(
-        f"{len(oversized_files)}/{len(files)} files are oversized."
-    )
+    logger.info(f"{len(oversized_files)}/{len(files)} files are oversized.")
 
     return reg_files, oversized_files
 
@@ -465,9 +452,12 @@ def format_data(args, raw_root, formatted_root):
         output_dir = os.path.join(output_root, split)
         PathManager.mkdirs(output_dir)
 
-        logger.info(f"({idx}/{len(all_setups)}) Processing {split} split, {calib_method} method, {center_fraction} center fraction ...")
-        logger.info("=======================================================================================")
-        
+        logger.info(
+            f"({idx}/{len(all_setups)}) Processing {split} split, "
+            f"{calib_method} method, {center_fraction} center fraction ..."
+        )
+        logger.info("=" * 90)
+
         files = get_files(input_dir, filenames=args.files)
         if not args.overwrite and not args.recompute:
             files = filter_files(files, output_dir, calib_method)
@@ -482,11 +472,11 @@ def format_data(args, raw_root, formatted_root):
 
             dataset = FastMRIDataset(files)
             data_loader = DataLoader(
-                dataset, 
-                shuffle=False, 
-                batch_size=1, 
-                num_workers=num_workers, 
-                pin_memory=True, 
+                dataset,
+                shuffle=False,
+                batch_size=1,
+                num_workers=num_workers,
+                pin_memory=True,
                 collate_fn=collate_simple,
             )
             eta = None
@@ -495,10 +485,7 @@ def format_data(args, raw_root, formatted_root):
                 data = data[0]
                 if idx > 0:
                     eta = datetime.timedelta(
-                        seconds=int(
-                            (time.perf_counter() - start_time) / idx * (
-                                    num_files - idx)
-                        )
+                        seconds=int((time.perf_counter() - start_time) / idx * (num_files - idx))
                     )
                 logger.info(
                     "Processing [{}/{}] {} {}".format(
@@ -530,7 +517,7 @@ def create_dev_split(files, seed, split_percentages=(0.8, 0.2)):
 
     Data is split by patients to avoid overlap of patients between
     different datasets.
-    
+
     Returns:
         Tuple[List, List]: Train and validation files.
             Both are sorted by filename
@@ -542,11 +529,11 @@ def create_dev_split(files, seed, split_percentages=(0.8, 0.2)):
             patient_ids[f.attrs["patient_id"]].append(fpath)
 
     # Weight by the number of files they correspond to.
-    patient_ids_list = sorted(list(patient_ids.keys()))
+    patient_ids_list = sorted(patient_ids.keys())
     patient_weights = [len(patient_ids[pid]) for pid in patient_ids_list]
 
     train_patient_ids, val_patient_ids = dp.approximately_split_weighted(
-        patient_ids_list, 
+        patient_ids_list,
         list(split_percentages),
         weights=patient_weights,
         balance="greedy",
@@ -567,7 +554,7 @@ def create_mini_split(files, seed, split_percentages=(0.55, 0.15, 0.3)):
 
     Data is split by patients to avoid overlap of patients between
     different datasets.
-    
+
     Returns:
         Tuple[List, List]: Train and validation files.
             Both are sorted by filename
@@ -579,11 +566,11 @@ def create_mini_split(files, seed, split_percentages=(0.55, 0.15, 0.3)):
             patient_ids[f.attrs["patient_id"]].append(fpath)
 
     # Weight by the number of files they correspond to.
-    patient_ids_list = sorted(list(patient_ids.keys()))
+    patient_ids_list = sorted(patient_ids.keys())
     patient_weights = [len(patient_ids[pid]) for pid in patient_ids_list]
 
     train_patient_ids, val_patient_ids, test_patient_ids = dp.approximately_split_weighted(
-        patient_ids_list, 
+        patient_ids_list,
         list(split_percentages),
         weights=patient_weights,
         balance="greedy",
@@ -610,12 +597,14 @@ def format_annotations(args, raw_root, formatted_root, base_ann_dir):
     # Formatted 1-to-1 files with the original fastMRI repositories.
     # Sort files to get deterministic behavior.
     formatted_files = {}
-    formatted_to_raw_files = {}
-    for split, fastmri_subdir in CHALLENGES[args.challenge].items():
+    formatted_to_raw_files = {}  # noqa: F841
+    for split, fastmri_subdir in CHALLENGES[args.challenge].items():  # noqa: B007
         if ann_method in ("mini",) and split != "val":
             # only need val split for mini dataset
             continue
-        formatted_files[split] = sorted(get_files(os.path.join(formatted_root, split), ignore_missing_dir=True))
+        formatted_files[split] = sorted(
+            get_files(os.path.join(formatted_root, split), ignore_missing_dir=True)
+        )
         # for fpath in formatted_files[split]:
         #     fname = os.path.basename(fpath)
         #     raw_file = os.path.join(raw_root, fastmri_subdir, fname)
@@ -669,14 +658,16 @@ def format_annotations(args, raw_root, formatted_root, base_ann_dir):
                 acquisition = f.attrs["acquisition"]
                 num_slices = f["kspace"].shape[0]
             scan_id = os.path.basename(formatted).split(".h5")[0].split("file")[-1]
-            image_data.append({
-                "file_name": os.path.basename(formatted),
-                # "file_path": formatted,
-                "scan_id": scan_id,
-                "patient_id": patient_id,
-                "acquisition": acquisition,
-                "num_slices": num_slices,
-            })
+            image_data.append(
+                {
+                    "file_name": os.path.basename(formatted),
+                    # "file_path": formatted,
+                    "scan_id": scan_id,
+                    "patient_id": patient_id,
+                    "acquisition": acquisition,
+                    "num_slices": num_slices,
+                }
+            )
 
         split_info = dict(info_template)
         split_info["description"] = split_info["description"].format(args.challenge, split)
@@ -686,8 +677,8 @@ def format_annotations(args, raw_root, formatted_root, base_ann_dir):
         }
 
         num_scans = len(image_data)
-        num_subjects = len(set(x['patient_id'] for x in image_data))
-        num_slices = sum(x['num_slices'] for x in image_data)
+        num_subjects = len({x["patient_id"] for x in image_data})
+        num_slices = sum(x["num_slices"] for x in image_data)
         logger.info(f"Summary: {num_scans} scans, {num_subjects} subjects, {num_slices} slices")
         with open(ann_file, "w") as f:
             json.dump(data, f, indent=2)
@@ -707,7 +698,7 @@ def add_shared_args(parser: argparse.ArgumentParser):
         help="Raw data directory (default: datasets/data/fastmri/raw/{challenge})",
     )
     parser.add_argument(
-        "--formatted", 
+        "--formatted",
         default=None,
         help="Formatted data directory (default: datasets/data/fastmri/{challenge})",
     )
@@ -716,15 +707,12 @@ def add_shared_args(parser: argparse.ArgumentParser):
 def main():
     parser = argparse.ArgumentParser(description="Data preparation")
     subparsers = parser.add_subparsers(
-        title="sub-commands", 
+        title="sub-commands",
         dest="subcommand",
         required=True,
     )
 
-    format_parser = subparsers.add_parser(
-        "format", 
-        help="Format fastMRI dataset"
-    )
+    format_parser = subparsers.add_parser("format", help="Format fastMRI dataset")
     add_shared_args(format_parser)
     format_parser.add_argument(
         "--calib-method",
@@ -746,13 +734,13 @@ def main():
         choices=SPLITS,
         nargs="*",
         default=SPLITS,
-        help=f"Dataset split(s) (default: {SPLITS})"
+        help=f"Dataset split(s) (default: {SPLITS})",
     )
     format_parser.add_argument(
         "--files",
         nargs="*",
         default=None,
-        help="Specific files to format. This should be the basename of the file"
+        help="Specific files to format. This should be the basename of the file",
     )
     format_parser.add_argument(
         "--device",
@@ -761,38 +749,20 @@ def main():
         help="Device on which to run sensitivity calibration step.",
     )
     format_parser.add_argument(
-        "--num-workers",
-        type=int,
-        default=0,
-        help="Number of workers to use."
+        "--num-workers", type=int, default=0, help="Number of workers to use."
     )
     format_parser.add_argument(
         "--recompute",
         action="store_true",
         help="Recompute sensitivity maps and target image. Only overwrites these two fields",
     )
-    format_parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite full file."
-    )
+    format_parser.add_argument("--overwrite", action="store_true", help="Overwrite full file.")
 
-    annotate_parser = subparsers.add_parser(
-        "annotate",
-        help="Create annotation json files"
-    )
+    annotate_parser = subparsers.add_parser("annotate", help="Create annotation json files")
     add_shared_args(annotate_parser)
+    annotate_parser.add_argument("--version", type=str, required=True, help="Annotation version")
     annotate_parser.add_argument(
-        "--version",
-        type=str,
-        required=True,
-        help="Annotation version"
-    )
-    annotate_parser.add_argument(
-        "--seed",
-        type=int,
-        default=1000,
-        help="Random seed (default: 1000)"
+        "--seed", type=int, default=1000, help="Random seed (default: 1000)"
     )
     annotate_parser.add_argument(
         "--method",
@@ -826,5 +796,5 @@ def main():
         raise ValueError(f"Subcommand {args.subcommand} not valid")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

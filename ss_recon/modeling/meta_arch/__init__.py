@@ -1,5 +1,5 @@
-from .build import build_model, META_ARCH_REGISTRY
-from .unrolled import GeneralizedUnrolledCNN
-from .n2r import N2RModel
-from .unet import UnetModel
-from .denoising import DenoisingModel
+from .build import META_ARCH_REGISTRY, build_model  # noqa: F401
+from .denoising import DenoisingModel  # noqa: F401
+from .n2r import N2RModel  # noqa: F401
+from .unet import UnetModel  # noqa: F401
+from .unrolled import GeneralizedUnrolledCNN  # noqa: F401

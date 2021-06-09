@@ -1,14 +1,12 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import json
 import logging
-import pprint
 import os
+import pprint
 import sys
 from collections import Mapping, OrderedDict
 
 import numpy as np
 import torch
-from tabulate import tabulate
 
 
 def print_csv_format(results):
@@ -19,22 +17,17 @@ def print_csv_format(results):
     Args:
         results (OrderedDict[dict]): task_name -> {metric -> score}
     """
-    assert isinstance(
-        results, OrderedDict
-    ), results  # unordered results cannot be properly printed
+    assert isinstance(results, OrderedDict), results  # unordered results cannot be properly printed
     logger = logging.getLogger(__name__)
     important_res = [(k, v) for k, v in results.items() if "-" not in k]
     logger.info("copypaste: " + ",".join([k[0] for k in important_res]))
-    logger.info(
-        "copypaste: "
-        + ",".join(["{0:.4f}".format(k[1]) for k in important_res])
-    )
+    logger.info("copypaste: " + ",".join(["{0:.4f}".format(k[1]) for k in important_res]))
 
     # Additional formatting
     logger.info(
         "Metrics (comma delimited): \n{}\n{}".format(
             ",".join([k[0] for k in important_res]),
-            ",".join(["{0:.4f}".format(k[1]) for k in important_res])
+            ",".join(["{0:.4f}".format(k[1]) for k in important_res]),
         )
     )
 
@@ -106,11 +99,12 @@ SUPPORTED_VAL_METRICS = {
     "iteration": "max",  # find the last checkpoint
 }
 
+
 def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
     """Find the best weights based on a validation criterion/metric.
 
     Args:
-        criterion (str): The criterion that we can select from 
+        criterion (str): The criterion that we can select from
     """
     logger = logging.getLogger(__name__)
 
@@ -148,19 +142,15 @@ def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
     metrics = []
     with open(metrics_file, "r") as f:
         metrics = [json.loads(line.strip()) for line in f]
-    metrics = [
-        m for m in metrics 
-        if criterion in m or any(k.endswith(criterion) for k in m.keys())
-    ]
+    metrics = [m for m in metrics if criterion in m or any(k.endswith(criterion) for k in m.keys())]
     is_metric_wrapped = criterion not in metrics[0]
     if is_metric_wrapped:
         metrics = [
             (
-                m["iteration"], 
-                np.mean([
-                    m[k] for k in m 
-                    if k.endswith(criterion) and "test" not in k.split("/")[0]
-                ]).item(),
+                m["iteration"],
+                np.mean(
+                    [m[k] for k in m if k.endswith(criterion) and "test" not in k.split("/")[0]]
+                ).item(),
             )
             for m in metrics
         ]
@@ -189,7 +179,7 @@ def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
     # iteration __after__ filtering out old training runs.
     metrics = {iteration: value for iteration, value in metrics}
     metrics = [(k, v) for k, v in metrics.items()]
-    best_iter_and_values = sorted(metrics, key=lambda x: x[1], reverse=operation=="max")[:top_k]
+    best_iter_and_values = sorted(metrics, key=lambda x: x[1], reverse=operation == "max")[:top_k]
 
     all_filepaths = []
     all_values = []
@@ -206,7 +196,7 @@ def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
         all_values.append(best_value)
 
         logger.info("Weights: {} - {}: {:0.4f}".format(file_name, criterion, best_value))
-    
+
     if top_k == 1:
         return all_filepaths[0], criterion, all_values[0]
     else:
@@ -218,7 +208,7 @@ def check_consistency(state_dict, model):
 
     Related to issue that loading weights from checkpoints of a cuda model
     does not properly load when model is on cpu. It may also result in
-    warnings for contiguous tensors, but this is not always the case. 
+    warnings for contiguous tensors, but this is not always the case.
     https://github.com/pytorch/pytorch/issues/42300
 
     Args:

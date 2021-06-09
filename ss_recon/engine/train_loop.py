@@ -220,9 +220,7 @@ class SimpleTrainer(TrainerBase):
         """
         Implement the standard training logic described above.
         """
-        assert (
-            self.model.training
-        ), "[SimpleTrainer] model was changed to eval mode!"
+        assert self.model.training, "[SimpleTrainer] model was changed to eval mode!"
         start = time.perf_counter()
         """
         If your want to do something with the data, you can wrap the dataloader.
@@ -240,9 +238,7 @@ class SimpleTrainer(TrainerBase):
         If your want to do something with the losses, you can wrap the model.
         """
         output_dict = self.model(inputs)
-        output_dict.update(
-            {k: inputs[k] for k in ["mean", "std", "norm"] if k in inputs}
-        )
+        output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"] if k in inputs})
         loss_dict = {k: v for k, v in output_dict.items() if "loss" in k}
         loss_dict.update(self.loss_computer(inputs, output_dict))
 
@@ -253,9 +249,7 @@ class SimpleTrainer(TrainerBase):
         metrics_dict = loss_dict
         metrics_dict["data_time"] = data_time
         metrics_dict["total_loss"] = losses
-        metrics_dict.update(
-            self.metrics_computer(output_dict) if self.metrics_computer else {}
-        )
+        metrics_dict.update(self.metrics_computer(output_dict) if self.metrics_computer else {})
         self._write_metrics(metrics_dict)
 
         """
@@ -284,9 +278,7 @@ class SimpleTrainer(TrainerBase):
             metrics_dict (dict): dict of scalar metrics
         """
         metrics_dict = {
-            k: torch.mean(v.detach().cpu()).item()
-            if isinstance(v, torch.Tensor)
-            else float(v)
+            k: torch.mean(v.detach().cpu()).item() if isinstance(v, torch.Tensor) else float(v)
             for k, v in metrics_dict.items()
         }
 

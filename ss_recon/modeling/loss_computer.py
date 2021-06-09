@@ -4,10 +4,8 @@ import torch
 from fvcore.common.registry import Registry
 
 from ss_recon.data.transforms.transform import build_normalizer
-from ss_recon.evaluation.metrics import compute_nrmse
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import transforms as T
-
 
 LOSS_COMPUTER_REGISTRY = Registry("LOSS_COMPUTER")  # noqa F401 isort:skip
 LOSS_COMPUTER_REGISTRY.__doc__ = """
@@ -49,7 +47,10 @@ class LossComputer(ABC):
         nrmse = l2 / torch.sqrt(torch.mean(tgt_mag ** 2, dim=1))
 
         metrics_dict = {
-            "l1": l1, "l2": l2.mean(), "psnr": psnr.mean(), "nrmse": nrmse.mean(),
+            "l1": l1,
+            "l2": l2.mean(),
+            "psnr": psnr.mean(),
+            "nrmse": nrmse.mean(),
             "mag_l1": mag_l1,
         }
 
@@ -117,12 +118,9 @@ class N2RLossComputer(LossComputer):
         # self.robust_step_size = cfg.MODEL.LOSS.ROBUST_STEP_SIZE
 
     def _compute_metrics(self, input, output, loss):
-        """Computes image metrics on prediction and target data.
-        """
+        """Computes image metrics on prediction and target data."""
         if output is None or len(output) == 0:
-            return {
-                k: torch.Tensor([0.0]).detach() for k in ["l1", "l2", "psnr", "loss"]
-            }
+            return {k: torch.Tensor([0.0]).detach() for k in ["l1", "l2", "psnr", "loss"]}
 
         pred: torch.Tensor = output["pred"]
         target = output["target"].to(pred.device)
@@ -165,14 +163,18 @@ class N2RLossComputer(LossComputer):
         loss = 0
         metrics_recon = {
             "recon_{}".format(k): v
-            for k, v in self._compute_metrics(input.get("supervised", None), output_recon, self.recon_loss).items()
+            for k, v in self._compute_metrics(
+                input.get("supervised", None), output_recon, self.recon_loss
+            ).items()
         }
         if output_recon is not None:
             loss += metrics_recon["recon_loss"]
 
         metrics_consistency = {
             "cons_{}".format(k): v
-            for k, v in self._compute_metrics(input.get("unsupervised", None), output_consistency, self.consistency_loss).items() # noqa
+            for k, v in self._compute_metrics(
+                input.get("unsupervised", None), output_consistency, self.consistency_loss
+            ).items()  # noqa
         }
         if output_consistency is not None:
             loss += self.consistency_weight * metrics_consistency["cons_loss"]
@@ -193,12 +195,12 @@ def perp_loss(yhat, y):
     Args:
         yhat: Predicted reconstruction. Must be complex.
         y: Target reconstruction. Must be complex.
-    
+
     Returns:
         Dict[str, scalar]:
 
     References:
-        Terpstra, et al. "Rethinking complex image reconstruction: 
+        Terpstra, et al. "Rethinking complex image reconstruction:
         ⟂-loss for improved complex image reconstruction with deep learning."
         International Society of Magnetic Resonance in Medicine Annual Meeting
         2021.
@@ -207,7 +209,7 @@ def perp_loss(yhat, y):
         yhat = torch.view_as_real(yhat)
     if cplx.is_complex(y):
         y = torch.view_as_real(y)
-    
+
     P = torch.abs(yhat[..., 0] * y[..., 1] - yhat[..., 1] * y[..., 0]) / cplx.abs(y)
     l1 = torch.abs(cplx.abs(y) - cplx.abs(yhat))
 
