@@ -291,9 +291,6 @@ def poisson(
         SIGGRAPH sketches. 2007.
 
     """
-    if isinstance(calib, tuple):
-        calib = list(calib)
-
     y, x = np.mgrid[: img_shape[-2], : img_shape[-1]]
     x = np.maximum(abs(x - img_shape[-1] / 2) - calib[-1] / 2, 0)
     x /= x.max()
