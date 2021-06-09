@@ -57,6 +57,30 @@ class TestEnvVariables(unittest.TestCase):
 
         self._reset_var(env_var, orig_val)
 
+    def test_debug(self):
+        env_var = "SSRECON_DEBUG"
+        orig_val = os.environ.get(env_var, "")
+
+        os.environ[env_var] = ""
+        assert not env.is_debug()
+
+        os.environ[env_var] = "True"
+        assert env.is_debug()
+
+        self._reset_var(env_var, orig_val)
+
+    def test_reproducibility_mode(self):
+        env_var = "SSRECON_REPRO"
+        orig_val = os.environ.get(env_var, "")
+
+        os.environ[env_var] = ""
+        assert not env.is_repro()
+
+        os.environ[env_var] = "True"
+        assert env.is_repro()
+
+        self._reset_var(env_var, orig_val)
+
 
 if __name__ == "__main__":
     unittest.main()

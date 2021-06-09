@@ -14,12 +14,15 @@ their projects.
 import argparse
 import logging
 import os
+import re
 import warnings
-from typing import Sequence
+from typing import Mapping, Sequence
 
 import torch
 from fvcore.common.file_io import PathManager
 
+from ss_recon.config.config import CfgNode
+from ss_recon.utils import env
 from ss_recon.utils.collect_env import collect_env_info
 from ss_recon.utils.env import get_available_gpus, seed_all_rng
 from ss_recon.utils.logger import setup_logger
@@ -54,6 +57,9 @@ def default_argument_parser():
     )
     parser.add_argument("--devices", type=int, nargs="*", default=None)
     parser.add_argument("--debug", action="store_true", help="use debug mode")
+    parser.add_argument(
+        "--reproducible", "--repro", action="store_true", help="activate reproducible mode"
+    )
 
     parser.add_argument(
         "opts",
@@ -68,18 +74,33 @@ def default_setup(cfg, args, save_cfg: bool = True):
     """
     Perform some basic common setups at the beginning of a job, including:
 
-    1. Set up the detectron2 logger
+    1. Set up the ss_recon logger
     2. Log basic information about environment, cmdline arguments, and config
     3. Backup the config to the output directory
+    4. Enables debug mode if ``args.debug==True``
+    5. Enables reproducible model if ``args.reproducible==True``
 
     Args:
         cfg (CfgNode): the full config to be used
         args (argparse.NameSpace): the command line arguments to be logged
         save_cfg (bool, optional): If `True`, writes config to `cfg.OUTPUT_DIR`.
+
+    Note:
+        Project-specific environment variables are modified by this function.
+        ``cfg`` is also modified in-place.
     """
+    is_repro_mode = (
+        env.is_repro() if env.is_repro() else (hasattr(args, "reproducible") and args.reproducible)
+    )
+    eval_only = hasattr(args, "eval_only") and args.eval_only
+
+    # Update config parameters before saving.
     cfg.defrost()
     cfg.OUTPUT_DIR = PathManager.get_local_path(cfg.OUTPUT_DIR)
+    if is_repro_mode:
+        _init_reproducible_mode(cfg, eval_only)
     cfg.freeze()
+
     output_dir = cfg.OUTPUT_DIR
     if output_dir:
         PathManager.mkdirs(output_dir)
@@ -90,6 +111,9 @@ def default_setup(cfg, args, save_cfg: bool = True):
     if args.debug:
         os.environ["SSRECON_DEBUG"] = "True"
         logger.info("Running in debug mode")
+    if is_repro_mode:
+        os.environ["SSRECON_REPRO"] = "True"
+        logger.info("Running in reproducible mode")
 
     logger.info("Environment info:\n" + collect_env_info())
 
@@ -131,7 +155,7 @@ def default_setup(cfg, args, save_cfg: bool = True):
     # cudnn benchmark has large overhead.
     # It shouldn't be used considering the small size of
     # typical validation set.
-    if not (hasattr(args, "eval_only") and args.eval_only):
+    if not eval_only:
         torch.backends.cudnn.benchmark = cfg.CUDNN_BENCHMARK
 
 
@@ -237,3 +261,58 @@ def init_wandb_run(
         **wandb_kwargs,
     )
     return wandb.run
+
+
+def _init_reproducible_mode(cfg: CfgNode, eval_only: bool):
+    """Activates reproducible mode and sets appropriate config paraemters.
+
+    This method does the following:
+        1. Sets environment variable indiciating project is in reproducible mode.
+        2. Sets all seeds in the ``cfg`` if they are not initialized.
+        3. Enables cuda benchmarking ``eval_only=False`` and ``cfg.CUDNN_BENCHMARK=True``.
+        4. Sets ``torch.backends.cudann.deterministic=True``.
+
+    Seed fields in ``cfg`` are indicated by keys that end with ``"SEED"``
+    and whose corresponding value is an integer. Below are some examples of
+    fields that would match as a seed field:
+
+        * cfg.SEED = -1
+        * cfg.XX.YY.SEED = -1
+        * cfg.A_SEED = -1
+        * cfg.SEED_VAL = -1  # this would not match, does not end with ``'SEED'``.
+        * cfg.SEED = "alpha"  # this would not match, value is not an int.
+
+    Args:
+        cfg (CfgNode): The full config. This will be modified in place.
+        eval_only (bool): If ``True``, initialize reproducible
+            mode in an evaluation only setting.
+
+    Note:
+        This method should typically be called through :func:`default_setup`.
+    """
+    os.environ["SSRECON_REPRO"] = "True"
+
+    orig_cfg = cfg.clone()
+    cfg.defrost()
+
+    # Set all seeds in the config if they are not set.
+    seed = seed_all_rng(None if cfg.SEED < 0 else cfg.SEED)
+    _set_all_seeds(cfg, seed)
+
+    # Turn off cuda benchmarking if this run is not only for evaluation.
+    # If eval_only, default to current config value.
+    cfg.CUDNN_BENCHMARK = False if not eval_only else orig_cfg.CUDNN_BENCHMARK
+    torch.backends.cudnn.benchmark = cfg.CUDNN_BENCHMARK
+
+    # Turn on deterministic mode.
+    torch.backends.cudnn.deterministic = True
+
+    cfg.freeze()
+
+
+def _set_all_seeds(cfg, seed_val):
+    for key, value in cfg.items():
+        if re.match("^.*SEED$", key) and isinstance(value, int) and value < 0:
+            cfg.__setattr__(key, seed_val)
+        if isinstance(value, Mapping):
+            _set_all_seeds(value, seed_val)

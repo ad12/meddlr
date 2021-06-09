@@ -2,11 +2,11 @@ import torch
 
 from ss_recon.utils import env
 
-if env.pt_version() >= [1,6]:
+if env.pt_version() >= [1, 6]:
     import torch.fft
 
 
-class MotionModel():
+class MotionModel:
     """A model that corrupts kspace inputs with motion.
 
     Motion is a common artifact experienced during the MR imaging forward problem.
@@ -29,13 +29,14 @@ class MotionModel():
             - ``traj``: The scan trajectory
             - ``etl``: The echo train length - how many readouts per shot.
             - ``num_shots``: Number of shots.
-        
+
         2. What would a simple translational motion model look?
-    
+
     Note:
         We do not store this as a module or else it would be saved to the model
         definition, which we dont want.
     """
+
     def __init__(self, seed: int = None):
         super().__init__()
 

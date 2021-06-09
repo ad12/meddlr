@@ -55,8 +55,14 @@ To train a basic configuration from the repository folder in the command line, r
 ```bash
 python tools/train_net.py --config-file configs/tests/basic.yaml
 
-# Run in debug mode.`
+# Run in debug mode.
 python tools/train_net.py --config-file configs/tests/basic.yaml --debug
+
+# Run in reproducibility mode.
+# This tries to make the run as reproducible as possible
+# (e.g. setting seeds, deterministism, etc.).
+python tools/train_net.py --config-file configs/tests/basic.yaml --reproducible
+# or SSRECON_REPRO=True python tools/train_net.py --config-file configs/tests/basic.yaml
 ```
 
 To evaluate the results, use `tools/eval_net.py`.

@@ -23,6 +23,9 @@ def seed_all_rng(seed=None):
 
     Args:
         seed (int): if None, will use a strong random seed.
+
+    Returns:
+        seed (int): The seed used.
     """
     if seed is None:
         seed = (
@@ -35,6 +38,7 @@ def seed_all_rng(seed=None):
     np.random.seed(seed)
     torch.set_rng_state(torch.manual_seed(seed).get_state())
     random.seed(seed)
+    return seed
 
 
 # from https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path  # noqa
@@ -164,6 +168,10 @@ def get_world_size():
 
 def is_debug() -> bool:
     return os.environ.get("SSRECON_DEBUG", "") == "True"
+
+
+def is_repro() -> bool:
+    return os.environ.get("SSRECON_REPRO", "") == "True"
 
 
 def supports_wandb():
