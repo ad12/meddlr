@@ -29,6 +29,7 @@ import itertools
 import logging
 import multiprocessing as mp
 import os
+import random
 import json
 import getpass
 import time
@@ -55,6 +56,11 @@ from ss_recon.utils.logger import setup_logger
 from ss_recon.utils import transforms as T
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils.env import seed_all_rng
+
+try:
+    import cupy as cp
+except ImportError:
+    cp = None
 
 
 _FILE_DIR = os.path.dirname(__file__)
@@ -92,8 +98,15 @@ CHALLENGES = {
 ANN_METHODS = ["dev", "toy-dev", "mini"]
 
 def seed_everything(device=None):
-    seed_all_rng(SEED)
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed_all(SEED)
+    random.seed(SEED)
+    if cp is not None:
+        cp.random.seed(SEED)
     if device is not None:
+        if isinstance(device, int):
+            device = sp.Device(device)
         with device:
             device.xp.random.seed(SEED)
 
@@ -112,7 +125,7 @@ def get_files(dir_path: str, ignore_missing_dir=False, filenames=None):
             raise NotADirectoryError(f"Directory {dir_path} does not exist")
     files = [
         os.path.join(dir_path, x) for x in os.listdir(dir_path)
-        if is_valid_file(x) and (not filenames or os.path.splitext(x)[0] in filenames)
+        if is_valid_file(x) and (not filenames or x in filenames or os.path.splitext(x)[0] in filenames)
     ]
     return files
 
@@ -200,6 +213,19 @@ def process_slice(
     device: int = -1,
     nmaps: int = NUM_EMAPS,
 ):
+    """Process 2D multi-coil kspace slice.
+
+    Args:
+        kspace (np.ndarray): The k-space. Shape ``(Ky, Kz, #coils)
+        calib_method (str): The calibration method.
+        calib_size (int): The calibration size.
+        device (int): The device to perform computation on. ``-1`` indicates CPU.
+        nmaps (int): Number of maps to create.
+    
+    Returns:
+        image (np.ndarray): The coil-combined image(s). Shape ``(Ky, Kz, #maps)``.
+        maps (np.ndarray): The maps. Shape ``(Ky, Kz, #coils, #maps)``
+    """
     # get data dimensions
     nky, nkz, ncoils = kspace.shape
 
@@ -226,7 +252,6 @@ def process_slice(
         ).run()
         # import pdb; pdb.set_trace()
         if not isinstance(maps, np.ndarray):
-            import cupy as cp
             maps = cp.asnumpy(maps)
     elif calib_method == "jsense":
         maps = app.JsenseRecon(
@@ -269,6 +294,9 @@ def format_train_file(
     recompute: bool=False,
     overwrite: bool=False,
 ):
+    # Seed everything before processing the slice.
+    seed_everything(device)
+
     file_path = data["file_path"]
     kspace_orig = data["kspace_orig"]
     kspace = data["kspace"]
@@ -430,6 +458,9 @@ def format_data(args, raw_root, formatted_root):
 
     failed_cases = []
     for idx, (split, calib_method, center_fraction) in enumerate(all_setups):
+        # Seed everything before processing the slice.
+        seed_everything(args.device)
+
         input_dir = os.path.join(input_root, CHALLENGES[args.challenge][split])
         output_dir = os.path.join(output_root, split)
         PathManager.mkdirs(output_dir)
@@ -704,7 +735,7 @@ def main():
     )
     format_parser.add_argument(
         "--center-fraction",
-        choices=[0.04, 0.08],
+        choices=[0.04, 0.08, 0.3],
         nargs="*",
         default=[0.04],
         type=float,

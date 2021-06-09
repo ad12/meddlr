@@ -1,7 +1,6 @@
 import os
 import numba as nb
 import numpy as np
-import sigpy.mri
 import torch
 from fvcore.common.registry import Registry
 from typing import Sequence
