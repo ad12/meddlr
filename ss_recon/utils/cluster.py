@@ -188,6 +188,24 @@ _USER_PATHS = {
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
     },
+    "bgunel": {
+        CLUSTER.ROMA: (
+            "/dataNAS/people/arjun/data",
+            "/dataNAS/people/bgunel/results/mrs",
+        ),
+        CLUSTER.VIGATA: (
+            "/dataNAS/people/arjun/data",
+            "/dataNAS/people/bgunel/results/mrs",
+        ),
+        CLUSTER.SIENA: (
+            "/data/datasets",  # mounted on siena only
+            "/dataNAS/people/bgunel/results/mrs",
+        ),
+        CLUSTER.TORINO: (
+            "/dataNAS/people/arjun/data",
+            "/dataNAS/people/bgunel/results/mrs",
+        ),
+    },
     # New users add path preference below.
 }
 
