@@ -37,6 +37,7 @@ class ReconEvaluator(DatasetEvaluator):
         skip_rescale=False,
         save_scans=False,
         metrics=None,
+        flush_period: int = None,
     ):
         """
         Args:
@@ -58,6 +59,10 @@ class ReconEvaluator(DatasetEvaluator):
                     https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf
                 * 'nrmse': Complex normalized root-mean-squared-error
                 * 'nrmse_mag': Magnitude normalized root-mean-squared-error.
+            flush_period (int, optional): The approximate period over which predictions
+                are cleared and running results are computed. This parameter helps
+                mitigate OOM errors. The period is equivalent to number of examples
+                (not batches).
         """
         # self._tasks = self._tasks_from_config(cfg)
         self._output_dir = output_dir
@@ -73,6 +78,14 @@ class ReconEvaluator(DatasetEvaluator):
 
         self._slice_metrics = [m for m in metrics if not m.endswith("_scan")] if metrics else None
         self._scan_metrics = [m[:-5] for m in metrics if m.endswith("_scan")] if metrics else None
+        self._results = None
+        self._running_results = None
+
+        if flush_period is None:
+            flush_period = cfg.TEST.FLUSH_PERIOD
+        if flush_period is None or flush_period < 0:
+            flush_period = 0
+        self.flush_period = flush_period
 
         # TODO: Uncomment when metadata is supported
         # self._metadata = MetadataCatalog.get(dataset_name)
@@ -96,19 +109,8 @@ class ReconEvaluator(DatasetEvaluator):
         self._predictions = []
         self._scan_map = defaultdict(dict)
         self.scans = None
-
-    def _tasks_from_config(self, cfg):
-        """
-        Returns:
-            tuple[str]: tasks that can be evaluated under the given
-                configuration.
-        """
-        tasks = ("bbox",)
-        if cfg.MODEL.MASK_ON:
-            tasks = tasks + ("segm",)
-        if cfg.MODEL.KEYPOINT_ON:
-            tasks = tasks + ("keypoints",)
-        return tasks
+        self._results = None
+        self._running_results = None
 
     def process(self, inputs, outputs):
         """
@@ -145,6 +147,9 @@ class ReconEvaluator(DatasetEvaluator):
             ]
         )
 
+        if self.flush_period > 0 and len(self._predictions) >= self.flush_period:
+            self.flush(skip_last_scan=True)
+
         # preds = outputs["pred"].to(self._cpu_device)
         # targets = outputs["target"].to(self._cpu_device)
         # means = inputs["mean"].to(self._cpu_device)
@@ -160,6 +165,43 @@ class ReconEvaluator(DatasetEvaluator):
         #     prediction = {"pred": pred, "target": target}
 
         #     self._predictions.append(prediction)
+
+    def flush(self, skip_last_scan: bool = True):
+        """Clear predictions and computing running metrics.
+
+        Results are added to ``self._running_results``.
+
+        Args:
+            skip_last_scan (bool, optional): If ``True``, does not flush
+                most recent scan. This avoids prematurely computing metrics
+                before all slices of the scan are available.
+        """
+        remaining_preds = []
+
+        if skip_last_scan:
+            try:
+                scan_ids = np.asarray([p["metadata"]["scan_id"] for p in self._predictions])
+            except KeyError:
+                raise ValueError(
+                    "Cannot skip last scan. metadata does not contain 'scan_id' keyword."
+                )
+
+            change_idxs = np.where(scan_ids[1:] != scan_ids[:-1])[0]
+            if len(change_idxs) == 0:
+                warnings.warn(
+                    "Flushing skipped. All current predictions are from the same scan. "
+                    "To force flush, set `skip_last_scan=True`."
+                )
+                return
+
+            last_idx = int(change_idxs[-1] + 1)
+            remaining_preds = self._predictions[last_idx:]
+            self._predictions = self._predictions[:last_idx]
+
+        self._logger.info("Flushing results...")
+
+        self.evaluate()
+        self._predictions = remaining_preds
 
     def structure_scans(self):
         """Structure scans into volumes to be used to evaluation."""
@@ -203,7 +245,13 @@ class ReconEvaluator(DatasetEvaluator):
             for k, v in val.items():
                 pred_vals[f"val_{k}_scan"].append(v)
 
-        self._results = OrderedDict({k: np.mean(v) for k, v in pred_vals.items()})
+        if self._running_results is None:
+            self._running_results = defaultdict(list)
+        for k, v in pred_vals.items():
+            self._running_results[k].extend(v)
+
+        self._results = OrderedDict({k: np.mean(v) for k, v in self._running_results.items()})
+
         # Copy so the caller can do whatever with results
         return copy.deepcopy(self._results)
 
@@ -237,10 +285,16 @@ class ReconEvaluator(DatasetEvaluator):
             for scan_id, pred in tqdm(scans.items()):
                 np.save(os.path.join(self._output_dir, f"{scan_id}.npy"), pred["pred"])
 
+        if self._running_results is None:
+            self._running_results = defaultdict(lambda: defaultdict(list))
+        for scan_id, metrics in pred_vals.items():
+            for k, v in metrics.items():
+                self._running_results[scan_id][k].extend(v)
+
         self._results = OrderedDict(
             {
                 scan_id: {k: np.mean(v) for k, v in metrics.items()}
-                for scan_id, metrics in pred_vals.items()
+                for scan_id, metrics in self._running_results.items()
             }
         )
 

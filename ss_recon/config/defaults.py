@@ -233,6 +233,10 @@ _C.TEST.VAL_AS_TEST = True
 # Validation metrics.
 _C.TEST.VAL_METRICS = CN()
 _C.TEST.VAL_METRICS.RECON = ()
+# The period over which to flush evaluation results.
+# Specify if you are getting OOM errors during evaluation.
+# Set to 0 to disable.
+_C.TEST.FLUSH_PERIOD = 0
 
 # ---------------------------------------------------------------------------- #
 # Misc options
