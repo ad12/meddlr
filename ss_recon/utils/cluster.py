@@ -42,6 +42,7 @@ class Cluster(Enum):
     AUTOFOCUS = 8, ["autofocus"]
     SIENA = 9, ["siena"]
     TORINO = 10, ["torino"]
+    SPIRAL = 11, ["spiral"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -206,6 +207,12 @@ _USER_PATHS = {
             "/dataNAS/people/bgunel/results/mrs",
         ),
     },
+    "harris": {
+        CLUSTER.SPIRAL: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/home_local/harris/dl-ss-recon/results/ss_recon",
+        )
+    }
     # New users add path preference below.
 }
 
