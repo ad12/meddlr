@@ -11,6 +11,7 @@ MODEL:
 DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
   VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
 DATALOADER:
   NUM_WORKERS: 0  # for debugging purposes
 SOLVER:
