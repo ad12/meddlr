@@ -210,7 +210,7 @@ _USER_PATHS = {
     "harris": {
         CLUSTER.SPIRAL: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home_local/harris/dl-ss-recon/results/ss_recon",
+            "/home_local/harris/results",
         )
     }
     # New users add path preference below.
