@@ -43,7 +43,7 @@ class MotionModel:
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
 
-    def forward(self, kspace, mask=None, seed=None, clone=True) -> torch.Tensor:
+    def forward(self, kspace, seed=None, clone=True) -> torch.Tensor:
         """Performs motion corruption on kspace image.
 
         TODO: The current arguments were copied from the NoiseModel.
@@ -63,7 +63,6 @@ class MotionModel:
         """
         if clone:
             kspace = kspace.clone()
-        mask = cplx.get_mask(kspace)
 
         width = kspace.shape[1]
         phase_matrix = np.zeros(kspace.shape)
@@ -80,8 +79,7 @@ class MotionModel:
                 rand_err = odd_err.numpy()
             phase_error = np.exp(-1j * rand_err)
             phase_matrix[:, line, :] = phase_error
-        masked_motion = mask * torch.from_numpy(phase_matrix)
-        aug_kspace = kspace * masked_motion
+        aug_kspace = kspace * torch.from_numpy(phase_matrix)
         return aug_kspace
 
     def choose_motion_range(self, range):
