@@ -60,6 +60,7 @@ _C.MODEL.CONSISTENCY.AUG = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
+_C.MODEL.CONSISTENCY.AUG.MOTION_RANGE = (0.2,0.5)
 # Noise scheduler
 _C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_METHOD = ""
@@ -98,6 +99,14 @@ _C.MODEL.N2R = CN()
 _C.MODEL.N2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
 # Use MODEL.CONSISTENCY.AUG.NOISE.STD_DEV to control noise parameters.
+
+# -----------------------------------------------------------------------------
+# Motion2Recon (M2R) model
+# -----------------------------------------------------------------------------
+_C.MODEL.M2R = CN()
+_C.MODEL.M2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.M2R.USE_SUPERVISED_CONSISTENCY = False
+# Use MODEL.CONSISTENCY.AUG.MOTION_RANGE to control motion parameters.
 
 # -----------------------------------------------------------------------------
 # Dataset

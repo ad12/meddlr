@@ -1,3 +1,4 @@
+from numpy.lib.type_check import imag
 import torch
 
 import numpy as np
@@ -32,13 +33,13 @@ class MotionModel:
         definition, which we dont want.
     """
 
-    def __init__(self, seed: int = None):
+    def __init__(self, motion_range = (0.2, 0.5), seed: int = None):
         super().__init__()
         g = torch.Generator()
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
-        self.motion_range = (0.2, 0.5)
+        self.motion_range = motion_range
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -65,26 +66,27 @@ class MotionModel:
             kspace = kspace.clone()
 
         width = kspace.shape[2]
-        phase_matrix = np.zeros(kspace.shape)
+        phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
         scale = (self.motion_range[1] - self.motion_range[0]) * \
                 torch.rand(1) + self.motion_range[0]
 
         g = self.generator if seed is None else torch.Generator().manual_seed(seed)
-        odd_err = (2 * np.pi * scale) * torch.rand(1, generator=g) - np.pi * scale
-        even_err = (2 * np.pi * scale) * torch.rand(1, generator=g) - np.pi * scale
+        odd_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
+        even_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
         for line in range(width):
             if line % 2 == 0:
-                rand_err = even_err.numpy()
+                rand_err = even_err
             else:
-                rand_err = odd_err.numpy()
+                rand_err = odd_err
             phase_error = np.exp(-1j * rand_err)
             phase_matrix[:, :, line] = phase_error
-        aug_kspace = kspace * torch.from_numpy(phase_matrix)
+        aug_kspace = kspace * phase_matrix
         return aug_kspace
 
     def choose_motion_range(self, range):
         self.motion_range = range
 
     @classmethod
-    def from_cfg(cls, **kwargs):
-        return cls(**kwargs)
+    def from_cfg(cls, cfg, seed=None, **kwargs):
+        motion_range = cfg.MODEL.CONSISTENCY.AUG.MOTION_RANGE
+        return cls(motion_range=motion_range, seed=seed, **kwargs)
