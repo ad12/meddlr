@@ -38,7 +38,7 @@ class MotionModel:
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
-        self.motion_range = (0.5, 0.7)
+        self.motion_range = (0.2, 0.5)
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -64,21 +64,21 @@ class MotionModel:
         if clone:
             kspace = kspace.clone()
 
-        width = kspace.shape[1]
+        width = kspace.shape[2]
         phase_matrix = np.zeros(kspace.shape)
         scale = (self.motion_range[1] - self.motion_range[0]) * \
                 torch.rand(1) + self.motion_range[0]
 
         g = self.generator if seed is None else torch.Generator().manual_seed(seed)
-        odd_err = (np.pi * scale) * torch.rand(1, generator=g) - np.pi/2 * scale
-        even_err = (np.pi * scale) * torch.rand(1, generator=g) - np.pi/2 * scale
+        odd_err = (2 * np.pi * scale) * torch.rand(1, generator=g) - np.pi * scale
+        even_err = (2 * np.pi * scale) * torch.rand(1, generator=g) - np.pi * scale
         for line in range(width):
             if line % 2 == 0:
                 rand_err = even_err.numpy()
             else:
                 rand_err = odd_err.numpy()
             phase_error = np.exp(-1j * rand_err)
-            phase_matrix[:, line, :] = phase_error
+            phase_matrix[:, :, line] = phase_error
         aug_kspace = kspace * torch.from_numpy(phase_matrix)
         return aug_kspace
 
