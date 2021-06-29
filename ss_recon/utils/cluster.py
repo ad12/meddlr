@@ -166,7 +166,8 @@ _USER_PATHS = {
             "/share/pi/bah/arjundd/results/ss_recon",
         ),
         CLUSTER.SIENA: (
-            "/data/datasets",  # mounted on siena only
+            # "/data/datasets",  # mounted on siena only
+            "/dataNAS/people/arjun/data",
             "/bmrNAS/people/arjun/results/ss_recon",
         ),
         CLUSTER.TORINO: (

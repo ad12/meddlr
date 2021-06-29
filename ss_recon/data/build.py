@@ -7,8 +7,9 @@ from typing import Sequence
 import numpy as np
 from torch.utils.data import DataLoader
 
+from ss_recon.data.samplers.build import build_train_sampler, build_val_sampler
+
 from .catalog import DatasetCatalog
-from .samplers import AlternatingSampler
 from .slice_dataset import SliceData, collate_by_supervision, default_collate, qDESSSliceDataset
 from .transforms import transform as T
 from .transforms.subsample import build_mask_func
@@ -156,31 +157,25 @@ def build_recon_train_loader(cfg, dataset_type=None):
     collate_fn = collate_by_supervision if is_semi_supervised else default_collate
 
     # Build sampler.
-    sampler = cfg.DATALOADER.SAMPLER_TRAIN
-    shuffle = False  # shuffling should be handled by sampler, if specified.
-    seed = cfg.SEED if cfg.SEED > -1 else None
-    if sampler == "AlternatingSampler":
-        sampler = AlternatingSampler(
-            train_data,
-            T_s=cfg.DATALOADER.ALT_SAMPLER.PERIOD_SUPERVISED,
-            T_us=cfg.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED,
-            seed=seed,
-        )
-    elif sampler == "":
-        sampler = None
-        shuffle = True
+    sampler, is_batch_sampler = build_train_sampler(cfg, train_data)
+    shuffle = not sampler  # shuffling should be handled by sampler, if specified.
+    if is_batch_sampler:
+        dl_kwargs = {"batch_sampler": sampler}
     else:
-        raise ValueError("Unknown Sampler {}".format(sampler))
+        dl_kwargs = {
+            "sampler": sampler,
+            "batch_size": cfg.SOLVER.TRAIN_BATCH_SIZE,
+            "shuffle": shuffle,
+            "drop_last": cfg.DATALOADER.DROP_LAST,
+        }
 
     train_loader = DataLoader(
         dataset=train_data,
-        batch_size=cfg.SOLVER.TRAIN_BATCH_SIZE,
-        shuffle=shuffle,
         num_workers=cfg.DATALOADER.NUM_WORKERS,
-        drop_last=cfg.DATALOADER.DROP_LAST,
         pin_memory=True,
-        sampler=sampler,
         collate_fn=collate_fn,
+        prefetch_factor=cfg.DATALOADER.PREFETCH_FACTOR,
+        **dl_kwargs,
     )
     return train_loader
 
@@ -200,19 +195,31 @@ def build_recon_val_loader(
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg, mask_func, is_test=as_test, add_noise=add_noise)
 
-    train_data = _build_dataset(
+    val_data = _build_dataset(
         cfg, dataset_dicts, data_transform, is_eval=True, dataset_type=dataset_type
     )
-    train_loader = DataLoader(
-        dataset=train_data,
-        batch_size=cfg.SOLVER.TEST_BATCH_SIZE,
-        shuffle=False,
+
+    # Build sampler.
+    sampler, is_batch_sampler = build_val_sampler(cfg, val_data)
+    if is_batch_sampler:
+        dl_kwargs = {"batch_sampler": sampler}
+    else:
+        dl_kwargs = {
+            "sampler": sampler,
+            "batch_size": cfg.SOLVER.TEST_BATCH_SIZE,
+            "shuffle": False,
+            "drop_last": False,
+        }
+
+    val_loader = DataLoader(
+        dataset=val_data,
         num_workers=cfg.DATALOADER.NUM_WORKERS,
-        drop_last=False,
         pin_memory=True,
         collate_fn=default_collate,
+        prefetch_factor=cfg.DATALOADER.PREFETCH_FACTOR,
+        **dl_kwargs,
     )
-    return train_loader
+    return val_loader
 
 
 def build_data_loaders_per_scan(cfg, dataset_name, accelerations=None):

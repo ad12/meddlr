@@ -63,6 +63,11 @@ python tools/train_net.py --config-file configs/tests/basic.yaml --debug
 # (e.g. setting seeds, deterministism, etc.).
 python tools/train_net.py --config-file configs/tests/basic.yaml --reproducible
 # or SSRECON_REPRO=True python tools/train_net.py --config-file configs/tests/basic.yaml
+
+# (ALPHA) Enable profiling RAM.
+# This tracks the RAM usage using the guppy library.
+# Install guppy with `pip install guppy3`
+SSRECON_MPROFILE=True python tools/train_net.py --config-file configs/tests/basic.yaml
 ```
 
 To evaluate the results, use `tools/eval_net.py`.

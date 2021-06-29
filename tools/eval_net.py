@@ -419,7 +419,10 @@ if __name__ == "__main__":
         "--iter-limit",
         default=None,
         type=int,
-        help="Iteration limit. Chooses weights below this time point.",
+        help=(
+            "Time limit. If negative, interpreted as epoch. "
+            "Chooses weights at or before this time point."
+        ),
     )
     parser.add_argument(
         "--overwrite",

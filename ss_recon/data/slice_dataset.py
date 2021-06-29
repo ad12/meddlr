@@ -97,11 +97,15 @@ class SliceData(Dataset):
 
             if "kspace_size" in dd:
                 num_slices = dd["kspace_size"][0]
+                shape = dd["kspace_size"][1:3]
             elif "num_slices" in dd:
                 num_slices = dd["num_slices"]
+                with h5py.File(file_path, "r") as f:
+                    shape = f["kspace"].shape[1:3]
             else:
                 with h5py.File(file_path, "r") as f:
                     num_slices = f["kspace"].shape[0]
+                    shape = f["kspace"].shape[0]
 
             examples.extend(
                 [
@@ -110,6 +114,8 @@ class SliceData(Dataset):
                         "slice_id": slice_id,
                         "is_unsupervised": is_unsupervised,
                         "fixed_acc": acc,
+                        "_metadata": dd.get("_metadata", {}),
+                        "inplane_shape": shape,
                     }
                     for slice_id in range(num_slices)
                 ]

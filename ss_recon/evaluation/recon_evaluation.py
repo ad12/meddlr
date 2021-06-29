@@ -119,6 +119,10 @@ class ReconEvaluator(DatasetEvaluator):
                 Currently this should be an empty dictionary.
             outputs: the outputs of a COCO model. It is a list of dicts with key
                 "instances" that contains :class:`Instances`.
+
+        Note:
+            All elements in ``inputs`` and ``outputs`` should already
+            be detached from the computational graph.
         """
         N = outputs["pred"].shape[0]
 

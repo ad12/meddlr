@@ -117,6 +117,8 @@ _C.DATASETS.TEST = ()
 _C.DATALOADER = CN()
 # Number of data loading threads
 _C.DATALOADER.NUM_WORKERS = 4
+# Number of batches to prefetch per worker
+_C.DATALOADER.PREFETCH_FACTOR = 2
 # If True, the dataloader will drop the last batch.
 _C.DATALOADER.DROP_LAST = True
 # Subsample training data to simulate data limited scenarios.
@@ -138,6 +140,10 @@ _C.DATALOADER.SAMPLER_TRAIN = ""
 _C.DATALOADER.ALT_SAMPLER = CN()
 _C.DATALOADER.ALT_SAMPLER.PERIOD_SUPERVISED = 1
 _C.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED = 1
+# GroupSampler config parameters.
+_C.DATALOADER.GROUP_SAMPLER = CN()
+_C.DATALOADER.GROUP_SAMPLER.BATCH_BY = ()
+_C.DATALOADER.GROUP_SAMPLER.AS_BATCH_SAMPLER = False
 # Paired tuple of data keys and H5DF keys. Empty tuple will result in default keys being used.
 # e.g. (("target", "espirit_recon"), ("maps", "espirit_maps"))
 # See data/slice_data.py for more information.

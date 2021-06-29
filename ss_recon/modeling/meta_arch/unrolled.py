@@ -194,13 +194,21 @@ class GeneralizedUnrolledCNN(nn.Module):
             # dc update
             grad_x = A(A(image), adjoint=True) - zf_image
             image = image + step_size * grad_x
+
+            # If the image is a complex tensor, we view it as a real image
+            # where last dimension has 2 channels (real, imaginary).
+            # This may take more time, but is done for backwards compatibility
+            # reasons.
+            # TODO (arjundd): Fix to auto-detect which version of the model is
+            # being used.
             use_cplx = cplx.is_complex(image)
             if use_cplx:
                 image = torch.view_as_real(image)
+
             # prox update
             image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(0, 3, 1, 2)
-
             image = resnet(image)
+
             image = image.permute(0, 2, 3, 1).reshape(dims[0:3] + (self.num_emaps, 2))
             if use_cplx:
                 image = torch.view_as_complex(image)

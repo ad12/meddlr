@@ -19,6 +19,12 @@ from ss_recon.utils.events import EventWriter
 
 from .train_loop import HookBase
 
+try:
+    from guppy import hpy
+except ImportError:  # pragma: no cover
+    hpy = None
+
+
 __all__ = [
     "CallbackHook",
     "IterationTimer",
@@ -381,3 +387,29 @@ class EvalHook(HookBase):
         # func is likely a closure that holds reference to the trainer
         # therefore we clean it to avoid circular reference in the end
         del self._func
+
+
+class MemoryProfiler(HookBase):
+    """
+    Profile RAM.
+
+    This class relies on the ``guppy`` module (pip install guppy3).
+
+    Note:
+        This function is still in ALPHA.
+    """
+
+    def __init__(self, period):
+        if hpy is None:
+            raise ModuleNotFoundError(
+                "Module `guppy` not found. Install with `pip install guppy3`"
+            )
+        self._period = period
+
+    def after_step(self):
+        next_iter = self.trainer.iter + 1
+        is_final = next_iter == self.trainer.max_iter
+        if is_final or (self._period > 0 and next_iter % self._period == 0):
+            hp = hpy()
+            heap = hp.heap()
+            self.trainer.storage.put_scalar("guppy/total_RAM", heap.size / 1024. / 1024., smoothing_hint=False)

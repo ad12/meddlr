@@ -19,6 +19,7 @@ from ss_recon.evaluation import (
 )
 from ss_recon.modeling import build_loss_computer, build_model
 from ss_recon.solver import GradAccumOptimizer, build_lr_scheduler, build_optimizer
+from ss_recon.utils import env
 from ss_recon.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
 from ss_recon.utils.logger import setup_logger
 
@@ -247,6 +248,10 @@ class DefaultTrainer(SimpleTrainer):
                 test_and_save_results,
             )
         )
+        if env.profile_memory():
+            ret.append(hooks.MemoryProfiler(20))
+
+        # Writing should be last
         ret.append(
             hooks.PeriodicWriter(
                 self.build_writers(),

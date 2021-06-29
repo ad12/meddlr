@@ -104,9 +104,23 @@ def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
     """Find the best weights based on a validation criterion/metric.
 
     Args:
-        criterion (str): The criterion that we can select from
+        cfg: The config.
+        criterion (str, optional): The criterion that we use to select weights.
+            Defaults to ``cfg.MODEL.RECON_LOSS.NAME``.
+        iter_limit (int, optional): If specified, all weights will be before
+            this iteration. If this value is negative, it is
+            interpreted as the epoch limit.
+        top_k (int, optional): The number of top weights to keep.
+    
+    Returns:
+        Tuple: ``k`` filepath(s), selection criterion, and ``k`` criterion value(s).
+            If ``k=1``, filepath is a string and value is a float.
     """
     logger = logging.getLogger(__name__)
+
+    # Negative iter_limit is interpreted as epoch limit.
+    if iter_limit is not None and iter_limit < 0:
+        iter_limit = int(abs(iter_limit) * get_iters_per_epoch_eval(cfg))
 
     ckpt_period = cfg.SOLVER.CHECKPOINT_PERIOD
     eval_period = cfg.TEST.EVAL_PERIOD
@@ -218,3 +232,41 @@ def check_consistency(state_dict, model):
     _state_dict = model.state_dict()
     for k in state_dict:
         assert torch.equal(state_dict[k], _state_dict[k]), f"Mismatch values: {k}"
+
+
+def get_iters_per_epoch_eval(cfg) -> int:
+    """Get number of iterations per epoch for evaluation purposes.
+
+    This function expects a metrics named ``{cfg.OUTPUT_DIR}/metrics.json``
+    that is written during training.
+
+    Args:
+        cfg: The config.
+
+    Return:
+        int: Number of iterations per epoch.
+    """
+    exp_path = cfg.OUTPUT_DIR
+
+    eval_period = cfg.TEST.EVAL_PERIOD
+    time_scale = cfg.TIME_SCALE
+    assert time_scale in ["epoch", "iter"]
+    if (time_scale == "epoch" and eval_period < 0) or (time_scale == "iter" and eval_period > 0):
+        raise ValueError("Evaluation period is not in # epochs")
+    eval_period = abs(eval_period)
+
+    with open(os.path.join(exp_path, "metrics.json"), "r") as f:
+        metrics = [json.loads(line.strip()) for line in f.readlines()]
+    # Filter to only have evaluation metrics.
+    metrics = [m for m in metrics if "eval_time" in m]
+    # last eval could be at end of training which doesnt have same
+    # spacing of iters_per_epoch - skip it
+    iterations = np.diff([m["iteration"] for m in metrics][:-1])
+    if len(iterations) == 0:
+        raise ValueError("Could not determine iters_per_epoch - too few evaluations")
+    if len(iterations) >= 2 and not np.all(iterations[:-1] == iterations[0]):
+        raise ValueError("Not all iteration spacings are equal - {iterations}")
+
+    iters_per_epoch = iterations[0] / eval_period
+    assert iters_per_epoch == int(iters_per_epoch)
+    return int(iters_per_epoch)
