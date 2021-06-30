@@ -404,7 +404,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--noise",
-        default="standard",
+        default="false",
         choices=("false", "standard", "sweep"),
         help="Type of noise evaluation",
     )

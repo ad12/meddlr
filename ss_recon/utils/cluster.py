@@ -199,7 +199,7 @@ _USER_PATHS = {
             "/dataNAS/people/bgunel/results/mrs",
         ),
         CLUSTER.SIENA: (
-            "/data/datasets",  # mounted on siena only
+            "/dataNAS/people/arjun/data",
             "/dataNAS/people/bgunel/results/mrs",
         ),
         CLUSTER.TORINO: (

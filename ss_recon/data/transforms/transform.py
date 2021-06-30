@@ -236,12 +236,9 @@ class DataTransform:
         # Convert everything from numpy arrays to tensors
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
         maps = cplx.to_tensor(maps).unsqueeze(0)
-        target = cplx.to_tensor(target).unsqueeze(0)
+        target_init = cplx.to_tensor(target).unsqueeze(0)
+        target = torch.complex(target_init, torch.zeros_like(target_init)).unsqueeze(-1) if not torch.is_complex(target_init) else target_init # handle rss vs. sensitivity-integrated
         norm = torch.sqrt(torch.mean(cplx.abs(target) ** 2))
-
-        # print(kspace.shape)
-        # print(maps.shape)
-        # print(target.shape)
 
         # TODO: Add other transforms here.
 
@@ -252,8 +249,14 @@ class DataTransform:
         )
 
         # Zero-filled Sense Recon.
-        A = T.SenseModel(maps, weights=mask)
-        image = A(masked_kspace, adjoint=True)
+        if torch.is_complex(target_init):
+            A = T.SenseModel(maps, weights=mask)
+            image = A(masked_kspace, adjoint=True)
+        # Zero-filled RSS Recon.
+        else:
+            image = T.ifft2(masked_kspace)
+            image_rss = torch.sqrt(torch.sum(cplx.abs(image) ** 2, axis=-1))
+            image = torch.complex(image_rss, torch.zeros_like(image_rss)).unsqueeze(-1)
 
         # Normalize
         normalized = self._normalizer.normalize(

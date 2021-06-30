@@ -12,6 +12,7 @@ import os
 from typing import Dict, List
 
 import h5py
+import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate as _default_collate
 
@@ -127,8 +128,8 @@ class SliceData(Dataset):
         slice_id = example["slice_id"]
         with h5py.File(file_path, "r") as data:
             kspace = data[self.mapping["kspace"]][slice_id]
-            maps = data[self.mapping["maps"]][slice_id]
             target = data[self.mapping["target"]][slice_id]
+            maps = np.zeros_like(target) if self.mapping["target"] == "reconstruction_rss" else data[self.mapping["maps"]][slice_id]
 
         return {
             "kspace": kspace,

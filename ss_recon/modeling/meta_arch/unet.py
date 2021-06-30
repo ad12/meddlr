@@ -10,6 +10,7 @@ from torch import nn
 from torch.nn import functional as F
 
 import ss_recon.utils.complex_utils as cplx
+from ss_recon.utils import transforms as T
 from ss_recon.utils.events import get_event_storage
 from ss_recon.utils.transforms import SenseModel
 
@@ -230,8 +231,15 @@ class UnetModel(nn.Module):
         if A is None:
             A = SenseModel(maps, weights=mask)
 
-        # Compute zero-filled image reconstruction
-        zf_image = A(kspace, adjoint=True)
+        # Zero-filled Sense Recon.
+        if cplx.is_complex(maps):
+            zf_image = A(kspace, adjoint=True)
+        # Zero-filled RSS Recon.
+        else:
+            zf_image_init = T.ifft2(kspace)
+            zf_image_rss = torch.sqrt(torch.sum(cplx.abs(zf_image_init) ** 2, axis=-1))
+            zf_image = torch.complex(zf_image_rss, torch.zeros_like(zf_image_rss)).unsqueeze(-1)
+
         use_cplx = cplx.is_complex(zf_image)
         if use_cplx:
             zf_image = torch.view_as_real(zf_image)
