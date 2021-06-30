@@ -62,11 +62,16 @@ class MotionModel:
             imaginary, respectively.
             TODO: This code should account for that case as well.
         """
+        is_complex = False
         if clone:
             kspace = kspace.clone()
-
+        if kspace.shape[-1] == 2:
+            is_complex = True
+            kspace = torch.view_as_complex(kspace)
+            phase_matrix = torch.zeros(kspace.shape[0:-1], dtype=torch.complex64)
+        else:
+            phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
         width = kspace.shape[2]
-        phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
         scale = (self.motion_range[1] - self.motion_range[0]) * \
                 torch.rand(1) + self.motion_range[0]
 

@@ -6,9 +6,42 @@ MODEL:
   CONSISTENCY:
     AUG:
       MOTION_RANGE: (0.2, 0.5)
+  UNET:
+    IN_CHANNELS: 2
+    OUT_CHANNELS: 2
+    CHANNELS: 32
+    NUM_POOL_LAYERS: 4
+    DROPOUT: 0.
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+  M2R:
+    META_ARCHITECTURE: "UnetModel"
+DATALOADER:
+  NUM_WORKERS: 0  # for debugging purposes
+  SAMPLER_TRAIN: "AlternatingSampler"
+  ALT_SAMPLER:
+    PERIOD_UNSUPERVISED: 1
+    PERIOD_SUPERVISED: 1
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: ""
+  TRAIN_BATCH_SIZE: 1
+  TEST_BATCH_SIZE: 4
+  MAX_ITER: 60000
+  GAMMA: 1.0  # do not decrease learning rate.
+  STEPS: (60000,)  # ensures learning rate does not decay
+  BASE_LR: 1e-4
+  BIAS_LR_FACTOR: 1.0
+  WEIGHT_DECAY: 0.0001
+  WEIGHT_DECAY_BIAS: 0.0001
+  CHECKPOINT_PERIOD: -1
+VIS_PERIOD: 400
+TIME_SCALE: "iter"
 DESCRIPTION:
   BRIEF: "Test using range of standard deviations for consistency"
   EXP_NAME: "tests/m2r/motion-range"
+  PROJECT_NAME: "motion2recon"
   TAGS: ("tests",)
 OUTPUT_DIR: "results://tests/m2r/motion-range"
 VERSION: 1
