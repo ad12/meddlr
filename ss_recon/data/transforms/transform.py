@@ -237,7 +237,11 @@ class DataTransform:
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
         maps = cplx.to_tensor(maps).unsqueeze(0)
         target_init = cplx.to_tensor(target).unsqueeze(0)
-        target = torch.complex(target_init, torch.zeros_like(target_init)).unsqueeze(-1) if not torch.is_complex(target_init) else target_init # handle rss vs. sensitivity-integrated
+        target = (
+            torch.complex(target_init, torch.zeros_like(target_init)).unsqueeze(-1)
+            if not torch.is_complex(target_init)
+            else target_init
+        )  # handle rss vs. sensitivity-integrated
         norm = torch.sqrt(torch.mean(cplx.abs(target) ** 2))
 
         # TODO: Add other transforms here.

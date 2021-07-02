@@ -129,7 +129,11 @@ class SliceData(Dataset):
         with h5py.File(file_path, "r") as data:
             kspace = data[self.mapping["kspace"]][slice_id]
             target = data[self.mapping["target"]][slice_id]
-            maps = np.zeros_like(target) if self.mapping["target"] == "reconstruction_rss" else data[self.mapping["maps"]][slice_id]
+            maps = (
+                np.zeros_like(target)
+                if self.mapping["target"] == "reconstruction_rss"
+                else data[self.mapping["maps"]][slice_id]
+            )
 
         return {
             "kspace": kspace,

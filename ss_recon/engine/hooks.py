@@ -401,9 +401,7 @@ class MemoryProfiler(HookBase):
 
     def __init__(self, period):
         if hpy is None:
-            raise ModuleNotFoundError(
-                "Module `guppy` not found. Install with `pip install guppy3`"
-            )
+            raise ModuleNotFoundError("Module `guppy` not found. Install with `pip install guppy3`")
         self._period = period
 
     def after_step(self):
@@ -412,4 +410,6 @@ class MemoryProfiler(HookBase):
         if is_final or (self._period > 0 and next_iter % self._period == 0):
             hp = hpy()
             heap = hp.heap()
-            self.trainer.storage.put_scalar("guppy/total_RAM", heap.size / 1024. / 1024., smoothing_hint=False)
+            self.trainer.storage.put_scalar(
+                "guppy/total_RAM", heap.size / 1024.0 / 1024.0, smoothing_hint=False
+            )

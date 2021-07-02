@@ -111,7 +111,7 @@ def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
             this iteration. If this value is negative, it is
             interpreted as the epoch limit.
         top_k (int, optional): The number of top weights to keep.
-    
+
     Returns:
         Tuple: ``k`` filepath(s), selection criterion, and ``k`` criterion value(s).
             If ``k=1``, filepath is a string and value is a float.
