@@ -2,7 +2,7 @@ import itertools
 import logging
 import random
 from collections import defaultdict
-from typing import Sequence
+from typing import Dict, Mapping, Sequence, Tuple, Union
 
 import numpy as np
 from torch.utils.data import DataLoader
@@ -17,7 +17,7 @@ from .transforms.subsample import build_mask_func
 
 def get_recon_dataset_dicts(
     dataset_names: Sequence[str],
-    num_scans_total: int = -1,
+    num_scans_total: Union[int, Tuple] = -1,
     num_scans_subsample: int = 0,
     seed: int = 1000,
     accelerations=(),
@@ -51,7 +51,10 @@ def get_recon_dataset_dicts(
     logger = logging.getLogger(__name__)
 
     state = random.Random(seed)
-    if num_scans_total > 0 or num_scans_subsample > 0:
+    limit_scans = (
+        num_scans_total > 0 if isinstance(num_scans_total, (float, int)) else bool(num_scans_total)
+    )
+    if limit_scans or num_scans_subsample > 0:
         # Sort to ensure same order for all users.
         # Shuffle for randomness.
         dataset_dicts = sorted(dataset_dicts, key=lambda x: x["file_name"])
@@ -84,8 +87,10 @@ def get_recon_dataset_dicts(
             )
 
     num_after_filter = len(dataset_dicts)
-    if num_scans_total > 0:
+    if isinstance(num_scans_total, int) and num_scans_total > 0:
         dataset_dicts = dataset_dicts[:num_scans_total]
+    elif isinstance(num_scans_total, Tuple) and num_scans_total:
+        dataset_dicts = _limit_data_by_group(dataset_dicts, num_scans_total)
 
     num_after = len(dataset_dicts)
     logger.info(
@@ -112,6 +117,36 @@ def get_recon_dataset_dicts(
     return dataset_dicts
 
 
+def _limit_data_by_group(dataset_dicts, num_scans_total: Tuple[str, Dict]):
+    if len(num_scans_total) > 1:
+        raise ValueError("Currently can only limit scans by one field")
+    metadata_key, cat_to_limit = num_scans_total[0]
+    if not isinstance(cat_to_limit, Mapping):
+        if not isinstance(cat_to_limit, Sequence) or len(cat_to_limit) % 2 != 0:
+            raise ValueError(
+                "Categories and limits must be provided as a dictionary or even-length tuple. "
+                "The tuple should be (group1, limit1, group2, limit2, ...)"
+            )
+        cat_to_limit = {k: v for k, v in zip(cat_to_limit[::2], cat_to_limit[1::2])}
+    cat_to_num = defaultdict(int)
+    new_dataset_dicts = []
+    for dd in dataset_dicts:
+        metadata_val = dd.get(metadata_key, dd.get("_metadata", {}).get(metadata_key, None))
+        for k in cat_to_limit:
+            if isinstance(k, (tuple, list)) and metadata_val in k:
+                metadata_val = k
+                break
+        if metadata_val is None or metadata_val not in cat_to_limit:
+            new_dataset_dicts.append(dd)
+            continue
+        if cat_to_num.get(metadata_val, 0) >= cat_to_limit[metadata_val]:
+            # Quota for this metadata field reached.
+            continue
+        new_dataset_dicts.append(dd)
+        cat_to_num[metadata_val] += 1
+    return new_dataset_dicts
+
+
 def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None, is_eval=False):
     keys = cfg.DATALOADER.DATA_KEYS
     if keys:
@@ -136,9 +171,23 @@ def _get_default_dataset_type(dataset_name):
 
 
 def build_recon_train_loader(cfg, dataset_type=None):
+    if (
+        cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL > 0
+        and cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL_BY_GROUP
+    ):
+        raise ValueError(
+            "`DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL` and "
+            "`DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL_BY_GROUP` are mutually exclusive."
+        )
+    num_scans_total = (
+        cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL_BY_GROUP
+        if cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL_BY_GROUP
+        else cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL
+    )
+
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=cfg.DATASETS.TRAIN,
-        num_scans_total=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL,
+        num_scans_total=num_scans_total,
         num_scans_subsample=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_UNDERSAMPLED,
         seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
         accelerations=cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS,
@@ -183,10 +232,24 @@ def build_recon_train_loader(cfg, dataset_type=None):
 def build_recon_val_loader(
     cfg, dataset_name, as_test: bool = False, add_noise: bool = False, dataset_type=None
 ):
+    if (
+        cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL > 0
+        and cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP
+    ):
+        raise ValueError(
+            "`DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL` and "
+            "`DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP` are mutually exclusive."
+        )
+    num_scans_total = (
+        cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP
+        if cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP
+        else cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL
+    )
+
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=[dataset_name],
         filter_by=cfg.DATALOADER.FILTER.BY,
-        num_scans_total=cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL,
+        num_scans_total=num_scans_total,
         seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
     )
     if dataset_type is None:
