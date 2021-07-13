@@ -186,7 +186,8 @@ def build_recon_train_loader(cfg, dataset_type=None):
 
 
 def build_recon_val_loader(
-    cfg, dataset_name, as_test: bool = False, add_noise: bool = False, dataset_type=None
+    cfg, dataset_name, as_test: bool = False, add_noise: bool = False,
+    add_motion: bool = False, dataset_type=None
 ):
     dataset_dicts = get_recon_dataset_dicts(
         dataset_names=[dataset_name],
@@ -198,7 +199,8 @@ def build_recon_val_loader(
         dataset_type = _get_default_dataset_type(cfg.DATASETS.TRAIN[0])
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(cfg, mask_func, is_test=as_test, add_noise=add_noise)
+    data_transform = T.DataTransform(cfg, mask_func, is_test=as_test,
+                                     add_noise=add_noise, add_motion=add_motion)
 
     train_data = _build_dataset(
         cfg, dataset_dicts, data_transform, is_eval=True, dataset_type=dataset_type

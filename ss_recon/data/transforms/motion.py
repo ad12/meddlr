@@ -93,5 +93,5 @@ class MotionModel:
 
     @classmethod
     def from_cfg(cls, cfg, seed=None, **kwargs):
-        motion_range = cfg.MODEL.CONSISTENCY.AUG.MOTION_RANGE
-        return cls(motion_range=motion_range, seed=seed, **kwargs)
+        cfg = cfg.MODEL.CONSISTENCY.AUG.MOTION
+        return cls(cfg.RANGE, seed=seed, **kwargs)

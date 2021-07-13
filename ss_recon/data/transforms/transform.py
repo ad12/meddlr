@@ -8,6 +8,7 @@ from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import transforms as T
 
 from .noise import NoiseModel
+from .motion import MotionModel
 
 NORMALIZER_REGISTRY = Registry("NORMALIZER")
 NORMALIZER_REGISTRY.__doc__ = """
@@ -170,7 +171,8 @@ class DataTransform:
     For scans that
     """
 
-    def __init__(self, cfg, mask_func, is_test: bool = False, add_noise: bool = False):
+    def __init__(self, cfg, mask_func, is_test: bool = False,
+                 add_noise: bool = False, add_motion: bool = False):
         """
         Args:
             mask_func (utils.subsample.MaskFunc): A function that can create a
@@ -188,14 +190,18 @@ class DataTransform:
         # mask_func = build_mask_func(cfg)
         self._subsampler = Subsampler(self.mask_func)
         self.add_noise = add_noise
+        self.add_motion = add_motion
         seed = cfg.SEED if cfg.SEED > -1 else None
         self.rng = np.random.RandomState(seed)
         if is_test:
             # When we test we dont want to initialize with certain parameters (e.g. scheduler).
             self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
+            self.motion_simulator = MotionModel(cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE, seed=seed)
         else:
             self.noiser = NoiseModel.from_cfg(cfg, seed=seed)
+            self.motion_simulator = MotionModel.from_cfg(cfg, seed=seed)
         self.p_noise = cfg.AUG_TRAIN.NOISE_P
+        self.p_motion = cfg.AUG_TRAIN.MOTION_P
         self._normalizer = build_normalizer(cfg)
 
     def __call__(
@@ -272,9 +278,13 @@ class DataTransform:
         add_noise = self.add_noise and (
             self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise)
         )
+        add_motion = self.add_motion and (
+            self._is_test or (not is_fixed and self.rng.uniform() < self.p_motion)
+        )
         if add_noise:
             masked_kspace = self.noiser(masked_kspace, mask=mask, seed=seed)
-
+        if add_motion:
+            masked_kspace = self.motion_simulator(masked_kspace, mask=mask, seed=seed)
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)
         maps = maps.squeeze(0)
