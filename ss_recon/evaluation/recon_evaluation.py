@@ -11,7 +11,13 @@ from tqdm import tqdm
 
 from ss_recon.data.transforms.transform import build_normalizer
 from ss_recon.evaluation.metrics import compute_mse  # noqa: F401
-from ss_recon.evaluation.metrics import compute_l2, compute_nrmse, compute_psnr, compute_ssim
+from ss_recon.evaluation.metrics import (
+    compute_l2,
+    compute_nrmse,
+    compute_psnr,
+    compute_ssim,
+    compute_vifp_mscale,
+)
 from ss_recon.utils import complex_utils as cplx
 
 from .evaluator import DatasetEvaluator
@@ -59,6 +65,8 @@ class ReconEvaluator(DatasetEvaluator):
                     https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf
                 * 'nrmse': Complex normalized root-mean-squared-error
                 * 'nrmse_mag': Magnitude normalized root-mean-squared-error.
+                * 'vif_mag': Visual information fidelity on magnitude images.
+                * 'vif_phase': Visual information fidelity on phase images.
             flush_period (int, optional): The approximate period over which predictions
                 are cleared and running results are computed. This parameter helps
                 mitigate OOM errors. The period is equivalent to number of examples
@@ -351,6 +359,11 @@ class ReconEvaluator(DatasetEvaluator):
             metrics["nrmse"] = compute_nrmse(target, output).item()
         if metric_names is None or "nrmse_mag" in metric_names:
             metrics["nrmse_mag"] = compute_nrmse(target, output, magnitude=True).item()
+
+        if metric_names is None or "vif_mag" in metric_names:
+            metrics["vif_mag"] = compute_vifp_mscale(target, output, im_type="magnitude")
+        if metric_names is None or "vif_phase" in metric_names:
+            metrics["vif_phase"] = compute_vifp_mscale(target, output, im_type="phase")
 
         # Make sure all metrics are handled.
         if metric_names is None:

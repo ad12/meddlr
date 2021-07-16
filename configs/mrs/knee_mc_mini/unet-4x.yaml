@@ -1,0 +1,55 @@
+DESCRIPTION:
+  BRIEF: U-NET LR = 1e-3 MRS 4x fastMRI knee-mc mini - {exp_type} experiment
+  EXP_NAME: fastMRI_knee_mc_mini/unet_4x
+  PROJECT_NAME: mrs
+  TAGS:
+  - fastMRI_knee_multicoil_mini_v0.0.1
+  - unet_LR1e-3
+  - mrs_4x
+DATASETS:
+  TRAIN: ("fastMRI_knee_multicoil_mini_v0.0.1_train",)
+  VAL: ("fastMRI_knee_multicoil_mini_v0.0.1_val",)
+  TEST: ("fastMRI_knee_multicoil_mini_v0.0.1_test",)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "RandomMaskFunc1D"
+    ACCELERATIONS: (4,)
+    CALIBRATION_SIZE: 0
+    CENTER_FRACTIONS: (0.08,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (4,)
+DATALOADER:
+  NUM_WORKERS: 8
+  DATA_KEYS: (("target", "espirit-cf=8/target"), ("maps", "espirit-cf=8/maps"))
+  FILTER:
+    BY: (("acquisition", "CORPDFS_FBK"),)
+MODEL:
+  META_ARCHITECTURE: "UnetModel"
+  UNET:
+    CHANNELS: 32
+    DROPOUT: 0.0
+    IN_CHANNELS: 2
+    NUM_POOL_LAYERS: 4
+    OUT_CHANNELS: 2
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: ""
+  TRAIN_BATCH_SIZE: 24
+  TEST_BATCH_SIZE: 24
+  CHECKPOINT_PERIOD: -10 # cpt every 10 epochs.
+  MAX_ITER: -200
+  BASE_LR: 0.001
+  STEPS: ()
+TEST:
+  EVAL_PERIOD: -10 # eval every 10 epochs.
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim_old", "ssim (Wang)")
+TIME_SCALE: "iter"
+OUTPUT_DIR: "results://mrs/fastmri_knee_mc_mini/unet-4x"
+SEED: 1000
+VIS_PERIOD: 400
+VERSION: 1

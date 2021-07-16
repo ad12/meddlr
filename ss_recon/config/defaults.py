@@ -135,11 +135,18 @@ _C.DATALOADER.SUBSAMPLE_TRAIN = CN()
 # meaning they will not be used for any training, even w/ semi-supervised N2R
 # framework
 _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL = -1
+# Number of training examples to retain based on metadata properties.
+# e.g. (("acquisition", {"AXT2": 15, "AXT1": 10}),) will only keep
+# 15 AXT2 scans and 10 AXT1 scans where AXT2 and AXT1 are categories in the
+# "acquisition" metadata field.
+_C.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL_BY_GROUP = ()
 # Number of scans out of total to undersample. If NUM_TOTAL is not -1, must be
 # less than NUM_TOTAL.
 _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_UNDERSAMPLED = 0
 # Number of scans with ground truth for validation.
 _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL = -1
+# Number of validation examples to retain based on metadata properties.
+_C.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP = ()
 # Seed for shuffling data. Should always be deterministic
 _C.DATALOADER.SUBSAMPLE_TRAIN.SEED = 1000
 # Options: "" (defaults to random sampling), "AlternatingSampler"

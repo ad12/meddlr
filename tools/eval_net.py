@@ -233,6 +233,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         )
 
     default_metrics = ReconEvaluator.default_metrics()
+    if args.extra_metrics:
+        default_metrics.extend(args.extra_metrics)
 
     for exp_idx, (dataset_name, acc, noise_level) in enumerate(values):
         # Check if the current configuration already has metrics computed
@@ -390,6 +392,7 @@ if __name__ == "__main__":
     # )
     parser.add_argument(
         "--metric",
+        "--criterion",
         type=str,
         default="",
         help=(
@@ -415,6 +418,7 @@ if __name__ == "__main__":
         type=float,
         help="args to sweep for noise",
     )
+    parser.add_argument("--extra-metrics", nargs="*", help="Extra metrics for testing")
     parser.add_argument(
         "--iter-limit",
         default=None,
