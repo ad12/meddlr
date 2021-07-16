@@ -204,7 +204,7 @@ class DataTransform:
         maps,
         target,
         fname,
-        slice,
+        slice_id,
         is_fixed,
         acceleration: int = None,
     ):
@@ -280,7 +280,9 @@ class DataTransform:
             self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise)
         )
         if add_noise:
-            masked_kspace = self.noiser(masked_kspace, mask=mask, seed=seed)
+            # Seed should be different for each slice of a scan.
+            noise_seed = seed + slice_id if seed is not None else None
+            masked_kspace = self.noiser(masked_kspace, mask=mask, seed=noise_seed)
 
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)

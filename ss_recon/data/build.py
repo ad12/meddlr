@@ -253,7 +253,7 @@ def build_recon_val_loader(
         seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
     )
     if dataset_type is None:
-        dataset_type = _get_default_dataset_type(cfg.DATASETS.TRAIN[0])
+        dataset_type = _get_default_dataset_type(dataset_name)
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(cfg, mask_func, is_test=as_test, add_noise=add_noise)

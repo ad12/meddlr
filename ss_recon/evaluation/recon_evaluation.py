@@ -19,6 +19,7 @@ from ss_recon.evaluation.metrics import (
     compute_vifp_mscale,
 )
 from ss_recon.utils import complex_utils as cplx
+from ss_recon.utils.transforms import center_crop
 
 from .evaluator import DatasetEvaluator
 
@@ -351,6 +352,16 @@ class ReconEvaluator(DatasetEvaluator):
             metrics["ssim (Wang)"] = compute_ssim(
                 target,
                 output,
+                data_range="ref-maxval",
+                gaussian_weights=True,
+                use_sample_covariance=False,
+            )
+        if metric_names is None or "ssim50 (Wang)" in metric_names:
+            shape = target.shape[:-1] if cplx.is_complex_as_real(target) else target.shape
+            shape = tuple(x // 2 if x > 1 else 1 for x in shape)
+            metrics["ssim50 (Wang)"] = compute_ssim(
+                center_crop(target, shape),
+                center_crop(output, shape),
                 data_range="ref-maxval",
                 gaussian_weights=True,
                 use_sample_covariance=False,

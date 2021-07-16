@@ -44,23 +44,18 @@ def build_val_sampler(cfg, dataset):
     sampler = cfg.DATALOADER.SAMPLER_TRAIN
     is_batch_sampler = False
     seed = cfg.SEED if cfg.SEED > -1 else None
-    if sampler == "GroupSampler":
-        if cfg.DATALOADER.GROUP_SAMPLER.BATCH_BY:
-            is_batch_sampler = True
-            sampler = GroupSampler(
-                dataset,
-                batch_by=cfg.DATALOADER.GROUP_SAMPLER.BATCH_BY,
-                batch_size=cfg.SOLVER.TEST_BATCH_SIZE,
-                as_batch_sampler=is_batch_sampler,
-                drop_last=False,
-                shuffle=False,
-                seed=seed,
-            )
-        else:
-            sampler = None
-    elif sampler == "":
-        sampler = None
+    if sampler == "GroupSampler" and cfg.DATALOADER.GROUP_SAMPLER.BATCH_BY:
+        is_batch_sampler = True
+        sampler = GroupSampler(
+            dataset,
+            batch_by=cfg.DATALOADER.GROUP_SAMPLER.BATCH_BY,
+            batch_size=cfg.SOLVER.TEST_BATCH_SIZE,
+            as_batch_sampler=is_batch_sampler,
+            drop_last=False,
+            shuffle=False,
+            seed=seed,
+        )
     else:
-        raise ValueError("Unknown Sampler {}".format(sampler))
+        sampler = None
 
     return sampler, is_batch_sampler

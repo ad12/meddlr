@@ -68,6 +68,8 @@ def test_limit_data_by_group():
     out_ids = [o["id"] for o in out]
     assert out_ids == [1, 2, 5, 7, 8, 9, 10, 11, 12]
 
-    out = _limit_data_by_group(dataset_dicts, num_scans_total=(("metadata_A", {("A1", "A2"): 5, "A3": 2}),))
+    out = _limit_data_by_group(
+        dataset_dicts, num_scans_total=(("metadata_A", {("A1", "A2"): 5, "A3": 2}),)
+    )
     out_ids = [o["id"] for o in out]
     assert out_ids == [1, 2, 3, 4, 5, 7, 8, 10, 11, 12]

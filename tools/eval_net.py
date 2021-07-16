@@ -25,6 +25,7 @@ from ss_recon.data.build import build_recon_val_loader
 from ss_recon.engine import DefaultTrainer, default_argument_parser, default_setup
 from ss_recon.evaluation import DatasetEvaluators, ReconEvaluator, inference_on_dataset
 from ss_recon.evaluation.testing import SUPPORTED_VAL_METRICS, check_consistency, find_weights
+from ss_recon.modeling.meta_arch import CSModel
 from ss_recon.utils.logger import setup_logger
 
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -203,7 +204,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
     # Get and load metrics file
     output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
-    metrics_file = os.path.join(output_dir, "metrics.csv")
+    metrics_file = os.path.join(output_dir, args.metrics_file)
     if not overwrite and os.path.isfile(metrics_file):
         metrics = pd.read_csv(metrics_file, index_col=0)
         # Add default parameters to metrics.
@@ -364,24 +365,27 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 def main(args):
     cfg = setup(args)
     model = DefaultTrainer.build_model(cfg)
-    weights, criterion, best_value = (
-        (cfg.MODEL.WEIGHTS, None, None)
-        if cfg.MODEL.WEIGHTS
-        else find_weights(cfg, args.metric, args.iter_limit)
-    )
-    model = model.to(cfg.MODEL.DEVICE)
-    DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-        weights, resume=args.resume
-    )
+    if isinstance(model, CSModel):
+        weights, criterion, best_value = None, None, 0
+    else:
+        weights, criterion, best_value = (
+            (cfg.MODEL.WEIGHTS, None, None)
+            if cfg.MODEL.WEIGHTS
+            else find_weights(cfg, args.metric, args.iter_limit)
+        )
+        model = model.to(cfg.MODEL.DEVICE)
+        DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
+            weights, resume=args.resume
+        )
 
-    # See https://github.com/pytorch/pytorch/issues/42300
-    logger.info("Checking weights were properly loaded...")
-    check_consistency(torch.load(weights)["model"], model)
+        # See https://github.com/pytorch/pytorch/issues/42300
+        logger.info("Checking weights were properly loaded...")
+        check_consistency(torch.load(weights)["model"], model)
 
-    logger.info("\n\n==============================")
-    logger.info("Loading weights from {}".format(weights))
+        logger.info("\n\n==============================")
+        logger.info("Loading weights from {}".format(weights))
 
-    eval(cfg, args, model, os.path.basename(weights), criterion, best_value)
+    eval(cfg, args, model, os.path.basename(weights) if weights else None, criterion, best_value)
 
 
 if __name__ == "__main__":
@@ -437,6 +441,7 @@ if __name__ == "__main__":
         "--skip-rescale", action="store_true", help="Skip rescaling when evaluating"
     )
     parser.add_argument("--save-scans", action="store_true", help="Save reconstruction outputs")
+    parser.add_argument("--metrics-file", type=str, default="metrics.csv", help="Metrics file")
     # parser.add_argument(
     #     "--wandb", action="store_true", help="Log to W&B during evaluation"
     # )
