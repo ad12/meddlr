@@ -92,6 +92,14 @@ _C.MODEL.DENOISING.NOISE = CN()
 _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
 
 # -----------------------------------------------------------------------------
+# Compressed Sensing (CS) model
+# -----------------------------------------------------------------------------
+_C.MODEL.CS = CN()
+_C.MODEL.CS.META_ARCHITECTURE = "CSModel"
+_C.MODEL.CS.REGULARIZATION = 0.005
+_C.MODEL.CS.MAX_ITER = 200
+
+# -----------------------------------------------------------------------------
 # Noise2Recon (N2R) model
 # -----------------------------------------------------------------------------
 _C.MODEL.N2R = CN()

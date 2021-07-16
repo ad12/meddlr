@@ -42,6 +42,7 @@ class Cluster(Enum):
     AUTOFOCUS = 8, ["autofocus"]
     SIENA = 9, ["siena"]
     TORINO = 10, ["torino"]
+    CINE = 11, ["cine"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -185,6 +186,10 @@ _USER_PATHS = {
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.AUTOFOCUS: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/home/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.CINE: (
             "/mnt/dense/ozt/dl-ss-recon/data",
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
