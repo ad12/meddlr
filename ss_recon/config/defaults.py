@@ -95,7 +95,6 @@ _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
 # Compressed Sensing (CS) model
 # -----------------------------------------------------------------------------
 _C.MODEL.CS = CN()
-_C.MODEL.CS.META_ARCHITECTURE = "CSModel"
 _C.MODEL.CS.REGULARIZATION = 0.005
 _C.MODEL.CS.MAX_ITER = 200
 
