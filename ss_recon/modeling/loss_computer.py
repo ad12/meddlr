@@ -87,8 +87,12 @@ class BasicLossComputer(LossComputer):
         target = output["target"].to(pred.device)
 
         if self.renormalize_data:
+            normalization_args = {k: input.get(k, output[k]) for k in ["mean", "std"]}
             normalized = self._normalizer.undo(
-                image=pred, target=target, mean=input["mean"], std=input["std"]
+                image=pred,
+                target=target,
+                mean=normalization_args["mean"],
+                std=normalization_args["std"],
             )
             output = normalized["image"]
             target = normalized["target"]

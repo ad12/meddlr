@@ -68,10 +68,10 @@ class NoiseModel:
         g = self.generator if seed is None else torch.Generator().manual_seed(seed)
         noise_std = self.choose_std_dev()
         if cplx.is_complex(kspace):
-            noise = noise_std * torch.randn(kspace.shape + (2,), generator=g)
+            noise = noise_std * torch.randn(kspace.shape + (2,), generator=g, device=kspace.device)
             noise = torch.view_as_complex(noise)
         else:
-            noise = noise_std * torch.randn(kspace.shape, generator=g)
+            noise = noise_std * torch.randn(kspace.shape, generator=g, device=kspace.device)
         masked_noise = noise * mask
         aug_kspace = kspace + masked_noise
 

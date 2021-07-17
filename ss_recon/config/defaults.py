@@ -87,6 +87,7 @@ _C.MODEL.UNET.DROPOUT = 0.0
 # Denoising model
 # -----------------------------------------------------------------------------
 _C.MODEL.DENOISING = CN()
+_C.MODEL.DENOISING.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.DENOISING.NOISE = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)

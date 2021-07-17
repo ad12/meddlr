@@ -1,10 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+import logging
 import pickle
 
-from fvcore.common.checkpoint import Checkpointer
+from fvcore.common.checkpoint import Checkpointer, _strip_prefix_if_present
 from fvcore.common.file_io import PathManager
 
-from .c2_model_loading import align_and_update_state_dicts
+logger = logging.getLogger(__name__)
 
 
 class DetectionCheckpointer(Checkpointer):
@@ -42,15 +43,24 @@ class DetectionCheckpointer(Checkpointer):
         return loaded
 
     def _load_model(self, checkpoint):
-        if checkpoint.get("matching_heuristics", False):
-            self._convert_ndarray_to_tensor(checkpoint["model"])
-            # convert weights by name-matching heuristics
-            model_state_dict = self.model.state_dict()
-            align_and_update_state_dicts(
-                model_state_dict,
-                checkpoint["model"],
-                c2_conversion=checkpoint.get("__author__", None) == "Caffe2",
-            )
-            checkpoint["model"] = model_state_dict
-        # for non-caffe2 models, use standard ways to load it
-        super()._load_model(checkpoint)
+        model_state_dict = checkpoint["model"]
+        incompatible = super()._load_model(checkpoint)
+        if not _has_incompatible_keys(incompatible):
+            return
+
+        # Load models that are wrapped in an nn.Module.
+        # Following convention, these wrapped models begin with the "model." prefix.
+        logger.warn("Attempting to load wrapped model from model state dict.")
+        _strip_prefix_if_present(model_state_dict, "module.")
+        _strip_prefix_if_present(model_state_dict, "model.")
+        incompatible = super()._load_model({"model": model_state_dict})
+        if _has_incompatible_keys(incompatible):
+            raise ValueError("Found incompatible keys or shapes:\n{}".format(incompatible))
+
+
+def _has_incompatible_keys(incompatible):
+    return (
+        bool(incompatible.missing_keys)
+        | bool(incompatible.unexpected_keys)
+        | bool(incompatible.incorrect_shapes)
+    )
