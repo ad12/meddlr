@@ -22,6 +22,7 @@ import ss_recon.utils.complex_utils as cplx
 from ss_recon.data.transforms.noise import NoiseModel
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from ss_recon.utils.events import get_event_storage
+from ss_recon.utils.general import move_to_device
 from ss_recon.utils.transforms import SenseModel
 
 __all__ = ["DenoisingModel"]
@@ -52,7 +53,7 @@ class DenoisingModel(nn.Module):
         noise_cfg.defrost()
         noise_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = cfg.MODEL.DENOISING.NOISE.STD_DEV
         noise_cfg.freeze()
-        self.noiser = NoiseModel.from_cfg(noise_cfg)
+        self.noiser = NoiseModel.from_cfg(noise_cfg, device=self.device)
 
         # TODO: Move to config at some point
         # If fully sampled kspace is available, perform denoising on the fully sampled kspace.
@@ -133,6 +134,8 @@ class DenoisingModel(nn.Module):
         """
         if vis_training and not self.training:
             raise ValueError("vis_training is only applicable in training mode.")
+
+        inputs = move_to_device(inputs, self.device)
 
         if self.training and self.vis_period > 0:
             storage = get_event_storage()
