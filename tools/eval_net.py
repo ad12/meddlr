@@ -191,7 +191,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     include_noise = noise_arg != "false"
     include_motion = motion_arg != "false"
     noise_sweep_vals = args.sweep_vals
-    motion_sweep_vals = args.sweep_vals_noise
+    motion_sweep_vals = args.sweep_vals_motion
     skip_rescale = args.skip_rescale
     overwrite = args.overwrite
     save_scans = args.save_scans
@@ -226,8 +226,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         noise_vals = [0]
 
     if include_motion:
-        motion_vals = motion_sweep_vals if motion_arg == "sweep" else [0.2, 0.5]
-        motion_vals += list(cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE)
+        motion_vals = [0] + motion_sweep_vals if motion_arg == "sweep" else [0]
+        motion_vals += list(cfg.MODEL.CONSISTENCY.AUG.MOTION_RANGE)
         motion_vals = sorted(set(motion_vals))
     else:
         motion_vals = [0]
@@ -288,7 +288,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         s_cfg = cfg.clone()
         s_cfg.defrost()
         s_cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (acc,)
-        s_cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE = (motion_level,)
+        s_cfg.MODEL.CONSISTENCY.AUG.MOTION_RANGE = motion_level
         s_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (noise_level,)
         s_cfg.freeze()
 
@@ -438,7 +438,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sweep-vals-motion",
-        default=[[0.1, 0.3], [0.2, 0.5]],
+        default=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
         nargs="*",
         type=float,
         help="args to sweep for motion",
