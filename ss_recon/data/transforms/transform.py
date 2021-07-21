@@ -196,7 +196,7 @@ class DataTransform:
         if is_test:
             # When we test we dont want to initialize with certain parameters (e.g. scheduler).
             self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
-            self.motion_simulator = MotionModel(cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE, seed=seed)
+            self.motion_simulator = MotionModel(cfg.MODEL.CONSISTENCY.AUG.MOTION_RANGE, seed=seed)
         else:
             self.noiser = NoiseModel.from_cfg(cfg, seed=seed)
             self.motion_simulator = MotionModel.from_cfg(cfg, seed=seed)
@@ -284,7 +284,7 @@ class DataTransform:
         if add_noise:
             masked_kspace = self.noiser(masked_kspace, mask=mask, seed=seed)
         if add_motion:
-            masked_kspace = self.motion_simulator(masked_kspace, mask=mask, seed=seed)
+            masked_kspace = self.motion_simulator(masked_kspace, seed=seed)
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)
         maps = maps.squeeze(0)

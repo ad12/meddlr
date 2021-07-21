@@ -226,7 +226,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         noise_vals = [0]
 
     if include_motion:
-        motion_vals = [0] + motion_sweep_vals if motion_arg == "sweep" else [0]
+        motion_vals = motion_sweep_vals if motion_arg == "sweep" else [0.2, 0.5]
         motion_vals += list(cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE)
         motion_vals = sorted(set(motion_vals))
     else:
@@ -419,13 +419,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--noise",
-        default="standard",
+        default="false",
         choices=("false", "standard", "sweep"),
         help="Type of noise evaluation",
     )
     parser.add_argument(
         "--motion",
-        default="standard",
+        default="false",
         choices=("false", "standard", "sweep"),
         help="Type of motion evaluation",
     )
@@ -438,7 +438,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sweep-vals-motion",
-        default=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
+        default=[[0.1, 0.3], [0.2, 0.5]],
         nargs="*",
         type=float,
         help="args to sweep for motion",

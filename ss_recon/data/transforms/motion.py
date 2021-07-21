@@ -39,6 +39,8 @@ class MotionModel:
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
+        if isinstance(motion_range, (float, int)):
+            motion_range = (motion_range, )
         self.motion_range = motion_range
 
     def __call__(self, *args, **kwargs):
@@ -65,16 +67,13 @@ class MotionModel:
         is_complex = False
         if clone:
             kspace = kspace.clone()
-        if kspace.shape[-1] == 2:
-            is_complex = True
-            kspace = torch.view_as_complex(kspace)
-            phase_matrix = torch.zeros(kspace.shape[0:-1], dtype=torch.complex64)
-        else:
-            phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
+        phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
         width = kspace.shape[2]
-        scale = (self.motion_range[1] - self.motion_range[0]) * \
-                torch.rand(1) + self.motion_range[0]
-
+        if len(self.motion_range) == 2:
+            scale = (self.motion_range[1] - self.motion_range[0]) * \
+                    torch.rand(1) + self.motion_range[0]
+        else:
+            scale = self.motion_range[0]
         g = self.generator if seed is None else torch.Generator().manual_seed(seed)
         odd_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
         even_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
@@ -83,7 +82,7 @@ class MotionModel:
                 rand_err = even_err
             else:
                 rand_err = odd_err
-            phase_error = np.exp(-1j * rand_err)
+            phase_error = torch.from_numpy(np.exp(-1j * rand_err))
             phase_matrix[:, :, line] = phase_error
         aug_kspace = kspace * phase_matrix
         return aug_kspace
@@ -93,5 +92,5 @@ class MotionModel:
 
     @classmethod
     def from_cfg(cls, cfg, seed=None, **kwargs):
-        cfg = cfg.MODEL.CONSISTENCY.AUG.MOTION
-        return cls(cfg.RANGE, seed=seed, **kwargs)
+        cfg = cfg.MODEL.CONSISTENCY.AUG
+        return cls(cfg.MOTION_RANGE, seed=seed, **kwargs)

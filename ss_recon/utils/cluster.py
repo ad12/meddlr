@@ -211,6 +211,10 @@ _USER_PATHS = {
         CLUSTER.SPIRAL: (
             "/mnt/dense/ozt/dl-ss-recon/data",
             "/home_local/harris/results",
+        ),
+        CLUSTER.HARBIN: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/home_local/harris/results",
         )
     }
     # New users add path preference below.

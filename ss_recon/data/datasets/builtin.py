@@ -15,15 +15,15 @@ from .register_mrco import register_mrco_scans
 _PREDEFINED_SPLITS_MRCO = {}
 _PREDEFINED_SPLITS_MRCO["mridata_knee_2019"] = {
     "mridata_knee_2019_train": (
-        "mridata_knee_2019_new/train",
+        "mridata_knee_2019/train",
         "ann://mridata_knee_2019/train.json",
     ),
     "mridata_knee_2019_val": (
-        "mridata_knee_2019_new/val",
+        "mridata_knee_2019/val",
         "ann://mridata_knee_2019/val.json",
     ),
     "mridata_knee_2019_test": (
-        "mridata_knee_2019_new/test",
+        "mridata_knee_2019/test",
         "ann://mridata_knee_2019/test.json",
     ),
 }
