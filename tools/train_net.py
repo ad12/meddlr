@@ -55,7 +55,7 @@ def main(args):
         raise NotImplementedError("Evaluation is not yet implemented")
 
     trainer = DefaultTrainer(cfg)
-    trainer.resume_or_load(resume=args.resume)
+    trainer.resume_or_load(resume=args.resume, restart_iter=args.restart_iter)
     return trainer.train()
 
 

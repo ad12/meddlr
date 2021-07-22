@@ -1,17 +1,3 @@
-"""Unrolled Compressed Sensing (2D).
-
-This file contains an implementation of the Unrolled Compressed Sensing
-framework by CM Sandino, JY Cheng, et al. See paper below for more details.
-
-It is also based heavily on the codebase below:
-
-https://github.com/MRSRL/dl-cs
-
-Implementation is based on:
-    CM Sandino, JY Cheng, et al. "Compressed Sensing: From Research to
-    Clinical Practice with Deep Neural Networks" IEEE Signal Processing
-    Magazine, 2020.
-"""
 import itertools
 
 import torch
@@ -55,10 +41,11 @@ class DenoisingModel(nn.Module):
         noise_cfg.freeze()
         self.noiser = NoiseModel.from_cfg(noise_cfg, device=self.device)
 
-        # TODO: Move to config at some point
-        # If fully sampled kspace is available, perform denoising on the fully sampled kspace.
-        # If False, denoising will be performed on the undersampled kspace.
-        self.add_noise_fully_sampled = True
+        self.use_fully_sampled_target = cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET
+        use_fully_sampled_target_eval = cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL
+        if use_fully_sampled_target_eval is None:
+            use_fully_sampled_target_eval = self.use_fully_sampled_target
+        self.use_fully_sampled_target_eval = use_fully_sampled_target_eval
 
     def augment(self, kspace):
         """Noise augmentation module.
@@ -145,14 +132,18 @@ class DenoisingModel(nn.Module):
         if not any(k in inputs for k in ["supervised", "unsupervised"]):
             inputs = {"supervised": inputs}
 
+        use_fully_sampled_target = (self.training and self.use_fully_sampled_target) or (
+            not self.training and self.use_fully_sampled_target_eval
+        )
+
         if "supervised" in inputs:
             sup_inputs = inputs["supervised"]
-            if self.add_noise_fully_sampled:
+            if use_fully_sampled_target:
                 img = sup_inputs["target"]
                 A = SenseModel(sup_inputs["maps"])
                 sup_inputs["kspace"] = self.augment(A(img, adjoint=False))
             else:
-                kspace = sup_inputs["target"]
+                kspace = sup_inputs["kspace"]
                 A = SenseModel(sup_inputs["maps"], weights=cplx.get_mask(kspace))
                 sup_inputs["target"] = A(kspace, adjoint=True).detach()
                 sup_inputs["kspace"] = self.augment(kspace)

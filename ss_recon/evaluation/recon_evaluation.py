@@ -56,7 +56,8 @@ class ReconEvaluator(DatasetEvaluator):
             skip_rescale (bool, optional): If `True`, skips rescaling the output and target
                 by the mean/std.
             save_scans (bool, optional): If `True`, saves predictions to .npy file.
-            metrics (Sequence[str], optional): Defaults to all supported recon metrics.
+            metrics (Sequence[str], optional): To avoid computing metrics, set to ``False``.
+                Defaults to all supported recon metrics.
                 To process metrics on the full scan, append ``'_scan'`` to the metric name
                 (e.g. `'psnr_scan'`). Supported metrics include:
                 * 'psnr': Complex peak signal-to-noise ratio
@@ -85,8 +86,16 @@ class ReconEvaluator(DatasetEvaluator):
         self._skip_rescale = skip_rescale
         self._save_scans = save_scans
 
-        self._slice_metrics = [m for m in metrics if not m.endswith("_scan")] if metrics else None
-        self._scan_metrics = [m[:-5] for m in metrics if m.endswith("_scan")] if metrics else None
+        if metrics is not False:
+            self._slice_metrics = (
+                [m for m in metrics if not m.endswith("_scan")] if metrics else None
+            )
+            self._scan_metrics = (
+                [m[:-5] for m in metrics if m.endswith("_scan")] if metrics else None
+            )
+        else:
+            self._slice_metrics = []
+            self._scan_metrics = []
         self._results = None
         self._running_results = None
 

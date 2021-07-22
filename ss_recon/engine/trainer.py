@@ -194,7 +194,7 @@ class DefaultTrainer(SimpleTrainer):
         temp_checkpointer = DetectionCheckpointer(self.model)
         temp_checkpointer.load(fine_tune_weights)
 
-    def resume_or_load(self, resume=True):
+    def resume_or_load(self, resume=True, restart_iter=False):
         """
         If `resume==True`, and last checkpoint exists, resume from it.
 
@@ -206,12 +206,13 @@ class DefaultTrainer(SimpleTrainer):
         # The checkpoint stores the training iteration that just finished,
         # thus we start at the next iteration
         # (or iter zero if there's no checkpoint).
-        self.start_iter = (
+        iteration = (
             self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume).get(
                 "iteration", -1
             )
             + 1
         )
+        self.start_iter = iteration if not restart_iter else 0
 
     def build_hooks(self):
         """

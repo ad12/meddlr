@@ -89,8 +89,15 @@ _C.MODEL.UNET.DROPOUT = 0.0
 _C.MODEL.DENOISING = CN()
 _C.MODEL.DENOISING.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.DENOISING.NOISE = CN()
-# Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
+# Noise standard deviation to use for augmentations.
 _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
+# When fully sampled kspace is available, if True, perform denoising on the
+# fully sampled kspace. If False, denoising will be performed on the
+# randomly generated undersampled kspace.
+_C.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET = True
+# Same as above, but at eval time (e.g. validation).
+# Defaults to MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET
+_C.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL = None
 
 # -----------------------------------------------------------------------------
 # Compressed Sensing (CS) model

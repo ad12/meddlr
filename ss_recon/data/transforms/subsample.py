@@ -302,6 +302,8 @@ def poisson(
     slope_min = 0
     if seed is not None:
         rand_state = np.random.get_state()
+    else:
+        seed = -1  # numba does not play nicely with None types
     while slope_min < slope_max:
         slope = (slope_max + slope_min) / 2.0
         R = 1.0 + r * slope
@@ -318,7 +320,7 @@ def poisson(
         else:
             slope_max = slope
 
-    if seed is not None:
+    if seed is not None and seed > 0:
         np.random.set_state(rand_state)
     mask = mask.reshape(img_shape).astype(dtype)
     if return_density:
@@ -333,7 +335,7 @@ def _poisson(nx, ny, K, R, calib, seed=None):
     mask = np.zeros((ny, nx))
     f = ny / nx
 
-    if seed is not None:
+    if seed is not None and seed > 0:
         np.random.seed(int(seed))
 
     pxs = np.empty(nx * ny, np.int32)

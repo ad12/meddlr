@@ -48,6 +48,11 @@ def default_argument_parser():
         action="store_true",
         help="whether to attempt to resume from the checkpoint directory",
     )
+    parser.add_argument(
+        "--restart-iter",
+        action="store_true",
+        help="restart iteration count when loading checkpointed weights",
+    )
     parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
     parser.add_argument(
         "--num-gpus",
