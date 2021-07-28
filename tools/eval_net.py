@@ -42,8 +42,8 @@ class ZFReconEvaluator(ReconEvaluator):
     """Zero-filled recon evaluator."""
 
     def process(self, inputs, outputs):
-        zf_out = {k: outputs[k] for k in ("target", "metadata")}
-        zf_out["pred"] = outputs["zf_pred"]
+        zf_out = {k: outputs[k] for k in ("target",)}
+        zf_out["pred"] = torch.view_as_complex(outputs["zf_image"])
         return super().process(inputs, zf_out)
 
 
@@ -227,7 +227,6 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
     if include_motion:
         motion_vals = [0] + motion_sweep_vals if motion_arg == "sweep" else [0]
-        motion_vals += list(cfg.MODEL.CONSISTENCY.AUG.MOTION_RANGE)
         motion_vals = sorted(set(motion_vals))
     else:
         motion_vals = [0]
@@ -300,7 +299,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         )
 
         # Build evaluators. Only save reconstructions for last scan.
-        _save_scans = (exp_idx == len(values) - 1) if save_scans else False
+        _save_scans = save_scans
         evaluators = [
             ReconEvaluator(
                 dataset_name,
@@ -308,7 +307,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
                 group_by_scan=group_by_scan,
                 skip_rescale=skip_rescale,
                 save_scans=_save_scans,
-                output_dir=os.path.join(output_dir, dataset_name) if _save_scans else None,
+                output_dir=os.path.join(output_dir, f"{dataset_name}-motion-{motion_level}") if _save_scans else None,
                 metrics=eval_metrics,
                 # output_dir=os.path.join(output_dir, f"{dataset_name}-acc={acc}-noise={noise_level}")
             )
@@ -317,7 +316,13 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         if zero_filled:
             evaluators.append(
                 ZFReconEvaluator(
-                    dataset_name, s_cfg, group_by_scan=group_by_scan, skip_rescale=skip_rescale
+                    dataset_name,
+                    s_cfg,
+                    group_by_scan=group_by_scan,
+                    skip_rescale=skip_rescale,
+                    save_scans=_save_scans,
+                    output_dir=os.path.join(output_dir, f"{dataset_name}-zero-filled-motion-{motion_level}") if _save_scans else None,
+                    metrics=eval_metrics,
                 )
             )
         evaluators = DatasetEvaluators(evaluators, as_list=True)
