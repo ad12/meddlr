@@ -256,7 +256,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         logger.info("==" * 30)
 
         existing_metrics = None
-        if metrics is not None:
+        if metrics is not None and compute_metrics:
             try:
                 existing_metrics = find_metrics(metrics, params)
             except KeyError:
@@ -422,7 +422,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sweep-vals",
-        default=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
+        default=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         nargs="*",
         type=float,
         help="args to sweep for noise",
