@@ -48,6 +48,11 @@ def default_argument_parser():
         action="store_true",
         help="whether to attempt to resume from the checkpoint directory",
     )
+    parser.add_argument(
+        "--restart-iter",
+        action="store_true",
+        help="restart iteration count when loading checkpointed weights",
+    )
     parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
     parser.add_argument(
         "--num-gpus",
@@ -234,7 +239,7 @@ def init_wandb_run(
         sync_tensorboard=True,
         job_type=job_type,
         dir=cfg.OUTPUT_DIR,
-        settings=wandb.Settings(start_method="fork"), # to solve init error on siena
+        settings=wandb.Settings(start_method="fork"),  # to solve init error on siena
     )
 
     # Resume run and return.

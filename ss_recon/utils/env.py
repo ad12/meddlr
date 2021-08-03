@@ -174,6 +174,10 @@ def is_repro() -> bool:
     return os.environ.get("SSRECON_REPRO", "") == "True"
 
 
+def profile_memory() -> bool:
+    return os.environ.get("SSRECON_MPROFILE", "") == "True"
+
+
 def supports_wandb():
     return "wandb" in sys.modules and not is_debug()
 

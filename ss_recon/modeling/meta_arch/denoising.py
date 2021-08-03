@@ -1,28 +1,15 @@
-"""Unrolled Compressed Sensing (2D).
+import itertools
 
-This file contains an implementation of the Unrolled Compressed Sensing
-framework by CM Sandino, JY Cheng, et al. See paper below for more details.
-
-It is also based heavily on the codebase below:
-
-https://github.com/MRSRL/dl-cs
-
-Implementation is based on:
-    CM Sandino, JY Cheng, et al. "Compressed Sensing: From Research to
-    Clinical Practice with Deep Neural Networks" IEEE Signal Processing
-    Magazine, 2020.
-"""
 import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
 import ss_recon.utils.complex_utils as cplx
+from ss_recon.data.transforms.noise import NoiseModel
+from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from ss_recon.utils.events import get_event_storage
 from ss_recon.utils.general import move_to_device
 from ss_recon.utils.transforms import SenseModel
-
-from ..layers.layers2D import ResNet
-from .build import META_ARCH_REGISTRY
 
 __all__ = ["DenoisingModel"]
 
@@ -37,89 +24,35 @@ class DenoisingModel(nn.Module):
         super().__init__()
         self.device = torch.device(cfg.MODEL.DEVICE)
 
-        # Extract network parameters
-        num_grad_steps = cfg.MODEL.UNROLLED.NUM_UNROLLED_STEPS
-        num_resblocks = cfg.MODEL.UNROLLED.NUM_RESBLOCKS
-        num_features = cfg.MODEL.UNROLLED.NUM_FEATURES
-        kernel_size = cfg.MODEL.UNROLLED.KERNEL_SIZE
-        if len(kernel_size) == 1:
-            kernel_size = kernel_size[0]
-        drop_prob = cfg.MODEL.UNROLLED.DROPOUT
-        circular_pad = cfg.MODEL.UNROLLED.PADDING == "circular"
-        fix_step_size = cfg.MODEL.UNROLLED.FIX_STEP_SIZE
-        share_weights = cfg.MODEL.UNROLLED.SHARE_WEIGHTS
-        noise_std_dev = cfg.MODEL.DENOISING.NOISE.STD_DEV
-        assert len(noise_std_dev) == 1, "Noise std dev currently only supports one value."
-        self.noise_std_dev = noise_std_dev[0]
+        model_cfg = cfg.clone()
+        model_cfg.defrost()
+        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.DENOISING.META_ARCHITECTURE
+        model_cfg.freeze()
+        self.model = build_model(model_cfg)
 
-        # Data dimensions
-        self.num_emaps = cfg.MODEL.UNROLLED.NUM_EMAPS
-
-        # ResNet parameters
-        resnet_params = dict(
-            num_resblocks=num_resblocks,
-            in_chans=2 * self.num_emaps,
-            chans=num_features,
-            kernel_size=kernel_size,
-            drop_prob=drop_prob,
-            circular_pad=circular_pad,
-            act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
-            norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
-            norm_affine=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE,
-            order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
-        )
-
-        # Declare ResNets and RNNs for each unrolled iteration
-        if share_weights:
-            self.resnets = nn.ModuleList([ResNet(**resnet_params)] * num_grad_steps)
-        else:
-            self.resnets = nn.ModuleList([ResNet(**resnet_params) for _ in range(num_grad_steps)])
-
-        # Declare step sizes for each iteration
-        init_step_size = torch.tensor([-2.0], dtype=torch.float32)
-        if fix_step_size:
-            self.step_sizes = [init_step_size] * num_grad_steps
-        else:
-            self.step_sizes = nn.ParameterList(
-                [torch.nn.Parameter(init_step_size) for _ in range(num_grad_steps)]
-            )
-
+        # Visualization done by this model
+        if hasattr(self.model, "vis_period"):
+            self.model.vis_period = -1
         self.vis_period = cfg.VIS_PERIOD
 
-    ''''
-    def augment(self, inputs):
-        """Noise augmentation module.
-        TODO: Perform the augmentation here.
-        """
-        kspace = inputs["kspace"].clone()
-        mask = cplx.get_mask(kspace)
+        noise_cfg = cfg.clone()
+        noise_cfg.defrost()
+        noise_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = cfg.MODEL.DENOISING.NOISE.STD_DEV
+        noise_cfg.freeze()
+        self.noiser = NoiseModel.from_cfg(noise_cfg, device=self.device)
 
-        noise_std = self.noise_std_dev
-        noise = noise_std * torch.randn(inputs['kspace'].size())
-        noise = noise.to(self.device) #wasn't a problem for n2r?
-        masked_noise = noise * mask
-        aug_kspace = kspace + masked_noise
-        import pdb; pdb.set_trace()
-        inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
-        inputs["kspace"] = aug_kspace
-        return inputs
-    '''
+        self.use_fully_sampled_target = cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET
+        use_fully_sampled_target_eval = cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL
+        if use_fully_sampled_target_eval is None:
+            use_fully_sampled_target_eval = self.use_fully_sampled_target
+        self.use_fully_sampled_target_eval = use_fully_sampled_target_eval
 
     def augment(self, kspace):
         """Noise augmentation module.
         TODO: Perform the augmentation here.
         """
-        # kspace = inputs["kspace"].clone()
-        mask = cplx.get_mask(kspace)
-
-        noise_std = self.noise_std_dev
-        noise = noise_std * torch.randn(kspace.size())
-        noise = noise.to(kspace.device)  # wasn't a problem for n2r?
-        masked_noise = noise * mask
-        aug_kspace = kspace + masked_noise
-        # inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
-        # inputs["kspace"] = aug_kspace
-        return aug_kspace.contiguous()
+        kspace = kspace.detach().clone()
+        return self.noiser(kspace, clone=False)
 
     def visualize_training(self, kspace, zfs, targets, preds):
         """A function used to visualize reconstructions.
@@ -188,70 +121,53 @@ class DenoisingModel(nn.Module):
         """
         if vis_training and not self.training:
             raise ValueError("vis_training is only applicable in training mode.")
-        # Need to fetch device at runtime for proper data transfer.
-        device = self.resnets[0].final_layer.weight.device
-        inputs = move_to_device(inputs, device)
-        clean_kspace = inputs["kspace"]
-        target = inputs.get("target", None)
-        mask = inputs.get("mask", None)
-        A = inputs.get("signal_model", None)
-        maps = inputs["maps"]
-        num_maps_dim = -2 if cplx.is_complex_as_real(maps) else -1
-        if self.num_emaps != maps.size()[num_maps_dim]:
-            raise ValueError("Incorrect number of ESPIRiT maps! Re-prep data...")
 
-        # Move step sizes to the right device.
-        step_sizes = [x.to(device) for x in self.step_sizes]
+        inputs = move_to_device(inputs, self.device)
 
-        if mask is None:
-            mask = cplx.get_mask(clean_kspace)
-        clean_kspace *= mask
-
-        # Get data dimensions
-        dims = tuple(clean_kspace.size())
-
-        # Declare signal model.
-        if A is None:
-            A = SenseModel(maps, weights=mask)
-
-        # Compute zero-filled image reconstruction
-        # inputs_aug = self.augment(inputs)
-        # kspace = inputs_aug["kspace"]
-        kspace = self.augment(clean_kspace)
-        zf_image = A(kspace, adjoint=True)
-        target = A(clean_kspace, adjoint=True)
-
-        # Begin unrolled proximal gradient descent
-        image = zf_image
-        for resnet, step_size in zip(self.resnets, step_sizes):
-            # dc update
-            grad_x = A(A(image), adjoint=True) - zf_image
-            image = image + step_size * grad_x
-            use_cplx = cplx.is_complex(image)
-            if use_cplx:
-                image = torch.view_as_real(image)
-
-            # prox update
-            image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(0, 3, 1, 2)
-
-            image = resnet(image)
-            image = image.permute(0, 2, 3, 1).reshape(dims[0:3] + (self.num_emaps, 2))
-            if use_cplx:
-                image = torch.view_as_complex(image)
-
-        output_dict = {
-            "pred": image,  # N x Y x Z x 1 x 2
-            "target": target,  # N x Y x Z x 1 x 2
-        }
-        if return_pp:
-            output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"]})
-
-        if self.training and (vis_training or self.vis_period > 0):
+        if self.training and self.vis_period > 0:
             storage = get_event_storage()
-            if vis_training or storage.iter % self.vis_period == 0:
-                self.visualize_training(kspace, zf_image, target, image)
+            if storage.iter % self.vis_period == 0:
+                vis_training = True
 
-        if not self.training:
-            output_dict["zf_image"] = zf_image
+        if not any(k in inputs for k in ["supervised", "unsupervised"]):
+            inputs = {"supervised": inputs}
+
+        use_fully_sampled_target = (self.training and self.use_fully_sampled_target) or (
+            not self.training and self.use_fully_sampled_target_eval
+        )
+
+        if "supervised" in inputs:
+            sup_inputs = inputs["supervised"]
+            if use_fully_sampled_target:
+                img = sup_inputs["target"]
+                A = SenseModel(sup_inputs["maps"])
+                sup_inputs["kspace"] = self.augment(A(img, adjoint=False))
+            else:
+                kspace = sup_inputs["kspace"]
+                A = SenseModel(sup_inputs["maps"], weights=cplx.get_mask(kspace))
+                sup_inputs["target"] = A(kspace, adjoint=True).detach()
+                sup_inputs["kspace"] = self.augment(kspace)
+        if "unsupervised" in inputs:
+            unsup_inputs = inputs["unsupervised"]
+            kspace = unsup_inputs["kspace"]
+            A = SenseModel(unsup_inputs["maps"], weights=cplx.get_mask(kspace))
+            unsup_inputs["target"] = A(kspace, adjoint=True).detach()
+            unsup_inputs["kspace"] = self.augment(kspace)
+
+        keys = [set(v.keys()) for v in inputs.values()]
+        keys = keys[0].intersection(*keys)
+        inputs = {k: [inputs[field][k] for field in inputs.keys()] for k in keys}
+        inputs = {
+            k: torch.cat(inputs[k], dim=0)
+            if isinstance(inputs[k][0], torch.Tensor)
+            else itertools.chain(inputs[k])
+            for k in inputs.keys()
+        }
+
+        output_dict = self.model(
+            inputs,
+            return_pp=True,
+            vis_training=vis_training,
+        )
 
         return output_dict

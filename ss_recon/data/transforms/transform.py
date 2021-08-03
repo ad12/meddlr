@@ -7,8 +7,8 @@ from fvcore.common.registry import Registry
 from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import transforms as T
 
-from .noise import NoiseModel
 from .motion import MotionModel
+from .noise import NoiseModel
 
 NORMALIZER_REGISTRY = Registry("NORMALIZER")
 NORMALIZER_REGISTRY.__doc__ = """
@@ -171,8 +171,14 @@ class DataTransform:
     For scans that
     """
 
-    def __init__(self, cfg, mask_func, is_test: bool = False,
-                 add_noise: bool = False, add_motion: bool = False):
+    def __init__(
+        self,
+        cfg,
+        mask_func,
+        is_test: bool = False,
+        add_noise: bool = False,
+        add_motion: bool = False,
+    ):
         """
         Args:
             mask_func (utils.subsample.MaskFunc): A function that can create a
@@ -210,7 +216,7 @@ class DataTransform:
         maps,
         target,
         fname,
-        slice,
+        slice_id,
         is_fixed,
         acceleration: int = None,
     ):
@@ -242,12 +248,13 @@ class DataTransform:
         # Convert everything from numpy arrays to tensors
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
         maps = cplx.to_tensor(maps).unsqueeze(0)
-        target = cplx.to_tensor(target).unsqueeze(0)
+        target_init = cplx.to_tensor(target).unsqueeze(0)
+        target = (
+            torch.complex(target_init, torch.zeros_like(target_init)).unsqueeze(-1)
+            if not torch.is_complex(target_init)
+            else target_init
+        )  # handle rss vs. sensitivity-integrated
         norm = torch.sqrt(torch.mean(cplx.abs(target) ** 2))
-
-        # print(kspace.shape)
-        # print(maps.shape)
-        # print(target.shape)
 
         # TODO: Add other transforms here.
 
@@ -258,8 +265,14 @@ class DataTransform:
         )
 
         # Zero-filled Sense Recon.
-        A = T.SenseModel(maps, weights=mask)
-        image = A(masked_kspace, adjoint=True)
+        if torch.is_complex(target_init):
+            A = T.SenseModel(maps, weights=mask)
+            image = A(masked_kspace, adjoint=True)
+        # Zero-filled RSS Recon.
+        else:
+            image = T.ifft2(masked_kspace)
+            image_rss = torch.sqrt(torch.sum(cplx.abs(image) ** 2, axis=-1))
+            image = torch.complex(image_rss, torch.zeros_like(image_rss)).unsqueeze(-1)
 
         # Normalize
         normalized = self._normalizer.normalize(
@@ -282,8 +295,12 @@ class DataTransform:
             self._is_test or (not is_fixed and self.rng.uniform() < self.p_motion)
         )
         if add_noise:
-            masked_kspace = self.noiser(masked_kspace, mask=mask, seed=seed)
+            # Seed should be different for each slice of a scan.
+            noise_seed = seed + slice_id if seed is not None else None
+            masked_kspace = self.noiser(masked_kspace, mask=mask, seed=noise_seed)
         if add_motion:
+            # Motion seed should not be different for each slice for now.
+            # TODO: Change this for 2D acquisitions.
             masked_kspace = self.motion_simulator(masked_kspace, seed=seed)
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)

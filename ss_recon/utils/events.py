@@ -207,12 +207,18 @@ class CommonMetricPrinter(EventWriter):
         else:
             max_mem_mb = None
 
+        ram_key = "guppy/total_RAM"
+        if ram_key in storage.histories():
+            total_ram = storage.history(ram_key).latest()  # this value is already in MB
+        else:
+            total_ram = None
+
         # NOTE: max_mem is parsed by grep in "dev/parse_results.sh"
         self.logger.info(
             """\
 eta: {eta}  iter: {iter}  {losses}  \
 {time}  {data_time}  \
-lr: {lr}  {memory}\
+lr: {lr}  {memory}  {ram}\
 """.format(
                 eta=eta_string,
                 iter=iteration,
@@ -229,6 +235,7 @@ lr: {lr}  {memory}\
                 data_time="data_time: {:.4f}".format(data_time) if data_time is not None else "",
                 lr=lr,
                 memory="max_mem: {:.0f}M".format(max_mem_mb) if max_mem_mb is not None else "",
+                ram="total_RAM: {:.0f}M".format(total_ram) if total_ram is not None else "",
             )
         )
 

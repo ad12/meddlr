@@ -1,10 +1,7 @@
-from numpy.lib.type_check import imag
+import numpy as np
 import torch
 
-import numpy as np
-
 from ss_recon.utils import env
-from ss_recon.utils import complex_utils as cplx
 
 if env.pt_version() >= [1, 6]:
     import torch.fft
@@ -33,14 +30,14 @@ class MotionModel:
         definition, which we dont want.
     """
 
-    def __init__(self, motion_range = (0.2, 0.5), seed: int = None):
+    def __init__(self, motion_range=(0.2, 0.5), seed: int = None):
         super().__init__()
         g = torch.Generator()
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
         if isinstance(motion_range, (float, int)):
-            motion_range = (motion_range, )
+            motion_range = (motion_range,)
         self.motion_range = motion_range
 
     def __call__(self, *args, **kwargs):
@@ -64,15 +61,16 @@ class MotionModel:
             imaginary, respectively.
             TODO: This code should account for that case as well.
         """
-        is_complex = False
+        # is_complex = False
         if clone:
             kspace = kspace.clone()
         phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
         width = kspace.shape[2]
         g = self.generator if seed is None else torch.Generator().manual_seed(seed)
         if len(self.motion_range) == 2:
-            scale = (self.motion_range[1] - self.motion_range[0]) * \
-                    torch.rand(1, generator=g).numpy() + self.motion_range[0]
+            scale = (self.motion_range[1] - self.motion_range[0]) * torch.rand(
+                1, generator=g
+            ).numpy() + self.motion_range[0]
         else:
             scale = self.motion_range[0]
         odd_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale

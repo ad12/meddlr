@@ -11,7 +11,6 @@ Supported metrics include:
 """
 import itertools
 import os
-import warnings
 from copy import deepcopy
 from typing import Any, Dict, Sequence
 
@@ -25,6 +24,7 @@ from ss_recon.data.build import build_recon_val_loader
 from ss_recon.engine import DefaultTrainer, default_argument_parser, default_setup
 from ss_recon.evaluation import DatasetEvaluators, ReconEvaluator, inference_on_dataset
 from ss_recon.evaluation.testing import SUPPORTED_VAL_METRICS, check_consistency, find_weights
+from ss_recon.modeling.meta_arch import CSModel
 from ss_recon.utils.logger import setup_logger
 
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -194,7 +194,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     motion_sweep_vals = args.sweep_vals_motion
     skip_rescale = args.skip_rescale
     overwrite = args.overwrite
-    save_scans = args.save_scans
+    save_scans = args.save_scans or "save_scans" in args.ops
+    compute_metrics = "metrics" in args.ops
     # TODO: Set up W&B configuration.
     # use_wandb = args.use_wandb
     # if use_wandb:
@@ -206,7 +207,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
     # Get and load metrics file
     output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
-    metrics_file = os.path.join(output_dir, "metrics.csv")
+    metrics_file = os.path.join(output_dir, args.metrics_file)
     if not overwrite and os.path.isfile(metrics_file):
         metrics = pd.read_csv(metrics_file, index_col=0)
         # Add default parameters to metrics.
@@ -232,17 +233,19 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         motion_vals = [0]
 
     values = itertools.product(
-        cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals,
-        motion_vals
+        cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals, motion_vals
     )
     values = list(values)
     all_results = []
-    if len(values) > 1 and save_scans:
-        warnings.warn(
-            "Found multiple evaluation configurations. Only outputs from last configuration will be saved..."
-        )
 
     default_metrics = ReconEvaluator.default_metrics()
+    if args.extra_metrics:
+        if not compute_metrics:
+            raise ValueError(
+                "Extra metrics were specified, but `--ops` did not "
+                "indicate eval should perform metric computation"
+            )
+        default_metrics.extend(args.extra_metrics)
 
     for exp_idx, (dataset_name, acc, noise_level, motion_level) in enumerate(values):
         # Check if the current configuration already has metrics computed
@@ -263,7 +266,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         logger.info("==" * 30)
 
         existing_metrics = None
-        if metrics is not None:
+        if metrics is not None and compute_metrics:
             try:
                 existing_metrics = find_metrics(metrics, params)
             except KeyError:
@@ -293,35 +296,42 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
         # Build a recon val loader
         dataloader = build_recon_val_loader(
-            s_cfg, dataset_name, as_test=True,
+            s_cfg,
+            dataset_name,
+            as_test=True,
             add_noise=noise_level > 0,
-            add_motion=motion_level > 0
+            add_motion=motion_level > 0,
         )
 
         # Build evaluators. Only save reconstructions for last scan.
-        _save_scans = save_scans
+        params_str = "-".join(f"{k}={v}" for k, v in params.items() if k != "dataset")
+        exp_output_dir = os.path.join(output_dir, dataset_name, params_str) if save_scans else None
         evaluators = [
             ReconEvaluator(
                 dataset_name,
                 s_cfg,
                 group_by_scan=group_by_scan,
                 skip_rescale=skip_rescale,
-                save_scans=_save_scans,
-                output_dir=os.path.join(output_dir, f"{dataset_name}-motion-{motion_level}") if _save_scans else None,
-                metrics=eval_metrics,
-                # output_dir=os.path.join(output_dir, f"{dataset_name}-acc={acc}-noise={noise_level}")
+                save_scans=save_scans,
+                output_dir=exp_output_dir,
+                metrics=eval_metrics if compute_metrics else False,
             )
         ]
         # TODO: add support for multiple evaluators.
         if zero_filled:
+            zf_output_dir = (
+                os.path.join(output_dir, dataset_name, "ZeroFilled-" + params_str)
+                if save_scans
+                else None
+            )
             evaluators.append(
                 ZFReconEvaluator(
                     dataset_name,
                     s_cfg,
                     group_by_scan=group_by_scan,
                     skip_rescale=skip_rescale,
-                    save_scans=_save_scans,
-                    output_dir=os.path.join(output_dir, f"{dataset_name}-zero-filled-motion-{motion_level}") if _save_scans else None,
+                    save_scans=save_scans,
+                    output_dir=zf_output_dir,
                     metrics=eval_metrics,
                 )
             )
@@ -357,49 +367,56 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         # file_path = os.path.join(output_dir, dataset_name, "{}.h5".format(scan_name))
         # os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-    all_results = pd.concat(all_results, ignore_index=True)
-    logger.info("Summary:\n{}".format(tabulate(all_results, headers=all_results.columns)))
+    if len(all_results) > 0:
+        all_results = pd.concat(all_results, ignore_index=True)
+        logger.info("Summary:\n{}".format(tabulate(all_results, headers=all_results.columns)))
+    else:
+        logger.info("No evaluation metrics were computed or available in this run")
 
     # Try to copy over old metrics information.
     # TODO: If fails, it automatically saves the old file in a versioned form and prints logging message.
-    if metrics is not None:
-        try:
-            running_results = update_metrics(
-                all_results,
-                metrics,
-                on=["Acceleration", "dataset", "Noise Level", "weights", "Method", "rescaled"],
-            )
-        except KeyError as e:
-            logger.error(e)
-            logger.error("Failed to load old metrics information")
-            # raise e
+    if compute_metrics:
+        if metrics is not None:
+            try:
+                running_results = update_metrics(
+                    all_results,
+                    metrics,
+                    on=["Acceleration", "dataset", "Noise Level", "weights", "Method", "rescaled"],
+                )
+            except KeyError as e:
+                logger.error(e)
+                logger.error("Failed to load old metrics information")
+                # raise e
+                running_results = all_results
+        else:
             running_results = all_results
-    else:
-        running_results = all_results
-    running_results.to_csv(metrics_file, mode="w")
+        running_results.to_csv(metrics_file, mode="w")
 
 
 def main(args):
     cfg = setup(args)
     model = DefaultTrainer.build_model(cfg)
-    weights, criterion, best_value = (
-        (cfg.MODEL.WEIGHTS, None, None)
-        if cfg.MODEL.WEIGHTS
-        else find_weights(cfg, args.metric, args.iter_limit)
-    )
-    model = model.to(cfg.MODEL.DEVICE)
-    DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-        weights, resume=args.resume
-    )
+    if isinstance(model, CSModel):
+        weights, criterion, best_value = None, None, 0
+    else:
+        weights, criterion, best_value = (
+            (cfg.MODEL.WEIGHTS, None, None)
+            if cfg.MODEL.WEIGHTS
+            else find_weights(cfg, args.metric, args.iter_limit)
+        )
+        model = model.to(cfg.MODEL.DEVICE)
+        DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
+            weights, resume=args.resume
+        )
 
-    # See https://github.com/pytorch/pytorch/issues/42300
-    logger.info("Checking weights were properly loaded...")
-    check_consistency(torch.load(weights)["model"], model)
+        # See https://github.com/pytorch/pytorch/issues/42300
+        logger.info("Checking weights were properly loaded...")
+        check_consistency(torch.load(weights)["model"], model)
 
-    logger.info("\n\n==============================")
-    logger.info("Loading weights from {}".format(weights))
+        logger.info("\n\n==============================")
+        logger.info("Loading weights from {}".format(weights))
 
-    eval(cfg, args, model, os.path.basename(weights), criterion, best_value)
+    eval(cfg, args, model, os.path.basename(weights) if weights else None, criterion, best_value)
 
 
 if __name__ == "__main__":
@@ -410,6 +427,7 @@ if __name__ == "__main__":
     # )
     parser.add_argument(
         "--metric",
+        "--criterion",
         type=str,
         default="",
         help=(
@@ -436,11 +454,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sweep-vals",
-        default=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
+        default=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         nargs="*",
         type=float,
         help="args to sweep for noise",
     )
+    parser.add_argument("--extra-metrics", nargs="*", help="Extra metrics for testing")
     parser.add_argument(
         "--sweep-vals-motion",
         default=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
@@ -452,7 +471,10 @@ if __name__ == "__main__":
         "--iter-limit",
         default=None,
         type=int,
-        help="Iteration limit. Chooses weights below this time point.",
+        help=(
+            "Time limit. If negative, interpreted as epoch. "
+            "Chooses weights at or before this time point."
+        ),
     )
     parser.add_argument(
         "--overwrite",
@@ -463,10 +485,23 @@ if __name__ == "__main__":
         "--skip-rescale", action="store_true", help="Skip rescaling when evaluating"
     )
     parser.add_argument("--save-scans", action="store_true", help="Save reconstruction outputs")
+    parser.add_argument("--metrics-file", type=str, default="metrics.csv", help="Metrics file")
     # parser.add_argument(
     #     "--wandb", action="store_true", help="Log to W&B during evaluation"
     # )
+    parser.add_argument(
+        "--ops",
+        type=str,
+        nargs="*",
+        default=["metrics"],
+        choices=["metrics", "save_scans"],
+        help="Operations to run. 'metrics': Compute metrics. 'save_scans': Save Scans",
+    )
 
     args = parser.parse_args()
+    args.ops = set(args.ops)
+    if args.save_scans:
+        args.ops |= {"save_scans"}
+
     print("Command Line Args:", args)
     main(args)

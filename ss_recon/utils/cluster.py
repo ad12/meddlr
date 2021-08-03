@@ -42,7 +42,8 @@ class Cluster(Enum):
     AUTOFOCUS = 8, ["autofocus"]
     SIENA = 9, ["siena"]
     TORINO = 10, ["torino"]
-    SPIRAL = 11, ["spiral"]
+    CINE = 11, ["cine"]
+    SPIRAL = 12, ["spiral"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -167,7 +168,8 @@ _USER_PATHS = {
             "/share/pi/bah/arjundd/results/ss_recon",
         ),
         CLUSTER.SIENA: (
-            "/data/datasets",  # mounted on siena only
+            # "/data/datasets",  # mounted on siena only
+            "/dataNAS/people/arjun/data",
             "/bmrNAS/people/arjun/results/ss_recon",
         ),
         CLUSTER.TORINO: (
@@ -185,6 +187,10 @@ _USER_PATHS = {
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.AUTOFOCUS: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/home/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.CINE: (
             "/mnt/dense/ozt/dl-ss-recon/data",
             "/home/ozt/dl-ss-recon/results/ss_recon",
         ),
@@ -215,7 +221,7 @@ _USER_PATHS = {
         CLUSTER.HARBIN: (
             "/mnt/dense/ozt/dl-ss-recon/data",
             "/mnt/dense/harris/results",
-        )
+        ),
     }
     # New users add path preference below.
 }

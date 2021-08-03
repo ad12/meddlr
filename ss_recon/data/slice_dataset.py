@@ -12,6 +12,7 @@ import os
 from typing import Dict, List
 
 import h5py
+import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate as _default_collate
 
@@ -97,11 +98,15 @@ class SliceData(Dataset):
 
             if "kspace_size" in dd:
                 num_slices = dd["kspace_size"][0]
+                shape = dd["kspace_size"][1:3]
             elif "num_slices" in dd:
                 num_slices = dd["num_slices"]
+                with h5py.File(file_path, "r") as f:
+                    shape = f["kspace"].shape[1:3]
             else:
                 with h5py.File(file_path, "r") as f:
                     num_slices = f["kspace"].shape[0]
+                    shape = f["kspace"].shape[0]
 
             examples.extend(
                 [
@@ -110,6 +115,8 @@ class SliceData(Dataset):
                         "slice_id": slice_id,
                         "is_unsupervised": is_unsupervised,
                         "fixed_acc": acc,
+                        "_metadata": dd.get("_metadata", {}),
+                        "inplane_shape": shape,
                     }
                     for slice_id in range(num_slices)
                 ]
@@ -121,8 +128,12 @@ class SliceData(Dataset):
         slice_id = example["slice_id"]
         with h5py.File(file_path, "r") as data:
             kspace = data[self.mapping["kspace"]][slice_id]
-            maps = data[self.mapping["maps"]][slice_id]
             target = data[self.mapping["target"]][slice_id]
+            maps = (
+                np.zeros_like(target)
+                if self.mapping["target"] == "reconstruction_rss"
+                else data[self.mapping["maps"]][slice_id]
+            )
 
         return {
             "kspace": kspace,

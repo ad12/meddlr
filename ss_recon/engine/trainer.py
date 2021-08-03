@@ -19,6 +19,7 @@ from ss_recon.evaluation import (
 )
 from ss_recon.modeling import build_loss_computer, build_model
 from ss_recon.solver import GradAccumOptimizer, build_lr_scheduler, build_optimizer
+from ss_recon.utils import env
 from ss_recon.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
 from ss_recon.utils.logger import setup_logger
 
@@ -193,7 +194,7 @@ class DefaultTrainer(SimpleTrainer):
         temp_checkpointer = DetectionCheckpointer(self.model)
         temp_checkpointer.load(fine_tune_weights)
 
-    def resume_or_load(self, resume=True):
+    def resume_or_load(self, resume=True, restart_iter=False):
         """
         If `resume==True`, and last checkpoint exists, resume from it.
 
@@ -205,12 +206,13 @@ class DefaultTrainer(SimpleTrainer):
         # The checkpoint stores the training iteration that just finished,
         # thus we start at the next iteration
         # (or iter zero if there's no checkpoint).
-        self.start_iter = (
+        iteration = (
             self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume).get(
                 "iteration", -1
             )
             + 1
         )
+        self.start_iter = iteration if not restart_iter else 0
 
     def build_hooks(self):
         """
@@ -247,6 +249,10 @@ class DefaultTrainer(SimpleTrainer):
                 test_and_save_results,
             )
         )
+        if env.profile_memory():
+            ret.append(hooks.MemoryProfiler(20))
+
+        # Writing should be last
         ret.append(
             hooks.PeriodicWriter(
                 self.build_writers(),
@@ -322,9 +328,10 @@ class DefaultTrainer(SimpleTrainer):
     @classmethod
     def build_loss_computer(cls, cfg):
         loss_computer = (
-            "N2RLossComputer" if cfg.MODEL.META_ARCHITECTURE == "N2RModel" or
-                                 cfg.MODEL.META_ARCHITECTURE == "M2RModel"
-                                 else "BasicLossComputer"
+            "N2RLossComputer"
+            if cfg.MODEL.META_ARCHITECTURE == "N2RModel"
+            or cfg.MODEL.META_ARCHITECTURE == "M2RModel"
+            else "BasicLossComputer"
         )
         return build_loss_computer(cfg, loss_computer)
 

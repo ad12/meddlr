@@ -66,6 +66,18 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
         "fastmri/knee_multicoil/val",
         "ann://fastmri/knee_multicoil/mini-v0.0.1/test.json",
     ),
+    "fastMRI_knee_multicoil_ultra_mini_v0.0.1_train": (
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/ultra-mini-v0.0.1/train.json",
+    ),
+    "fastMRI_knee_multicoil_ultra_mini_v0.0.1_val": (
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/ultra-mini-v0.0.1/val.json",
+    ),
+    "fastMRI_knee_multicoil_ultra_mini_v0.0.1_test": (
+        "fastmri/knee_multicoil/val",
+        "ann://fastmri/knee_multicoil/ultra-mini-v0.0.1/test.json",
+    ),
     # fastMRI knee multicoil - fat-suppressed
     "fastMRI_knee_multicoil_v0.0.1_fs_train": (
         "fastmri/knee_multicoil/train",

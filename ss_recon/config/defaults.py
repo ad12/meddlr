@@ -60,7 +60,7 @@ _C.MODEL.CONSISTENCY.AUG = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
-_C.MODEL.CONSISTENCY.AUG.MOTION_RANGE = (0.2,0.5)
+_C.MODEL.CONSISTENCY.AUG.MOTION_RANGE = (0.2, 0.5)
 
 # Noise scheduler
 _C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER = CN()
@@ -89,9 +89,24 @@ _C.MODEL.UNET.DROPOUT = 0.0
 # Denoising model
 # -----------------------------------------------------------------------------
 _C.MODEL.DENOISING = CN()
+_C.MODEL.DENOISING.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.DENOISING.NOISE = CN()
-# Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
+# Noise standard deviation to use for augmentations.
 _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
+# When fully sampled kspace is available, if True, perform denoising on the
+# fully sampled kspace. If False, denoising will be performed on the
+# randomly generated undersampled kspace.
+_C.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET = True
+# Same as above, but at eval time (e.g. validation).
+# Defaults to MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET
+_C.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL = None
+
+# -----------------------------------------------------------------------------
+# Compressed Sensing (CS) model
+# -----------------------------------------------------------------------------
+_C.MODEL.CS = CN()
+_C.MODEL.CS.REGULARIZATION = 0.005
+_C.MODEL.CS.MAX_ITER = 200
 
 # -----------------------------------------------------------------------------
 # Noise2Recon (N2R) model
@@ -127,6 +142,8 @@ _C.DATASETS.TEST = ()
 _C.DATALOADER = CN()
 # Number of data loading threads
 _C.DATALOADER.NUM_WORKERS = 4
+# Number of batches to prefetch per worker
+_C.DATALOADER.PREFETCH_FACTOR = 2
 # If True, the dataloader will drop the last batch.
 _C.DATALOADER.DROP_LAST = True
 # Subsample training data to simulate data limited scenarios.
@@ -135,11 +152,18 @@ _C.DATALOADER.SUBSAMPLE_TRAIN = CN()
 # meaning they will not be used for any training, even w/ semi-supervised N2R
 # framework
 _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL = -1
+# Number of training examples to retain based on metadata properties.
+# e.g. (("acquisition", {"AXT2": 15, "AXT1": 10}),) will only keep
+# 15 AXT2 scans and 10 AXT1 scans where AXT2 and AXT1 are categories in the
+# "acquisition" metadata field.
+_C.DATALOADER.SUBSAMPLE_TRAIN.NUM_TOTAL_BY_GROUP = ()
 # Number of scans out of total to undersample. If NUM_TOTAL is not -1, must be
 # less than NUM_TOTAL.
 _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_UNDERSAMPLED = 0
 # Number of scans with ground truth for validation.
 _C.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL = -1
+# Number of validation examples to retain based on metadata properties.
+_C.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP = ()
 # Seed for shuffling data. Should always be deterministic
 _C.DATALOADER.SUBSAMPLE_TRAIN.SEED = 1000
 # Options: "" (defaults to random sampling), "AlternatingSampler"
@@ -148,6 +172,10 @@ _C.DATALOADER.SAMPLER_TRAIN = ""
 _C.DATALOADER.ALT_SAMPLER = CN()
 _C.DATALOADER.ALT_SAMPLER.PERIOD_SUPERVISED = 1
 _C.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED = 1
+# GroupSampler config parameters.
+_C.DATALOADER.GROUP_SAMPLER = CN()
+_C.DATALOADER.GROUP_SAMPLER.BATCH_BY = ()
+_C.DATALOADER.GROUP_SAMPLER.AS_BATCH_SAMPLER = False
 # Paired tuple of data keys and H5DF keys. Empty tuple will result in default keys being used.
 # e.g. (("target", "espirit_recon"), ("maps", "espirit_maps"))
 # See data/slice_data.py for more information.

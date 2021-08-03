@@ -17,7 +17,9 @@ class NoiseModel:
     definition, which we dont want.
     """
 
-    def __init__(self, std_devs: Union[float, Sequence[float]], scheduler=None, seed=None):
+    def __init__(
+        self, std_devs: Union[float, Sequence[float]], scheduler=None, seed=None, device=None
+    ):
         if not isinstance(std_devs, Sequence):
             std_devs = (std_devs,)
         elif len(std_devs) > 2:
@@ -31,7 +33,7 @@ class NoiseModel:
             self.warmup_iters = scheduler.WARMUP_ITERS
 
         # For reproducibility.
-        g = torch.Generator()
+        g = torch.Generator(device=device)
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
@@ -53,7 +55,8 @@ class NoiseModel:
         else:
             std_range = self.std_devs[1] - self.std_devs[0]
 
-        std_dev = self.std_devs[0] + std_range * torch.rand(1, generator=self.generator).item()
+        g = self.generator
+        std_dev = self.std_devs[0] + std_range * torch.rand(1, generator=g, device=g.device).item()
         return std_dev
 
     def __call__(self, *args, **kwargs):
@@ -65,13 +68,17 @@ class NoiseModel:
             kspace = kspace.clone()
         mask = cplx.get_mask(kspace)
 
-        g = self.generator if seed is None else torch.Generator().manual_seed(seed)
+        g = (
+            self.generator
+            if seed is None
+            else torch.Generator(device=kspace.device).manual_seed(seed)
+        )
         noise_std = self.choose_std_dev()
         if cplx.is_complex(kspace):
-            noise = noise_std * torch.randn(kspace.shape + (2,), generator=g)
+            noise = noise_std * torch.randn(kspace.shape + (2,), generator=g, device=kspace.device)
             noise = torch.view_as_complex(noise)
         else:
-            noise = noise_std * torch.randn(kspace.shape, generator=g)
+            noise = noise_std * torch.randn(kspace.shape, generator=g, device=kspace.device)
         masked_noise = noise * mask
         aug_kspace = kspace + masked_noise
 

@@ -11,8 +11,15 @@ from tqdm import tqdm
 
 from ss_recon.data.transforms.transform import build_normalizer
 from ss_recon.evaluation.metrics import compute_mse  # noqa: F401
-from ss_recon.evaluation.metrics import compute_l2, compute_nrmse, compute_psnr, compute_ssim
+from ss_recon.evaluation.metrics import (
+    compute_l2,
+    compute_nrmse,
+    compute_psnr,
+    compute_ssim,
+    compute_vifp_mscale,
+)
 from ss_recon.utils import complex_utils as cplx
+from ss_recon.utils.transforms import center_crop
 
 from .evaluator import DatasetEvaluator
 
@@ -49,7 +56,8 @@ class ReconEvaluator(DatasetEvaluator):
             skip_rescale (bool, optional): If `True`, skips rescaling the output and target
                 by the mean/std.
             save_scans (bool, optional): If `True`, saves predictions to .npy file.
-            metrics (Sequence[str], optional): Defaults to all supported recon metrics.
+            metrics (Sequence[str], optional): To avoid computing metrics, set to ``False``.
+                Defaults to all supported recon metrics.
                 To process metrics on the full scan, append ``'_scan'`` to the metric name
                 (e.g. `'psnr_scan'`). Supported metrics include:
                 * 'psnr': Complex peak signal-to-noise ratio
@@ -59,6 +67,8 @@ class ReconEvaluator(DatasetEvaluator):
                     https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf
                 * 'nrmse': Complex normalized root-mean-squared-error
                 * 'nrmse_mag': Magnitude normalized root-mean-squared-error.
+                * 'vif_mag': Visual information fidelity on magnitude images.
+                * 'vif_phase': Visual information fidelity on phase images.
             flush_period (int, optional): The approximate period over which predictions
                 are cleared and running results are computed. This parameter helps
                 mitigate OOM errors. The period is equivalent to number of examples
@@ -76,8 +86,16 @@ class ReconEvaluator(DatasetEvaluator):
         self._skip_rescale = skip_rescale
         self._save_scans = save_scans
 
-        self._slice_metrics = [m for m in metrics if not m.endswith("_scan")] if metrics else None
-        self._scan_metrics = [m[:-5] for m in metrics if m.endswith("_scan")] if metrics else None
+        if metrics is not False:
+            self._slice_metrics = (
+                [m for m in metrics if not m.endswith("_scan")] if metrics else None
+            )
+            self._scan_metrics = (
+                [m[:-5] for m in metrics if m.endswith("_scan")] if metrics else None
+            )
+        else:
+            self._slice_metrics = []
+            self._scan_metrics = []
         self._results = None
         self._running_results = None
 
@@ -119,6 +137,10 @@ class ReconEvaluator(DatasetEvaluator):
                 Currently this should be an empty dictionary.
             outputs: the outputs of a COCO model. It is a list of dicts with key
                 "instances" that contains :class:`Instances`.
+
+        Note:
+            All elements in ``inputs`` and ``outputs`` should already
+            be detached from the computational graph.
         """
         N = outputs["pred"].shape[0]
 
@@ -343,10 +365,25 @@ class ReconEvaluator(DatasetEvaluator):
                 gaussian_weights=True,
                 use_sample_covariance=False,
             )
+        if metric_names is None or "ssim50 (Wang)" in metric_names:
+            shape = target.shape[:-1] if cplx.is_complex_as_real(target) else target.shape
+            shape = tuple(x // 2 if x > 1 else 1 for x in shape)
+            metrics["ssim50 (Wang)"] = compute_ssim(
+                center_crop(target, shape),
+                center_crop(output, shape),
+                data_range="ref-maxval",
+                gaussian_weights=True,
+                use_sample_covariance=False,
+            )
         if metric_names is None or "nrmse" in metric_names:
             metrics["nrmse"] = compute_nrmse(target, output).item()
         if metric_names is None or "nrmse_mag" in metric_names:
             metrics["nrmse_mag"] = compute_nrmse(target, output, magnitude=True).item()
+
+        if metric_names is None or "vif_mag" in metric_names:
+            metrics["vif_mag"] = compute_vifp_mscale(target, output, im_type="magnitude")
+        if metric_names is None or "vif_phase" in metric_names:
+            metrics["vif_phase"] = compute_vifp_mscale(target, output, im_type="phase")
 
         # Make sure all metrics are handled.
         if metric_names is None:
