@@ -192,19 +192,19 @@ _USER_PATHS = {
     "bgunel": {
         CLUSTER.ROMA: (
             "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/mrs",
+            "/dataNAS/people/bgunel/results/",
         ),
         CLUSTER.VIGATA: (
             "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/mrs",
+            "/dataNAS/people/bgunel/results/",
         ),
         CLUSTER.SIENA: (
-            "/data/datasets",  # mounted on siena only
-            "/dataNAS/people/bgunel/results/mrs",
+            "/dataNAS/people/arjun/data",  # mounted on siena only
+            "/dataNAS/people/bgunel/results/",
         ),
         CLUSTER.TORINO: (
             "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/mrs",
+            "/dataNAS/people/bgunel/results/",
         ),
     },
     "harris": {

@@ -234,6 +234,7 @@ def init_wandb_run(
         sync_tensorboard=True,
         job_type=job_type,
         dir=cfg.OUTPUT_DIR,
+        settings=wandb.Settings(start_method="fork"), # to solve init error on siena
     )
 
     # Resume run and return.
