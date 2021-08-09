@@ -202,7 +202,7 @@ class DataTransform:
         if is_test:
             # When we test we dont want to initialize with certain parameters (e.g. scheduler).
             self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
-            self.motion_simulator = MotionModel(cfg.MODEL.CONSISTENCY.AUG.MOTION_RANGE, seed=seed)
+            self.motion_simulator = MotionModel(cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE, seed=seed)
         else:
             self.noiser = NoiseModel.from_cfg(cfg, seed=seed)
             self.motion_simulator = MotionModel.from_cfg(cfg, seed=seed)

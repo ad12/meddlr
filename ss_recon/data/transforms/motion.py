@@ -1,7 +1,10 @@
+from typing import Sequence, Union
 import numpy as np
 import torch
 
+from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import env
+from ss_recon.utils.events import get_event_storage
 
 if env.pt_version() >= [1, 6]:
     import torch.fft
@@ -30,15 +33,46 @@ class MotionModel:
         definition, which we dont want.
     """
 
-    def __init__(self, motion_range=(0.2, 0.5), seed: int = None):
-        super().__init__()
+    def __init__(
+        self, motion_range: Union[float, Sequence[float]], scheduler=None, seed=None, device=None
+    ):
+        if isinstance(motion_range, (float, int)):
+            motion_range = (motion_range,)
+        elif len(motion_range) > 2:
+            raise ValueError("`motion_range` must have 2 or fewer values")
+
+        self.warmup_method = None
+        self.warmup_iters = 0
+        if scheduler is not None:
+            self.warmup_method = scheduler.WARMUP_METHOD
+            self.warmup_iters = scheduler.WARMUP_ITERS
+        self.motion_range = motion_range
+
         g = torch.Generator()
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
-        if isinstance(motion_range, (float, int)):
-            motion_range = (motion_range,)
-        self.motion_range = motion_range
+
+    def choose_motion_range(self):
+        """Chooses motion range based on warmup."""
+        if not isinstance(self.motion_range, Sequence):
+            return self.motion_range
+        elif len(self.motion_range) == 1:
+            return self.motion_range[0]
+
+        if self.warmup_method:
+            curr_iter = get_event_storage().iter
+            warmup_iters = self.warmup_iters
+            if self.warmup_method == "linear":
+                motion_range = curr_iter / warmup_iters * (self.motion_range[1] - self.motion_range[0])
+            else:
+                raise ValueError(f"`warmup_method={self.warmup_method}` not supported")
+        else:
+            motion_range = self.motion_range[1] - self.motion_range[0]
+
+        g = self.generator
+        motion_range = self.motion_range[0] + motion_range * torch.rand(1, generator=g, device=g.device).item()
+        return motion_range
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -67,14 +101,10 @@ class MotionModel:
         phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
         width = kspace.shape[2]
         g = self.generator if seed is None else torch.Generator().manual_seed(seed)
-        if len(self.motion_range) == 2:
-            scale = (self.motion_range[1] - self.motion_range[0]) * torch.rand(
-                1, generator=g
-            ).numpy() + self.motion_range[0]
-        else:
-            scale = self.motion_range[0]
-        odd_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
-        even_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
+        motion_range = self.choose_motion_range()
+
+        odd_err = (2 * np.pi * motion_range) * torch.rand(1, generator=g).numpy() - np.pi * motion_range
+        even_err = (2 * np.pi * motion_range) * torch.rand(1, generator=g).numpy() - np.pi * motion_range
         for line in range(width):
             if line % 2 == 0:
                 rand_err = even_err
@@ -85,10 +115,7 @@ class MotionModel:
         aug_kspace = kspace * phase_matrix
         return aug_kspace
 
-    def choose_motion_range(self, range):
-        self.motion_range = range
-
     @classmethod
     def from_cfg(cls, cfg, seed=None, **kwargs):
-        cfg = cfg.MODEL.CONSISTENCY.AUG
-        return cls(cfg.MOTION_RANGE, seed=seed, **kwargs)
+        cfg = cfg.MODEL.CONSISTENCY.AUG.MOTION
+        return cls(cfg.RANGE, scheduler=cfg.SCHEDULER, seed=seed, **kwargs)

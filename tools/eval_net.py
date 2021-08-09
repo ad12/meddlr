@@ -448,7 +448,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--motion",
-        default="false",
+        default="sweep",
         choices=("false", "standard", "sweep"),
         help="Type of motion evaluation",
     )
@@ -462,7 +462,7 @@ if __name__ == "__main__":
     parser.add_argument("--extra-metrics", nargs="*", help="Extra metrics for testing")
     parser.add_argument(
         "--sweep-vals-motion",
-        default=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
+        default=[0, 0.2, 0.4],
         nargs="*",
         type=float,
         help="args to sweep for motion",
