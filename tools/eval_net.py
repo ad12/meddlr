@@ -290,7 +290,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         s_cfg = cfg.clone()
         s_cfg.defrost()
         s_cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (acc,)
-        s_cfg.MODEL.CONSISTENCY.AUG.MOTION_RANGE = motion_level
+        s_cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE = motion_level
         s_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (noise_level,)
         s_cfg.freeze()
 

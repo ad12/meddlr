@@ -38,7 +38,7 @@ MODEL:
     MOTION:
       RANGE: (0.2,0.5)
       SCHEDULER:
-        WARMUP_ITERS: -25 # 1/8 of MAX_ITER
+        WARMUP_ITERS: 2000 # 1/8 of MAX_ITER
         WARMUP_METHOD: linear
 SOLVER:
  OPTIMIZER: "Adam"

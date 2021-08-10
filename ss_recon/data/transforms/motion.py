@@ -101,10 +101,10 @@ class MotionModel:
         phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
         width = kspace.shape[2]
         g = self.generator if seed is None else torch.Generator().manual_seed(seed)
-        motion_range = self.choose_motion_range()
+        scale = self.choose_motion_range()
 
-        odd_err = (2 * np.pi * motion_range) * torch.rand(1, generator=g).numpy() - np.pi * motion_range
-        even_err = (2 * np.pi * motion_range) * torch.rand(1, generator=g).numpy() - np.pi * motion_range
+        odd_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
+        even_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
         for line in range(width):
             if line % 2 == 0:
                 rand_err = even_err
