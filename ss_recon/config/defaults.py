@@ -131,6 +131,14 @@ _C.MODEL.M2R.USE_SUPERVISED_CONSISTENCY = False
 # Use MODEL.CONSISTENCY.AUG.MOTION_RANGE to control motion parameters.
 
 # -----------------------------------------------------------------------------
+# NoiseMotion2Recon (NM2R) model
+# -----------------------------------------------------------------------------
+_C.MODEL.NM2R = CN()
+_C.MODEL.NM2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.NM2R.USE_SUPERVISED_CONSISTENCY = False
+# Use MODEL.CONSISTENCY.AUG.MOTION_RANGE to control motion parameters.
+
+# -----------------------------------------------------------------------------
 # Dataset
 # -----------------------------------------------------------------------------
 _C.DATASETS = CN()

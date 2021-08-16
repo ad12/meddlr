@@ -1,6 +1,6 @@
 DESCRIPTION:
- BRIEF: Aug2Recon 16x mridata m2r heavy
- EXP_NAME: mridata/m2r_heavy/unet_16x
+ BRIEF: Aug2Recon 16x mridata n2r heavy
+ EXP_NAME: mridata/n2r_heavy/unet_16x
  PROJECT_NAME: aug2recon
 DATASETS:
  TRAIN: ("mridata_knee_2019_train",)
@@ -21,7 +21,7 @@ DATALOADER:
    NUM_UNDERSAMPLED: 5
  SAMPLER_TRAIN: "AlternatingSampler"
 MODEL:
- META_ARCHITECTURE: "M2RModel"
+ META_ARCHITECTURE: "N2RModel"
  UNET:
    CHANNELS: 32
    DROPOUT: 0.0
@@ -31,15 +31,12 @@ MODEL:
  RECON_LOSS:
    NAME: "l1"
    RENORMALIZE_DATA: False
- M2R:
+ N2R:
    META_ARCHITECTURE: "UnetModel"
  CONSISTENCY:
    AUG:
-    MOTION:
-      RANGE: (0.2,0.5)
-      # SCHEDULER:
-      #   WARMUP_ITERS: 2000 # 1/8 of MAX_ITER
-      #   WARMUP_METHOD: linear
+    NOISE:
+      STD_DEV: (0.2,0.5)
 SOLVER:
  OPTIMIZER: "Adam"
  LR_SCHEDULER_NAME: ""
@@ -54,7 +51,7 @@ TEST:
  VAL_METRICS:
    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim_old", "ssim (Wang)")
 TIME_SCALE: "iter"
-OUTPUT_DIR: "results://aug2recon/mridata/m2r_heavy/unet-16x"
+OUTPUT_DIR: "results://aug2recon/mridata/n2r_heavy/unet-16x"
 SEED: 1000
 VIS_PERIOD: 400
 VERSION: 1

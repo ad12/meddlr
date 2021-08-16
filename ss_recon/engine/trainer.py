@@ -331,6 +331,7 @@ class DefaultTrainer(SimpleTrainer):
             "N2RLossComputer"
             if cfg.MODEL.META_ARCHITECTURE == "N2RModel"
             or cfg.MODEL.META_ARCHITECTURE == "M2RModel"
+            or cfg.MODEL.META_ARCHITECTURE == "NM2RModel"
             else "BasicLossComputer"
         )
         return build_loss_computer(cfg, loss_computer)

@@ -448,7 +448,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--motion",
-        default="sweep",
+        default="false",
         choices=("false", "standard", "sweep"),
         help="Type of motion evaluation",
     )
