@@ -44,6 +44,8 @@ class Cluster(Enum):
     TORINO = 10, ["torino"]
     CINE = 11, ["cine"]
     SPIRAL = 12, ["spiral"]
+    MOTION = 13, ["motion"]
+    LOWRANK = 14, ["lowrank"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -180,19 +182,31 @@ _USER_PATHS = {
     "ozt": {
         CLUSTER.HARBIN: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home/ozt/dl-ss-recon/results/ss_recon",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.MRLEARNING: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home/ozt/dl-ss-recon/results/ss_recon",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.AUTOFOCUS: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home/ozt/dl-ss-recon/results/ss_recon",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.CINE: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home/ozt/dl-ss-recon/results/ss_recon",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.LOWRANK: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.MOTION: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.SPIRAL: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
         ),
     },
     "bgunel": {
