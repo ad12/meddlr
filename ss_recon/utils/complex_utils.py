@@ -223,3 +223,16 @@ def to_tensor(x: np.ndarray):
     if not supports_cplx_tensor():
         x = np.stack((x.real, x.imag), axis=-1)
     return torch.from_numpy(x)
+
+
+def rss(x: torch.Tensor, dim: int = 0) -> torch.Tensor:
+    """
+    Compute the Root Sum of Squares (RSS) for complex inputs.
+    RSS is computed assuming that dim is the coil dimension.
+    Args:
+        data: The input tensor
+        dim: The dimensions along which to apply the RSS transform
+    Returns:
+        The RSS value.
+    """
+    return torch.sqrt((abs(x) ** 2).sum(dim))
