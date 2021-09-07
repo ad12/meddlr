@@ -18,7 +18,12 @@ class NoiseModel:
     """
 
     def __init__(
-        self, std_devs: Union[float, Sequence[float]], scheduler=None, seed=None, device=None
+        self,
+        std_devs: Union[float, Sequence[float]],
+        scheduler=None,
+        mask=None,
+        seed=None,
+        device=None,
     ):
         if not isinstance(std_devs, Sequence):
             std_devs = (std_devs,)
@@ -31,6 +36,11 @@ class NoiseModel:
         if scheduler is not None:
             self.warmup_method = scheduler.WARMUP_METHOD
             self.warmup_iters = scheduler.WARMUP_ITERS
+
+        # Amount of the kspace to augment with noise.
+        self.rho = None
+        if mask is not None:
+            self.rho = mask.RHO
 
         # For reproducibility.
         g = torch.Generator(device=device)
@@ -79,12 +89,35 @@ class NoiseModel:
             noise = torch.view_as_complex(noise)
         else:
             noise = noise_std * torch.randn(kspace.shape, generator=g, device=kspace.device)
+
+        if self.rho is not None and self.rho != 1:
+            mask = self.subsample_mask(mask)
         masked_noise = noise * mask
         aug_kspace = kspace + masked_noise
 
         return aug_kspace
 
+    def subsample_mask(self, mask: torch.Tensor, generator=None):
+        """Subsamples mask to add the noise to.
+
+        Currently done uniformly at random.
+        """
+        rho = self.rho
+        shape = mask.shape
+        mask = mask.view(-1)
+
+        # TODO: this doesnt work if the matrix is > 2*24 in size.
+        # TODO: make this a bit more optimized
+        num_valid = torch.sum(mask)
+        weights = mask / num_valid
+        num_samples = int((1 - rho) * num_valid)
+        samples = torch.multinomial(weights, num_samples, replacement=False, generator=generator)
+        mask[samples] = 0
+
+        mask = mask.view(shape)
+        return mask
+
     @classmethod
     def from_cfg(cls, cfg, seed=None, **kwargs):
         cfg = cfg.MODEL.CONSISTENCY.AUG.NOISE
-        return cls(cfg.STD_DEV, scheduler=cfg.SCHEDULER, seed=seed, **kwargs)
+        return cls(cfg.STD_DEV, scheduler=cfg.SCHEDULER, mask=cfg.MASK, seed=seed, **kwargs)

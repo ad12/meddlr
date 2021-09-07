@@ -4,6 +4,8 @@ Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
 
 import logging
+import re
+from typing import Mapping
 
 from fvcore.common.config import CfgNode as _CfgNode
 
@@ -64,6 +66,19 @@ class CfgNode(_CfgNode):
             self.clear()
             self.update(new_config)
 
+    def format_fields(self):
+        """
+        Format string fields in the config by filling them in
+        with different parameter values.
+        """
+        return format_config_fields(self, inplace=True)
+
+    def get_recursive(self, key):
+        d = self
+        for k in key.split("."):
+            d = d[k]
+        return d
+
     def dump(self, *args, **kwargs):
         """
         Returns:
@@ -71,6 +86,16 @@ class CfgNode(_CfgNode):
         """
         # to make it show up in docs
         return super().dump(*args, **kwargs)
+
+    def freeze(self):
+        """Make this CfgNode and all of its children immutable."""
+        super().freeze()
+        return self
+
+    def defrost(self):
+        """Make this CfgNode and all of its children mutable."""
+        super().defrost()
+        return self
 
 
 global_cfg = CfgNode()
@@ -108,3 +133,38 @@ def set_global_cfg(cfg: CfgNode) -> None:
     global global_cfg
     global_cfg.clear()
     global_cfg.update(cfg)
+
+
+def _find_format_str_keys(cfg: Mapping, prefix="", accum=()):
+    accum = set(accum)
+    for k, v in cfg.items():
+        k_prefix = prefix + "." + k if prefix else k
+        if isinstance(v, Mapping):
+            accum |= _find_format_str_keys(cfg[k], prefix=k_prefix, accum=accum)
+        elif isinstance(v, str) and (
+            (v.startswith('f"') and v.endswith('"')) or (v.startswith("f'") and v.endswith("'"))
+        ):
+            accum |= {(k_prefix, v)}
+    return accum
+
+
+def format_config_fields(cfg: CfgNode, inplace=False):
+    keys_and_val_str = _find_format_str_keys(cfg)
+    values_list = []
+    for k, val_str in keys_and_val_str:
+        start = [x.start() for x in re.finditer("\{", val_str)]
+        end = [x.start() for x in re.finditer("\}", val_str)]
+        assert len(start) == len(end), f"Could not determine formatting string: {val_str}"
+        cfg_keys_to_search = [val_str[s + 1 : e] for s, e in zip(start, end)]
+        values = [cfg.get_recursive(v) for v in cfg_keys_to_search]
+
+        fmt_str = ""
+        idxs = [0] + [y for x in zip(start, end) for y in x] + [len(val_str)]
+        for i in range(len(idxs) // 2):
+            fmt_str += val_str[idxs[2 * i] : idxs[2 * i + 1] + 1]
+        fmt_str = eval(fmt_str.format(*values))
+        values_list.extend([k, fmt_str])
+    if not inplace:
+        cfg.clone()
+    cfg.defrost().merge_from_list(values_list)
+    return cfg
