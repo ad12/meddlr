@@ -1,0 +1,137 @@
+import unittest
+
+import torch
+
+from ss_recon.config import get_cfg
+from ss_recon.transforms.base import Rot90Transform
+from ss_recon.transforms.base.spatial import FlipTransform
+from ss_recon.transforms.build import build_transforms
+from ss_recon.transforms.gen import RandomNoise, RandomRot90
+from ss_recon.transforms.tf_scheduler import WarmupMultiStepTF, WarmupTF
+from ss_recon.transforms.transform_gen import TransformGen
+
+
+class TestBuildTransforms(unittest.TestCase):
+    def test_build_single(self):
+        cfg = get_cfg()
+
+        # Transform Gen
+        ks = (1, 2)
+        p = 0.2
+        seed = 42
+        tfm_cfg = {"name": "RandomRot90", "ks": ks}
+        expected_tfm = RandomRot90(ks, p=p).seed(seed)
+        tfm: TransformGen = build_transforms(cfg, tfm_cfg, p=p).seed(seed)
+        assert tfm.ks == expected_tfm.ks == ks
+        assert tfm.p == expected_tfm.p == p
+        assert torch.all(tfm._generator.get_state() == expected_tfm._generator.get_state())
+
+        # Transform
+        k = 1
+        dims = (-1, -2)
+        seed = 42
+        tfm_cfg = {"name": "Rot90Transform", "k": k, "dims": dims}
+        expected_tfm = Rot90Transform(k, dims)
+        tfm = build_transforms(cfg, tfm_cfg)
+        assert tfm == expected_tfm
+
+    def test_build_with_scheduler(self):
+        cfg = get_cfg()
+
+        ks = (1, 2)
+        p = 0.2
+        seed = 42
+        warmup_iters = 100
+        delay_iters = 40
+
+        tfm_cfg = {
+            "name": "RandomRot90",
+            "ks": ks,
+            "scheduler": {
+                "name": "WarmupTF",
+                "warmup_iters": warmup_iters,
+                "delay_iters": delay_iters,
+                "params": ["p"],
+            },
+        }
+        expected_tfm = RandomRot90(ks, p=p).seed(seed)
+        tfm: TransformGen = build_transforms(cfg, tfm_cfg, p=p).seed(seed)
+        assert tfm.ks == expected_tfm.ks == ks
+        assert tfm.p == expected_tfm.p == p
+        assert torch.all(tfm._generator.get_state() == expected_tfm._generator.get_state())
+
+        assert len(tfm._schedulers) == 1
+        scheduler = tfm._schedulers[0]
+        assert isinstance(scheduler, WarmupTF)
+        assert scheduler.warmup_iters == warmup_iters
+        assert scheduler.delay_iters == delay_iters
+        assert tuple(scheduler._parameter_names()) == ("p",)
+
+    def test_build_complex(self):
+        cfg = get_cfg()
+        cfg.SOLVER.MAX_ITERS = 1000
+
+        tfm_cfg = [
+            {
+                "name": "RandomRot90",
+                "p": 0.5,
+                "scheduler": {
+                    "name": "WarmupTF",
+                    "warmup_iters": 800,
+                    "delay_iters": 500,
+                    "params": ["p"],
+                },
+            },
+            {
+                "name": "FlipTransform",
+                "dims": (-1,),
+            },
+            {
+                "name": "RandomNoise",
+                "std_devs": (1, 2),
+                "p": 0.2,
+                "scheduler": [
+                    {
+                        "name": "WarmupStepTF",
+                        "warmup_milestones": (100,),
+                        "max_iter": 500,
+                        "delay_iters": 100,
+                        "params": ["p"],
+                    },
+                    {
+                        "name": "WarmupTF",
+                        "params": ("std_devs",),
+                        "warmup_iters": 600,
+                    },
+                ],
+            },
+        ]
+        tfms = build_transforms(cfg, tfm_cfg)
+
+        tfm = tfms[0]
+        assert isinstance(tfm, RandomRot90)
+        assert tfm.p == 0.5
+        assert len(tfm._schedulers) == 1
+        scheduler = tfm._schedulers[0]
+        assert isinstance(scheduler, WarmupTF)
+        assert scheduler.warmup_iters == 800
+        assert scheduler.delay_iters == 500
+        assert tuple(scheduler._params) == ("p",)
+
+        tfm = tfms[1]
+        assert isinstance(tfm, FlipTransform)
+        assert tfm.dims == (-1,)
+
+        tfm = tfms[2]
+        assert isinstance(tfm, RandomNoise)
+        assert tfm.std_devs == (1, 2)
+        assert tfm.p == 0.2
+        assert len(tfm._schedulers) == 2
+        sch1 = tfm._schedulers[0]
+        assert isinstance(sch1, WarmupMultiStepTF)
+        assert sch1.warmup_milestones == (100, 200, 300, 400, 500)
+        assert tuple(sch1._params) == ("p",)
+        sch2 = tfm._schedulers[1]
+        assert isinstance(sch2, WarmupTF)
+        assert sch2.warmup_iters == 600
+        assert tuple(sch2._params) == ("std_devs",)

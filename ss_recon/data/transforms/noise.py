@@ -59,7 +59,9 @@ class NoiseModel:
             curr_iter = get_event_storage().iter
             warmup_iters = self.warmup_iters
             if self.warmup_method == "linear":
-                std_range = curr_iter / warmup_iters * (self.std_devs[1] - self.std_devs[0])
+                std_range = min(curr_iter / warmup_iters, 1.0) * (
+                    self.std_devs[1] - self.std_devs[0]
+                )
             else:
                 raise ValueError(f"`warmup_method={self.warmup_method}` not supported")
         else:

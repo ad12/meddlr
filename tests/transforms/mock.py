@@ -2,6 +2,7 @@ import torch
 
 import ss_recon.utils.complex_utils as cplx
 import ss_recon.utils.transforms as T
+from ss_recon.transforms.tf_scheduler import SchedulableMixin
 
 
 def generate_mock_mri_data(ky=20, kz=20, nc=8, nm=1, scale=1.0):
@@ -11,3 +12,20 @@ def generate_mock_mri_data(ky=20, kz=20, nc=8, nm=1, scale=1.0):
     A = T.SenseModel(maps)
     target = A(kspace, adjoint=True)
     return kspace, maps, target
+
+
+class MockSchedulable(SchedulableMixin):
+    def __init__(self, a=0.5, b=(0.2, 1.0)) -> None:
+        self._params = {"a": a, "b": b}
+        self._schedulers = []
+
+
+class MockIterTracker:
+    def __init__(self, start=0) -> None:
+        self._iter = start
+
+    def step(self):
+        self._iter += 1
+
+    def get_iter(self):
+        return self._iter
