@@ -127,12 +127,16 @@ class UnetModel(nn.Module):
         chans = cfg.MODEL.UNET.CHANNELS
         num_pool_layers = cfg.MODEL.UNET.NUM_POOL_LAYERS
         drop_prob = cfg.MODEL.UNET.DROPOUT
+        use_latent = cfg.MODEL.CONSISTENCY.USE_LATENT
+        num_latent_layers = cfg.MODEL.CONSISTENCY.NUM_LATENT_LAYERS
 
         self.in_chans = in_chans
         self.out_chans = out_chans
         self.chans = chans
         self.num_pool_layers = num_pool_layers
         self.drop_prob = drop_prob
+        self.use_latent = use_latent
+        self.num_latent_layers = num_latent_layers
 
         self.down_sample_layers = nn.ModuleList([ConvBlock(in_chans, chans, drop_prob)])
         ch = chans
@@ -157,6 +161,25 @@ class UnetModel(nn.Module):
         ]
 
         self.vis_period = cfg.VIS_PERIOD
+        
+    def register_hooks(self):
+        if self.use_latent:
+            self.feats = {}
+            self.hooks = []
+            self.hooks.append(self.conv.register_forward_hook(self.get_latent('E4')))
+            for _i in range(self.num_latent_layers-1):
+                k = self.num_pool_layers - 1 - _i
+                self.hooks.append(self.up_conv[_i].register_forward_hook(self.get_latent('D'+str(k))))
+                self.hooks.append(self.down_sample_layers[k].register_forward_hook(self.get_latent('E'+str(k))))
+            
+    def remove_hooks(self):
+        for _i in range(self.num_latent_layers-1):
+            self.hooks[_i].remove()
+            
+    def get_latent(self,layer_name):
+        def hook(module, input, output):
+            self.feats[layer_name] = output
+        return hook
 
     def visualize_training(self, kspace, zfs, targets, preds):
         """A function used to visualize reconstructions.
@@ -207,8 +230,9 @@ class UnetModel(nn.Module):
         Returns:
             (torch.Tensor): Output tensor of shape [batch_size, self.out_chans, height, width]
         """
+        self.register_hooks()
         stack = []
-
+        
         # Need to fetch device at runtime for proper data transfer.
         inputs = input
         device = next(self.parameters()).device
@@ -291,5 +315,10 @@ class UnetModel(nn.Module):
 
         if not self.training:
             output_dict["zf_image"] = zf_image
+        
+        if self.use_latent:
+            output_dict["latent"] = self.feats
 
+        self.remove_hooks()
+        
         return output_dict

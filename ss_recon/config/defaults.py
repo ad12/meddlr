@@ -53,13 +53,21 @@ _C.MODEL.RECON_LOSS = CN()
 _C.MODEL.RECON_LOSS.NAME = "l1"
 _C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
 _C.MODEL.CONSISTENCY = CN()
+_C.MODEL.CONSISTENCY.USE_LATENT = False
+_C.MODEL.CONSISTENCY.USE_CONSISTENCY = True
+_C.MODEL.CONSISTENCY.LATENT_LOSS_NAME = "mag_l1"
+_C.MODEL.CONSISTENCY.NUM_LATENT_LAYERS = 1
 _C.MODEL.CONSISTENCY.LOSS_NAME = "l1"
 _C.MODEL.CONSISTENCY.LOSS_WEIGHT = 0.1
+_C.MODEL.CONSISTENCY.LATENT_LOSS_WEIGHT = 0.1
 # Consistency Augmentations
 _C.MODEL.CONSISTENCY.AUG = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
+_C.MODEL.CONSISTENCY.AUG.MOTION = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
+_C.MODEL.CONSISTENCY.AUG.MOTION.RANGE = (0.2, 0.5)
+
 # Noise scheduler
 _C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_METHOD = ""
@@ -69,6 +77,11 @@ _C.MODEL.CONSISTENCY.AUG.NOISE.MASK = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE.MASK.RHO = 1.0
 _C.MODEL.CONSISTENCY.AUG.MRI_RECON = CN()
 _C.MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS = ()
+
+# Motion scheduler
+_C.MODEL.CONSISTENCY.AUG.MOTION.SCHEDULER = CN()
+_C.MODEL.CONSISTENCY.AUG.MOTION.SCHEDULER.WARMUP_METHOD = ""
+_C.MODEL.CONSISTENCY.AUG.MOTION.SCHEDULER.WARMUP_ITERS = 0
 
 # Image normalization options.
 # See ss_recon/data/transforms/transform.py for more details.
@@ -118,6 +131,22 @@ _C.MODEL.N2R = CN()
 _C.MODEL.N2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
 # Use MODEL.CONSISTENCY.AUG.NOISE.STD_DEV to control noise parameters.
+
+# -----------------------------------------------------------------------------
+# Motion2Recon (M2R) model
+# -----------------------------------------------------------------------------
+_C.MODEL.M2R = CN()
+_C.MODEL.M2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.M2R.USE_SUPERVISED_CONSISTENCY = False
+# Use MODEL.CONSISTENCY.AUG.MOTION_RANGE to control motion parameters.
+
+# -----------------------------------------------------------------------------
+# NoiseMotion2Recon (NM2R) model
+# -----------------------------------------------------------------------------
+_C.MODEL.NM2R = CN()
+_C.MODEL.NM2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.NM2R.USE_SUPERVISED_CONSISTENCY = False
+# Use MODEL.CONSISTENCY.AUG.MOTION_RANGE to control motion parameters.
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -195,7 +224,9 @@ _C.AUG_TRAIN.UNDERSAMPLE.CALIBRATION_SIZE = 20
 _C.AUG_TRAIN.UNDERSAMPLE.CENTER_FRACTIONS = ()
 # Augment with noise. See MODEL.CONSISTENCY.AUG.NOISE for parameters.
 _C.AUG_TRAIN.USE_NOISE = False
+_C.AUG_TRAIN.USE_MOTION = False
 _C.AUG_TRAIN.NOISE_P = 0.2
+_C.AUG_TRAIN.MOTION_P = 0.2
 _C.AUG_TRAIN.MRI_RECON = CN()
 _C.AUG_TRAIN.MRI_RECON.TRANSFORMS = ()
 

@@ -43,6 +43,9 @@ class Cluster(Enum):
     SIENA = 9, ["siena"]
     TORINO = 10, ["torino"]
     CINE = 11, ["cine"]
+    SPIRAL = 12, ["spiral"]
+    MOTION = 13, ["motion"]
+    LOWRANK = 14, ["lowrank"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -179,39 +182,61 @@ _USER_PATHS = {
     "ozt": {
         CLUSTER.HARBIN: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home/ozt/dl-ss-recon/results/ss_recon",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.MRLEARNING: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home/ozt/dl-ss-recon/results/ss_recon",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.AUTOFOCUS: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home/ozt/dl-ss-recon/results/ss_recon",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
         ),
         CLUSTER.CINE: (
             "/mnt/dense/ozt/dl-ss-recon/data",
-            "/home/ozt/dl-ss-recon/results/ss_recon",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.LOWRANK: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.MOTION: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
+        ),
+        CLUSTER.SPIRAL: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
         ),
     },
     "bgunel": {
         CLUSTER.ROMA: (
             "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/mrs",
+            "/dataNAS/people/bgunel/results/",
         ),
         CLUSTER.VIGATA: (
             "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/mrs",
+            "/dataNAS/people/bgunel/results/",
         ),
         CLUSTER.SIENA: (
-            "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/mrs",
+            "/dataNAS/people/arjun/data",  # mounted on siena only
+            "/dataNAS/people/bgunel/results/",
         ),
         CLUSTER.TORINO: (
             "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/mrs",
+            "/dataNAS/people/bgunel/results/",
         ),
     },
+    "harris": {
+        CLUSTER.SPIRAL: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/mnt/dense/harris/results",
+        ),
+        CLUSTER.HARBIN: (
+            "/mnt/dense/ozt/dl-ss-recon/data",
+            "/mnt/dense/harris/results",
+        ),
+    }
     # New users add path preference below.
 }
 

@@ -1,6 +1,5 @@
 """
 Copyright (c) Facebook, Inc. and its affiliates.
-
 This source code is licensed under the MIT license found in the
 LICENSE file in the root directory of this source tree.
 """
@@ -209,12 +208,10 @@ def decompose_LR(images, num_basis, block_size=16, overlapping=False, block_op=N
 def fft2(data):
     """
     Apply centered 2 dimensional Fast Fourier Transform.
-
     Args:
         data (torch.Tensor): Complex valued input data with the last dimension
             containing real and imaginary components.
         dims (2-tuple): Containing spatial dimension indices.
-
     Returns:
         torch.Tensor: The FFT of the input.
     """
@@ -256,12 +253,10 @@ def fft2(data):
 def ifft2(data):
     """
     Apply centered 2-dimensional Inverse Fast Fourier Transform.
-
     Args:
         data (torch.Tensor): Complex valued input data with the last dimension
             containing real and imaginary components.
         dims (2-tuple): Containing spatial dimension indices.
-
     Returns:
         torch.Tensor: The IFFT of the input.
     """
@@ -336,7 +331,6 @@ def sliding_window(data, dim, window_size):
 def center_crop(data, shape):
     """
     Apply a center crop to a batch of images.
-
     Args:
         data (torch.Tensor): The input tensor to be center cropped.
         shape (list of ints): The output shape. If shape[dim] = -1, then no crop
@@ -377,13 +371,11 @@ def normalize(data, mean, stddev, eps=0.0):
     """
     Normalize the given tensor using:
         (data - mean) / (stddev + eps)
-
     Args:
         data (torch.Tensor): Input data to be normalized
         mean (float): Mean value
         stddev (float): Standard deviation
         eps (float): Added to stddev to prevent dividing by zero
-
     Returns:
         torch.Tensor: Normalized tensor
     """
@@ -395,11 +387,9 @@ def normalize_instance(data, eps=0.0):
     Normalize the given tensor using:
         (data - mean) / (stddev + eps)
     where mean and stddev are computed from the data itself.
-
     Args:
         data (torch.Tensor): Input data to be normalized
         eps (float): Added to stddev to prevent dividing by zero
-
     Returns:
         torch.Tensor: Normalized tensor
     """

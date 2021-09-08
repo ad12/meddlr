@@ -1,5 +1,6 @@
 from typing import Sequence, Union
 import numpy as np
+
 import torch
 
 from ss_recon.utils import complex_utils as cplx
@@ -10,48 +11,57 @@ if env.pt_version() >= [1, 6]:
     import torch.fft
 
 
-class MotionModel:
-    """A model that corrupts kspace inputs with motion.
-    Motion is a common artifact experienced during the MR imaging forward problem.
-    When a patient moves, the recorded (expected) location of the kspace sample is
-    different than the actual location where the kspace sample that was acquired.
-    This module is responsible for simulating different motion artifacts.
-    Args:
-        seed (int, optional): The fixed seed.
-    Attributes:
-        generator (torch.Generator): The generator that should be used for all
-            random logic in this class.
-    Things to consider:
-        1. What other information is relevant for inducing motion corruption?
-            This could include:
-            - ``traj``: The scan trajectory
-            - ``etl``: The echo train length - how many readouts per shot.
-            - ``num_shots``: Number of shots.
-        2. What would a simple translational motion model look?
-    Note:
-        We do not store this as a module or else it would be saved to the model
-        definition, which we dont want.
+class NoiseAndMotionModel:
+    """A model that adds additive white noise after adding simple motion. N(M(x))
     """
 
     def __init__(
-        self, motion_range: Union[float, Sequence[float]], scheduler=None, seed=None, device=None
+        self, std_devs: Union[float, Sequence[float]], motion_range: Union[float, Sequence[float]], scheduler=None, seed=None, device=None
     ):
+        if not isinstance(std_devs, Sequence):
+            std_devs = (std_devs,)
         if isinstance(motion_range, (float, int)):
             motion_range = (motion_range,)
+        elif len(std_devs) > 2:
+            raise ValueError("`std_devs` must have 2 or fewer values")
         elif len(motion_range) > 2:
             raise ValueError("`motion_range` must have 2 or fewer values")
+        self.std_devs = std_devs
+        self.motion_range = motion_range
 
         self.warmup_method = None
         self.warmup_iters = 0
         if scheduler is not None:
             self.warmup_method = scheduler.WARMUP_METHOD
             self.warmup_iters = scheduler.WARMUP_ITERS
-        self.motion_range = motion_range
 
-        g = torch.Generator()
+        # For reproducibility.
+        g = torch.Generator(device=device)
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
+        
+
+    def choose_std_dev(self):
+        """Chooses std range based on warmup."""
+        if not isinstance(self.std_devs, Sequence):
+            return self.std_devs
+        elif len(self.std_devs) == 1:
+            return self.std_devs[0]
+
+        if self.warmup_method:
+            curr_iter = get_event_storage().iter
+            warmup_iters = self.warmup_iters
+            if self.warmup_method == "linear":
+                std_range = curr_iter / warmup_iters * (self.std_devs[1] - self.std_devs[0])
+            else:
+                raise ValueError(f"`warmup_method={self.warmup_method}` not supported")
+        else:
+            std_range = self.std_devs[1] - self.std_devs[0]
+
+        g = self.generator
+        std_dev = self.std_devs[0] + std_range * torch.rand(1, generator=g, device=g.device).item()
+        return std_dev
 
     def choose_motion_range(self):
         """Chooses motion range based on warmup."""
@@ -74,37 +84,31 @@ class MotionModel:
         motion_range = self.motion_range[0] + motion_range * torch.rand(1, generator=g, device=g.device).item()
         return motion_range
 
+
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
 
-    def forward(self, kspace, seed=None, clone=True) -> torch.Tensor:
-        """Performs motion corruption on kspace image.
-
-        TODO: The current arguments were copied from the NoiseModel.
-            Feel free to change.
-        Args:
-            kspace (torch.Tensor): The complex tensor. Shape ``(N, Y, X, #coils, [2])``.
-            mask (torch.Tensor): The undersampling mask. Shape ``(N, Y, X, #coils)``.
-            seed (int, optional): Fixed seed at runtime (useful for generating testing vals).
-            clone (bool, optional): If ``True``, return a cloned tensor.
-        Returns:
-            torch.Tensor: The motion corrupted kspace.
-        Note:
-            For backwards compatibility with torch<1.6, complex tensors may also have the shape
-            ``(..., 2)``, where the 2 channels in the last dimension are real and
-            imaginary, respectively.
-            TODO: This code should account for that case as well.
-        """
-        # is_complex = False
+    def forward(self, kspace, mask=None, seed=None, clone=True) -> torch.Tensor:
+        """Performs noise augmentation followed by motion simulation on undersampled kspace mask."""
         if clone:
             kspace = kspace.clone()
+        mask = cplx.get_mask(kspace)
+
+        g = (
+            self.generator
+            if seed is None
+            else torch.Generator(device=kspace.device).manual_seed(seed)
+        )
+
         phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64)
         width = kspace.shape[2]
-        g = self.generator if seed is None else torch.Generator().manual_seed(seed)
+
+        noise_std = self.choose_std_dev()
         scale = self.choose_motion_range()
 
         odd_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
         even_err = (2 * np.pi * scale) * torch.rand(1, generator=g).numpy() - np.pi * scale
+
         for line in range(width):
             if line % 2 == 0:
                 rand_err = even_err
@@ -113,9 +117,19 @@ class MotionModel:
             phase_error = torch.from_numpy(np.exp(-1j * rand_err))
             phase_matrix[:, :, line] = phase_error
         aug_kspace = kspace * phase_matrix
-        return aug_kspace
+ 
+        if cplx.is_complex(aug_kspace):
+            noise = noise_std * torch.randn(aug_kspace.shape + (2,), generator=g, device=aug_kspace.device)
+            noise = torch.view_as_complex(noise)
+        else:
+            noise = noise_std * torch.randn(aug_kspace.shape, generator=g, device=aug_kspace.device)
+        masked_noise = noise * mask
+        noised_aug_kspace = aug_kspace + masked_noise
+
+        return noised_aug_kspace
+
 
     @classmethod
     def from_cfg(cls, cfg, seed=None, **kwargs):
-        cfg = cfg.MODEL.CONSISTENCY.AUG.MOTION
-        return cls(cfg.RANGE, scheduler=cfg.SCHEDULER, seed=seed, **kwargs)
+        cfg = cfg.MODEL.CONSISTENCY.AUG
+        return cls(cfg.NOISE.STD_DEV, cfg.MOTION.RANGE, scheduler=cfg.NOISE.SCHEDULER, seed=seed, **kwargs)

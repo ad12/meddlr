@@ -198,7 +198,8 @@ def build_recon_train_loader(cfg, dataset_type=None):
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(
-        cfg, mask_func, is_test=False, add_noise=cfg.AUG_TRAIN.USE_NOISE
+        cfg, mask_func, is_test=False,
+        add_noise=cfg.AUG_TRAIN.USE_NOISE, add_motion=cfg.AUG_TRAIN.USE_MOTION
     )
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform, dataset_type)
@@ -230,7 +231,12 @@ def build_recon_train_loader(cfg, dataset_type=None):
 
 
 def build_recon_val_loader(
-    cfg, dataset_name, as_test: bool = False, add_noise: bool = False, dataset_type=None
+    cfg,
+    dataset_name,
+    as_test: bool = False,
+    add_noise: bool = False,
+    add_motion: bool = False,
+    dataset_type=None,
 ):
     if (
         cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL > 0
@@ -256,7 +262,9 @@ def build_recon_val_loader(
         dataset_type = _get_default_dataset_type(dataset_name)
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(cfg, mask_func, is_test=as_test, add_noise=add_noise)
+    data_transform = T.DataTransform(
+        cfg, mask_func, is_test=as_test, add_noise=add_noise, add_motion=add_motion
+    )
 
     val_data = _build_dataset(
         cfg, dataset_dicts, data_transform, is_eval=True, dataset_type=dataset_type

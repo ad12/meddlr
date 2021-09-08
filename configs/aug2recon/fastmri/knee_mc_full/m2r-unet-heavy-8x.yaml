@@ -1,0 +1,65 @@
+DESCRIPTION:
+  BRIEF: U-NET LR = 1e-3 Aug2Recon 8x fastMRI knee-mc full
+  EXP_NAME: fastMRI_knee_mc/m2r_heavy/unet_8x
+  PROJECT_NAME: aug2recon 
+  TAGS:
+  - fastMRI_knee_multicoil_v0.0.1
+  - unet_LR1e-3
+  - m2r_8x
+  - heavy_motion
+DATASETS:
+  TRAIN: ("fastMRI_knee_multicoil_v0.0.1_train",)
+  VAL: ("fastMRI_knee_multicoil_v0.0.1_val",)
+  TEST: ("fastMRI_knee_multicoil_v0.0.1_test",)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "RandomMaskFunc1D"
+    ACCELERATIONS: (8,)
+    CALIBRATION_SIZE: 0
+    CENTER_FRACTIONS: (0.04,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (8,)
+DATALOADER:
+  NUM_WORKERS: 8
+  DATA_KEYS: (("target", "espirit-cf=4/target"), ("maps", "espirit-cf=4/maps"))
+  FILTER:
+    BY: (("acquisition", "CORPDFS_FBK"), ("systemFieldStrength_T", 2.89362))
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 54
+    NUM_UNDERSAMPLED: 45
+    NUM_VAL: 50
+MODEL:
+  META_ARCHITECTURE: "M2RModel"
+  UNET:
+    CHANNELS: 32
+    DROPOUT: 0.0
+    IN_CHANNELS: 2
+    NUM_POOL_LAYERS: 4
+    OUT_CHANNELS: 2
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+  M2R:
+    META_ARCHITECTURE: "UnetModel"
+  CONSISTENCY:
+    AUG:
+      MOTION_RANGE: (0.2,0.5)
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: ""
+  TRAIN_BATCH_SIZE: 24
+  TEST_BATCH_SIZE: 24
+  CHECKPOINT_PERIOD: -10 # cpt every 10 epochs.
+  MAX_ITER: -200
+  BASE_LR: 0.001
+  STEPS: ()
+TEST:
+  EVAL_PERIOD: -10 # eval every 10 epochs.
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim_old", "ssim (Wang)")
+TIME_SCALE: "iter"
+OUTPUT_DIR: "results://aug2recon/fastmri_knee_mc/m2r_heavy/unet-8x"
+SEED: 1000
+VIS_PERIOD: 400
+VERSION: 1

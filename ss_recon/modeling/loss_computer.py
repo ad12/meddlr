@@ -34,14 +34,21 @@ class LossComputer(ABC):
 
     def _get_metrics(self, target: torch.Tensor, output: torch.Tensor, loss_name):
         # Compute metrics
-        abs_error = cplx.abs(output - target)
-        abs_mag_error = torch.abs(cplx.abs(output) - cplx.abs(target))
+        if loss_name == "mag_l1":
+            abs_error = torch.abs(output - target)
+            abs_mag_error = abs_error
+        else:
+            abs_error = cplx.abs(output - target)
+            abs_mag_error = torch.abs(cplx.abs(output) - cplx.abs(target))
         l1 = torch.mean(abs_error)
         mag_l1 = torch.mean(abs_mag_error)
         N = target.shape[0]
 
         abs_error = abs_error.view(N, -1)
-        tgt_mag = cplx.abs(target).view(N, -1)
+        if loss_name == "mag_l1":
+            tgt_mag = torch.abs(target).view(N, -1)
+        else:
+            tgt_mag = cplx.abs(target).view(N, -1)
         l2 = torch.sqrt(torch.mean(abs_error ** 2, dim=1))
         psnr = 20 * torch.log10(tgt_mag.max(dim=1)[0] / (l2 + EPS))
         nrmse = l2 / torch.sqrt(torch.mean(tgt_mag ** 2, dim=1))
@@ -109,14 +116,21 @@ class N2RLossComputer(LossComputer):
         super().__init__(cfg)
         recon_loss = cfg.MODEL.RECON_LOSS.NAME
         consistency_loss = cfg.MODEL.CONSISTENCY.LOSS_NAME
+        latent_loss = cfg.MODEL.CONSISTENCY.LATENT_LOSS_NAME
 
         assert recon_loss in IMAGE_LOSSES or recon_loss in KSPACE_LOSSES
         assert consistency_loss in IMAGE_LOSSES or consistency_loss in KSPACE_LOSSES
 
         self.recon_loss = recon_loss
         self.consistency_loss = consistency_loss
+        self.latent_loss = latent_loss
         self.renormalize_data = cfg.MODEL.RECON_LOSS.RENORMALIZE_DATA
         self.consistency_weight = cfg.MODEL.CONSISTENCY.LOSS_WEIGHT
+        self.latent_weight = cfg.MODEL.CONSISTENCY.LATENT_LOSS_WEIGHT
+        self.use_latent = cfg.MODEL.CONSISTENCY.USE_LATENT
+        self.use_consistency = cfg.MODEL.CONSISTENCY.USE_CONSISTENCY
+        self.num_latent_layers = cfg.MODEL.CONSISTENCY.NUM_LATENT_LAYERS
+        self.latent_keys = ["E4","E3","D3","E2","D2","E1","D1"]
         # self.use_robust = cfg.MODEL.LOSS.USE_ROBUST
         # self.beta = cfg.MODEL.LOSS.BETA
         # self.robust_step_size = cfg.MODEL.LOSS.ROBUST_STEP_SIZE
@@ -180,14 +194,35 @@ class N2RLossComputer(LossComputer):
                 input.get("unsupervised", None), output_consistency, self.consistency_loss
             ).items()  # noqa
         }
-        if output_consistency is not None:
+        if output_consistency is not None and self.use_consistency:
             loss += self.consistency_weight * metrics_consistency["cons_loss"]
+        
+        if self.use_latent:
+            num_losses = self.num_latent_layers * 2 - 1
+            all_metrics_latent = []
+            for i in range(num_losses):
+                output_latent = {}
+                output_latent["target"] = output_recon["latent"][self.latent_keys[i]]
+                output_latent["pred"] = output_consistency["latent"][self.latent_keys[i]]
 
+                metrics_latent = {
+                    "latent_"+self.latent_keys[i]+"_{}".format(k): v
+                    for k, v in self._compute_metrics(
+                        None, output_latent, self.latent_loss
+                    ).items()  # noqa
+                }
+                
+                all_metrics_latent.append(metrics_latent)
+                loss += self.latent_weight * metrics_latent["latent_"+self.latent_keys[i]+"_loss"]
+                
         metrics = {}
-        if output_consistency is not None:
+        if output_consistency is not None and self.use_consistency:
             metrics.update(metrics_consistency)
         if output_recon is not None:
             metrics.update(metrics_recon)
+        if self.use_latent:
+            for i in range(num_losses):
+                metrics.update(all_metrics_latent[i])
 
         metrics["loss"] = loss
         return metrics

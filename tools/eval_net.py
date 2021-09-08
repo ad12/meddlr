@@ -42,8 +42,8 @@ class ZFReconEvaluator(ReconEvaluator):
     """Zero-filled recon evaluator."""
 
     def process(self, inputs, outputs):
-        zf_out = {k: outputs[k] for k in ("target", "metadata")}
-        zf_out["pred"] = outputs["zf_pred"]
+        zf_out = {k: outputs[k] for k in ("target",)}
+        zf_out["pred"] = torch.view_as_complex(outputs["zf_image"])
         return super().process(inputs, zf_out)
 
 
@@ -187,8 +187,11 @@ def update_metrics(metrics_new: pd.DataFrame, metrics_old: pd.DataFrame, on: Seq
 def eval(cfg, args, model, weights_basename, criterion, best_value):
     zero_filled = args.zero_filled
     noise_arg = args.noise.lower()
+    motion_arg = args.motion.lower()
     include_noise = noise_arg != "false"
+    include_motion = motion_arg != "false"
     noise_sweep_vals = args.sweep_vals
+    motion_sweep_vals = args.sweep_vals_motion
     skip_rescale = args.skip_rescale
     overwrite = args.overwrite
     save_scans = args.save_scans or "save_scans" in args.ops
@@ -223,8 +226,14 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     else:
         noise_vals = [0]
 
+    if include_motion:
+        motion_vals = [0] + motion_sweep_vals if motion_arg == "sweep" else [0]
+        motion_vals = sorted(set(motion_vals))
+    else:
+        motion_vals = [0]
+
     values = itertools.product(
-        cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals
+        cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals, motion_vals
     )
     values = list(values)
     all_results = []
@@ -238,13 +247,14 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             )
         default_metrics.extend(args.extra_metrics)
 
-    for exp_idx, (dataset_name, acc, noise_level) in enumerate(values):
+    for exp_idx, (dataset_name, acc, noise_level, motion_level) in enumerate(values):
         # Check if the current configuration already has metrics computed
         # If so, dont recompute
         params = {
             "Acceleration": acc,
             "dataset": dataset_name,
             "Noise Level": noise_level,
+            "Motion Level": motion_level,
             "weights": weights_basename,
             "rescaled": not skip_rescale,
         }
@@ -280,12 +290,17 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         s_cfg = cfg.clone()
         s_cfg.defrost()
         s_cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (acc,)
+        s_cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE = motion_level
         s_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (noise_level,)
         s_cfg.freeze()
 
         # Build a recon val loader
         dataloader = build_recon_val_loader(
-            s_cfg, dataset_name, as_test=True, add_noise=noise_level > 0
+            s_cfg,
+            dataset_name,
+            as_test=True,
+            add_noise=noise_level > 0,
+            add_motion=motion_level > 0,
         )
 
         # Build evaluators. Only save reconstructions for last scan.
@@ -304,9 +319,20 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         ]
         # TODO: add support for multiple evaluators.
         if zero_filled:
+            zf_output_dir = (
+                os.path.join(output_dir, dataset_name, "ZeroFilled-" + params_str)
+                if save_scans
+                else None
+            )
             evaluators.append(
                 ZFReconEvaluator(
-                    dataset_name, s_cfg, group_by_scan=group_by_scan, skip_rescale=skip_rescale
+                    dataset_name,
+                    s_cfg,
+                    group_by_scan=group_by_scan,
+                    skip_rescale=skip_rescale,
+                    save_scans=save_scans,
+                    output_dir=zf_output_dir,
+                    metrics=eval_metrics,
                 )
             )
         evaluators = DatasetEvaluators(evaluators, as_list=True)
@@ -421,6 +447,12 @@ if __name__ == "__main__":
         help="Type of noise evaluation",
     )
     parser.add_argument(
+        "--motion",
+        default="false",
+        choices=("false", "standard", "sweep"),
+        help="Type of motion evaluation",
+    )
+    parser.add_argument(
         "--sweep-vals",
         default=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         nargs="*",
@@ -428,6 +460,13 @@ if __name__ == "__main__":
         help="args to sweep for noise",
     )
     parser.add_argument("--extra-metrics", nargs="*", help="Extra metrics for testing")
+    parser.add_argument(
+        "--sweep-vals-motion",
+        default=[0, 0.2, 0.4],
+        nargs="*",
+        type=float,
+        help="args to sweep for motion",
+    )
     parser.add_argument(
         "--iter-limit",
         default=None,

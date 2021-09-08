@@ -1,14 +1,14 @@
-# N2R standard testing config
+# M2R standard testing config
 # The model will be trained for 60 iterations (not epochs)
 # on the mridata.org 2019 knee dataset.
 MODEL:
-  META_ARCHITECTURE: "N2RModel"
+  META_ARCHITECTURE: "M2RModel"
   UNROLLED:
     NUM_UNROLLED_STEPS: 8
     NUM_RESBLOCKS: 2
     NUM_FEATURES: 128
     DROPOUT: 0.
-  N2R:
+  M2R:
     META_ARCHITECTURE: "GeneralizedUnrolledCNN"
 DATASETS:
   TRAIN: ("mridata_knee_2019_train",)
@@ -27,5 +27,5 @@ TEST:
   EVAL_PERIOD: 40
 VIS_PERIOD: 10
 TIME_SCALE: "iter"
-OUTPUT_DIR: "results://tests/n2r/standard"
+OUTPUT_DIR: "results://tests/m2r/standard"
 VERSION: 1
