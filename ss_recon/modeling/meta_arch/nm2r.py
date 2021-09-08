@@ -34,8 +34,7 @@ class NM2RModel(nn.Module):
         self.noiser = NoiseAndMotionModel.from_cfg(cfg)
 
     def augment(self, inputs):
-        """Noise + motion augmentation.
-        """
+        """Noise + motion augmentation."""
         kspace = inputs["kspace"].clone()
         aug_kspace = self.noiser(kspace, clone=False)
 

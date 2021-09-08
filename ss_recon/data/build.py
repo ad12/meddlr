@@ -198,8 +198,11 @@ def build_recon_train_loader(cfg, dataset_type=None):
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(
-        cfg, mask_func, is_test=False,
-        add_noise=cfg.AUG_TRAIN.USE_NOISE, add_motion=cfg.AUG_TRAIN.USE_MOTION
+        cfg,
+        mask_func,
+        is_test=False,
+        add_noise=cfg.AUG_TRAIN.USE_NOISE,
+        add_motion=cfg.AUG_TRAIN.USE_MOTION,
     )
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform, dataset_type)

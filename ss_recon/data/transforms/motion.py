@@ -1,8 +1,8 @@
 from typing import Sequence, Union
+
 import numpy as np
 import torch
 
-from ss_recon.utils import complex_utils as cplx
 from ss_recon.utils import env
 from ss_recon.utils.events import get_event_storage
 
@@ -64,14 +64,18 @@ class MotionModel:
             curr_iter = get_event_storage().iter
             warmup_iters = self.warmup_iters
             if self.warmup_method == "linear":
-                motion_range = curr_iter / warmup_iters * (self.motion_range[1] - self.motion_range[0])
+                motion_range = (
+                    curr_iter / warmup_iters * (self.motion_range[1] - self.motion_range[0])
+                )
             else:
                 raise ValueError(f"`warmup_method={self.warmup_method}` not supported")
         else:
             motion_range = self.motion_range[1] - self.motion_range[0]
 
         g = self.generator
-        motion_range = self.motion_range[0] + motion_range * torch.rand(1, generator=g, device=g.device).item()
+        motion_range = (
+            self.motion_range[0] + motion_range * torch.rand(1, generator=g, device=g.device).item()
+        )
         return motion_range
 
     def __call__(self, *args, **kwargs):

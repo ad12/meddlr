@@ -161,24 +161,29 @@ class UnetModel(nn.Module):
         ]
 
         self.vis_period = cfg.VIS_PERIOD
-        
+
     def register_hooks(self):
         if self.use_latent:
             self.feats = {}
             self.hooks = []
-            self.hooks.append(self.conv.register_forward_hook(self.get_latent('E4')))
-            for _i in range(self.num_latent_layers-1):
+            self.hooks.append(self.conv.register_forward_hook(self.get_latent("E4")))
+            for _i in range(self.num_latent_layers - 1):
                 k = self.num_pool_layers - 1 - _i
-                self.hooks.append(self.up_conv[_i].register_forward_hook(self.get_latent('D'+str(k))))
-                self.hooks.append(self.down_sample_layers[k].register_forward_hook(self.get_latent('E'+str(k))))
-            
+                self.hooks.append(
+                    self.up_conv[_i].register_forward_hook(self.get_latent("D" + str(k)))
+                )
+                self.hooks.append(
+                    self.down_sample_layers[k].register_forward_hook(self.get_latent("E" + str(k)))
+                )
+
     def remove_hooks(self):
-        for _i in range(self.num_latent_layers-1):
+        for _i in range(self.num_latent_layers - 1):
             self.hooks[_i].remove()
-            
-    def get_latent(self,layer_name):
+
+    def get_latent(self, layer_name):
         def hook(module, input, output):
             self.feats[layer_name] = output
+
         return hook
 
     def visualize_training(self, kspace, zfs, targets, preds):
@@ -232,7 +237,7 @@ class UnetModel(nn.Module):
         """
         self.register_hooks()
         stack = []
-        
+
         # Need to fetch device at runtime for proper data transfer.
         inputs = input
         device = next(self.parameters()).device
@@ -315,10 +320,10 @@ class UnetModel(nn.Module):
 
         if not self.training:
             output_dict["zf_image"] = zf_image
-        
+
         if self.use_latent:
             output_dict["latent"] = self.feats
 
         self.remove_hooks()
-        
+
         return output_dict

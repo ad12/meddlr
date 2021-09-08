@@ -1,6 +1,6 @@
 from typing import Sequence, Union
-import numpy as np
 
+import numpy as np
 import torch
 
 from ss_recon.utils import complex_utils as cplx
@@ -12,11 +12,15 @@ if env.pt_version() >= [1, 6]:
 
 
 class NoiseAndMotionModel:
-    """A model that adds additive white noise after adding simple motion. N(M(x))
-    """
+    """A model that adds additive white noise after adding simple motion. N(M(x))"""
 
     def __init__(
-        self, std_devs: Union[float, Sequence[float]], motion_range: Union[float, Sequence[float]], scheduler=None, seed=None, device=None
+        self,
+        std_devs: Union[float, Sequence[float]],
+        motion_range: Union[float, Sequence[float]],
+        scheduler=None,
+        seed=None,
+        device=None,
     ):
         if not isinstance(std_devs, Sequence):
             std_devs = (std_devs,)
@@ -40,7 +44,6 @@ class NoiseAndMotionModel:
         if seed:
             g = g.manual_seed(seed)
         self.generator = g
-        
 
     def choose_std_dev(self):
         """Chooses std range based on warmup."""
@@ -74,16 +77,19 @@ class NoiseAndMotionModel:
             curr_iter = get_event_storage().iter
             warmup_iters = self.warmup_iters
             if self.warmup_method == "linear":
-                motion_range = curr_iter / warmup_iters * (self.motion_range[1] - self.motion_range[0])
+                motion_range = (
+                    curr_iter / warmup_iters * (self.motion_range[1] - self.motion_range[0])
+                )
             else:
                 raise ValueError(f"`warmup_method={self.warmup_method}` not supported")
         else:
             motion_range = self.motion_range[1] - self.motion_range[0]
 
         g = self.generator
-        motion_range = self.motion_range[0] + motion_range * torch.rand(1, generator=g, device=g.device).item()
+        motion_range = (
+            self.motion_range[0] + motion_range * torch.rand(1, generator=g, device=g.device).item()
+        )
         return motion_range
-
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -117,9 +123,11 @@ class NoiseAndMotionModel:
             phase_error = torch.from_numpy(np.exp(-1j * rand_err))
             phase_matrix[:, :, line] = phase_error
         aug_kspace = kspace * phase_matrix
- 
+
         if cplx.is_complex(aug_kspace):
-            noise = noise_std * torch.randn(aug_kspace.shape + (2,), generator=g, device=aug_kspace.device)
+            noise = noise_std * torch.randn(
+                aug_kspace.shape + (2,), generator=g, device=aug_kspace.device
+            )
             noise = torch.view_as_complex(noise)
         else:
             noise = noise_std * torch.randn(aug_kspace.shape, generator=g, device=aug_kspace.device)
@@ -128,8 +136,9 @@ class NoiseAndMotionModel:
 
         return noised_aug_kspace
 
-
     @classmethod
     def from_cfg(cls, cfg, seed=None, **kwargs):
         cfg = cfg.MODEL.CONSISTENCY.AUG
-        return cls(cfg.NOISE.STD_DEV, cfg.MOTION.RANGE, scheduler=cfg.NOISE.SCHEDULER, seed=seed, **kwargs)
+        return cls(
+            cfg.NOISE.STD_DEV, cfg.MOTION.RANGE, scheduler=cfg.NOISE.SCHEDULER, seed=seed, **kwargs
+        )
