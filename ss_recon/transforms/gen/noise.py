@@ -3,12 +3,14 @@ from typing import Sequence, Tuple
 import torch
 
 from ss_recon.transforms.base.noise import NoiseTransform
+from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.transform import NoOpTransform
 from ss_recon.transforms.transform_gen import TransformGen
 
 __all__ = ["RandomNoise"]
 
 
+@TRANSFORM_REGISTRY.register()
 class RandomNoise(TransformGen):
     """A model that adds additive white noise."""
 
@@ -31,7 +33,7 @@ class RandomNoise(TransformGen):
         self.use_mask = use_mask
         super().__init__(params=params, p=p)
 
-    def get_transform(self, input):
+    def get_transform(self, input: torch.Tensor):
         params = self._get_param_values(use_schedulers=True)
         std_devs = params["std_devs"]
         rho = params["rhos"]
@@ -45,5 +47,5 @@ class RandomNoise(TransformGen):
 
         gen = self._generator
         if gen is None:
-            gen = torch.Generator(device=self._device).manual_seed(int(self._rand() * 1e10))
+            gen = torch.Generator(device=input.device).manual_seed(int(self._rand() * 1e10))
         return NoiseTransform(std_dev=std_dev, use_mask=self.use_mask, rho=rho, generator=gen)

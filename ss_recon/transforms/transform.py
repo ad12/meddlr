@@ -154,7 +154,7 @@ class Transform(DeviceMixin):
             torch.all(v)
             if isinstance(v, torch.Tensor)
             else np.all(v)
-            if isinstance(v, np.ndarray)
+            if isinstance(v, (np.ndarray, list, tuple))
             else all(v)
             if isinstance(v, Iterable)
             else v

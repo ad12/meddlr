@@ -24,8 +24,8 @@ class MockIterTracker:
     def __init__(self, start=0) -> None:
         self._iter = start
 
-    def step(self):
-        self._iter += 1
+    def step(self, num=1):
+        self._iter += num
 
     def get_iter(self):
         return self._iter

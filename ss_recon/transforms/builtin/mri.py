@@ -3,9 +3,11 @@ from typing import Sequence, Union
 import ss_recon.utils.complex_utils as cplx
 import ss_recon.utils.transforms as T
 from ss_recon.data.transforms.transform import Normalizer
+from ss_recon.transforms.build import build_transforms
 from ss_recon.transforms.mixins import GeometricMixin
 from ss_recon.transforms.transform import NoOpTransform, Transform, TransformList
 from ss_recon.transforms.transform_gen import RandomTransformChoice, TransformGen
+from ss_recon.utils import env
 
 
 class MRIReconAugmentor:
@@ -146,6 +148,13 @@ class MRIReconAugmentor:
                 g.reset()
 
     @classmethod
-    def from_cfg(cls, cfg, seed=None, **kwargs):
-        # TODO:
-        return cls()
+    def from_cfg(cls, cfg, aug_kind, seed=None, **kwargs):
+        assert aug_kind in ("aug_train", "consistency")
+        if aug_kind == "aug_train":
+            vals = cfg.AUG_TRAIN.MRI_RECON
+        elif aug_kind == "consistency":
+            vals = cfg.MODEL.CONSISTENCY.AUG.MRI_RECON
+        if seed is None and env.is_repro():
+            seed = cfg.SEED
+        tfms_or_gens = build_transforms(cfg, vals.TRANSFORMS, seed=seed, **kwargs)
+        return cls(tfms_or_gens)

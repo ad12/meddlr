@@ -3,12 +3,14 @@ from typing import Sequence, Union
 import torch
 
 from ss_recon.transforms.base.motion import MRIMotionTransform
+from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.transform import NoOpTransform
 from ss_recon.transforms.transform_gen import TransformGen
 
 __all__ = ["RandomMRIMotion"]
 
 
+@TRANSFORM_REGISTRY.register()
 class RandomMRIMotion(TransformGen):
     """A model that corrupts kspace inputs with motion.
     Motion is a common artifact experienced during the MR imaging forward problem.
@@ -45,7 +47,7 @@ class RandomMRIMotion(TransformGen):
             raise ValueError("`motion_range` must have 2 or fewer values")
         super().__init__(params={"std_devs": std_devs}, p=p)
 
-    def get_transform(self, input):
+    def get_transform(self, input: torch.Tensor):
         params = self._get_param_values(use_schedulers=True)
         if self._rand() >= params["p"]:
             return NoOpTransform()
@@ -53,5 +55,5 @@ class RandomMRIMotion(TransformGen):
         std_dev = self._rand_range(*params["std_devs"])
         gen = self._generator
         if gen is None:
-            gen = torch.Generator(device=self._device).manual_seed(int(self._rand() * 1e10))
+            gen = torch.Generator(device=input.device).manual_seed(int(self._rand() * 1e10))
         return MRIMotionTransform(std_dev=std_dev, generator=gen)

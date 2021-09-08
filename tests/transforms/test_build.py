@@ -3,6 +3,7 @@ import unittest
 import torch
 
 from ss_recon.config import get_cfg
+from ss_recon.engine.trainer import convert_cfg_time_to_iter
 from ss_recon.transforms.base import Rot90Transform
 from ss_recon.transforms.base.spatial import FlipTransform
 from ss_recon.transforms.build import build_transforms
@@ -135,3 +136,55 @@ class TestBuildTransforms(unittest.TestCase):
         assert isinstance(sch2, WarmupTF)
         assert sch2.warmup_iters == 600
         assert tuple(sch2._params) == ("std_devs",)
+
+    def test_to_iter(self):
+        tfm_cfg = [
+            {
+                "name": "RandomRot90",
+                "p": 0.5,
+                "scheduler": {
+                    "name": "WarmupTF",
+                    "warmup_iters": -2,
+                    "delay_iters": 500,
+                    "params": ["p"],
+                },
+            },
+            {
+                "name": "FlipTransform",
+                "dims": (-1,),
+            },
+            {
+                "name": "RandomNoise",
+                "std_devs": (1, 2),
+                "p": 0.2,
+                "scheduler": [
+                    {
+                        "name": "WarmupStepTF",
+                        "warmup_milestones": (-1,),
+                        "max_iter": -2,
+                        "delay_iters": 500,
+                        "params": ["p"],
+                    },
+                    {
+                        "name": "WarmupTF",
+                        "params": ("std_devs",),
+                        "warmup_iters": 600,
+                    },
+                ],
+            },
+        ]
+
+        cfg = get_cfg()
+        cfg.TIME_SCALE = "iter"
+        cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS = tfm_cfg
+
+        iters_per_epoch = 100
+        cfg = convert_cfg_time_to_iter(cfg, iters_per_epoch=iters_per_epoch)
+        tfms = cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS
+
+        assert tfms[0]["scheduler"]["warmup_iters"] == 2 * iters_per_epoch
+        assert tfms[0]["scheduler"]["delay_iters"] == 500
+        assert tfms[2]["scheduler"][0]["warmup_milestones"] == (iters_per_epoch,)
+        assert tfms[2]["scheduler"][0]["max_iter"] == 2 * iters_per_epoch
+        assert tfms[2]["scheduler"][0]["delay_iters"] == 500
+        assert tfms[2]["scheduler"][1]["warmup_iters"] == 600

@@ -5,10 +5,12 @@ import torch
 import torchvision.transforms.functional as TF
 
 import ss_recon.utils.complex_utils as cplx
+from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.mixins import GeometricMixin
 from ss_recon.transforms.transform import Transform
 
 
+@TRANSFORM_REGISTRY.register()
 class AffineTransform(GeometricMixin, Transform):
     def __init__(
         self,
@@ -68,7 +70,6 @@ class AffineTransform(GeometricMixin, Transform):
         return self._apply_affine(img)
 
     def apply_maps(self, maps: torch.Tensor):
-        # TODO: Figure out what to do with sensitivity maps during translation.
         maps = self._apply_affine(maps)  # BxCxMxHxW
         norm = cplx.rss(maps, dim=1).unsqueeze(1)
         norm += 1e-8 * (norm == 0)
@@ -79,6 +80,7 @@ class AffineTransform(GeometricMixin, Transform):
         return ("angle", "translate", "scale", "shear")
 
 
+@TRANSFORM_REGISTRY.register()
 class FlipTransform(GeometricMixin, Transform):
     def __init__(self, dims):
         super().__init__()
@@ -101,6 +103,7 @@ class FlipTransform(GeometricMixin, Transform):
         return ("dims",)
 
 
+@TRANSFORM_REGISTRY.register()
 class Rot90Transform(GeometricMixin, Transform):
     def __init__(self, k, dims) -> None:
         super().__init__()

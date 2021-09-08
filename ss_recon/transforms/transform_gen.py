@@ -1,10 +1,12 @@
 import inspect
 import pprint
-from typing import Sequence, Union
+from typing import Any, Dict, Mapping, Sequence, Union
 
 import torch
 
+from ss_recon.config import CfgNode
 from ss_recon.transforms.mixins import DeviceMixin, TransformCacheMixin
+from ss_recon.transforms.tf_scheduler import SchedulableMixin
 
 # from ss_recon.transforms.tf_scheduler import TFScheduler
 from ss_recon.transforms.transform import Transform
@@ -12,7 +14,7 @@ from ss_recon.transforms.transform import Transform
 __all__ = ["TransformGen", "RandomTransformChoice"]
 
 
-class TransformGen(DeviceMixin, TransformCacheMixin):
+class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
     """
     TransformGen takes an array of type float as input.
     It creates a :class:`Transform` based on the given image, sometimes with
@@ -26,8 +28,8 @@ class TransformGen(DeviceMixin, TransformCacheMixin):
 
     def __init__(
         self,
-        params=None,
-        p=0.0,
+        params: Dict[str, Any] = None,
+        p: float = 0.0,
     ) -> None:
         from ss_recon.transforms.tf_scheduler import TFScheduler
 
@@ -94,6 +96,7 @@ class TransformGen(DeviceMixin, TransformCacheMixin):
 
     def seed(self, value: int):
         self._generator = torch.Generator(device=self._device).manual_seed(value)
+        return self
 
     def __repr__(self):
         """
@@ -150,6 +153,7 @@ class RandomTransformChoice(TransformGen):
         for g in self.tfms_or_gens:
             if isinstance(g, TransformGen):
                 g.seed(value)
+        return self
 
     def __repr__(self):
         classname = type(self).__name__
@@ -157,3 +161,13 @@ class RandomTransformChoice(TransformGen):
             "{} - p={:0.2f}".format(t, p) for t, p in zip(self.tfms_or_gens, self.tfm_ps)
         )
         return "{}(\n\t{}\n\t)".format(classname, ", ".join(argstr))
+
+    @classmethod
+    def from_dict(cls, cfg: CfgNode, init_kwargs: Mapping[str, Any], **kwargs):
+        from ss_recon.transforms.build import build_transforms
+
+        init_kwargs = init_kwargs.copy()
+        tfms_or_gens = init_kwargs.pop("tfms_or_gens")
+        tfms_or_gens = build_transforms(cfg, tfms_or_gens, **kwargs)
+
+        return cls(tfms_or_gens, **init_kwargs)

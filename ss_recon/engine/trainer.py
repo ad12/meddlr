@@ -1,8 +1,9 @@
 import logging
 import math
 import os
+import re
 from collections import OrderedDict
-from typing import Sequence, Union
+from typing import Mapping, Sequence, Union
 
 from torch.nn import DataParallel
 
@@ -62,6 +63,33 @@ def format_as_iter(vals: Union[int, Sequence[int]], iters_per_epoch: int, time_s
         return vals
 
 
+def _convert_time_recursive(
+    entity: Union[Mapping, Sequence],
+    iters_per_epoch,
+    time_scale,
+    patterns=("^.*_iters$", "^.*_iter$", "^.*_milestones$"),
+):
+    otype = type(entity)
+    if isinstance(entity, (list, tuple)):
+        out = []
+        for e in entity:
+            out.append(_convert_time_recursive(e, iters_per_epoch, time_scale, patterns))
+        return otype(out)
+    elif isinstance(entity, Mapping):
+        entity = {k: v for k, v in entity.items()}
+        for k in entity.keys():
+            if not isinstance(entity[k], Mapping):
+                if any(re.match(pattern, k) for pattern in patterns):
+                    entity[k] = format_as_iter(entity[k], iters_per_epoch, time_scale)
+                elif not isinstance(entity[k], (list, tuple)):
+                    continue
+
+            entity[k] = _convert_time_recursive(entity[k], iters_per_epoch, time_scale, patterns)
+        return otype(entity)
+    else:
+        return entity
+
+
 def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int):
     """Convert all config time-related parameters to iterations."""
     cfg = cfg.clone()
@@ -77,6 +105,12 @@ def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int):
     cfg.VIS_PERIOD = format_as_iter(cfg.VIS_PERIOD, iters_per_epoch, time_scale)
     cfg.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS = format_as_iter(
         cfg.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS, iters_per_epoch, time_scale
+    )
+    cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS = _convert_time_recursive(
+        cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS, iters_per_epoch, time_scale
+    )
+    cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS = _convert_time_recursive(
+        cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS, iters_per_epoch, time_scale
     )
     cfg.TIME_SCALE = "iter"
     cfg.freeze()

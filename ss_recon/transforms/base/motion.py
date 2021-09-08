@@ -2,15 +2,12 @@ from typing import Sequence, Tuple, Union
 
 import torch
 
-from ss_recon.utils import env
-
-if env.pt_version() >= [1, 6]:
-    import torch.fft
-
 import ss_recon.transforms.functional as stf
+from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.transform import Transform
 
 
+@TRANSFORM_REGISTRY.register()
 class MRIMotionTransform(Transform):
     """A model that corrupts kspace inputs with motion.
     Motion is a common artifact experienced during the MR imaging forward problem.

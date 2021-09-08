@@ -4,12 +4,14 @@ from typing import Dict, Sequence, Tuple, Union
 import torch
 
 from ss_recon.transforms.base.spatial import AffineTransform, FlipTransform, Rot90Transform
+from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.transform import NoOpTransform
 from ss_recon.transforms.transform_gen import TransformGen
 
 __all__ = ["RandomAffine", "RandomFlip", "RandomRot90"]
 
 
+@TRANSFORM_REGISTRY.register()
 class RandomAffine(TransformGen):
     _base_transform = AffineTransform
     _param_names = ("angle", "translate", "scale", "shear")
@@ -81,6 +83,7 @@ class RandomAffine(TransformGen):
         )
 
 
+@TRANSFORM_REGISTRY.register()
 class RandomFlip(TransformGen):
     _base_transform = FlipTransform
 
@@ -99,6 +102,7 @@ class RandomFlip(TransformGen):
         return FlipTransform(dims) if dims else NoOpTransform()
 
 
+@TRANSFORM_REGISTRY.register()
 class RandomRot90(TransformGen):
     _base_transform = Rot90Transform
 

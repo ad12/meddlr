@@ -2,15 +2,12 @@ from typing import Tuple
 
 import torch
 
-from ss_recon.utils import complex_utils as cplx
-from ss_recon.utils import env
-
-if env.pt_version() >= [1, 6]:
-    import torch.fft
-
+from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.transform import Transform
+from ss_recon.utils import complex_utils as cplx
 
 
+@TRANSFORM_REGISTRY.register()
 class NoiseTransform(Transform):
     """A model that adds additive white noise."""
 
