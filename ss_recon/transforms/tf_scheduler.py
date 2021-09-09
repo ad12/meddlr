@@ -159,7 +159,7 @@ class WarmupMultiStepTF(TFScheduler):
         self,
         tfm: SchedulableMixin,
         warmup_milestones: Sequence[int],
-        warmup_method: str = None,
+        warmup_method: str = "linear",
         gamma: float = 1.0,
         params=None,
     ):

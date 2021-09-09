@@ -55,14 +55,11 @@ class MRIMotionTransform(Transform):
             g = g.manual_seed(seed)
         return g
 
-    def apply_kspace(self, kspace) -> torch.Tensor:
+    def apply_kspace(self, kspace, channel_first: bool = True) -> torch.Tensor:
         """Performs motion corruption on kspace image.
 
         Args:
-            kspace (torch.Tensor): The complex tensor. Shape ``(N, Y, X, #coils, [2])``.
-            mask (torch.Tensor): The undersampling mask. Shape ``(N, Y, X, #coils)``.
-            seed (int, optional): Fixed seed at runtime (useful for generating testing vals).
-            clone (bool, optional): If ``True``, return a cloned tensor.
+            kspace (torch.Tensor): The complex tensor. Shape ``(N, #coils, Y, X, [2])``.
 
         Returns:
             torch.Tensor: The motion corrupted kspace.
@@ -75,7 +72,7 @@ class MRIMotionTransform(Transform):
         """
         scale = self.std_dev
         g = self._generator(kspace)
-        return stf.add_even_odd_motion(kspace, scale=scale, generator=g)
+        return stf.add_even_odd_motion(kspace, scale=scale, channel_first=channel_first, generator=g)
 
     def _eq_attrs(self) -> Tuple[str]:
         return (

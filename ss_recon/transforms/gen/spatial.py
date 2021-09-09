@@ -87,17 +87,27 @@ class RandomAffine(TransformGen):
 class RandomFlip(TransformGen):
     _base_transform = FlipTransform
 
-    def __init__(self, ndim, p: Union[float, Dict[int, float]] = 0.0) -> None:
+    def __init__(self, dims=None, ndim=None, p: Union[float, Dict[int, float]] = 0.0) -> None:
+        if dims is None and ndim is None:
+            raise ValueError("Either `dims` or `ndim` must be specified")
+        if all(x is not None for x in (dims, ndim)):
+            raise ValueError("Only one of `dims` or `ndim` can be specified.")
+        if isinstance(dims, int):
+            dims = (dims,)
+        self.dims = dims
         self.ndim = ndim
         super().__init__(p=p)
 
     def get_transform(self, input):
         params = self._get_param_values(use_schedulers=True)
         p = params["p"]
-        if isinstance(p, Dict):
-            dims = tuple(k for k, v in p.items() if self._rand() < v)
+        if self.dims is not None:
+            dims = tuple(d for d in self.dims if self._rand() < p)
         else:
-            dims = tuple(d for d in range(-self.ndim, 0) if self._rand() < p)
+            if isinstance(p, Dict):
+                dims = tuple(k for k, v in p.items() if self._rand() < v)
+            else:
+                dims = tuple(d for d in range(-self.ndim, 0) if self._rand() < p)
 
         return FlipTransform(dims) if dims else NoOpTransform()
 

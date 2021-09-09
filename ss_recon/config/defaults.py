@@ -227,6 +227,11 @@ _C.AUG_TRAIN.USE_NOISE = False
 _C.AUG_TRAIN.USE_MOTION = False
 _C.AUG_TRAIN.NOISE_P = 0.2
 _C.AUG_TRAIN.MOTION_P = 0.2
+# Augmentations using MRIReconAugmentor pipeline.
+# If this is specified, it will be used in place of MOTION and NOISE
+# augmentation parameters above. If you would like to use those parameters
+# set AUG_TRAIN.MRI_RECON.TRANSFORMS=().
+# This augmentation pipeline will automatically be ignored at test time (for now).
 _C.AUG_TRAIN.MRI_RECON = CN()
 _C.AUG_TRAIN.MRI_RECON.TRANSFORMS = ()
 

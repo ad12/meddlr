@@ -3,7 +3,7 @@ from typing import Sequence, Union
 import ss_recon.utils.complex_utils as cplx
 import ss_recon.utils.transforms as T
 from ss_recon.data.transforms.transform import Normalizer
-from ss_recon.transforms.build import build_transforms
+from ss_recon.transforms.build import build_transforms, seed_tfm_gens
 from ss_recon.transforms.mixins import GeometricMixin
 from ss_recon.transforms.transform import NoOpTransform, Transform, TransformList
 from ss_recon.transforms.transform_gen import RandomTransformChoice, TransformGen
@@ -16,9 +16,13 @@ class MRIReconAugmentor:
     of deterministic and random transforms for MRI reconstruction.
     """
 
-    def __init__(self, tfms_or_gens: Sequence[Union[Transform, TransformGen]]) -> None:
+    def __init__(
+        self, tfms_or_gens: Sequence[Union[Transform, TransformGen]], seed: int = None
+    ) -> None:
         if isinstance(tfms_or_gens, TransformList):
             tfms_or_gens = tfms_or_gens.transforms
+        if seed is None:
+            seed_tfm_gens(tfms_or_gens, seed=seed)
         self.tfms_or_gens = tfms_or_gens
 
     def __call__(
@@ -51,12 +55,13 @@ class MRIReconAugmentor:
         img, target, maps, tfms_equivariant = self._apply_te(tfms_equivariant, img, target, maps)
         img, target, maps = self._permute_data(img, target, maps, spatial_last=False)
 
-        A = T.SenseModel(maps)
-        kspace = A(img)
+        if len(tfms_equivariant) > 0:
+            A = T.SenseModel(maps)
+            kspace = A(img)
 
-        if mask_gen:
+        if mask_gen is not None:
             kspace, mask = mask_gen(kspace)
-            img = T.SenseModel()
+            img = T.SenseModel(maps, weights=mask)(kspace, adjoint=True)
 
         if normalizer:
             normalized = normalizer.normalize(

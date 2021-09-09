@@ -28,13 +28,8 @@ def build_transforms(
 
     tfms = [_build_transform(cfg, tfm_cfg, **kwargs) for tfm_cfg in tfm_cfgs]
 
-    # Seed all transform generators with unique, but reproducible seeds.
-    # Do not change the scaling constant (1e10).
-    rng = np.random.RandomState(seed)
     if seed is not None:
-        for g in tfms:
-            if isinstance(g, TransformGen):
-                g.seed(int(rng.rand() * 1e10))
+        seed_tfm_gens(tfms, seed=seed)
 
     if is_single:
         tfms = tfms[0]
@@ -98,3 +93,13 @@ def build_scheduler(
         return WarmupMultiStepTF(**init_kwargs)
 
     raise ValueError("Unknown LR scheduler: {}".format(name))
+
+
+def seed_tfm_gens(tfms, seed):
+    # Seed all transform generators with unique, but reproducible seeds.
+    # Do not change the scaling constant (1e10).
+    rng = np.random.RandomState(seed)
+    if seed is not None:
+        for g in tfms:
+            if isinstance(g, TransformGen):
+                g.seed(int(rng.rand() * 1e10))

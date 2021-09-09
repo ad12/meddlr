@@ -1,5 +1,7 @@
 """Basic Transforms.
 """
+from functools import partial
+
 import numpy as np
 import torch
 from fvcore.common.registry import Registry
@@ -188,6 +190,8 @@ class DataTransform:
                 generator seed from the filename. This ensures that the same
                 mask is used for all the slices of a given volume every time.
         """
+        from ss_recon.transforms.builtin.mri import MRIReconAugmentor
+
         self._cfg = cfg
         self.mask_func = mask_func
         self._is_test = is_test
@@ -209,6 +213,46 @@ class DataTransform:
         self.p_noise = cfg.AUG_TRAIN.NOISE_P
         self.p_motion = cfg.AUG_TRAIN.MOTION_P
         self._normalizer = build_normalizer(cfg)
+
+        # Build augmentation pipeline.
+        self.augmentor = None
+        if not is_test and cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS:
+            self.augmentor = MRIReconAugmentor.from_cfg(cfg, aug_kind="aug_train", seed=seed)
+
+    def _call_augmentor(
+        self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None
+    ):
+        # Convert everything from numpy arrays to tensors
+        kspace = cplx.to_tensor(kspace).unsqueeze(0)
+        maps = cplx.to_tensor(maps).unsqueeze(0)
+        target_init = cplx.to_tensor(target).unsqueeze(0)
+        target = (
+            torch.complex(target_init, torch.zeros_like(target_init)).unsqueeze(-1)
+            if not torch.is_complex(target_init)
+            else target_init
+        )  # handle rss vs. sensitivity-integrated
+        norm = torch.sqrt(torch.mean(cplx.abs(target) ** 2))
+
+        seed = sum(tuple(map(ord, fname))) if self._is_test or is_fixed else None  # noqa
+        mask_gen = partial(
+            self._subsampler.__call__, mode="2D", seed=seed, acceleration=acceleration
+        )
+
+        out, _, _ = self.augmentor(
+            kspace, maps=maps, target=target, normalizer=self._normalizer, mask_gen=mask_gen
+        )
+        masked_kspace = out["kspace"]
+        maps = out["maps"]
+        target = out["target"]
+        mean = out["mean"]
+        std = out["std"]
+
+        # Get rid of batch dimension...
+        masked_kspace = masked_kspace.squeeze(0)
+        maps = maps.squeeze(0)
+        target = target.squeeze(0)
+
+        return masked_kspace, maps, target, mean, std, norm
 
     def __call__(
         self,
@@ -244,6 +288,12 @@ class DataTransform:
         """
         if is_fixed and not acceleration:
             raise ValueError("Accelerations must be specified for undersampled scans")
+
+        # If augmentor is defined, use it to do computation.
+        if self.augmentor is not None:
+            return self._call_augmentor(
+                kspace, maps, target, fname, slice_id, is_fixed, acceleration
+            )
 
         # Convert everything from numpy arrays to tensors
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
