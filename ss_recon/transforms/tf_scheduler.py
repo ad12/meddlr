@@ -2,7 +2,7 @@ import logging
 import weakref
 from bisect import bisect_right
 from numbers import Number
-from typing import Dict, List, Sequence, Tuple, Union
+from typing import Dict, List, Mapping, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -18,10 +18,23 @@ class TFScheduler:
     def _parameter_names(self) -> List[str]:
         return self._params if self._params is not None else list(self.tfm.params().keys())
 
+    def _get_tfm_keys(self):
+        def _dfs_pname(params, prefix=""):
+            out = []
+            if isinstance(params, Mapping):
+                for k, v in params.items():
+                    out.extend(_dfs_pname(v, f"{prefix}.{k}"))
+            else:
+                out.append(prefix)
+            return out
+
+        out = _dfs_pname(self.tfm._params)
+        return [x[1:] if x.startswith(".") else x for x in out]
+
     def _register_parameters(self, names: Union[str, Sequence[str]]):
         if isinstance(names, str):
             names = [names]
-        unknown_params = set(names) - set(self.tfm._params.keys())
+        unknown_params = set(names) - set(self._get_tfm_keys())
         if len(unknown_params) > 0:
             raise ValueError(
                 f"Unknown parameters for transform {self.tfm.__class__.__name__}: {unknown_params}"
@@ -36,6 +49,27 @@ class TFScheduler:
         params = self._parameter_names()
         params = [x for x in params if x not in names]
         self._params = params
+
+    def _get_tfm_param_val(self, pname: str):
+        pname = _parse_pname(pname)
+        if isinstance(pname, str):
+            return self.tfm._params[pname]
+
+        pval = self.tfm._params
+        for pn in pname:
+            pval = pval[pn]
+        return pval
+
+    def _fill_param_dict(self, params: Dict, pname: str, pval):
+        pname = _parse_pname(pname)
+        if isinstance(pname, str):
+            params[pname] = pval
+            return
+
+        for idx, pn in enumerate(pname):
+            if pn not in params:
+                params[pn] = pval if idx == len(pname) - 1 else {}
+            params = params[pn]
 
     def get_params(self):
         raise NotImplementedError
@@ -127,7 +161,9 @@ class WarmupTF(TFScheduler):
         names = self._parameter_names()
         params = {}
         for pname in names:
-            params[pname] = self._compute_value(self.tfm._params[pname])
+            self._fill_param_dict(
+                params, pname, self._compute_value(self._get_tfm_param_val(pname))
+            )
         return params
 
     def _compute_value(self, value):
@@ -245,3 +281,9 @@ def _get_warmup_factor_at_iter(
         return min((1 - np.exp(-(iter - delay_iters) / tau)) / (1 - np.exp(-gamma)), 1.0)
     else:
         raise ValueError("Unknown warmup method: {}".format(method))
+
+
+def _parse_pname(pname: str):
+    if "." not in pname:
+        return pname
+    return pname.split(".")

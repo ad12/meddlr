@@ -72,7 +72,9 @@ class MRIMotionTransform(Transform):
         """
         scale = self.std_dev
         g = self._generator(kspace)
-        return stf.add_even_odd_motion(kspace, scale=scale, channel_first=channel_first, generator=g)
+        return stf.add_even_odd_motion(
+            kspace, scale=scale, channel_first=channel_first, generator=g
+        )
 
     def _eq_attrs(self) -> Tuple[str]:
         return (

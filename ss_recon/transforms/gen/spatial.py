@@ -26,6 +26,9 @@ class RandomAffine(TransformGen):
     ):
         if isinstance(p, Number):
             p = {n: p for n in self._param_names}
+        else:
+            assert isinstance(p, dict)
+            p = p.copy().update({k: 0.0 for k in self._param_names if k not in p})
         params = locals()
         params = {k: params[k] for k in list(self._param_names) + ["p"]}
         self.fill = None

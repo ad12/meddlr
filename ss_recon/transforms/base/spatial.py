@@ -1,8 +1,10 @@
+import logging
 from typing import Sequence, Tuple
 
 import numpy as np
 import torch
 import torchvision.transforms.functional as TF
+from PIL import Image
 
 import ss_recon.utils.complex_utils as cplx
 from ss_recon.transforms.build import TRANSFORM_REGISTRY
@@ -18,8 +20,13 @@ class AffineTransform(GeometricMixin, Transform):
         translate: Sequence[int] = None,
         scale=None,
         shear: Sequence[int] = None,
+        pad_like: str = None,
+        upsample_factor: float = 1,
+        upsample_order: int = 1,
     ) -> None:
         super().__init__()
+        logger = logging.getLogger(f"{__name__}.{type(self).__name__}")
+
         if angle is None:
             angle = 0.0
         if scale is None:
@@ -28,10 +35,21 @@ class AffineTransform(GeometricMixin, Transform):
             translate = [0, 0]
         if shear is None:
             shear = [0, 0]
+
+        if pad_like not in (None, "MRAugment"):
+            raise ValueError("`pad_like` must be one of (None, 'MRAugment')")
+        if pad_like == "MRAugment" and translate not in ([0, 0], None):
+            logger.warning("MRAugment padding may not appropriately account for translation")
         self._set_attributes(locals())
 
     def _apply_affine(self, x):
         img = x
+        angle = self.angle
+        translate = self.translate[::-1]
+        scale = self.scale
+        shear = self.shear[::-1]
+        upsample_factor = self.upsample_factor
+        upsample_order = self.upsample_order
 
         is_complex = cplx.is_complex(img)
         permute = is_complex or cplx.is_complex_as_real(img)
@@ -49,13 +67,35 @@ class AffineTransform(GeometricMixin, Transform):
             else:
                 img = img.reshape((np.product(shape[:-3]),) + shape[-3:])
 
+        base_shape = img.shape[-2:]
+        upsample = upsample_factor != 1
+        interpolation = Image.BICUBIC if upsample_order == 3 else Image.BILINEAR
+        if upsample:
+            upsampled_shape = (
+                img.shape[-2] * self.upsample_factor,
+                img.shape[-1] * self.upsample_factor,
+            )
+            img = TF.resize(img, size=upsampled_shape, interpolation=interpolation)
+
+        h, w = img.shape[-2:]
+        if self.pad_like == "MRAugment":
+            pad = _get_mraugment_affine_pad(shape[-2:], angle, translate, scale, shear)
+            img = TF.pad(img, padding=pad, padding_mode="reflect")
+
         img = TF.affine(
             img,
-            angle=self.angle,
-            translate=self.translate,
-            scale=self.scale,
-            shear=self.shear,
+            angle=angle,
+            translate=translate,
+            scale=scale,
+            shear=shear,
+            resample=2,  # bilinear
         )
+
+        if self.pad_like == "MRAugment":
+            img = TF.center_crop(img, (h, w))
+
+        if upsample:
+            img = TF.resize(img, size=base_shape, interpolation=interpolation)
 
         if use_view:
             img = img.view(shape)
@@ -124,3 +164,57 @@ class Rot90Transform(GeometricMixin, Transform):
             "k",
             "dims",
         )
+
+
+def _get_mraugment_affine_pad(im_shape, angle, translate, scale, shear):
+    """Calculate the padding size based on MRAugment padding method.
+
+    This padding should be applied before the affine transformation.
+
+    Args:
+        im_shape (tuple): Shape as ``(height, width)``.
+        angle (float): The rotating angle.
+        scale (float): The scale factor.
+        shear (tuple): Shear factors (H x W) (i.e. YxX).
+
+    Note:
+        This method is adapted from MRAugment.
+        https://github.com/MathFLDS/MRAugment/blob/master/mraugment/data_augment.py
+    """
+    h, w = im_shape
+    shear = shear[::-1]
+    translate = translate[::-1]
+
+    corners = [
+        [-h / 2, -w / 2, 1.0],
+        [-h / 2, w / 2, 1.0],
+        [h / 2, w / 2, 1.0],
+        [h / 2, -w / 2, 1.0],
+    ]
+    mx = torch.tensor(
+        TF._get_inverse_affine_matrix([0.0, 0.0], -angle, translate, scale, [-s for s in shear])
+    ).reshape(2, 3)
+    corners = torch.cat([torch.tensor(c).reshape(3, 1) for c in corners], dim=1)
+    tr_corners = torch.matmul(mx, corners)
+    all_corners = torch.cat([tr_corners, corners[:2, :]], dim=1)
+    bounding_box = all_corners.amax(dim=1) - all_corners.amin(dim=1)
+    py = torch.clip(torch.floor((bounding_box[0] - h) / 2), min=0.0, max=h - 1)
+    px = torch.clip(torch.floor((bounding_box[1] - w) / 2), min=0.0, max=w - 1)
+    return int(px.item()), int(py.item())
+
+
+def _get_mraugment_translate_pad(im_shape, translation):
+    shape = im_shape[-len(translation) :]
+
+    pad = []
+    sl = []
+
+    for s, t in zip(shape, translation):
+        if t > 0:
+            pad.append((t, 0))
+            sl.append(slice(t, None))
+        else:
+            pad.append((0, t))
+            sl.append(slice(0, s))
+    pad = [x for y in pad[::-1] for x in y]
+    return pad, sl

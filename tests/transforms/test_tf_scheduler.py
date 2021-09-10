@@ -59,6 +59,33 @@ class TestWarmupTF(unittest.TestCase):
         assert np.allclose(params["a"], a_expected)
         assert np.allclose(params["b"], b_expected)
 
+    def test_warmup_nested_dict(self):
+        a = 0.5
+        b = {"v1": 0.5, "v2": (0, 0.5)}
+        schedulable = MockSchedulable(a=a, b=b)
+
+        warmup_iters = 5
+        method = "linear"
+        total_iters = warmup_iters + 2
+        a_expected = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.5]
+        b_v1_expected = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.5]
+        b_v2_expected = [(0, 0), (0, 0.1), (0, 0.2), (0, 0.3), (0, 0.4), (0, 0.5), (0, 0.5)]
+
+        scheduler = WarmupTF(
+            tfm=schedulable,
+            warmup_iters=warmup_iters,
+            params=("a", "b.v1", "b.v2"),
+            warmup_method=method,
+        )
+        params = _run_simulation(scheduler, total_iters)
+        a_val = params["a"]
+        b_v1_val = [x["v1"] for x in params["b"]]
+        b_v2_val = [x["v2"] for x in params["b"]]
+        assert len(params.keys()) == 2
+        assert np.allclose(a_val, a_expected)
+        assert np.allclose(b_v1_val, b_v1_expected)
+        assert np.allclose(b_v2_val, b_v2_expected)
+
     def test_warmup_delay(self):
         a = 0.5
         b = (0.0, 0.5)

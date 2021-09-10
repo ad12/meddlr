@@ -11,7 +11,8 @@ class TestRandomMRIMotion(unittest.TestCase):
     def test_randomness(self):
         """Test if there is randomness in the generation process."""
         kspace, _, _ = generate_mock_mri_data()
-        kspace = kspace.permute(0,3,1,2)  # BxCxHxW
+        kspace = kspace.permute(0, 3, 1, 2)  # BxCxHxW
+
         motion_aug = RandomMRIMotion(p=1.0, std_devs=(0.6, 0.6))
 
         tfm = motion_aug.get_transform(kspace)
@@ -24,7 +25,7 @@ class TestRandomMRIMotion(unittest.TestCase):
 
     def test_reproducibility(self):
         kspace, _, _ = generate_mock_mri_data()
-        kspace = kspace.permute(0,3,1,2)  # BxCxHxW
+        kspace = kspace.permute(0, 3, 1, 2)  # BxCxHxW
         seed = 42
 
         aug1 = RandomMRIMotion(p=1.0, std_devs=(0.6, 0.6))
