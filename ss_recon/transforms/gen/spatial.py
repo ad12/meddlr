@@ -3,12 +3,20 @@ from typing import Dict, Sequence, Tuple, Union
 
 import torch
 
-from ss_recon.transforms.base.spatial import AffineTransform, FlipTransform, Rot90Transform
+from ss_recon.transforms.base.spatial import (
+    AffineTransform,
+    FlipTransform,
+    Rot90Transform,
+    TranslationTransform,
+)
 from ss_recon.transforms.build import TRANSFORM_REGISTRY
+from ss_recon.transforms.param_kind import ParamKind
 from ss_recon.transforms.transform import NoOpTransform
 from ss_recon.transforms.transform_gen import TransformGen
 
 __all__ = ["RandomAffine", "RandomFlip", "RandomRot90"]
+
+SPATIAL_RANGE_OR_VAL = Union[float, Sequence[float], Sequence[Tuple[float, float]]]
 
 
 @TRANSFORM_REGISTRY.register()
@@ -20,20 +28,25 @@ class RandomAffine(TransformGen):
         self,
         p: Union[float, Dict[str, float]] = 0.0,
         angle: Union[float, Tuple[float, float]] = None,
-        translate: Union[float, Tuple[float, float], Sequence[Tuple[float, float]]] = None,
+        translate: SPATIAL_RANGE_OR_VAL = None,
         scale: Union[float, Tuple[float, float]] = None,
-        shear: Union[float, Tuple[float, float], Sequence[Tuple[float, float]]] = None,
+        shear: SPATIAL_RANGE_OR_VAL = None,
+        pad_like=None,
     ):
         if isinstance(p, Number):
             p = {n: p for n in self._param_names}
         else:
             assert isinstance(p, dict)
-            p = p.copy().update({k: 0.0 for k in self._param_names if k not in p})
+            p = p.copy()
+            p.update({k: 0.0 for k in self._param_names if k not in p})
         params = locals()
-        params = {k: params[k] for k in list(self._param_names) + ["p"]}
-        self.fill = None
-        self.resample = None
-        super().__init__(params=params, p=p)
+        params = {k: params[k] for k in list(self._param_names)}
+        self.pad_like = pad_like
+        super().__init__(
+            params=params,
+            p=p,
+            param_kinds={"translate": ParamKind.MULTI_ARG, "shear": ParamKind.MULTI_ARG},
+        )
 
     def _get_params(self, shape):
         ndim = len(shape)
@@ -48,14 +61,14 @@ class RandomAffine(TransformGen):
         if isinstance(param_angle, Number):
             param_angle = (-param_angle, param_angle)
         if isinstance(param_translate, Number):
-            param_translate = (-param_translate, param_translate)
+            param_translate = ((-param_translate, param_translate),)
         if isinstance(param_scale, Number):
             param_scale = tuple(sorted([1.0 / param_scale, param_scale]))
         if isinstance(param_shear, Number):
-            param_shear = (-param_shear, param_shear)
+            param_shear = ((-param_shear, param_shear),)
 
-        param_translate = _duplicate_ndim(param_translate, ndim)
-        param_shear = _duplicate_ndim(param_shear, ndim)
+        param_translate = self._format_param(param_translate, ParamKind.MULTI_ARG, ndim)
+        param_shear = self._format_param(param_shear, ParamKind.MULTI_ARG, ndim)
 
         angle, translate, scale, shear = None, None, None, None
 
@@ -71,7 +84,8 @@ class RandomAffine(TransformGen):
         return angle, translate, scale, shear
 
     def get_transform(self, image):
-        spatial_shape = _get_spatial_shape(image)
+        # Affine only supports 2D spatial transforms
+        spatial_shape = image.shape[-2:]
 
         out = self._get_params(spatial_shape)
         if all(x is None for x in out):
@@ -84,6 +98,39 @@ class RandomAffine(TransformGen):
             scale=scale,
             shear=shear,
         )
+
+
+@TRANSFORM_REGISTRY.register()
+class RandomTranslation(TransformGen):
+    _base_transform = TranslationTransform
+
+    def __init__(
+        self,
+        p: Union[float, Dict[str, float]] = 0.0,
+        translate: SPATIAL_RANGE_OR_VAL = None,
+        pad_mode=None,
+        pad_value=0,
+        ndim=2,
+    ):
+        params = {"translate": translate}
+        self.pad_mode = pad_mode
+        self.pad_value = pad_value
+        self.ndim = ndim
+        super().__init__(params=params, p=p, param_kinds={"translate": ParamKind.MULTI_ARG})
+
+    def get_transform(self, image):
+        shape = image.shape[-self.ndim :]
+        ndim = len(shape)
+
+        params = self._get_param_values(use_schedulers=True)
+        p = params["p"]
+        param_translate = params["translate"]
+        translate = self._format_param(param_translate, ParamKind.MULTI_ARG, ndim)
+
+        if self._rand() >= p:
+            return NoOpTransform()
+        translate = [int(self._rand_range(*x) * s) for x, s in zip(translate, shape)]
+        return TranslationTransform(translate, pad_mode=self.pad_mode, pad_value=self.pad_value)
 
 
 @TRANSFORM_REGISTRY.register()
@@ -143,9 +190,3 @@ def _duplicate_ndim(param, ndim):
     else:
         param = (-param, param)
     return [param] * ndim
-
-
-def _get_spatial_shape(x):
-    start = 2  # first 2 channels are B, C
-    end = x.ndim
-    return tuple(range(start, end))

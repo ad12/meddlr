@@ -3,7 +3,12 @@ import unittest
 import torch
 import torchvision.transforms.functional as tvf
 
-from ss_recon.transforms.base.spatial import AffineTransform, FlipTransform, Rot90Transform
+from ss_recon.transforms.base.spatial import (
+    AffineTransform,
+    FlipTransform,
+    Rot90Transform,
+    TranslationTransform,
+)
 
 
 class TestAffineTransform(unittest.TestCase):
@@ -23,6 +28,33 @@ class TestAffineTransform(unittest.TestCase):
         tfm = AffineTransform(angle=angle, translate=translate, scale=scale)
         out = tfm.apply_image(x)
 
+        assert torch.all(out == expected_out)
+
+
+class TestTranslationTransform(unittest.TestCase):
+    def test_func(self):
+        x = torch.randn(1, 1, 5, 7)
+
+        ty, tx = (3, 4)
+        translate = (ty, tx)  # (ty, tx)
+        expected_out = tvf.affine(
+            x, angle=0, translate=translate[::-1], scale=1.0, shear=[0.0, 0.0]
+        )
+        tfm = TranslationTransform(translate=translate)
+        out = tfm.apply_image(x)
+        assert torch.all(out[:, :, :ty, :] == 0)
+        assert torch.all(out[:, :, :, :tx] == 0)
+        assert torch.all(out == expected_out)
+
+        ty, tx = (-3, -4)
+        translate = (ty, tx)  # (ty, tx)
+        expected_out = tvf.affine(
+            x, angle=0, translate=translate[::-1], scale=1.0, shear=[0.0, 0.0]
+        )
+        tfm = TranslationTransform(translate=translate)
+        out = tfm.apply_image(x)
+        assert torch.all(out[:, :, -ty:, :] == 0)
+        assert torch.all(out[:, :, :, -tx:] == 0)
         assert torch.all(out == expected_out)
 
 

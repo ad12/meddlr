@@ -17,6 +17,7 @@ def generate_mock_mri_data(ky=20, kz=20, nc=8, nm=1, scale=1.0):
 class MockSchedulable(SchedulableMixin):
     def __init__(self, a=0.5, b=(0.2, 1.0)) -> None:
         self._params = {"a": a, "b": b}
+        self._param_kinds = {}
         self._schedulers = []
 
 

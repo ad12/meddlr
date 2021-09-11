@@ -3,6 +3,7 @@ from typing import Sequence, Tuple
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 from PIL import Image
 
@@ -121,6 +122,62 @@ class AffineTransform(GeometricMixin, Transform):
 
 
 @TRANSFORM_REGISTRY.register()
+class TranslationTransform(GeometricMixin, Transform):
+    def __init__(
+        self,
+        translate: Sequence[int],
+        pad_mode="constant",
+        pad_value=0,
+    ) -> None:
+        super().__init__()
+        self.translate = translate
+        self.pad_mode = pad_mode
+        self.pad_value = pad_value
+
+    def apply_image(self, img: torch.Tensor):
+        translation = self.translate
+        max_dims = len(translation) + 2
+
+        is_complex = cplx.is_complex(img)
+        permute = is_complex or cplx.is_complex_as_real(img)
+        if is_complex:
+            img = torch.view_as_real(img)
+        if permute:
+            img = img.permute((img.ndim - 1,) + tuple(range(0, img.ndim - 1)))
+
+        shape = img.shape
+        use_view = img.ndim > max_dims
+        if use_view:
+            is_contiguous = img.is_contiguous()
+            if is_contiguous:
+                img = img.view((np.product(shape[: -(max_dims - 1)]),) + shape[-(max_dims - 1) :])
+            else:
+                img = img.reshape(
+                    (np.product(shape[: -(max_dims - 1)]),) + shape[-(max_dims - 1) :]
+                )
+
+        pad, sl = _get_mraugment_translate_pad(img.shape, translation)
+        img = F.pad(img, pad, mode=self.pad_mode, value=self.pad_value)
+        img = img[sl]
+
+        if use_view:
+            img = img.view(shape)
+
+        if permute:
+            img = img.permute(tuple(range(1, img.ndim)) + (0,))
+        if is_complex:
+            img = torch.view_as_complex(img.contiguous())
+        return img
+
+    def apply_maps(self, maps: torch.Tensor):
+        maps = self.apply_image(maps)  # BxCxMxHxW
+        norm = cplx.rss(maps, dim=1).unsqueeze(1)
+        norm += 1e-8 * (norm == 0)
+        maps = maps / norm
+        return maps
+
+
+@TRANSFORM_REGISTRY.register()
 class FlipTransform(GeometricMixin, Transform):
     def __init__(self, dims):
         super().__init__()
@@ -212,9 +269,10 @@ def _get_mraugment_translate_pad(im_shape, translation):
     for s, t in zip(shape, translation):
         if t > 0:
             pad.append((t, 0))
-            sl.append(slice(t, None))
-        else:
-            pad.append((0, t))
             sl.append(slice(0, s))
+        else:
+            pad.append((0, abs(t)))
+            sl.append(slice(abs(t), None))
     pad = [x for y in pad[::-1] for x in y]
+    sl.insert(0, Ellipsis)
     return pad, sl

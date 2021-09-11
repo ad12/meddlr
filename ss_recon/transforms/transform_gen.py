@@ -1,14 +1,14 @@
 import inspect
 import pprint
+from numbers import Number
 from typing import Any, Dict, Mapping, Sequence, Union
 
 import torch
 
 from ss_recon.config import CfgNode
 from ss_recon.transforms.mixins import DeviceMixin, TransformCacheMixin
+from ss_recon.transforms.param_kind import ParamKind
 from ss_recon.transforms.tf_scheduler import SchedulableMixin
-
-# from ss_recon.transforms.tf_scheduler import TFScheduler
 from ss_recon.transforms.transform import Transform
 
 __all__ = ["TransformGen", "RandomTransformChoice"]
@@ -30,6 +30,7 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
         self,
         params: Dict[str, Any] = None,
         p: float = 0.0,
+        param_kinds: Dict[str, Any] = None,
     ) -> None:
         from ss_recon.transforms.tf_scheduler import TFScheduler
 
@@ -37,8 +38,11 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
 
         if params is None:
             params = {}
+        if param_kinds is None:
+            param_kinds = {}
         params.update({"p": p})
         self._set_attributes(params)
+        self._param_kinds = param_kinds
         self._schedulers: Sequence[TFScheduler] = []
 
         self._generator = None
@@ -88,10 +92,29 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
         if size is None:
             size = 1
 
+        if low > high:
+            high, low = low, high
+
         if high - low == 0:
             val = low
         else:
             val = (low + (high - low) * torch.rand(size, generator=self._generator)).cpu().item()
+        return val
+
+    def _format_param(self, val, kind: ParamKind, ndim=None):
+        if kind == ParamKind.MULTI_ARG:
+            if isinstance(val, Number):
+                return ((-val, val),) * ndim
+            elif isinstance(val, (list, tuple)):
+                out = []
+                for v in val:
+                    if isinstance(v, (list, tuple)):
+                        out.append(v)
+                    elif isinstance(v, Number):
+                        out.append((-v, v))
+                    else:
+                        raise ValueError(f"Type {type(val)} not supported - val={val}")
+                return type(val)(out)
         return val
 
     def seed(self, value: int):

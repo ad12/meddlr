@@ -6,6 +6,7 @@ from typing import Dict, List, Mapping, Sequence, Tuple, Union
 
 import numpy as np
 
+from ss_recon.transforms.param_kind import ParamKind
 from ss_recon.utils.events import get_event_storage
 
 
@@ -34,6 +35,7 @@ class TFScheduler:
     def _register_parameters(self, names: Union[str, Sequence[str]]):
         if isinstance(names, str):
             names = [names]
+        names = [x for x in self._get_tfm_keys() if any(x.startswith(n) for n in names)]
         unknown_params = set(names) - set(self._get_tfm_keys())
         if len(unknown_params) > 0:
             raise ValueError(
@@ -46,6 +48,7 @@ class TFScheduler:
     def _unregister_parameters(self, names: Union[str, Sequence[str]]):
         if isinstance(names, str):
             names = [names]
+        names = [x for x in self._get_tfm_keys() if any(x.startswith(n) for n in names)]
         params = self._parameter_names()
         params = [x for x in params if x not in names]
         self._params = params
@@ -72,6 +75,16 @@ class TFScheduler:
             params = params[pn]
 
     def get_params(self):
+        names = self._parameter_names()
+        params = {}
+        for pname in names:
+            kind = self.tfm._param_kinds.get(pname, ParamKind.SINGLE_ARG)
+            self._fill_param_dict(
+                params, pname, self._compute_value(self._get_tfm_param_val(pname), kind)
+            )
+        return params
+
+    def _compute_value(self, value, param_kind: ParamKind):
         raise NotImplementedError
 
     def get_iteration(self):
@@ -94,6 +107,7 @@ class TFScheduler:
 
 class SchedulableMixin:
     _params: Dict[str, Union[Number, Tuple[Number, Number]]]
+    _param_kinds: Dict[str, ParamKind]
     _schedulers: List[TFScheduler]
 
     def base_params(self):
@@ -157,16 +171,10 @@ class WarmupTF(TFScheduler):
 
         super().__init__(tfm, params)
 
-    def get_params(self):
-        names = self._parameter_names()
-        params = {}
-        for pname in names:
-            self._fill_param_dict(
-                params, pname, self._compute_value(self._get_tfm_param_val(pname))
-            )
-        return params
+    def _compute_value(self, value, kind: ParamKind):
+        if kind == ParamKind.MULTI_ARG and isinstance(value, (list, tuple)):
+            return [self._compute_value(v, kind.SINGLE_ARG) for v in value]
 
-    def _compute_value(self, value):
         is_number = isinstance(value, Number)
         if is_number:
             value = (0, value)
@@ -212,14 +220,10 @@ class WarmupMultiStepTF(TFScheduler):
 
         super().__init__(tfm, params)
 
-    def get_params(self):
-        names = self._parameter_names()
-        params = {}
-        for pname in names:
-            params[pname] = self._compute_value(self.tfm._params[pname])
-        return params
+    def _compute_value(self, value, kind: ParamKind):
+        if kind == ParamKind.MULTI_ARG and isinstance(value, (list, tuple)):
+            return [self._compute_value(v, kind.SINGLE_ARG) for v in value]
 
-    def _compute_value(self, value):
         t = self.get_iteration()
         step = bisect_right(self.warmup_milestones, t)
         total_steps = len(self.warmup_milestones)

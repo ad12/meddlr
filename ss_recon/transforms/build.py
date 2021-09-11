@@ -50,7 +50,12 @@ def _build_transform(cfg: CfgNode, tfm_cfg: Dict[str, Any], **kwargs):
     if hasattr(klass, "from_dict"):
         tfm = klass.from_dict(cfg, init_args, **kwargs)
     else:
-        tfm = klass(**init_args)
+        try:
+            tfm = klass(**init_args)
+        except TypeError as e:
+            raise TypeError(f"Failed to initialize {klass.__name__} - {e}")
+        except RecursionError as e:
+            raise RecursionError(f"Failed to initialize {klass.__name__} - {e}")
     if isinstance(tfm, Transform) or schedulers_cfgs is None:
         return tfm
 
