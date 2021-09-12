@@ -18,10 +18,10 @@ class DeviceMixin:
         self._device = device
 
     def cpu(self):
-        self._device = torch.device("cpu")
+        return self.to(torch.device("cpu"))
 
     def cuda(self):
-        self._device = torch.device("cuda")
+        return self.to(torch.device("cuda"))
 
 
 class GeometricMixin:

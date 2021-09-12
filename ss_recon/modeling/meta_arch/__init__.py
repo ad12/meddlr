@@ -1,3 +1,4 @@
+from .a2r import A2RModel  # noqa: F401
 from .build import META_ARCH_REGISTRY, build_model  # noqa: F401
 from .cs_model import CSModel  # noqa: F401
 from .denoising import DenoisingModel  # noqa: F401

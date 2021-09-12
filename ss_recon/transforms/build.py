@@ -1,4 +1,5 @@
 import inspect
+import multiprocessing as mp
 from typing import Any, Dict, List, Mapping, Union
 
 import numpy as np
@@ -108,3 +109,13 @@ def seed_tfm_gens(tfms, seed):
         for g in tfms:
             if isinstance(g, TransformGen):
                 g.seed(int(rng.rand() * 1e10))
+
+
+def build_iter_func(batch_size, num_workers):
+    def get_iter(step):
+        # Worker id is 1-indexed by default.
+        worker_id = int(mp.current_process().name.split("-")[1])
+        curr_iter = (step * num_workers + worker_id - 1) // batch_size
+        return curr_iter
+
+    return get_iter

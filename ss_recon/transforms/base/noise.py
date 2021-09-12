@@ -14,7 +14,7 @@ class NoiseTransform(Transform):
     def __init__(
         self,
         std_dev: int = None,
-        use_mask: bool = False,
+        use_mask: bool = True,
         rho: float = None,
         seed: int = None,
         generator: torch.Generator = None,

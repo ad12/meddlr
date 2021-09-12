@@ -223,6 +223,8 @@ class TransformList:
             TransformList: list of transforms.
         """
         ignore_no_op = self.ignore_no_op or other.ignore_no_op
+        if not other:
+            return TransformList(self.transforms, ignore_no_op=ignore_no_op)
         others = other.transforms if isinstance(other, TransformList) else [other]
         return TransformList(self.transforms + others, ignore_no_op=ignore_no_op)
 

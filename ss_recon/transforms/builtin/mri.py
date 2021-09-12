@@ -3,27 +3,39 @@ from typing import Sequence, Union
 import ss_recon.utils.complex_utils as cplx
 import ss_recon.utils.transforms as T
 from ss_recon.data.transforms.transform import Normalizer
-from ss_recon.transforms.build import build_transforms, seed_tfm_gens
-from ss_recon.transforms.mixins import GeometricMixin
+from ss_recon.transforms.build import (
+    build_iter_func,
+    build_scheduler,
+    build_transforms,
+    seed_tfm_gens,
+)
+from ss_recon.transforms.mixins import DeviceMixin, GeometricMixin
+from ss_recon.transforms.tf_scheduler import SchedulableMixin
 from ss_recon.transforms.transform import NoOpTransform, Transform, TransformList
 from ss_recon.transforms.transform_gen import RandomTransformChoice, TransformGen
 from ss_recon.utils import env
 
 
-class MRIReconAugmentor:
+class MRIReconAugmentor(DeviceMixin):
     """
     The class that manages the organization, generation, and application
     of deterministic and random transforms for MRI reconstruction.
     """
 
     def __init__(
-        self, tfms_or_gens: Sequence[Union[Transform, TransformGen]], seed: int = None
+        self,
+        tfms_or_gens: Sequence[Union[Transform, TransformGen]],
+        seed: int = None,
+        device=None,
     ) -> None:
         if isinstance(tfms_or_gens, TransformList):
             tfms_or_gens = tfms_or_gens.transforms
-        if seed is None:
-            seed_tfm_gens(tfms_or_gens, seed=seed)
         self.tfms_or_gens = tfms_or_gens
+
+        if device is not None:
+            self.to(device)
+        if seed is None:
+            seed_tfm_gens(self.tfms_or_gens, seed=seed)
 
     def __call__(
         self,
@@ -43,17 +55,22 @@ class MRIReconAugmentor:
         ]
 
         tfms_equivariant, tfms_invariant = self._classify_transforms(transform_gens)
+        use_img = normalizer is not None or len(tfms_equivariant) > 0
 
         # Apply equivariant transforms to the SENSE reconstructed image.
         # Note, RSS reconstruction is not currently supported.
-        if mask is True:
-            mask = cplx.get_mask(kspace)
-        A = T.SenseModel(maps, weights=mask)
-        img = A(kspace, adjoint=True)
+        if use_img:
+            if mask is True:
+                mask = cplx.get_mask(kspace)
+            A = T.SenseModel(maps, weights=mask)
+            img = A(kspace, adjoint=True)
 
-        img, target, maps = self._permute_data(img, target, maps, spatial_last=True)
-        img, target, maps, tfms_equivariant = self._apply_te(tfms_equivariant, img, target, maps)
-        img, target, maps = self._permute_data(img, target, maps, spatial_last=False)
+        if len(tfms_equivariant) > 0:
+            img, target, maps = self._permute_data(img, target, maps, spatial_last=True)
+            img, target, maps, tfms_equivariant = self._apply_te(
+                tfms_equivariant, img, target, maps
+            )
+            img, target, maps = self._permute_data(img, target, maps, spatial_last=False)
 
         if len(tfms_equivariant) > 0:
             A = T.SenseModel(maps)
@@ -80,12 +97,23 @@ class MRIReconAugmentor:
             mean, std = None, None
 
         # Apply invariant transforms.
-        kspace = self._permute_data(kspace, spatial_last=True)
-        kspace, tfms_invariant = self._apply_ti(tfms_invariant, kspace)
-        kspace = self._permute_data(kspace, spatial_last=False)
+        if len(tfms_invariant) > 0:
+            kspace = self._permute_data(kspace, spatial_last=True)
+            kspace, tfms_invariant = self._apply_ti(tfms_invariant, kspace)
+            kspace = self._permute_data(kspace, spatial_last=False)
 
         out = {"kspace": kspace, "maps": maps, "target": target, "mean": mean, "std": std}
+
+        for s in self.get_schedulers():
+            s.step(kspace.shape[0])
+
         return out, tfms_equivariant, tfms_invariant
+
+    def get_schedulers(self):
+        schedulers = [
+            tfm._schedulers for tfm in self.tfms_or_gens if isinstance(tfm, SchedulableMixin)
+        ]
+        return [x for y in schedulers for x in y]
 
     def _classify_transforms(self, transform_gens):
         tfms_equivariant = []
@@ -152,14 +180,38 @@ class MRIReconAugmentor:
             if isinstance(g, TransformGen):
                 g.reset()
 
+    def to(self, device):
+        tfms = [tfm for tfm in self.tfms_or_gens if isinstance(tfm, DeviceMixin)]
+        for t in tfms:
+            t.to(device)
+        return self
+
     @classmethod
-    def from_cfg(cls, cfg, aug_kind, seed=None, **kwargs):
+    def from_cfg(cls, cfg, aug_kind, seed=None, device=None, **kwargs):
+        mri_tfm_cfg = None
         assert aug_kind in ("aug_train", "consistency")
         if aug_kind == "aug_train":
-            vals = cfg.AUG_TRAIN.MRI_RECON
+            mri_tfm_cfg = cfg.AUG_TRAIN.MRI_RECON
         elif aug_kind == "consistency":
-            vals = cfg.MODEL.CONSISTENCY.AUG.MRI_RECON
+            mri_tfm_cfg = cfg.MODEL.CONSISTENCY.AUG.MRI_RECON
+
         if seed is None and env.is_repro():
             seed = cfg.SEED
-        tfms_or_gens = build_transforms(cfg, vals.TRANSFORMS, seed=seed, **kwargs)
-        return cls(tfms_or_gens)
+
+        tfms_or_gens = build_transforms(cfg, mri_tfm_cfg.TRANSFORMS, seed=seed, **kwargs)
+        scheduler_p = dict(mri_tfm_cfg.SCHEDULER_P)
+        if len(scheduler_p):
+            scheduler_p["params"] = ["p"]
+            tfms = [tfm for tfm in tfms_or_gens if isinstance(tfm, TransformGen)]
+            for tfm in tfms:
+                scheduler = build_scheduler(cfg, scheduler_p, tfm)
+                tfm.register_schedulers([scheduler])
+
+        if aug_kind in ("aug_train",) and cfg.DATALOADER.NUM_WORKERS > 0:
+            func = build_iter_func(cfg.SOLVER.TRAIN_BATCH_SIZE, cfg.DATALOADER.NUM_WORKERS)
+            tfms = [tfm for tfm in tfms_or_gens if isinstance(tfm, SchedulableMixin)]
+            for tfm in tfms:
+                for s in tfm._schedulers:
+                    s._iter_fn = func
+
+        return cls(tfms_or_gens, seed=seed, device=device)

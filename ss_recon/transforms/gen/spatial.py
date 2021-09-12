@@ -63,7 +63,7 @@ class RandomAffine(TransformGen):
         if isinstance(param_translate, Number):
             param_translate = ((-param_translate, param_translate),)
         if isinstance(param_scale, Number):
-            param_scale = tuple(sorted([1.0 / param_scale, param_scale]))
+            param_scale = tuple(sorted([1.0 - param_scale, 1.0 + param_scale]))
         if isinstance(param_shear, Number):
             param_shear = ((-param_shear, param_shear),)
 

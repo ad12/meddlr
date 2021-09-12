@@ -11,6 +11,13 @@ from .config import CfgNode as CN
 # IMAGES_PER_BATCH_TEST
 
 # -----------------------------------------------------------------------------
+# Base configurations
+# -----------------------------------------------------------------------------
+_MRI_RECON_TFM = CN()
+_MRI_RECON_TFM.TRANSFORMS = ()
+_MRI_RECON_TFM.SCHEDULER_P = CN(new_allowed=True)
+
+# -----------------------------------------------------------------------------
 # Config definition
 # -----------------------------------------------------------------------------
 
@@ -75,8 +82,7 @@ _C.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS = 0
 # Noise masking
 _C.MODEL.CONSISTENCY.AUG.NOISE.MASK = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE.MASK.RHO = 1.0
-_C.MODEL.CONSISTENCY.AUG.MRI_RECON = CN()
-_C.MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS = ()
+_C.MODEL.CONSISTENCY.AUG.MRI_RECON = _MRI_RECON_TFM.clone()
 
 # Motion scheduler
 _C.MODEL.CONSISTENCY.AUG.MOTION.SCHEDULER = CN()
@@ -131,6 +137,13 @@ _C.MODEL.N2R = CN()
 _C.MODEL.N2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
 # Use MODEL.CONSISTENCY.AUG.NOISE.STD_DEV to control noise parameters.
+
+# -----------------------------------------------------------------------------
+# Aug2Recon (A2R) model
+# -----------------------------------------------------------------------------
+_C.MODEL.A2R = CN()
+_C.MODEL.A2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.A2R.USE_SUPERVISED_CONSISTENCY = False
 
 # -----------------------------------------------------------------------------
 # Motion2Recon (M2R) model
@@ -232,8 +245,7 @@ _C.AUG_TRAIN.MOTION_P = 0.2
 # augmentation parameters above. If you would like to use those parameters
 # set AUG_TRAIN.MRI_RECON.TRANSFORMS=().
 # This augmentation pipeline will automatically be ignored at test time (for now).
-_C.AUG_TRAIN.MRI_RECON = CN()
-_C.AUG_TRAIN.MRI_RECON.TRANSFORMS = ()
+_C.AUG_TRAIN.MRI_RECON = _MRI_RECON_TFM.clone()
 
 _C.AUG_TEST = CN()
 _C.AUG_TEST.UNDERSAMPLE = CN()

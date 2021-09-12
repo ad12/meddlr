@@ -1,4 +1,6 @@
 import logging
+import multiprocessing as mp
+import sys
 import weakref
 from bisect import bisect_right
 from numbers import Number
@@ -11,10 +13,12 @@ from ss_recon.utils.events import get_event_storage
 
 
 class TFScheduler:
-    def __init__(self, tfm, params: List[str] = None):
+    def __init__(self, tfm, params: List[str] = None, iter_fn=None):
         self.tfm: SchedulableMixin = weakref.proxy(tfm)
         self._params = []
         self._register_parameters(params)
+        self._iter_fn = iter_fn
+        self._step = 0
 
     def _parameter_names(self) -> List[str]:
         return self._params if self._params is not None else list(self.tfm.params().keys())
@@ -88,7 +92,15 @@ class TFScheduler:
         raise NotImplementedError
 
     def get_iteration(self):
-        return get_event_storage().iter
+        if _is_main_process():
+            return get_event_storage().iter
+
+        iter_num = self._iter_fn(self._step)
+        print(f"Worker {mp.current_process()}: iter - {iter_num}, step={self._step}")
+        return iter_num
+
+    def step(self, n=1):
+        self._step += n
 
     def _repr_args(self) -> List[str]:
         return ["tfm", "_params"]
@@ -249,7 +261,7 @@ class WarmupMultiStepTF(TFScheduler):
 
     def _repr_args(self) -> List[str]:
         base = super()._repr_args()
-        base.extend(["warmup_milestones", "warmup_method", "delay_iters", "gamma"])
+        base.extend(["warmup_milestones", "warmup_method", "gamma"])
         return base
 
 
@@ -291,3 +303,10 @@ def _parse_pname(pname: str):
     if "." not in pname:
         return pname
     return pname.split(".")
+
+
+def _is_main_process():
+    py_version = tuple(sys.version_info[0:2])
+    return (py_version < (3, 8) and mp.current_process().name == "MainProcess") or (
+        py_version >= (3, 8) and mp.parent_process() is None
+    )

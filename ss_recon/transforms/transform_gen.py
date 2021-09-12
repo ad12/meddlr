@@ -107,6 +107,8 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
                 return ((-val, val),) * ndim
             elif isinstance(val, (list, tuple)):
                 out = []
+                if len(val) == 1:
+                    val = val * ndim
                 for v in val:
                     if isinstance(v, (list, tuple)):
                         out.append(v)

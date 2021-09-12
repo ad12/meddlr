@@ -1,3 +1,4 @@
+import os
 import unittest
 
 import torch
@@ -7,6 +8,9 @@ from ss_recon.data.build import build_data_loaders_per_scan
 from ss_recon.utils import complex_utils as cplx
 
 
+@unittest.skipIf(
+    os.environ.get("SSRECON_TEST_REPRO", "").lower() != "true", "Repro eval is time-consuming"
+)
 def test_eval_reproducibility():
     cfg = get_cfg()
     cfg.DATALOADER.NUM_WORKERS = 4

@@ -54,6 +54,6 @@ class RandomMRIMotion(TransformGen):
 
         std_dev = self._rand_range(*params["std_devs"])
         gen = self._generator
-        if gen is None:
+        if gen is None or gen.device != input.device:
             gen = torch.Generator(device=input.device).manual_seed(int(self._rand() * 1e10))
         return MRIMotionTransform(std_dev=std_dev, generator=gen)

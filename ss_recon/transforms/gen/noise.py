@@ -22,7 +22,7 @@ class RandomNoise(TransformGen):
         p: float = 0.0,
         std_devs: Tuple[float, float] = None,
         rhos: Tuple[float, float] = None,
-        use_mask: bool = False,
+        use_mask: bool = True,
     ):
         std_devs = (std_devs, std_devs) if not isinstance(std_devs, Sequence) else std_devs
         if rhos is not None:
@@ -46,6 +46,6 @@ class RandomNoise(TransformGen):
             rho = self._rand_range(*rho)
 
         gen = self._generator
-        if gen is None:
+        if gen is None or gen.device != input.device:
             gen = torch.Generator(device=input.device).manual_seed(int(self._rand() * 1e10))
         return NoiseTransform(std_dev=std_dev, use_mask=self.use_mask, rho=rho, generator=gen)
