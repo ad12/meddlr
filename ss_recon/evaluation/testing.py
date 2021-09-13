@@ -65,7 +65,7 @@ def verify_results(cfg, results):
     return ok
 
 
-def flatten_results_dict(results):
+def flatten_results_dict(results, delimiter="/"):
     """
     Expand a hierarchical dict of scalars into a flat dict of scalars.
     If results[k1][k2][k3] = v, the returned dict will have the entry
@@ -79,7 +79,7 @@ def flatten_results_dict(results):
         if isinstance(v, Mapping):
             v = flatten_results_dict(v)
             for kk, vv in v.items():
-                r[k + "/" + kk] = vv
+                r[k + delimiter + kk] = vv
         else:
             r[k] = v
     return r

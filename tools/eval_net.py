@@ -416,6 +416,11 @@ def main(args):
         logger.info("\n\n==============================")
         logger.info("Loading weights from {}".format(weights))
 
+    # Do not limit number of scans to evaluate during testing.
+    cfg.defrost()
+    cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL = -1
+    cfg.freeze()
+
     eval(cfg, args, model, os.path.basename(weights) if weights else None, criterion, best_value)
 
 

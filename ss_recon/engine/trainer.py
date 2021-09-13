@@ -109,8 +109,14 @@ def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int):
     cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS = _convert_time_recursive(
         cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS, iters_per_epoch, time_scale
     )
+    cfg.AUG_TRAIN.MRI_RECON.SCHEDULER_P = _convert_time_recursive(
+        cfg.AUG_TRAIN.MRI_RECON.SCHEDULER_P, iters_per_epoch, time_scale
+    )
     cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS = _convert_time_recursive(
         cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS, iters_per_epoch, time_scale
+    )
+    cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.SCHEDULER_P = _convert_time_recursive(
+        cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.SCHEDULER_P, iters_per_epoch, time_scale
     )
     cfg.TIME_SCALE = "iter"
     cfg.freeze()
@@ -180,6 +186,11 @@ class DefaultTrainer(SimpleTrainer):
         else:
             num_iter_per_epoch = math.ceil(num_iter_per_epoch)
         cfg = convert_cfg_time_to_iter(cfg, num_iter_per_epoch)
+        logger.info(f"Calculated {num_iter_per_epoch} iterations per epoch")
+
+        # Recreate data loader in case data loader required epoch -> iter conversion.
+        del data_loader
+        data_loader = self.build_train_loader(cfg)
 
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)

@@ -1,17 +1,15 @@
 import inspect
 import pprint
 from numbers import Number
-from typing import Any, Dict, Mapping, Sequence, Union
+from typing import Any, Dict, Sequence
 
 import torch
 
-from ss_recon.config import CfgNode
 from ss_recon.transforms.mixins import DeviceMixin, TransformCacheMixin
 from ss_recon.transforms.param_kind import ParamKind
 from ss_recon.transforms.tf_scheduler import SchedulableMixin
-from ss_recon.transforms.transform import Transform
 
-__all__ = ["TransformGen", "RandomTransformChoice"]
+__all__ = ["TransformGen"]
 
 
 class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
@@ -152,47 +150,3 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
 
     def __str__(self) -> str:
         return self.__repr__()
-
-
-class RandomTransformChoice(TransformGen):
-    def __init__(
-        self, tfms_or_gens: Sequence[Union[Transform, TransformGen]], tfm_ps="uniform", p=0.0
-    ) -> None:
-        self.tfms_or_gens = tfms_or_gens
-
-        N = len(tfms_or_gens)
-        if tfm_ps == "uniform":
-            tfm_ps = torch.ones(N) / N
-        else:
-            tfm_ps = torch.as_tensor(tfm_ps)
-        assert torch.allclose(torch.sum(tfm_ps), 1.0)
-        self.tfm_ps = tfm_ps
-
-        super().__init__(p=p)
-
-    def get_transform(self, input):
-        return self.tfms_or_gens[self._rand_choice(probs=self.tfm_ps)]
-
-    def seed(self, value: int):
-        self._generator = torch.Generator(device=self._device).manual_seed(value)
-        for g in self.tfms_or_gens:
-            if isinstance(g, TransformGen):
-                g.seed(value)
-        return self
-
-    def __repr__(self):
-        classname = type(self).__name__
-        argstr = ",\n\t".join(
-            "{} - p={:0.2f}".format(t, p) for t, p in zip(self.tfms_or_gens, self.tfm_ps)
-        )
-        return "{}(\n\t{}\n\t)".format(classname, ", ".join(argstr))
-
-    @classmethod
-    def from_dict(cls, cfg: CfgNode, init_kwargs: Mapping[str, Any], **kwargs):
-        from ss_recon.transforms.build import build_transforms
-
-        init_kwargs = init_kwargs.copy()
-        tfms_or_gens = init_kwargs.pop("tfms_or_gens")
-        tfms_or_gens = build_transforms(cfg, tfms_or_gens, **kwargs)
-
-        return cls(tfms_or_gens, **init_kwargs)

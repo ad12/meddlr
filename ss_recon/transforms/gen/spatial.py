@@ -37,6 +37,9 @@ class RandomAffine(TransformGen):
             p = {n: p for n in self._param_names}
         else:
             assert isinstance(p, dict)
+            unknown_keys = set(p.keys()) - set(self._param_names)
+            if len(unknown_keys):
+                raise ValueError(f"Unknown keys for `p`: {unknown_keys}")
             p = p.copy()
             p.update({k: 0.0 for k in self._param_names if k not in p})
         params = locals()

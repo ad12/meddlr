@@ -17,7 +17,7 @@ from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate as _default_collate
 
 from ss_recon.data.transforms.subsample import MaskLoader
-from ss_recon.data.transforms.transform import Subsampler
+from ss_recon.data.transforms.transform import DataTransform, Subsampler
 from ss_recon.utils.cluster import CLUSTER, Cluster
 
 __all__ = ["collate_by_supervision", "SliceData"]
@@ -175,6 +175,14 @@ class SliceData(Dataset):
             "norm": norm,
             "is_unsupervised": is_unsupervised,
         }
+        if (
+            hasattr(self.transform, "augmentor")
+            and isinstance(self.transform, DataTransform)
+            and self.transform.augmentor is not None
+        ):
+            scheduler_params = self.transform.augmentor.get_tfm_gen_params()
+            if len(scheduler_params):
+                vals["metrics"] = {"scheduler": scheduler_params}
         if self._include_metadata:
             vals["metadata"] = {"scan_id": fname, "slice_id": slice_id}
         if not is_unsupervised:

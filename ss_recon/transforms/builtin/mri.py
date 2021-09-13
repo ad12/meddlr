@@ -1,18 +1,21 @@
-from typing import Sequence, Union
+from numbers import Number
+from typing import Dict, Sequence, Union
 
 import ss_recon.utils.complex_utils as cplx
 import ss_recon.utils.transforms as T
 from ss_recon.data.transforms.transform import Normalizer
+from ss_recon.evaluation.testing import flatten_results_dict
 from ss_recon.transforms.build import (
     build_iter_func,
     build_scheduler,
     build_transforms,
     seed_tfm_gens,
 )
+from ss_recon.transforms.gen import RandomTransformChoice
 from ss_recon.transforms.mixins import DeviceMixin, GeometricMixin
-from ss_recon.transforms.tf_scheduler import SchedulableMixin
+from ss_recon.transforms.tf_scheduler import SchedulableMixin, TFScheduler
 from ss_recon.transforms.transform import NoOpTransform, Transform, TransformList
-from ss_recon.transforms.transform_gen import RandomTransformChoice, TransformGen
+from ss_recon.transforms.transform_gen import TransformGen
 from ss_recon.utils import env
 
 
@@ -114,6 +117,23 @@ class MRIReconAugmentor(DeviceMixin):
             tfm._schedulers for tfm in self.tfms_or_gens if isinstance(tfm, SchedulableMixin)
         ]
         return [x for y in schedulers for x in y]
+
+    def get_tfm_gen_params(self, scalars_only: bool = True):
+        """Get dictionary of scheduler parameters."""
+        schedulers: Dict[str, Sequence[TFScheduler]] = {
+            type(tfm).__name__: tfm._get_param_values(use_schedulers=True)
+            for tfm in self.tfms_or_gens
+            if isinstance(tfm, SchedulableMixin)
+        }
+        params = {}
+        for tfm_name, p in schedulers.items():
+            p = flatten_results_dict(p, delimiter=".")
+            # Filter out values that are not scalars
+            p = {f"{tfm_name}/{k}": v for k, v in p.items()}
+            if scalars_only:
+                p = {k: v for k, v in p.items() if isinstance(v, Number)}
+            params.update(p)
+        return params
 
     def _classify_transforms(self, transform_gens):
         tfms_equivariant = []

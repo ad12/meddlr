@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Mapping
 
 import torch
 from fvcore.common.file_io import PathManager
@@ -69,3 +69,23 @@ def find_experiment_dirs(dirpath, completed=True) -> List[str]:
     if completed:
         exp_dirs = [x for x in exp_dirs if os.path.isfile(os.path.join(x, "model_final.pth"))]
     return exp_dirs
+
+
+def flatten_dict(results, delimiter="/"):
+    """
+    Expand a hierarchical dict of scalars into a flat dict of scalars.
+    If results[k1][k2][k3] = v, the returned dict will have the entry
+    {"k1/k2/k3": v}.
+
+    Args:
+        results (dict):
+    """
+    r = {}
+    for k, v in results.items():
+        if isinstance(v, Mapping):
+            v = flatten_dict(v)
+            for kk, vv in v.items():
+                r[k + delimiter + kk] = vv
+        else:
+            r[k] = v
+    return r

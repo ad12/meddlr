@@ -8,6 +8,7 @@ import weakref
 import torch
 
 from ss_recon.utils.events import EventStorage
+from ss_recon.utils.general import flatten_dict
 
 __all__ = ["HookBase", "TrainerBase", "SimpleTrainer"]
 
@@ -211,10 +212,15 @@ class SimpleTrainer(TrainerBase):
 
         self.model = model
         self.data_loader = data_loader
-        self._data_loader_iter = iter(data_loader)
+        self._data_loader_iter = None
         self.optimizer = optimizer
         self.loss_computer = loss_computer
         self.metrics_computer = metrics_computer
+
+    def before_train(self):
+        out = super().before_train()
+        self._data_loader_iter = iter(self.data_loader)
+        return out
 
     def run_step(self):
         """
@@ -247,6 +253,11 @@ class SimpleTrainer(TrainerBase):
         self._detect_anomaly(losses, loss_dict)
 
         metrics_dict = loss_dict
+        metrics_dict.update(
+            flatten_dict(
+                {k: v for k, v in inputs.get("metrics", {}).items() if k not in metrics_dict}
+            )
+        )
         metrics_dict["data_time"] = data_time
         metrics_dict["total_loss"] = losses
         metrics_dict.update(self.metrics_computer(output_dict) if self.metrics_computer else {})

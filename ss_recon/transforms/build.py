@@ -93,7 +93,9 @@ def build_scheduler(
             "max_iter", scheduler_cfg.pop("max_iters", cfg.SOLVER.MAX_ITER)
         )
         num_steps = (max_iter - delay_iters) // step
-        steps = (delay_iters,) + tuple(step * x + delay_iters for x in range(1, 1 + num_steps))
+        steps = tuple(step * x + delay_iters for x in range(1, 1 + num_steps))
+        if delay_iters > 0:
+            steps = (delay_iters,) + steps
         init_kwargs = dict(tfm=tfm_gen, warmup_milestones=steps, params=params)
         init_kwargs.update({k: v for k, v in scheduler_cfg.items() if k not in init_kwargs})
         return WarmupMultiStepTF(**init_kwargs)

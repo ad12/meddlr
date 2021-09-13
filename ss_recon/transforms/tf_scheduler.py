@@ -95,11 +95,24 @@ class TFScheduler:
         if _is_main_process():
             return get_event_storage().iter
 
-        iter_num = self._iter_fn(self._step)
-        print(f"Worker {mp.current_process()}: iter - {iter_num}, step={self._step}")
-        return iter_num
+        # The EventStorage object is not always synchronized betweeen different
+        # forks. Therefore, directly accessing get_event_storage().iter may not
+        # give the correct iteration estimate. `self._step` keeps track of changes
+        # in iterations for each worker based on the computation from `self._iter_fn`.
+        # `self._step` is and should always be 0 on the main process. In other words,
+        # it is only updated on each worker and is reset to 0 everytime states are
+        # synchronized.
+        # Therefore, the true iteration count can be estimated by adding the
+        # iteration number from EventStorage with the estimated elapsed iteration
+        # between synchronization periods given by `self._iter_fn(self._step)`.
+        base_iter = get_event_storage().iter
+        delta_iter = self._iter_fn(self._step)
+        return base_iter + delta_iter
 
     def step(self, n=1):
+        if _is_main_process():
+            return get_event_storage().iter
+
         self._step += n
 
     def _repr_args(self) -> List[str]:

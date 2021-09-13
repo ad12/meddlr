@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import torch
 
 from ss_recon.config.config import get_cfg
@@ -13,6 +14,7 @@ from ss_recon.transforms.gen import (
     RandomRot90,
 )
 from ss_recon.transforms.tf_scheduler import WarmupMultiStepTF, WarmupTF
+from ss_recon.utils.events import EventStorage
 
 from ..mock import generate_mock_mri_data
 
@@ -77,7 +79,7 @@ class TestMRIReconAugmentor(unittest.TestCase):
         tfms = [
             RandomRot90(p=p),
             RandomFlip(ndim=2, p=p),
-            RandomAffine(p=p, angle=12, translate=None, scale=2, shear=30),
+            RandomAffine(p=p, angle=12, translate=None, scale=0.25, shear=30),
             RandomNoise(p=p, std_devs=(0.05, 1.0)),
             RandomMRIMotion(std_devs=(0.05, 1.0), p=p),
         ]
@@ -98,6 +100,89 @@ class TestMRIReconAugmentor(unittest.TestCase):
         assert torch.allclose(out1["kspace"], out2["kspace"], atol=1e-3)
         assert torch.allclose(out1["maps"], out2["maps"], atol=1e-3)
         assert torch.allclose(out1["target"], out2["target"], atol=1e-3)
+
+    def test_get_scheduler_params(self):
+        cfg = get_cfg()
+
+        tfm_cfg = [
+            {
+                "name": "RandomRot90",
+                "p": 0.5,
+                "scheduler": {
+                    "name": "WarmupTF",
+                    "warmup_iters": 800,
+                    "delay_iters": 500,
+                    "params": ["p"],
+                },
+            },
+            {
+                "name": "RandomFlip",
+                "p": 0.2,
+                "ndim": 2,
+            },
+            {
+                "name": "RandomAffine",
+                "p": 0.4,
+                "angle": 12.0,
+                "scale": 2.0,
+                "translate": 0.4,
+            },
+            {
+                "name": "RandomNoise",
+                "std_devs": (1, 2),
+                "p": 0.2,
+                "scheduler": [
+                    {
+                        "name": "WarmupStepTF",
+                        "warmup_milestones": (100,),
+                        "max_iter": 500,
+                        "params": ["p"],
+                    },
+                    {
+                        "name": "WarmupTF",
+                        "params": ("std_devs",),
+                        "warmup_iters": 600,
+                    },
+                ],
+            },
+        ]
+        cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS = tfm_cfg
+
+        aug = MRIReconAugmentor.from_cfg(cfg, aug_kind="aug_train")
+
+        expected_params_0 = {
+            "RandomRot90/p": 0,
+            "RandomFlip/p": 0.2,
+            "RandomAffine/p.angle": 0.4,
+            "RandomAffine/p.translate": 0.4,
+            "RandomAffine/p.scale": 0.4,
+            "RandomNoise/p": 0.0,
+        }
+
+        expected_params_200 = {
+            "RandomRot90/p": 0,
+            "RandomFlip/p": 0.2,
+            "RandomAffine/p.angle": 0.4,
+            "RandomAffine/p.translate": 0.4,
+            "RandomAffine/p.scale": 0.4,
+            "RandomNoise/p": 0.08,
+        }
+
+        with EventStorage(0) as e:
+            # Iteration 0
+            params = aug.get_tfm_gen_params()
+            for k in expected_params_0:
+                assert np.allclose(params[k], expected_params_0[k]), "{}: {}, {}".format(
+                    k, params[k], expected_params_0[k]
+                )
+
+            # Iteration 200
+            e._iter = 200
+            params = aug.get_tfm_gen_params()
+            for k in expected_params_200:
+                assert np.allclose(params[k], expected_params_200[k]), "{}: {}, {}".format(
+                    k, params[k], expected_params_200[k]
+                )
 
     def test_from_cfg(self):
         cfg = get_cfg()
