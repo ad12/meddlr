@@ -1,13 +1,17 @@
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, List, Mapping, Sequence, Union
 
 import torch
 
 from ss_recon.config import CfgNode
 from ss_recon.transforms.build import TRANSFORM_REGISTRY, build_transforms
-from ss_recon.transforms.transform import Transform
+from ss_recon.transforms.mixins import DeviceMixin
+from ss_recon.transforms.tf_scheduler import SchedulableMixin
+from ss_recon.transforms.transform import NoOpTransform, Transform
 from ss_recon.transforms.transform_gen import TransformGen
 
 __all__ = ["RandomTransformChoice"]
+
+_TRANSFORM_OR_GEN = Union[Transform, TransformGen]
 
 
 @TRANSFORM_REGISTRY.register()
@@ -26,27 +30,55 @@ class RandomTransformChoice(TransformGen):
 
         super().__init__(p=p)
 
-    def get_transform(self, input=None):
+    def get_transform(self, input=None) -> Union[_TRANSFORM_OR_GEN, Sequence[_TRANSFORM_OR_GEN]]:
+        params = self._get_param_values(use_schedulers=True)
+        p = params["p"]
+        if self._rand() >= p:
+            return NoOpTransform()
+
         return self.tfms_or_gens[self._rand_choice(probs=self.tfm_ps)]
+
+    def schedulers(self):
+        tfms: List[SchedulableMixin] = self._get_tfm_by_type(SchedulableMixin)
+        schedulers = list(self._schedulers)
+        schedulers.extend([sch for tfm in tfms for sch in tfm.schedulers()])
+        return schedulers
 
     def seed(self, value: int):
         self._generator = torch.Generator(device=self._device).manual_seed(value)
-        for g in self.tfms_or_gens:
-            if isinstance(g, TransformGen):
-                g.seed(value)
+        tfms: List[TransformGen] = self._get_tfm_by_type(TransformGen)
+        for t in tfms:
+            t.seed(value)
         return self
+
+    def to(self, device):
+        super().to(device)
+        tfms: List[DeviceMixin] = self._get_tfm_by_type(DeviceMixin)
+        for t in tfms:
+            t.to(device)
+        return self
+
+    def _get_tfm_by_type(self, klass):
+        tfms = []
+        for tfm in self.tfms_or_gens:
+            if isinstance(tfm, (list, tuple)):
+                tfms.extend(t for t in tfm if isinstance(t, klass))
+            elif isinstance(tfm, klass):
+                tfms.append(tfm)
+        return tfms
 
     def __repr__(self):
         classname = type(self).__name__
-        argstr = ",\n\t".join(
-            "{} - p={:0.2f}".format(t, p) for t, p in zip(self.tfms_or_gens, self.tfm_ps)
+        argstr = ",\n  ".join(
+            "(p={:0.2f}) {}".format(p, repr(t)) for t, p in zip(self.tfms_or_gens, self.tfm_ps)
         )
-        return "{}(\n\t{}\n\t)".format(classname, ", ".join(argstr))
+        return "{}(\n  {}\n)".format(classname, argstr)
 
     @classmethod
     def from_dict(cls, cfg: CfgNode, init_kwargs: Mapping[str, Any], **kwargs):
         init_kwargs = init_kwargs.copy()
-        tfms_or_gens = init_kwargs.pop("tfms_or_gens")
-        tfms_or_gens = build_transforms(cfg, tfms_or_gens, **kwargs)
+        tfms_or_gens = []
+        for tfm_cfg in init_kwargs.pop("tfms_or_gens"):
+            tfms_or_gens.append(build_transforms(cfg, tfm_cfg, **kwargs))
 
         return cls(tfms_or_gens, **init_kwargs)

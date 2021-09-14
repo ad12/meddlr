@@ -76,16 +76,39 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
         return params
 
     def _rand(self) -> float:
+        """Uniform sample between [0, 1) using ``self._generator``.
+
+        Returns:
+            float: The sample between [0, 1).
+        """
         return torch.rand(1, generator=self._generator).cpu().item()
 
-    def _rand_choice(self, n=None, probs=None) -> int:
+    def _rand_choice(self, n=None, probs: torch.Tensor = None) -> int:
+        """Chooses random integer between [0, n-1].
+
+        Args:
+            n (int): Number of choices. This is required if ``probs``
+                is not specified.
+            probs (torch.Tensor): The probability tensor.
+
+        Returns:
+            int: The index of the selected choice.
+        """
+        device = "cpu" if self._generator is None else self._generator.device
         if probs is None:
-            probs = torch.ones(n) / n
-        return torch.multinomial(probs, 1).cpu().item()
+            probs = torch.ones(n, device=device) / n
+        return torch.multinomial(probs.to(device), 1, generator=self._generator).cpu().item()
 
     def _rand_range(self, low, high, size: int = None):
-        """
-        Uniform float random number between low and high.
+        """Uniform float random number between [low, high).
+
+        Args:
+            low (number-like): The lower bound.
+            high (number-like): The upper bound.
+            size (int): Number of samples to draw in the range.
+
+        Returns:
+            float: A uniformly sampled number in range [low, high).
         """
         if size is None:
             size = 1

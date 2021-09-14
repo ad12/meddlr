@@ -56,6 +56,14 @@ class MRIReconAugmentor(DeviceMixin):
             x.get_transform() if isinstance(x, RandomTransformChoice) else x
             for x in self.tfms_or_gens
         ]
+        if any(isinstance(x, (list, tuple)) for x in transform_gens):
+            _temp = []
+            for t in transform_gens:
+                if isinstance(t, (list, tuple)):
+                    _temp.extend(t)
+                else:
+                    _temp.append(t)
+            transform_gens = _temp
 
         tfms_equivariant, tfms_invariant = self._classify_transforms(transform_gens)
         use_img = normalizer is not None or len(tfms_equivariant) > 0
@@ -107,14 +115,14 @@ class MRIReconAugmentor(DeviceMixin):
 
         out = {"kspace": kspace, "maps": maps, "target": target, "mean": mean, "std": std}
 
-        for s in self.get_schedulers():
+        for s in self.schedulers():
             s.step(kspace.shape[0])
 
         return out, tfms_equivariant, tfms_invariant
 
-    def get_schedulers(self):
+    def schedulers(self):
         schedulers = [
-            tfm._schedulers for tfm in self.tfms_or_gens if isinstance(tfm, SchedulableMixin)
+            tfm.schedulers() for tfm in self.tfms_or_gens if isinstance(tfm, SchedulableMixin)
         ]
         return [x for y in schedulers for x in y]
 
@@ -220,7 +228,8 @@ class MRIReconAugmentor(DeviceMixin):
 
         tfms_or_gens = build_transforms(cfg, mri_tfm_cfg.TRANSFORMS, seed=seed, **kwargs)
         scheduler_p = dict(mri_tfm_cfg.SCHEDULER_P)
-        if len(scheduler_p):
+        ignore_scheduler = scheduler_p.pop("IGNORE", False)
+        if len(scheduler_p) and not ignore_scheduler:
             scheduler_p["params"] = ["p"]
             tfms = [tfm for tfm in tfms_or_gens if isinstance(tfm, TransformGen)]
             for tfm in tfms:

@@ -1,3 +1,5 @@
+import logging
+
 import torch
 import torchvision.utils as tv_utils
 from torch import nn
@@ -30,6 +32,8 @@ class A2RModel(nn.Module):
     def __init__(self, cfg):
         super().__init__()
 
+        _logger = logging.getLogger(__name__)
+
         model_cfg = cfg.clone()
         model_cfg.defrost()
         model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.A2R.META_ARCHITECTURE
@@ -49,6 +53,7 @@ class A2RModel(nn.Module):
         self.augmentor = MRIReconAugmentor.from_cfg(
             cfg, aug_kind="consistency", device=cfg.MODEL.DEVICE, seed=cfg.SEED
         )
+        _logger.info("Aug2Recon augmentor:\n{}".format(str(self.augmentor.tfms_or_gens)))
 
     def augment(self, inputs, pred_base):
         inputs = move_to_device(inputs, device="cuda")

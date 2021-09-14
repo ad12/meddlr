@@ -37,6 +37,7 @@ class TFScheduler:
         return [x[1:] if x.startswith(".") else x for x in out]
 
     def _register_parameters(self, names: Union[str, Sequence[str]]):
+        # TODO (arjundd): names=None does not work.
         if isinstance(names, str):
             names = [names]
         names = [x for x in self._get_tfm_keys() if any(x.startswith(n) for n in names)]
@@ -157,6 +158,8 @@ class SchedulableMixin:
     def register_schedulers(
         self, schedulers: Sequence[TFScheduler], overwrite_params: bool = False
     ):
+        if isinstance(schedulers, TFScheduler):
+            schedulers = [schedulers]
         if overwrite_params:
             new_params = [name for s in schedulers for name in s._parameter_names()]
             for s in self._schedulers:
@@ -164,6 +167,9 @@ class SchedulableMixin:
 
         self._schedulers.extend(schedulers)
         self.validate_schedulers()
+
+    def schedulers(self) -> List[TFScheduler]:
+        return self._schedulers
 
 
 class WarmupTF(TFScheduler):

@@ -16,6 +16,7 @@ from .config import CfgNode as CN
 _MRI_RECON_TFM = CN()
 _MRI_RECON_TFM.TRANSFORMS = ()
 _MRI_RECON_TFM.SCHEDULER_P = CN(new_allowed=True)
+_MRI_RECON_TFM.SCHEDULER_P.IGNORE = False
 
 # -----------------------------------------------------------------------------
 # Config definition

@@ -108,9 +108,9 @@ def seed_tfm_gens(tfms, seed):
     # Do not change the scaling constant (1e10).
     rng = np.random.RandomState(seed)
     if seed is not None:
-        for g in tfms:
-            if isinstance(g, TransformGen):
-                g.seed(int(rng.rand() * 1e10))
+        for t in tfms:
+            if isinstance(t, TransformGen):
+                t.seed(int(rng.rand() * 1e10))
 
 
 def build_iter_func(batch_size, num_workers):
