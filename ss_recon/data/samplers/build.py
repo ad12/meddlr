@@ -1,4 +1,4 @@
-from ss_recon.data.samplers.group_sampler import GroupSampler
+from ss_recon.data.samplers.group_sampler import AlternatingGroupSampler, GroupSampler
 from ss_recon.data.samplers.sampler import AlternatingSampler
 
 
@@ -28,6 +28,18 @@ def build_train_sampler(cfg, dataset):
             shuffle=True,
             seed=seed,
         )
+    elif sampler == "AlternatingGroupSampler":
+        is_batch_sampler = cfg.DATALOADER.GROUP_SAMPLER.AS_BATCH_SAMPLER
+        sampler = AlternatingGroupSampler(
+            dataset,
+            T_s=cfg.DATALOADER.ALT_SAMPLER.PERIOD_SUPERVISED,
+            T_us=cfg.DATALOADER.ALT_SAMPLER.PERIOD_UNSUPERVISED,
+            batch_by=cfg.DATALOADER.GROUP_SAMPLER.BATCH_BY,
+            batch_size=cfg.SOLVER.TRAIN_BATCH_SIZE,
+            as_batch_sampler=is_batch_sampler,
+            drop_last=cfg.DATALOADER.DROP_LAST,
+            seed=seed,
+        )
     elif sampler == "":
         sampler = None
     else:
@@ -44,7 +56,10 @@ def build_val_sampler(cfg, dataset):
     sampler = cfg.DATALOADER.SAMPLER_TRAIN
     is_batch_sampler = False
     seed = cfg.SEED if cfg.SEED > -1 else None
-    if sampler == "GroupSampler" and cfg.DATALOADER.GROUP_SAMPLER.BATCH_BY:
+    if (
+        sampler in ("GroupSampler", "AlternatingGroupSampler")
+        and cfg.DATALOADER.GROUP_SAMPLER.BATCH_BY
+    ):
         is_batch_sampler = True
         sampler = GroupSampler(
             dataset,

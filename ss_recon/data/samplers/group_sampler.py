@@ -154,10 +154,15 @@ class AlternatingGroupSampler(GroupSampler):
         self.T_s = T_s
         self.T_us = T_us
 
+        example = dataset.examples[0]
+        key = [k for k in ("is_unsupervised", "_is_unsupervised") if k in example]
+        assert len(key) == 1
+        key = key[0]
+
         if batch_by is None:
             batch_by = ()
         batch_by = tuple(batch_by) if isinstance(batch_by, (list, tuple)) else (batch_by,)
-        batch_by += ("_is_unsupervised",)
+        batch_by += (key,)
 
         super().__init__(
             dataset,

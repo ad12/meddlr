@@ -1,0 +1,57 @@
+# N2R with alternating group sampler. Useful for fastmri experiments.
+# The alternating sampler switches between periods of supervised examples and unsupervised examples
+# The model will be trained for 60 iterations (not epochs)
+# on the mridata.org 2019 knee dataset.
+_BASE_: "standard.yaml"
+MODEL:
+  META_ARCHITECTURE: "N2RModel"
+  UNET:
+    IN_CHANNELS: 2
+    OUT_CHANNELS: 2
+    CHANNELS: 32
+    NUM_POOL_LAYERS: 4
+    DROPOUT: 0.
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+  N2R:
+    META_ARCHITECTURE: "UnetModel"
+DATASETS:
+  TRAIN: ("fastMRI_brain_multicoil_mini_v0.0.1_train",)
+  VAL: ("fastMRI_brain_multicoil_mini_v0.0.1_val",)
+  TEST: ("fastMRI_brain_multicoil_mini_v0.0.1_test",)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "RandomMaskFunc1D"
+    ACCELERATIONS: (8,)
+    CALIBRATION_SIZE: 0
+    CENTER_FRACTIONS: (0.04,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (8,)
+DATALOADER:
+  NUM_WORKERS: 0  # for debugging purposes
+  DATA_KEYS: (("target", "jsense-8-cf=4/target"), ("maps", "jsense-8-cf=4/maps"))
+  FILTER:
+    BY: (("acquisition", "AXT2"), ("systemFieldStrength_T", 2.8936))
+  SAMPLER_TRAIN: "AlternatingGroupSampler"
+  GROUP_SAMPLER:
+    BATCH_BY: ("receiverChannels", "inplane_shape")
+    AS_BATCH_SAMPLER: True
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 10
+    NUM_UNDERSAMPLED: 8
+    NUM_VAL: 5
+  ALT_SAMPLER:
+    PERIOD_UNSUPERVISED: 1
+    PERIOD_SUPERVISED: 1
+SOLVER:
+  TRAIN_BATCH_SIZE: 2
+TEST:
+  EVAL_PERIOD: -10 # eval every 10 epochs.
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim_old", "ssim (Wang)")
+SEED: 1000
+TIME_SCALE: "iter"
+OUTPUT_DIR: "results://tests/n2r/alt_group_sampler"
+VERSION: 1
