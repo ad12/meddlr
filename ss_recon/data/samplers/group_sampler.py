@@ -1,9 +1,10 @@
 import logging
 from collections import defaultdict
-from typing import Any, List, Mapping, Sequence, Union
+from typing import Any, Dict, Hashable, List, Mapping, Sequence, Tuple, Union
 
+import numpy as np
 import torch
-from torch.utils.data import Sampler
+from torch.utils.data import Sampler, SubsetRandomSampler
 
 _UNKNOWN_TOKEN = "<UNK>"
 
@@ -134,6 +135,207 @@ class GroupSampler(Sampler):
             batches = [batches[i] for i in torch.randperm(len(batches), generator=self._rng)]
 
         return batches
+
+
+class AlternatingGroupSampler(GroupSampler):
+    """Alternate sampler between supervised/unsupervised examples within groups."""
+
+    def __init__(
+        self,
+        dataset,
+        T_s: int = 1,
+        T_us: int = 1,
+        batch_by: Any = None,
+        batch_size: int = None,
+        as_batch_sampler: bool = False,
+        drop_last: bool = False,
+        seed: int = None,
+    ):
+        self.T_s = T_s
+        self.T_us = T_us
+
+        if batch_by is None:
+            batch_by = ()
+        batch_by = tuple(batch_by) if isinstance(batch_by, (list, tuple)) else (batch_by,)
+        batch_by += ("_is_unsupervised",)
+
+        super().__init__(
+            dataset,
+            batch_by=batch_by,
+            batch_size=batch_size if batch_size else 1,
+            as_batch_sampler=as_batch_sampler,
+            drop_last=False,
+            shuffle=True,
+            seed=seed,
+        )
+
+        # Groups should only have one subgroup.
+        counts = {}
+        counts_per_group = defaultdict(int)
+        for grp_name, grp in self._groups.items():
+            if len(grp) > 1:
+                raise ValueError(
+                    f"All groups should only have 1 subgroup. "
+                    f"{grp_name} has {len(grp)} - {grp.keys()}"
+                )
+            num = len(list(grp.values())[0])
+            counts_per_group[grp_name[:-1]] += num
+            counts[grp_name] = num
+        # Drop any groups that will be smaller than the batch size.
+        if drop_last:
+            drop_keys = [grp_name for grp_name, count in counts.items() if count < batch_size]
+            for k in drop_keys:
+                counts_per_group.pop(k)
+                for gk in [k + (True,), k + (False,)]:
+                    counts.pop(gk, None)
+                    self._groups.pop(gk, None)
+        self.counts_per_group = counts_per_group
+        self.counts = counts
+        self._samplers = self._build_samplers(seed=seed)
+
+        # State variables
+        self._iterators = {}
+        self._counter = {grp_name: 0 for grp_name in self._samplers}
+        self._pointer = 0
+        self._excess_sampled = 0
+
+    def __len__(self):
+        """
+        Note:
+            This property should not be used for any real logic.
+            It is purely to satisfy the requirement that samplers
+            used as BatchSamplers should have a length.
+        """
+        return sum(v // self.batch_size for v in self.counts.values())
+
+    def _batch_by_groups(self):
+        return list(self.counts_per_group.keys())
+
+    def _build_samplers(self, seed=None) -> Dict[Tuple[Hashable], SubsetRandomSampler]:
+        groups = self._groups
+        samplers = {}
+        for grp_idx, (grp_name, grp) in enumerate(groups.items()):
+            indices = list(grp.values())[0]
+            g_seed = seed + grp_idx if seed is not None else None
+            gen = torch.Generator()
+            if g_seed is not None:
+                gen = gen.manual_seed(g_seed)
+            samplers[grp_name] = SubsetRandomSampler(indices, generator=gen)
+        return samplers
+
+    def _sample(self, group: Hashable, unsupervised: bool):
+        def _reset_iterator(grp):
+            self._iterators[grp] = iter(self._samplers[grp])
+
+        group = group + (bool(unsupervised),)
+
+        if group not in self._iterators:
+            _reset_iterator(group)
+
+        try:
+            idx = next(self._iterators[group])
+        except StopIteration:
+            _reset_iterator(group)
+            idx = next(self._iterators[group])
+
+        self._counter[group] += 1
+        return idx
+
+    def _get_group(self, excess_sample, to_sample: List[bool]):
+        """Return the group that should be sampled for this batch.
+
+        Args:
+            excess_sample (int): A value ``<0`` indicates that a surplus of supervised
+                examples have previously been sampled. The algorithm will then choose
+                a group with probability based on the remaining number of unsupervised examples.
+                If value is ``>0``, then vice versa.
+        """
+        batch_by = self._batch_by_groups()
+        sample_by_groups = (
+            [excess_sample < 0] if excess_sample != 0 else sorted(np.unique(to_sample))
+        )
+
+        # Find the relative epoch for each iterator.
+        num_examples_by_group = np.asarray(
+            [
+                [self.counts.get(batch_grp + (x,), 0) for x in sample_by_groups]
+                for batch_grp in batch_by
+            ]
+        )
+        counter = np.asarray(
+            [
+                [self._counter.get(batch_grp + (x,), 0) for x in sample_by_groups]
+                for batch_grp in batch_by
+            ]
+        )
+
+        epoch_num = counter // (num_examples_by_group + (num_examples_by_group == 0))
+        epoch_num[num_examples_by_group == 0] = np.max(epoch_num) + 1
+        remainder = num_examples_by_group - counter % (
+            num_examples_by_group + (num_examples_by_group == 0)
+        )
+        remainder[epoch_num != np.min(epoch_num)] = 0
+        weights = np.sum(remainder, axis=1)
+        p = torch.as_tensor(weights / np.sum(weights))
+
+        idx = torch.multinomial(p, 1, generator=self._rng).item()
+        return batch_by[idx]
+
+    def _next_batch(self) -> List[int]:
+        batch_size: int = self.batch_size
+        # pointer must be in range [0, self.T_s + self.T_us)
+        pointer = self._pointer
+        # False = supervised, True = unsupervised
+        to_sample: List[bool] = []
+
+        num_excess_sample = min(abs(self._excess_sampled), batch_size)
+        to_sample.extend([self._excess_sampled < 0] * num_excess_sample)
+
+        num_alt_sample = batch_size - len(to_sample)
+        c_range = np.arange(pointer, pointer + num_alt_sample)
+        to_sample.extend(c_range % (self.T_s + self.T_us) >= self.T_s)
+
+        # Find group to sample.
+        group = self._get_group(self._excess_sampled, to_sample)
+
+        # If sampled group only has supervised or unsupervised examples (but not both),
+        # the batch will be composed of only supervised or only unsupervised examples.
+        # This violates the duty cycle of supervised to unsupervised samples.
+        # We change the self._excess_sampled state variable to indicate that a surplus
+        # of either supervised or unsupervised samples has been selected. In this case,
+        # the next batch will attempt to "correct" this sampling by oversampling the
+        # opposite.
+        is_unsupervised_options = [False, True]
+        has_supervised_unsupervised = [
+            group + (is_unsup,) in self._groups for is_unsup in is_unsupervised_options
+        ]
+        # TODO: Check if to_sample is made up of all of same type.
+        if not all(has_supervised_unsupervised):
+            idx = np.where(has_supervised_unsupervised)[0][0]
+            is_unsup = is_unsupervised_options[idx]
+            to_sample = [is_unsup] * batch_size
+            shift_pointer = 0
+            while is_unsup == ((pointer + shift_pointer) % (self.T_s + self.T_us) >= self.T_s):
+                shift_pointer += 1
+            self._excess_sampled += ((-1) ** (is_unsup + 1)) * (batch_size - shift_pointer)
+            self._pointer += shift_pointer
+        else:
+            if self._excess_sampled < 0:
+                self._excess_sampled = self._excess_sampled + num_excess_sample
+            else:
+                self._excess_sampled = self._excess_sampled - num_excess_sample
+            self._pointer = (self._pointer + num_alt_sample) % (self.T_s + self.T_us)
+
+        samples = torch.as_tensor([self._sample(group, is_unsup) for is_unsup in to_sample])
+        return samples
+
+    def _build_batches(self, shuffle: bool = None):
+        """Build batches of examples to sample."""
+        # Hacky way of getting around GroupSampler.__init__ _length computation.
+        if not hasattr(self, "counts"):
+            return [torch.tensor([])]
+
+        return [self._next_batch() for _ in range(len(self))]
 
 
 def _shuffle_groups(groups, rng):

@@ -1,4 +1,6 @@
 """Implementation of different dataset samplers."""
+from typing import Sequence
+
 import numpy as np
 import torch
 from torch.utils.data import Sampler
@@ -20,6 +22,7 @@ class AlternatingSampler(Sampler):
         dataset,
         T_s: int,
         T_us: int,
+        indices: Sequence[int] = None,
         seed: int = None,
     ):
         """
@@ -28,10 +31,18 @@ class AlternatingSampler(Sampler):
                 `get_supervised_idxs()` and `get_unsupervised_idxs()`
             T_s (int): Period for returning supervised examples
             T_us (int): Period for returning unsupervised examples
+            indices (Sequence[int], optional): Indices in the dataset to consider.
+                If specified, only these indices will be iterated over.
         """
         super().__init__(dataset)
-        self._supervised_idxs = torch.tensor(dataset.get_supervised_idxs())
-        self._unsupervised_idxs = torch.tensor(dataset.get_unsupervised_idxs())
+
+        supervised_idxs = dataset.get_supervised_idxs()
+        unsupervised_idxs = dataset.get_unsupervised_idxs()
+        if indices is not None:
+            supervised_idxs = [x for x in supervised_idxs if x in indices]
+            unsupervised_idxs = [x for x in unsupervised_idxs if x in indices]
+        self._supervised_idxs = torch.tensor(supervised_idxs)
+        self._unsupervised_idxs = torch.tensor(unsupervised_idxs)
 
         if len(self._unsupervised_idxs) == 0 or len(self._supervised_idxs) == 0:
             raise ValueError(
@@ -79,17 +90,22 @@ class AlternatingSampler(Sampler):
         self._num_samples_sup = num_passes_supervised * len(self._supervised_idxs)  # noqa
         self._num_samples_unsup = num_passes_unsupervised * len(self._unsupervised_idxs)  # noqa
 
-    def __len__(self):
-        return self._num_samples_sup + self._num_samples_unsup
-
-    def __iter__(self):
+    def get_indices(self, as_list=False):
         s_idxs = self._build_idx(self._supervised_idxs, self.T_s, self._num_samples_sup)
         us_idxs = self._build_idx(self._unsupervised_idxs, self.T_us, self._num_samples_unsup)
 
         # TODO: Add parameter to choose whether to start with supervised or
         # unsupervised data.
         idxs = torch.cat([s_idxs, us_idxs], dim=1).reshape(-1)
-        return iter(idxs.tolist())
+        if as_list:
+            idxs = idxs.tolist()
+        return idxs
+
+    def __len__(self):
+        return self._num_samples_sup + self._num_samples_unsup
+
+    def __iter__(self):
+        return iter(self.get_indices(as_list=True))
 
     def _build_idx(self, idxs: torch.Tensor, T: int, num_samples: int):
         assert num_samples % len(idxs) == 0

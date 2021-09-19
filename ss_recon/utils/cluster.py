@@ -46,6 +46,7 @@ class Cluster(Enum):
     SPIRAL = 12, ["spiral"]
     MOTION = 13, ["motion"]
     LOWRANK = 14, ["lowrank"]
+    STELVIO = 15, ["stelvio"]
 
     def __new__(cls, value: int, patterns: List[str]):
         """
@@ -177,6 +178,10 @@ _USER_PATHS = {
         CLUSTER.TORINO: (
             "/dataNAS/people/arjun/data",
             "/bmrNAS/people/arjun/results/ss_recon",
+        ),
+        CLUSTER.STELVIO: (
+            "/data/arjundd/data",
+            "/data/arjundd/results/ss_recon",
         ),
     },
     "ozt": {
