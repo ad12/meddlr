@@ -14,7 +14,7 @@ def add_even_odd_motion(
     assert cplx.is_complex(kspace) or cplx.is_complex_as_real(kspace)
 
     phase_matrix = torch.zeros(kspace.shape, dtype=torch.complex64, device=kspace.device)
-    width = kspace.shape[2] if channel_first else kspace.shape[2]
+    width = kspace.shape[3] if channel_first else kspace.shape[2]
     g = generator if seed is None else torch.Generator(device=kspace.device).manual_seed(seed)
 
     odd_err = (2 * np.pi * scale) * torch.rand(

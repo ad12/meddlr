@@ -222,6 +222,8 @@ class DataTransform:
     def _call_augmentor(
         self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None
     ):
+        assert not self._is_test, "Augmentor is not supported with testing yet"
+
         # Convert everything from numpy arrays to tensors
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
         maps = cplx.to_tensor(maps).unsqueeze(0)
@@ -239,7 +241,12 @@ class DataTransform:
         )
 
         out, _, _ = self.augmentor(
-            kspace, maps=maps, target=target, normalizer=self._normalizer, mask_gen=mask_gen
+            kspace,
+            maps=maps,
+            target=target,
+            normalizer=self._normalizer,
+            mask_gen=mask_gen,
+            skip_tfm=is_fixed,  # Skip augmentations for unsupervised scans.
         )
         masked_kspace = out["kspace"]
         maps = out["maps"]

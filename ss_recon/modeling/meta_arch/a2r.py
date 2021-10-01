@@ -62,7 +62,11 @@ class A2RModel(nn.Module):
 
         out, _, _ = self.augmentor(kspace, maps, pred_base, mask=True)
 
-        inputs = {k: v.clone() for k, v in inputs.items() if k not in ("kspace", "maps")}
+        inputs = {
+            k: v.clone() if isinstance(v, torch.Tensor) else v
+            for k, v in inputs.items()
+            if k not in ("kspace", "maps")
+        }
         inputs["kspace"] = out["kspace"]
         inputs["maps"] = out["maps"]
         aug_pred_base = out["target"]

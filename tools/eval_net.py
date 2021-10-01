@@ -221,7 +221,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     # Find range of noise values to search
     if include_noise:
         noise_vals = [0] + noise_sweep_vals if noise_arg == "sweep" else [0]
-        noise_vals += list(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV)
+        # noise_vals += list(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV)
         noise_vals = sorted(set(noise_vals))
     else:
         noise_vals = [0]
@@ -381,7 +381,15 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
                 running_results = update_metrics(
                     all_results,
                     metrics,
-                    on=["Acceleration", "dataset", "Noise Level", "weights", "Method", "rescaled"],
+                    on=[
+                        "Acceleration",
+                        "dataset",
+                        "Noise Level",
+                        "Motion Level",
+                        "weights",
+                        "Method",
+                        "rescaled",
+                    ],
                 )
             except KeyError as e:
                 logger.error(e)
