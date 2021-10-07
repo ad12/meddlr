@@ -14,7 +14,7 @@ from ss_recon.transforms.param_kind import ParamKind
 from ss_recon.transforms.transform import NoOpTransform
 from ss_recon.transforms.transform_gen import TransformGen
 
-__all__ = ["RandomAffine", "RandomFlip", "RandomRot90"]
+__all__ = ["RandomAffine", "RandomFlip", "RandomRot90", "RandomTranslation"]
 
 SPATIAL_RANGE_OR_VAL = Union[float, Sequence[float], Sequence[Tuple[float, float]]]
 

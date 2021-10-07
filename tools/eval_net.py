@@ -332,7 +332,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
                     skip_rescale=skip_rescale,
                     save_scans=save_scans,
                     output_dir=zf_output_dir,
-                    metrics=eval_metrics,
+                    metrics=eval_metrics if compute_metrics else False,
                 )
             )
         evaluators = DatasetEvaluators(evaluators, as_list=True)
