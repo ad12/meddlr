@@ -12,8 +12,8 @@ from ss_recon.utils.general import move_to_device
 
 
 @META_ARCH_REGISTRY.register()
-class A2RModel(nn.Module):
-    """Aug2Recon Model.
+class VortexModel(nn.Module):
+    """VORTEX model.
 
     This is the generalized model implementation for augmentation-based consistency.
     It differs from :class:`N2RModel` and :class:`M2RModel` in some ways:
@@ -28,6 +28,7 @@ class A2RModel(nn.Module):
     """
 
     _version = 1
+    _aliases = ["A2RModel"]
 
     def __init__(self, cfg):
         super().__init__()

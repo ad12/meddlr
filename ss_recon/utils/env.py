@@ -1,6 +1,7 @@
 import importlib
 import importlib.util
 import logging
+import multiprocessing as mp
 import os
 import random
 import subprocess
@@ -219,3 +220,10 @@ def supports_cplx_tensor() -> bool:
         return True
     else:
         raise ValueError(f"Unknown environment value: {env_var}")
+
+
+def is_main_process():
+    py_version = tuple(sys.version_info[0:2])
+    return (py_version < (3, 8) and mp.current_process().name == "MainProcess") or (
+        py_version >= (3, 8) and mp.parent_process() is None
+    )

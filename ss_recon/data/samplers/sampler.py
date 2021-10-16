@@ -13,8 +13,9 @@ class AlternatingSampler(Sampler):
     supervised and unsupervised examples. This sampler facilitates returning
     samples in this alternating pattern.
 
-    Currently, periods `T_s` and `T_us` must be perfect divisors of the number
-    of supervised_idxs and unsupervised_idxs.
+    Note:
+        Currently, periods :math:`T_s` and :math:`T_us` must be perfect divisors
+        of the number of supervised_idxs and unsupervised_idxs.
     """
 
     def __init__(

@@ -30,6 +30,7 @@ _PREDEFINED_SPLITS_MRCO["mridata_knee_2019"] = {
 
 
 _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
+    # fastMRI knee multicoil toy dataset - do not use.
     "fastMRI_knee_multicoil_dev_train": (
         None,
         "fastmri/knee_multicoil/annotations/vtoy-dev/train.json",
@@ -42,6 +43,7 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
         None,
         "fastmri/knee_multicoil/annotations/vtoy-dev/test.json",
     ),
+    # fastMRI knee multicoil base v0.0.1 dataset.
     "fastMRI_knee_multicoil_v0.0.1_train": (
         "fastmri/knee_multicoil/train",
         "ann://fastmri/knee_multicoil/v0.0.1-dev/train.json",
@@ -54,6 +56,7 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
         "fastmri/knee_multicoil/val",
         "ann://fastmri/knee_multicoil/v0.0.1-dev/test.json",
     ),
+    # fastMRI knee multicoil mini v0.0.1 dataset.
     "fastMRI_knee_multicoil_mini_v0.0.1_train": (
         "fastmri/knee_multicoil/val",
         "ann://fastmri/knee_multicoil/mini-v0.0.1/train.json",
@@ -66,6 +69,7 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_knee_multicoil"] = {
         "fastmri/knee_multicoil/val",
         "ann://fastmri/knee_multicoil/mini-v0.0.1/test.json",
     ),
+    # fastMRI knee multicoil ultra mini v0.0.1 dataset.
     "fastMRI_knee_multicoil_ultra_mini_v0.0.1_train": (
         "fastmri/knee_multicoil/val",
         "ann://fastmri/knee_multicoil/ultra-mini-v0.0.1/train.json",

@@ -34,12 +34,11 @@ __all__ = [
 ]
 
 
-def default_argument_parser():
-    """
-    Create a parser with some common arguments used by detectron2 users.
+def default_argument_parser() -> argparse.ArgumentParser:
+    """Create a parser with some common arguments.
 
     Returns:
-        argparse.ArgumentParser:
+        argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser(description="Detectron2 Training")
     parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")

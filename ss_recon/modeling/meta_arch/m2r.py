@@ -10,6 +10,13 @@ from ss_recon.utils.events import get_event_storage
 
 @META_ARCH_REGISTRY.register()
 class M2RModel(nn.Module):
+    """Adaptation of :cls:`N2RModel` for MRI motion augmentations.
+
+    Note:
+        This class is functionally deprecated and will not be maintained.
+        Use :cls:`VortexModel` instead.
+    """
+
     _version = 2
 
     def __init__(self, cfg):

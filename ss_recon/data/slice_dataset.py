@@ -1,13 +1,3 @@
-"""
-Copyright (c) Facebook, Inc. and its affiliates.
-
-This source code is licensed under the MIT license found in the
-LICENSE file in the root directory of this source tree.
-
-This code was adapted from Facebook's fastMRI Challenge codebase:
-
-https://github.com/facebookresearch/fastMRI
-"""
 import os
 from typing import Dict, List
 
@@ -20,10 +10,26 @@ from ss_recon.data.transforms.subsample import MaskLoader
 from ss_recon.data.transforms.transform import DataTransform, Subsampler
 from ss_recon.utils.cluster import CLUSTER, Cluster
 
-__all__ = ["collate_by_supervision", "SliceData"]
+__all__ = ["default_collate", "collate_by_supervision", "SliceData"]
 
 
-def default_collate(batch: list):
+def default_collate(batch: List[Dict]):
+    """Default collate function when using :cls:`SliceDataset`.
+
+    This collate function handles metadata appropriately by returning
+    metadata as a list of dictionaries instead of a dictionary of tensors.
+    This is done because not all metadata (e.g. string values) can be
+    tensorized.
+
+    Metadata is only handled if at least one example in the batch has
+    a ``'metadata'`` key.
+
+    Args:
+        batch (list): The list of dictionaries.
+
+    Returns:
+        Dict
+    """
     metadata = None
     if any("metadata" in b for b in batch):
         metadata = [b.pop("metadata", None) for b in batch]
@@ -34,7 +40,17 @@ def default_collate(batch: list):
 
 
 def collate_by_supervision(batch: list):
-    """Collate supervised/unsupervised batch examples."""
+    """Collate supervised/unsupervised batch examples.
+
+    This collate function is required when training with semi-supervised
+    models, such as :cls:`N2RModel` and :cls:`VortexModel`.
+
+    Args:
+        batch (list): The list of dictionaries.
+
+    Returns:
+        Dict[str, Dict]: A dictionary with 2 keys, ``'supervised'`` and ``'unsupervised'``.
+    """
     supervised = [x for x in batch if not x.get("is_unsupervised", False)]
     unsupervised = [x for x in batch if x.get("is_unsupervised", False)]
 
@@ -50,9 +66,30 @@ def collate_by_supervision(batch: list):
 
 
 class SliceData(Dataset):
-    """A PyTorch Dataset class that iterates over 2D MR image slices."""
+    """A PyTorch Dataset class that iterates over 2D slices for MRI reconstruction.
 
-    # Default mapping for key types
+    This dataset handles per-slice data iteration for MRI reconstruction problems.
+    This means that slices of K-space, target images, and sensitivity maps (if applicable)
+    are returned in ``__getitem__``.
+
+    Because slices are the atomic unit in this dataset, we refer to them as the *examples*.
+    This dataset splits a single scan (i.e. a dataset dictionary) into multiple slices
+    (called *examples*) along the 0-th axis. ``self.transform`` is used to
+    execute transforms (e.g. undersampling, intensity normalization, etc.) on the data.
+
+    This dataset is also useful for organizing and fetching supervised and unsupervised
+    examples. This functionality is used with :cls:`AlternatingSampler` and
+    :cls:`GroupAlternatingSampler`.
+
+    While this class is designed to be flexible for easy interation with different datasets
+    (e.g. fastMRI, mridata 2D/3D FSE, SKM-TEA), there are some nuances in how the data must
+    be formatted. You can find more information at in the Prepare Your Own Dataset section
+    of the documentation (documentation in progress).
+
+    This class was adapted from https://github.com/facebookresearch/fastMRI.
+    """
+
+    # Default mapping for key types.
     _DEFAULT_MAPPING = {"kspace": "kspace", "maps": "maps", "target": "target"}
 
     def __init__(self, dataset_dicts: List[Dict], transform, keys=None, include_metadata=False):
@@ -192,12 +229,25 @@ class SliceData(Dataset):
     def __len__(self):
         return len(self.examples)
 
-    def get_supervised_idxs(self):
-        """Get indices of supervised examples."""
+    def get_supervised_idxs(self) -> List[int]:
+        """Returns indices corresponding to supervised examples.
+
+        These indices can be used with ``__getitem__`` to fetch supervised examples.
+
+        Returns:
+            List[int]: The indices corresponding to supervised examples.
+        """
         idxs = [idx for idx, x in enumerate(self.examples) if not x["is_unsupervised"]]
         return idxs
 
     def get_unsupervised_idxs(self):
+        """Returns indices corresponding to unsupervised examples.
+
+        These indices can be used with ``__getitem__`` to fetch unsupervised examples.
+
+        Returns:
+            List[int]: The indices corresponding to unsupervised examples.
+        """
         supervised_idxs = self.get_supervised_idxs()
         unsupervised_idxs = set(range(len(self))) - set(supervised_idxs)
         return sorted(unsupervised_idxs)

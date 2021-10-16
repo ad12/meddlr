@@ -6,14 +6,14 @@ from fvcore.common.file_io import PathManager
 
 
 def move_to_device(obj, device, non_blocking=False):
-    """Given a structure (possibly) containing Tensors on the CPU, move all the Tensors
-      to the specified GPU (or do nothing, if they should be on the CPU).
-        device = -1 -> "cpu"
-        device =  0 -> "cuda:0"
+    """
+    Given a structure (possibly) containing Tensors on the CPU, move all the Tensors
+    to the specified GPU (or do nothing, if they should be on the CPU).
 
     Args:
-      obj(Any): The object to convert.
-      device(int): The device id, defaults to -1.
+      obj (Any): The object to convert.
+      device (int | str | torch.Device): The device id.
+        Integers correspond to ``'cuda:{device}'``. ``-1`` corresponds to cpu.
 
     Returns:
       Any: The converted object.
@@ -39,10 +39,10 @@ def move_to_device(obj, device, non_blocking=False):
 
 
 def find_experiment_dirs(dirpath, completed=True) -> List[str]:
-    """Find all experiment directories under the `dirpath`.
+    """Recursively search for experiment directories under the ``dirpath``.
 
     Args:
-        dirpath (str): The directory under which to search.
+        dirpath (str): The base directory under which to search.
         completed (bool, optional): If `True`, filter directories where runs
             are completed.
 

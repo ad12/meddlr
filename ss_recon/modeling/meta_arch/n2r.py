@@ -10,6 +10,14 @@ from ss_recon.utils.events import get_event_storage
 
 @META_ARCH_REGISTRY.register()
 class N2RModel(nn.Module):
+    """Noise2Recon model.
+
+    Reference:
+        AD Desai, BM Ozturkler, CM Sandino, et al. Noise2Recon: A Semi-Supervised Framework
+        for Joint MRI Reconstruction and Denoising. ArXiv 2021.
+        https://arxiv.org/abs/2110.00075
+    """
+
     _version = 2
 
     def __init__(self, cfg):
@@ -34,8 +42,17 @@ class N2RModel(nn.Module):
         self.noiser = NoiseModel.from_cfg(cfg)
 
     def augment(self, inputs):
-        """Noise augmentation module.
-        TODO: Perform the augmentation here.
+        """Noise augmentation module for the consistency branch.
+
+        Args:
+            inputs (Dict[str, Any]): The input dictionary.
+                It must contain a key ``'kspace'``, which traditionally
+                corresponds to the undersampled kspace when performing
+                augmentation for consistency.
+
+        Returns:
+            Dict[str, Any]: The input dictionary with the kspace polluted
+                with additive masked complex Gaussian noise.
         """
         kspace = inputs["kspace"].clone()
         aug_kspace = self.noiser(kspace, clone=False)

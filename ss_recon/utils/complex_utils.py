@@ -8,14 +8,40 @@ from ss_recon.utils.env import supports_cplx_tensor
 
 
 def is_complex(x):
-    """Wrapper around torch.is_complex() for PyTorch<1.7"""
+    """Returns if ``x`` is a complex-tensor.
+
+    This function is a wrapper around torch.is_complex() for PyTorch<1.7.
+    torch < 1.7 does not have the ``torch.is_complex`` directive, so
+    we can't call it for older PyTorch versions.
+
+    Args:
+        x (torch.Tensor): A tensor.
+
+    Returns:
+        bool: ``True`` if complex tensors are supported and the tensor is complex.
+    """
     return supports_cplx_tensor() and torch.is_complex(x)
 
 
 def is_complex_as_real(x):
-    """Returns `True` if the tensor is real-view convention for complex numbers.
+    """
+    Returns ``True`` if the tensor follows the real-view
+    convention for complex numbers.
 
-    The real-view of a complex tensor has the shape [..., 2]
+    The real-view of a complex tensor has the shape [..., 2].
+
+    Args:
+        x (torch.Tensor): A tensor.
+
+    Returns:
+        bool: ``True`` if the tensor follows the real-view convention
+            for complex numbers.
+
+    Note:
+        We recommend using complex tensors instead of the real-view
+        convention. This function cannot interpret if the last dimension
+        has a size of ``2`` because it is the real-imaginary channel or
+        for some other reason.
     """
     return x.size(-1) == 2
 
@@ -23,7 +49,14 @@ def is_complex_as_real(x):
 def conj(x):
     """
     Computes the complex conjugate of complex-valued input tensor (x).
-    i.e. conj(a + ib) = a - ib
+
+    ``conj(a + ib)`` = :math:`\\bar{a + ib} = a - ib`
+
+    Args:
+        x (torch.Tensor): A tensor.
+
+    Returns:
+        torch.Tensor: The conjugate.
     """
     assert is_complex_as_real(x) or is_complex(x)
     if is_complex(x):
@@ -37,7 +70,15 @@ def conj(x):
 def mul(x, y):
     """
     Multiplies two complex-valued tensors x and y.
-     i.e. z = (a + ib) * (c + id)
+
+    :math:`z = (a + ib) * (c + id) = (ac - bd) + i(ad + bc)`
+
+    Args:
+        x (torch.Tensor): A tensor.
+        y (torch.Tensor): A tensor.
+
+    Returns:
+        torch.Tensor: The matrix multiplication.
     """
     # assert x.size(-1) == 2
     # assert y.size(-1) == 2
@@ -69,7 +110,13 @@ def mul(x, y):
 
 def abs(x):
     """
-    Computes the absolute value of a complex-valued input tensor (x).
+    Computes the absolute value (magnitude) of a complex-valued input tensor (x).
+
+    Args:
+        x (torch.Tensor): A tensor.
+
+    Returns:
+        torch.Tensor: The magnitude tensor.
     """
     assert is_complex_as_real(x) or is_complex(x)
     if is_complex(x):
@@ -81,6 +128,12 @@ def abs(x):
 def angle(x, eps=1e-11):
     """
     Computes the phase of a complex-valued input tensor (x).
+
+    Args:
+        x (torch.Tensor): A tensor.
+
+    Returns:
+        torch.Tensor: The angle tensor.
     """
     assert is_complex_as_real(x) or is_complex(x)
     if is_complex(x):
@@ -89,10 +142,14 @@ def angle(x, eps=1e-11):
         return torch.atan(x[..., 1] / (x[..., 0] + eps))
 
 
-def from_polar(magnitude, phase):
+def from_polar(magnitude, phase, return_cplx: bool = False):
     """
     Computes real and imaginary values from polar representation.
     """
+    if return_cplx:
+        if not supports_cplx_tensor():
+            raise RuntimeError(f"torch {torch.__version__} does not support complex tensors")
+        return torch.polar(magnitude, phase)
     real = magnitude * torch.cos(phase)
     imag = magnitude * torch.sin(phase)
     return torch.stack((real, imag), dim=-1)
@@ -164,7 +221,7 @@ def power_method(X, num_iter=10, eps=1e-6):
 
 def svd(X, compute_uv=True):
     """
-    Computes singular value decomposition of batch of complex-valued matrices
+    Computes singular value decomposition of batch of complex-valued matrices.
 
     Args:
         matrix (torch.Tensor): batch of complex-valued 2D matrices
@@ -204,7 +261,7 @@ def svd(X, compute_uv=True):
     return U, S, V
 
 
-def to_numpy(x):
+def to_numpy(x: torch.Tensor):
     """
     Convert real-valued PyTorch tensor to complex-valued numpy array.
     """
@@ -227,12 +284,14 @@ def to_tensor(x: np.ndarray):
 
 def rss(x: torch.Tensor, dim: int = 0) -> torch.Tensor:
     """
-    Compute the Root Sum of Squares (RSS) for complex inputs.
+    Compute the root-sum-of-squares (RSS) for complex inputs.
     RSS is computed assuming that dim is the coil dimension.
+
     Args:
-        data: The input tensor
-        dim: The dimensions along which to apply the RSS transform
+        data: The complex-valued input tensor.
+        dim: The dimensions along which to apply the RSS transform.
+
     Returns:
-        The RSS value.
+        torch.Tensor: The RSS value.
     """
     return torch.sqrt((abs(x) ** 2).sum(dim))

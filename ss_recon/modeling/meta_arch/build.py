@@ -1,4 +1,4 @@
-from fvcore.common.registry import Registry
+from ss_recon.utils.registry import Registry
 
 META_ARCH_REGISTRY = Registry("META_ARCH")  # noqa F401 isort:skip
 META_ARCH_REGISTRY.__doc__ = """

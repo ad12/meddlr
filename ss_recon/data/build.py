@@ -26,22 +26,30 @@ def get_recon_dataset_dicts(
     """Get recon datasets and perform filtering.
 
     Given the same seed, scans will be selected in a fixed order. For example,
-    let `num_scans_total=3` in experiment A and `num_scans_total=4` in
+    let ``num_scans_total=3`` in experiment A and ``num_scans_total=4`` in
     experiment B. If the seed is the same for both experiments, then the scans
     selected in experiment A will be a subset of the scans selected in
     experiment B. This is to simulate data as a growing set- we can never
     "lose" data, only add to the existing set.
 
     Args:
-        dataset_names (str(s)): datasets to load.
-        num_scans_total (int): Number of total scans to return.
-            If `-1`, ignored.
-        num_scans_subsample (int): Number of scans to mark as only subsample
-            scans. These scans will not have a ground truth scan.
-        seed (int): the deterministic seed for filtering which scans to select.
-        accelerations (sequence): the range of accelerations for this dataset.
-            The maximum in the range will be used for retrospective
+        dataset_names (str(s)): Datasets to load. See ss_recon/data/datasets/builtin.py
+            for built-in datasets.
+        num_scans_total (int): Number of total scans to return. If ``-1``, ignored.
+        num_scans_subsample (int): Number of scans to mark as only undersampled
+            (i.e. unsupervised) scans. These scans will not have a ground truth scan.
+        seed (int): The deterministic seed for filtering which scans to select.
+            For reproducibility, this seed should be set.
+        accelerations (Tuple[float, float], optional): The range of accelerations
+            for this dataset. The maximum in the range will be used for retrospective
             undersampling of the unsupervised subset of scans.
+        filter_by (Tuple): Metadata key to filter on and the value(s) to filter by.
+            If the value for a particular key is a list, any one of the elements in
+            the list is a valid entry.
+            The schema is ``((k1, v1), (k2, v2), (k3, v3), ...)``.
+
+    Returns:
+        List[Dict]: The dataset dictionaries.
     """
     assert len(dataset_names)
     dataset_dicts = [DatasetCatalog.get(dataset_name) for dataset_name in dataset_names]

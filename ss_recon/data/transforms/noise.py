@@ -3,18 +3,47 @@ from typing import Sequence, Union
 import torch
 
 from ss_recon.utils import complex_utils as cplx
-from ss_recon.utils import env
 from ss_recon.utils.events import get_event_storage
-
-if env.pt_version() >= [1, 6]:
-    import torch.fft
 
 
 class NoiseModel:
     """A model that adds additive white noise.
 
-    Note we do not store this as a module or else it would be saved to the model
-    definition, which we dont want.
+    This model adds zero-mean Gaussian noise to a real-valued or
+    complex-valued input. The standard deviation of the noise
+    distribution is chosen from a range ``std_devs`` provided by
+    the user. The standard deviation is often referred to as the
+    *difficulty*, as higher standard deviations correspond to
+    wider distributions from which noise can be sampled.
+
+    To simulate noise during MRI acquisition, we only add noise
+    to the samples that are acquired. In other words, if a sample
+    in kspace was not acquired (i.e. accelerated acquisition), those
+    samples are not corrupted with noise.
+
+    Attributes:
+        std_devs (Tuple[float]): The range of standard deviations used for
+            noise model. If a single value is provided on initialization,
+            it is stored as a tuple with 1 element.
+        warmup_method (str): The method that is being used for warmup.
+        warmup_iters (int): Number of iterations to use for warmup.
+        generator (torch.Generator): The generator that should be used for all
+            random logic in this class.
+
+    Note:
+        This class is functionally deprecated and will not be maintained.
+        Use :cls:`RandomNoise` instead.
+
+    Note:
+        We do not store this as a module or else it would be saved to the model
+        definition, which we dont want.
+
+    Note:
+        There is a known bug that the warmup method does not clamp the upper
+        bound at the appropriate value. Thus the upper bound of the range keeps
+        growing. We have elected not to correct for this to preserve
+        reproducibility for older results. To use schedulers with corrected
+        functionality, see :cls:`RandomNoise` instead.
     """
 
     def __init__(
@@ -25,6 +54,14 @@ class NoiseModel:
         seed=None,
         device=None,
     ):
+        """
+        Args:
+            std_devs (float, Tuple[float, float]): The  noise difficulty range.
+            scheduler (CfgNode, optional): Config detailing scheduler.
+            mask (CfgNode, optional): Config for masking method. Should have
+                an attribute ``RHO`` that specifies the extent of masking.
+            seed (int, optional): A seed for reproducibility.
+        """
         if not isinstance(std_devs, Sequence):
             std_devs = (std_devs,)
         elif len(std_devs) > 2:
