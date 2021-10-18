@@ -2,6 +2,7 @@ import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
+from ss_recon.config.config import configurable
 from ss_recon.data.transforms.noise import NoiseModel
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from ss_recon.utils import complex_utils as cplx
@@ -20,26 +21,37 @@ class N2RModel(nn.Module):
 
     _version = 2
 
-    def __init__(self, cfg):
+    @configurable
+    def __init__(
+        self,
+        model: nn.Module,
+        noiser: NoiseModel,
+        use_supervised_consistency: bool = False,
+        vis_period: int = -1,
+    ):
+        """
+        Args:
+            model (nn.Module): The base model.
+            noiser (NoiseModel): The additive noise module.
+            use_supervised_consistency (bool, optional): If ``True``, use consistency
+                with supervised examples too.
+            vis_period (int, optional): The period over which to visualize images.
+                If ``<=0``, it is ignored. Note if the ``model`` has a ``vis_period``
+                attribute, it will be overridden so that this class handles visualization.
+        """
         super().__init__()
-
-        model_cfg = cfg.clone()
-        model_cfg.defrost()
-        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.N2R.META_ARCHITECTURE
-        model_cfg.freeze()
-        self.model = build_model(model_cfg)
+        self.model = model
 
         # Visualization done by this model
-        if hasattr(self.model, "vis_period"):
+        if hasattr(self.model, "vis_period") and vis_period > 0:
             self.model.vis_period = -1
-        self.vis_period = cfg.VIS_PERIOD
+        self.vis_period = vis_period
 
         # Keep gradient for base images in transform.
         self.use_base_grad = False
         # Use supervised examples for consistency
-        self.use_supervised_consistency = cfg.MODEL.N2R.USE_SUPERVISED_CONSISTENCY
-
-        self.noiser = NoiseModel.from_cfg(cfg)
+        self.use_supervised_consistency = use_supervised_consistency
+        self.noiser = noiser
 
     def augment(self, inputs):
         """Noise augmentation module for the consistency branch.
@@ -188,3 +200,20 @@ class N2RModel(nn.Module):
                 "Backwards compatibility has not been configured."
             )
         return super().load_state_dict(state_dict, strict)
+
+    @classmethod
+    def from_config(cls, cfg):
+        model_cfg = cfg.clone()
+        model_cfg.defrost()
+        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.N2R.META_ARCHITECTURE
+        model_cfg.freeze()
+        model = build_model(model_cfg)
+
+        noiser = NoiseModel.from_cfg(cfg)
+
+        return {
+            "model": model,
+            "noiser": noiser,
+            "use_supervised_consistency": cfg.MODEL.N2R.USE_SUPERVISED_CONSISTENCY,
+            "vis_period": cfg.VIS_PERIOD,
+        }

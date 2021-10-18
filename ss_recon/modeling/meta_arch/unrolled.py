@@ -1,22 +1,12 @@
-"""Unrolled Compressed Sensing (2D).
+from numbers import Number
+from typing import Sequence, Union
 
-This file contains an implementation of the Unrolled Compressed Sensing
-framework by CM Sandino, JY Cheng, et al. See paper below for more details.
-
-It is also based heavily on the codebase below:
-
-https://github.com/MRSRL/dl-cs
-
-Implementation is based on:
-    CM Sandino, JY Cheng, et al. "Compressed Sensing: From Research to
-    Clinical Practice with Deep Neural Networks" IEEE Signal Processing
-    Magazine, 2020.
-"""
 import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
 import ss_recon.utils.complex_utils as cplx
+from ss_recon.config.config import configurable
 from ss_recon.utils.events import get_event_storage
 from ss_recon.utils.general import move_to_device
 from ss_recon.utils.transforms import SenseModel
@@ -29,8 +19,13 @@ __all__ = ["GeneralizedUnrolledCNN"]
 
 @META_ARCH_REGISTRY.register()
 class GeneralizedUnrolledCNN(nn.Module):
-    """
-    PyTorch implementation of Unrolled Compressed Sensing.
+    """PyTorch implementation of Unrolled Compressed Sensing.
+
+    This file contains an implementation of the Unrolled Compressed Sensing
+    framework by CM Sandino, JY Cheng, et al. See paper below for more details.
+
+    It is also based heavily on the codebase below:
+    https://github.com/MRSRL/dl-cs
 
     Implementation is based on:
         CM Sandino, JY Cheng, et al. "Compressed Sensing: From Research to
@@ -38,59 +33,36 @@ class GeneralizedUnrolledCNN(nn.Module):
         Magazine, 2020.
     """
 
-    def __init__(self, cfg):
-        """
-        Args:
-            params (dict): Dictionary containing network parameters
-        """
+    @configurable
+    def __init__(
+        self,
+        blocks: nn.ModuleList,
+        step_sizes: Union[float, Sequence[float]] = -2.0,
+        fix_step_size: bool = False,
+        num_emaps: int = 1,
+        vis_period: int = -1,
+    ):
         super().__init__()
-        self.device = torch.device(cfg.MODEL.DEVICE)
 
-        # Extract network parameters
-        num_grad_steps = cfg.MODEL.UNROLLED.NUM_UNROLLED_STEPS
-        num_resblocks = cfg.MODEL.UNROLLED.NUM_RESBLOCKS
-        num_features = cfg.MODEL.UNROLLED.NUM_FEATURES
-        kernel_size = cfg.MODEL.UNROLLED.KERNEL_SIZE
-        if len(kernel_size) == 1:
-            kernel_size = kernel_size[0]
-        drop_prob = cfg.MODEL.UNROLLED.DROPOUT
-        circular_pad = cfg.MODEL.UNROLLED.PADDING == "circular"
-        fix_step_size = cfg.MODEL.UNROLLED.FIX_STEP_SIZE
-        share_weights = cfg.MODEL.UNROLLED.SHARE_WEIGHTS
+        if isinstance(blocks, Sequence) and not isinstance(blocks, nn.ModuleList):
+            blocks = nn.ModuleList(blocks)
+        if not isinstance(blocks, nn.ModuleList):
+            raise TypeError("`blocks` must be a sequence of nn.Modules or a nn.ModuleList")
+        self.resnets = blocks
+        num_grad_steps = len(blocks)
 
-        # Data dimensions
-        self.num_emaps = cfg.MODEL.UNROLLED.NUM_EMAPS
-
-        # ResNet parameters
-        resnet_params = dict(
-            num_resblocks=num_resblocks,
-            in_chans=2 * self.num_emaps,
-            chans=num_features,
-            kernel_size=kernel_size,
-            drop_prob=drop_prob,
-            circular_pad=circular_pad,
-            act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
-            norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
-            norm_affine=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE,
-            order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
-        )
-
-        # Declare ResNets and RNNs for each unrolled iteration
-        if share_weights:
-            self.resnets = nn.ModuleList([ResNet(**resnet_params)] * num_grad_steps)
+        if isinstance(step_sizes, Number):
+            step_sizes = [
+                torch.tensor([step_sizes], dtype=torch.float32) for _ in range(num_grad_steps)
+            ]
         else:
-            self.resnets = nn.ModuleList([ResNet(**resnet_params) for _ in range(num_grad_steps)])
+            step_sizes = [torch.tensor(s) for s in step_sizes]
+        if not fix_step_size:
+            step_sizes = nn.ParameterList([nn.Parameter(s) for s in step_sizes])
+        self.step_sizes = step_sizes
 
-        # Declare step sizes for each iteration
-        init_step_size = torch.tensor([-2.0], dtype=torch.float32)
-        if fix_step_size:
-            self.step_sizes = [init_step_size] * num_grad_steps
-        else:
-            self.step_sizes = nn.ParameterList(
-                [torch.nn.Parameter(init_step_size) for _ in range(num_grad_steps)]
-            )
-
-        self.vis_period = cfg.VIS_PERIOD
+        self.num_emaps = num_emaps
+        self.vis_period = vis_period
 
     def visualize_training(self, kspace, zfs, targets, preds):
         """A function used to visualize reconstructions.
@@ -230,3 +202,51 @@ class GeneralizedUnrolledCNN(nn.Module):
             output_dict["zf_image"] = zf_image
 
         return output_dict
+
+    @classmethod
+    def from_config(cls, cfg):
+        """
+        Note:
+            Currently, only resblocks can be constructed from the config.
+            Step sizes are currently fixed at initialization to -2.0.
+        """
+        # Extract network parameters
+        num_grad_steps = cfg.MODEL.UNROLLED.NUM_UNROLLED_STEPS
+        num_resblocks = cfg.MODEL.UNROLLED.NUM_RESBLOCKS
+        num_features = cfg.MODEL.UNROLLED.NUM_FEATURES
+        kernel_size = cfg.MODEL.UNROLLED.KERNEL_SIZE
+        if len(kernel_size) == 1:
+            kernel_size = kernel_size[0]
+        drop_prob = cfg.MODEL.UNROLLED.DROPOUT
+        circular_pad = cfg.MODEL.UNROLLED.PADDING == "circular"
+        share_weights = cfg.MODEL.UNROLLED.SHARE_WEIGHTS
+
+        # Data dimensions
+        num_emaps = cfg.MODEL.UNROLLED.NUM_EMAPS
+
+        # ResNet parameters
+        resnet_params = dict(
+            num_resblocks=num_resblocks,
+            in_chans=2 * num_emaps,
+            chans=num_features,
+            kernel_size=kernel_size,
+            drop_prob=drop_prob,
+            circular_pad=circular_pad,
+            act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
+            norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
+            norm_affine=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE,
+            order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
+        )
+
+        # Declare ResNets and RNNs for each unrolled iteration
+        if share_weights:
+            blocks = nn.ModuleList([ResNet(**resnet_params)] * num_grad_steps)
+        else:
+            blocks = nn.ModuleList([ResNet(**resnet_params) for _ in range(num_grad_steps)])
+
+        return {
+            "blocks": blocks,
+            "fix_step_size": cfg.MODEL.UNROLLED.FIX_STEP_SIZE,
+            "num_emaps": num_emaps,
+            "vis_period": cfg.VIS_PERIOD,
+        }

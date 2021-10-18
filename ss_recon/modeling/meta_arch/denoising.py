@@ -5,6 +5,7 @@ import torchvision.utils as tv_utils
 from torch import nn
 
 import ss_recon.utils.complex_utils as cplx
+from ss_recon.config.config import configurable
 from ss_recon.data.transforms.noise import NoiseModel
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from ss_recon.utils.events import get_event_storage
@@ -16,36 +17,39 @@ __all__ = ["DenoisingModel"]
 
 @META_ARCH_REGISTRY.register()
 class DenoisingModel(nn.Module):
-    def __init__(self, cfg):
+    @configurable
+    def __init__(
+        self,
+        model,
+        noiser: NoiseModel,
+        use_fully_sampled_target=False,
+        use_fully_sampled_target_eval: bool = None,
+        vis_period: int = -1,
+    ):
         """
         Args:
-            params (dict): Dictionary containing network parameters
+            model (nn.Module): The base model.
+            noiser (NoiseModel): The additive noise model.
+            use_fully_sampled_target (bool, optional): If ``True``,
+                use fully sampled images as the target for denoising during training.
+            use_fully_sampled_target_eval (bool, optional): If ``True``,
+                use fully sampled images as the target for denoising during evaluation
+                (includes validation). If ``None``, defaults to ``use_fully_sampled_target``.
         """
         super().__init__()
-        self.device = torch.device(cfg.MODEL.DEVICE)
+        self.model = model
+        self.noiser = noiser
 
-        model_cfg = cfg.clone()
-        model_cfg.defrost()
-        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.DENOISING.META_ARCHITECTURE
-        model_cfg.freeze()
-        self.model = build_model(model_cfg)
+        # Default validation to use_fully_sampled_target_eval.
+        if use_fully_sampled_target_eval is None:
+            use_fully_sampled_target_eval = use_fully_sampled_target
+        self.use_fully_sampled_target = use_fully_sampled_target
+        self.use_fully_sampled_target_eval = use_fully_sampled_target_eval
 
         # Visualization done by this model
-        if hasattr(self.model, "vis_period"):
+        if hasattr(self.model, "vis_period") and vis_period > 0:
             self.model.vis_period = -1
-        self.vis_period = cfg.VIS_PERIOD
-
-        noise_cfg = cfg.clone()
-        noise_cfg.defrost()
-        noise_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = cfg.MODEL.DENOISING.NOISE.STD_DEV
-        noise_cfg.freeze()
-        self.noiser = NoiseModel.from_cfg(noise_cfg, device=self.device)
-
-        self.use_fully_sampled_target = cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET
-        use_fully_sampled_target_eval = cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL
-        if use_fully_sampled_target_eval is None:
-            use_fully_sampled_target_eval = self.use_fully_sampled_target
-        self.use_fully_sampled_target_eval = use_fully_sampled_target_eval
+        self.vis_period = vis_period
 
     def augment(self, kspace):
         """Noise augmentation module.
@@ -122,7 +126,8 @@ class DenoisingModel(nn.Module):
         if vis_training and not self.training:
             raise ValueError("vis_training is only applicable in training mode.")
 
-        inputs = move_to_device(inputs, self.device)
+        device = next(self.parameters()).device
+        inputs = move_to_device(inputs, device)
 
         if self.training and self.vis_period > 0:
             storage = get_event_storage()
@@ -171,3 +176,26 @@ class DenoisingModel(nn.Module):
         )
 
         return output_dict
+
+    @classmethod
+    def from_config(cls, cfg):
+        device = torch.device(cfg.MODEL.DEVICE)
+
+        model_cfg = cfg.clone()
+        model_cfg.defrost()
+        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.DENOISING.META_ARCHITECTURE
+        model_cfg.freeze()
+        model = build_model(model_cfg)
+
+        noise_cfg = cfg.clone()
+        noise_cfg.defrost()
+        noise_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = cfg.MODEL.DENOISING.NOISE.STD_DEV
+        noise_cfg.freeze()
+        noiser = NoiseModel.from_cfg(noise_cfg, device=device)
+
+        return {
+            "model": model,
+            "noiser": noiser,
+            "use_fully_sampled_target": cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET,
+            "use_fully_sampled_target_eval": cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL,
+        }

@@ -10,6 +10,7 @@ from torch import nn
 from torch.nn import functional as F
 
 import ss_recon.utils.complex_utils as cplx
+from ss_recon.config.config import configurable
 from ss_recon.utils import transforms as T
 from ss_recon.utils.events import get_event_storage
 from ss_recon.utils.transforms import SenseModel
@@ -111,7 +112,18 @@ class UnetModel(nn.Module):
         computing and computer-assisted intervention, pages 234–241. Springer, 2015.
     """
 
-    def __init__(self, cfg):
+    @configurable
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        channels: int = 32,
+        num_pool_layers: int = 4,
+        dropout: float = 0.0,
+        use_latent: bool = False,
+        num_latent_layers: int = 1,
+        vis_period: int = -1,
+    ):
         """
         Args:
             in_chans (int): Number of channels in the input to the U-Net model.
@@ -122,45 +134,37 @@ class UnetModel(nn.Module):
         """
         super().__init__()
 
-        in_chans = cfg.MODEL.UNET.IN_CHANNELS
-        out_chans = cfg.MODEL.UNET.OUT_CHANNELS
-        chans = cfg.MODEL.UNET.CHANNELS
-        num_pool_layers = cfg.MODEL.UNET.NUM_POOL_LAYERS
-        drop_prob = cfg.MODEL.UNET.DROPOUT
-        use_latent = cfg.MODEL.CONSISTENCY.USE_LATENT
-        num_latent_layers = cfg.MODEL.CONSISTENCY.NUM_LATENT_LAYERS
-
-        self.in_chans = in_chans
-        self.out_chans = out_chans
-        self.chans = chans
+        self.in_chans = in_channels
+        self.out_chans = out_channels
+        self.chans = channels
         self.num_pool_layers = num_pool_layers
-        self.drop_prob = drop_prob
+        self.drop_prob = dropout
         self.use_latent = use_latent
         self.num_latent_layers = num_latent_layers
 
-        self.down_sample_layers = nn.ModuleList([ConvBlock(in_chans, chans, drop_prob)])
-        ch = chans
+        self.down_sample_layers = nn.ModuleList([ConvBlock(in_channels, channels, dropout)])
+        ch = channels
         for _i in range(num_pool_layers - 1):
-            self.down_sample_layers += [ConvBlock(ch, ch * 2, drop_prob)]
+            self.down_sample_layers += [ConvBlock(ch, ch * 2, dropout)]
             ch *= 2
-        self.conv = ConvBlock(ch, ch * 2, drop_prob)
+        self.conv = ConvBlock(ch, ch * 2, dropout)
 
         self.up_conv = nn.ModuleList()
         self.up_transpose_conv = nn.ModuleList()
         for _i in range(num_pool_layers - 1):
             self.up_transpose_conv += [TransposeConvBlock(ch * 2, ch)]
-            self.up_conv += [ConvBlock(ch * 2, ch, drop_prob)]
+            self.up_conv += [ConvBlock(ch * 2, ch, dropout)]
             ch //= 2
 
         self.up_transpose_conv += [TransposeConvBlock(ch * 2, ch)]
         self.up_conv += [
             nn.Sequential(
-                ConvBlock(ch * 2, ch, drop_prob),
+                ConvBlock(ch * 2, ch, dropout),
                 nn.Conv2d(ch, self.out_chans, kernel_size=1, stride=1),
             )
         ]
 
-        self.vis_period = cfg.VIS_PERIOD
+        self.vis_period = vis_period
 
     def register_hooks(self):
         if self.use_latent:
@@ -327,3 +331,16 @@ class UnetModel(nn.Module):
         self.remove_hooks()
 
         return output_dict
+
+    @classmethod
+    def from_config(cls, cfg):
+        return {
+            "in_channels": cfg.MODEL.UNET.IN_CHANNELS,
+            "out_channels": cfg.MODEL.UNET.OUT_CHANNELS,
+            "channels": cfg.MODEL.UNET.CHANNELS,
+            "num_pool_layers": cfg.MODEL.UNET.NUM_POOL_LAYERS,
+            "dropout": cfg.MODEL.UNET.DROPOUT,
+            "use_latent": cfg.MODEL.CONSISTENCY.USE_LATENT,
+            "num_latent_layers": cfg.MODEL.CONSISTENCY.NUM_LATENT_LAYERS,
+            "vis_period": cfg.VIS_PERIOD,
+        }

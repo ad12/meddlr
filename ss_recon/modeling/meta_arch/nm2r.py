@@ -2,6 +2,7 @@ import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
+from ss_recon.config.config import configurable
 from ss_recon.data.transforms.noiseandmotion import NoiseAndMotionModel
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from ss_recon.utils import complex_utils as cplx
@@ -12,31 +13,32 @@ from ss_recon.utils.events import get_event_storage
 class NM2RModel(nn.Module):
     _version = 2
 
-    def __init__(self, cfg):
+    @configurable
+    def __init__(
+        self,
+        model: nn.Module,
+        augmentor: NoiseAndMotionModel,
+        use_supervised_consistency: bool = False,
+        vis_period: int = -1,
+    ):
         super().__init__()
-
-        model_cfg = cfg.clone()
-        model_cfg.defrost()
-        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.NM2R.META_ARCHITECTURE
-        model_cfg.freeze()
-        self.model = build_model(model_cfg)
+        self.model = model
 
         # Visualization done by this model
-        if hasattr(self.model, "vis_period"):
+        if hasattr(self.model, "vis_period") and vis_period > 0:
             self.model.vis_period = -1
-        self.vis_period = cfg.VIS_PERIOD
+        self.vis_period = vis_period
 
         # Keep gradient for base images in transform.
         self.use_base_grad = False
         # Use supervised examples for consistency
-        self.use_supervised_consistency = cfg.MODEL.NM2R.USE_SUPERVISED_CONSISTENCY
-
-        self.noiser = NoiseAndMotionModel.from_cfg(cfg)
+        self.use_supervised_consistency = use_supervised_consistency
+        self.augmentor = augmentor
 
     def augment(self, inputs):
         """Noise + motion augmentation."""
         kspace = inputs["kspace"].clone()
-        aug_kspace = self.noiser(kspace, clone=False)
+        aug_kspace = self.augmentor(kspace, clone=False)
 
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = aug_kspace
@@ -167,3 +169,20 @@ class NM2RModel(nn.Module):
                 "Backwards compatibility has not been configured."
             )
         return super().load_state_dict(state_dict, strict)
+
+    @classmethod
+    def from_config(cls, cfg):
+        model_cfg = cfg.clone()
+        model_cfg.defrost()
+        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.NM2R.META_ARCHITECTURE
+        model_cfg.freeze()
+        model = build_model(model_cfg)
+
+        augmentor = NoiseAndMotionModel.from_cfg(cfg)
+
+        return {
+            "model": model,
+            "augmentor": augmentor,
+            "use_supervised_consistency": cfg.MODEL.NM2R.USE_SUPERVISED_CONSISTENCY,
+            "vis_period": cfg.VIS_PERIOD,
+        }

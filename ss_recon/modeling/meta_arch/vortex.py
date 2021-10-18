@@ -4,6 +4,7 @@ import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
+from ss_recon.config.config import configurable
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from ss_recon.transforms.builtin.mri import MRIReconAugmentor
 from ss_recon.utils import complex_utils as cplx
@@ -30,31 +31,35 @@ class VortexModel(nn.Module):
     _version = 1
     _aliases = ["A2RModel"]
 
-    def __init__(self, cfg):
+    @configurable
+    def __init__(
+        self,
+        model: nn.Module,
+        augmentor: MRIReconAugmentor,
+        use_supervised_consistency: bool = False,
+        vis_period: int = -1,
+    ):
+        """
+        Args:
+            model (nn.Module): The base model.
+            augmentor (MRIReconAugmentor): The augmentation module.
+            use_supervised_consistency (bool, optional): If ``True``, use consistency
+                with supervised examples too.
+            vis_period (int, optional): The period over which to visualize images.
+                If ``<=0``, it is ignored. Note if the ``model`` has a ``vis_period``
+                attribute, it will be overridden so that this class handles visualization.
+        """
         super().__init__()
 
-        _logger = logging.getLogger(__name__)
-
-        model_cfg = cfg.clone()
-        model_cfg.defrost()
-        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.A2R.META_ARCHITECTURE
-        model_cfg.freeze()
-        self.model = build_model(model_cfg)
+        self.model = model
+        self.augmentor = augmentor
+        self.use_base_grad = False  # Keep gradient for base images in transform.
+        self.use_supervised_consistency = use_supervised_consistency
 
         # Visualization done by this model
-        if hasattr(self.model, "vis_period"):
+        if hasattr(model, "vis_period") and vis_period > 0:
             self.model.vis_period = -1
-        self.vis_period = cfg.VIS_PERIOD
-
-        # Keep gradient for base images in transform.
-        self.use_base_grad = False
-        # Use supervised examples for consistency
-        self.use_supervised_consistency = cfg.MODEL.A2R.USE_SUPERVISED_CONSISTENCY
-
-        self.augmentor = MRIReconAugmentor.from_cfg(
-            cfg, aug_kind="consistency", device=cfg.MODEL.DEVICE, seed=cfg.SEED
-        )
-        _logger.info("Aug2Recon augmentor:\n{}".format(str(self.augmentor.tfms_or_gens)))
+        self.vis_period = vis_period
 
     def augment(self, inputs, pred_base):
         inputs = move_to_device(inputs, device="cuda")
@@ -191,3 +196,25 @@ class VortexModel(nn.Module):
                 )
 
         return output_dict
+
+    @classmethod
+    def from_config(cls, cfg):
+        _logger = logging.getLogger(__name__)
+
+        model_cfg = cfg.clone()
+        model_cfg.defrost()
+        model_cfg.MODEL.META_ARCHITECTURE = cfg.MODEL.A2R.META_ARCHITECTURE
+        model_cfg.freeze()
+        model = build_model(model_cfg)
+
+        augmentor = MRIReconAugmentor.from_cfg(
+            cfg, aug_kind="consistency", device=cfg.MODEL.DEVICE, seed=cfg.SEED
+        )
+        _logger.info("Built augmentor:\n{}".format(str(augmentor.tfms_or_gens)))
+
+        return {
+            "model": model,
+            "augmentor": augmentor,
+            "use_supervised_consistency": cfg.MODEL.A2R.USE_SUPERVISED_CONSISTENCY,
+            "vis_period": cfg.VIS_PERIOD,
+        }

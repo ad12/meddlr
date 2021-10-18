@@ -18,6 +18,7 @@ import torch
 from torch import nn
 
 import ss_recon.utils.complex_utils as cplx
+from ss_recon.config.config import configurable
 from ss_recon.utils.general import move_to_device
 from ss_recon.utils.transforms import SenseModel
 
@@ -36,24 +37,33 @@ __all__ = ["CSModel"]
 
 @META_ARCH_REGISTRY.register()
 class CSModel(nn.Module):
-    def __init__(self, cfg):
+    @configurable
+    def __init__(self, reg: float, max_iter: int, device="cpu", num_emaps: int = 1):
+        """
+        Args:
+            reg (float): The regularization strength.
+            max_iter (int): Maximum number of iterations.
+            device (str | torch.device, optional): The device to execute on.
+            num_emaps (int, optional): Number of estimated sensitivity maps.
+                Currently only ``1`` is supported.
+        """
         super().__init__()
-        self.device = torch.device(cfg.MODEL.DEVICE)
-        if self.device != torch.device("cpu") and not _CUPY_AVAILABLE:
+        if device != torch.device("cpu") and not _CUPY_AVAILABLE:
             raise ModuleNotFoundError(
-                f"Requested device {self.device}, but cupy not installed. "
+                f"Requested device {device}, but cupy not installed. "
                 f"Install cupy>=9.0 following instructions at "
                 f"https://docs.cupy.dev/en/stable/install.html"
             )
+        self.device = device
 
         # Extract network parameters
-        self.l1_reg = cfg.MODEL.CS.REGULARIZATION
-        self.max_iter = cfg.MODEL.CS.MAX_ITER
+        self.l1_reg = reg
+        self.max_iter = max_iter
 
         # Data dimensions
-        self.num_emaps = cfg.MODEL.UNROLLED.NUM_EMAPS
+        self.num_emaps = num_emaps
         if self.num_emaps != 1:
-            raise ValueError("CS only supports one sensitivity map.")
+            raise ValueError("CS currentlyonly supports one sensitivity map.")
 
     def forward(self, inputs, return_pp=False, vis_training=False):
         """
@@ -141,3 +151,12 @@ class CSModel(nn.Module):
             output_dict["zf_image"] = zf_image
 
         return output_dict
+
+    @classmethod
+    def from_config(cls, cfg):
+        return {
+            "reg": cfg.MODEL.CS.REGULARIZATION,
+            "max_iter": cfg.MODEL.CS.MAX_ITER,
+            "device": cfg.MODEL.DEVICE,
+            "num_emaps": cfg.MODEL.UNROLLED.NUM_EMAPS,
+        }
