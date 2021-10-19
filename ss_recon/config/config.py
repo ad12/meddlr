@@ -100,6 +100,7 @@ class CfgNode(_CfgNode):
 
 
 global_cfg = CfgNode()
+_base_cfg = None
 
 
 def get_cfg() -> CfgNode:
@@ -111,7 +112,20 @@ def get_cfg() -> CfgNode:
     """
     from .defaults import _C
 
-    return _C.clone()
+    cfg = _C if _base_cfg is None else _base_cfg
+    return cfg.clone()
+
+
+def set_cfg(cfg: CfgNode) -> None:
+    """Set the base config object to use.
+
+    This is useful when customizing ss_recon for different projects.
+
+    Args:
+        cfg (CfgNode): Set the base config.
+    """
+    global _base_cfg
+    _base_cfg = cfg
 
 
 def set_global_cfg(cfg: CfgNode) -> None:
