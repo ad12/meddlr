@@ -139,25 +139,6 @@ _PREDEFINED_SPLITS_MRCO["fastMRI_brain_multicoil"] = {
 }
 
 
-_PREDEFINED_SPLITS_MRCO["stanford_qDESS_knee_2020"] = {
-    # 2D qDESS reconstruction dataset
-    # Calibration size: 24x24
-    # Note: This dataset is not yet configured for general use.
-    "stanford_qDESS_knee_2020_v0.1.0_c24_train": (
-        "stanford_qdess_2020/files_recon_calib-24/",
-        "stanford_qdess_2020/annotations/v0.1.0/train.json",
-    ),
-    "stanford_qDESS_knee_2020_v0.1.0_c24_val": (
-        "stanford_qdess_2020/files_recon_calib-24/",
-        "stanford_qdess_2020/annotations/v0.1.0/val.json",
-    ),
-    "stanford_qDESS_knee_2020_v0.1.0_c24_test": (
-        "stanford_qdess_2020/files_recon_calib-24/",
-        "stanford_qdess_2020/annotations/v0.1.0/test.json",
-    ),
-}
-
-
 _METADATA_FILES = {
     "mridata_knee_2019": "ann://mridata_knee_2019/metadata.csv",
     "fastMRI_knee_multicoil": "ann://fastmri/knee_multicoil/fastmri_knee_multicoil_metadata.csv",

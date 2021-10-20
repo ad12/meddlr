@@ -16,6 +16,7 @@ import torch
 __all__ = []
 
 _PT_VERSION = torch.__version__
+_SETTINGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.settings"))
 
 
 def seed_all_rng(seed=None):
@@ -227,3 +228,7 @@ def is_main_process():
     return (py_version < (3, 8) and mp.current_process().name == "MainProcess") or (
         py_version >= (3, 8) and mp.parent_process() is None
     )
+
+
+def settings_dir():
+    return os.environ.get("SS_RECON_SETTINGS", _SETTINGS_DIR)

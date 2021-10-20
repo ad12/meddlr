@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from ss_recon.data.samplers.build import build_train_sampler, build_val_sampler
 
 from .catalog import DatasetCatalog
-from .slice_dataset import SliceData, collate_by_supervision, default_collate, qDESSSliceDataset
+from .slice_dataset import SliceData, collate_by_supervision, default_collate
 from .transforms import transform as T
 from .transforms.subsample import build_mask_func
 
@@ -173,8 +173,6 @@ def _get_default_dataset_type(dataset_name):
 
     TODO: This function and its call hierarchy need to be refactored.
     """
-    if "stanford_qDESS" in dataset_name:
-        return qDESSSliceDataset
     return SliceData
 
 

@@ -2,111 +2,251 @@
 
 DO NOT MOVE THIS FILE.
 """
-import getpass
 import os
 import re
 import socket
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import List
+from typing import Any, Dict, List, Sequence, Union
 
+import yaml
 from fvcore.common.file_io import PathHandler, PathManager
+
+from .env import settings_dir
 
 # Path to the repository directory.
 # TODO: make this cleaner
 _REPO_DIR = os.path.join(os.path.dirname(__file__), "../..")
 
 
-class Cluster(Enum):
-    """Hacky way to keep track of the cluster you are working on.
+class Cluster:
+    """Manages configurations for different nodes/clusters.
 
-    To identify the cluster, we inspect the hostname.
-    This can be problematic if two clusters have the same hostname, though
+    This class is helpful for managing different cluster configurations
+    (e.g. storage paths) across different nodes/clusters without the
+    overhead of duplicating the codebase across multiple nodes.
+
+    A cluster is defined as a combination of a set of nodes (i.e. machines)
+    that share configuration properties, such as storage paths. This class helps
+    manage the configuration properties of these sets of nodes together. For example,
+    let's say machines with hostnames *nodeA* and *nodeB* share some data and results
+    paths. We can define a new cluster *MyCluster* to manage these:
+
+    >>> cluster = Cluster(
+    ...     'MyCluster', patterns=['nodeA', 'nodeB'],
+    ...     data_dir="/path/to/datasets", results_dir="/path/to/results"
+    ... )
+
+    To use the configurations of a particular cluster, set the working cluster:
+
+    >>> Cluster.set_working_cluster(cluster)
+
+    Configs can be persisted by saving to a file. If the config has been saved,
+    future sessions will attempt to auto-detect the set of saved configs:
+
+    >>> cluster.save()  # save cluster configuration to file
+    >>> cluster.delete()  # deletes cluster configuration from file
+
+    To get the file where the configs are stored, run:
+
+    >>> Cluster.config_file()  # get the config file for the cluster
+
+    To identify the cluster config to use, we inspect the hostname of the current node.
+    This can be problematic if two machines have the same hostname, though
     this has not been an issue as of yet.
 
-    DO NOT use the machine's public ip address to identify it. While this is
-    definitely more robust, there are security issues associated with this.
+    Note:
+        DO NOT use the machine's public ip address to identify it. While this is
+        definitely more robust, there are security issues associated with this.
 
-    Useful for developing with multiple people working on same and different
-    machines.
+    Note:
+        This class is not thread safe. Saving/deleting configs should be done on
+        the main thread.
     """
 
-    UNKNOWN = 0, []
-    ROMA = 1, ["roma"]
-    VIGATA = 2, ["vigata"]
-    NERO = 3, ["slurm-gpu-compute.*"]
-    SHERLOCK = 4, ["sh[0-9]+.*"]
-    SAIL = 5, ["sc.*stanford.edu", "pasteur[0-9].stanford.edu"]
-    HARBIN = 6, ["harbin"]
-    MRLEARNING = 7, ["mrlearning"]
-    AUTOFOCUS = 8, ["autofocus"]
-    SIENA = 9, ["siena"]
-    TORINO = 10, ["torino"]
-    CINE = 11, ["cine"]
-    SPIRAL = 12, ["spiral"]
-    MOTION = 13, ["motion"]
-    LOWRANK = 14, ["lowrank"]
-    STELVIO = 15, ["stelvio"]
-
-    def __new__(cls, value: int, patterns: List[str]):
+    def __init__(
+        self,
+        name: str,
+        patterns: Union[str, Sequence[str]],
+        data_dir: str = None,
+        results_dir: str = None,
+        **cfg_kwargs,
+    ):
         """
         Args:
-            value (int): Unique integer value.
-            patterns (`List[str]`): List of regex patterns that would match the
-                hostname on the compute cluster. There can be multiple hostnames
-                per compute cluster because of the different nodes.
+            name (str): The name of the cluster. Name is case-sensitive.
+            patterns (Sequence[str]): Regex pattern(s) for identifying nodes
+                in the cluster. Cluster will be identified by
+                ``any(re.match(p, socket.gethostname()) for p in patterns)``.
+            data_dir (str, optional): The data directory. Defaults to
+                ``os.environ['SSRECON_DATASETS_DIR']`` or ``"./datasets"``.
+            results_dir (str, optional): The results directory. Defaults to
+                `"os.environ['SSRECON_RESULTS_DIR']"` or ``"./results"``.
+            cfg_kwargs (optional): Any other configurations you would like to
+                store for the cluster.
         """
-        obj = object.__new__(cls)
-        obj._value_ = value
+        self.name = name
 
-        obj.patterns = patterns
-        obj.dir_map = {}
+        if isinstance(patterns, str):
+            patterns = patterns
+        self.patterns = patterns
 
-        return obj
+        self._data_dir = data_dir
+        self._results_dir = results_dir
+        self._cfg_kwargs = cfg_kwargs
+
+    @property
+    def data_dir(self):
+        path = self._data_dir
+        if not path:
+            path = os.environ.get("SSRECON_DATASETS_DIR", "./datasets")
+        return PathManager.get_local_path(path)
+
+    @property
+    def results_dir(self):
+        path = self._results_dir
+        if not path:
+            path = os.environ.get("SSRECON_RESULTS_DIR", "./results")
+        return PathManager.get_local_path(path)
+
+    def __getattr__(self, attr: str):
+        attr_env = f"SSRECON_{attr.upper()}"
+        try:
+            value = self._cfg_kwargs.get(attr, os.environ[attr_env])
+        except KeyError:
+            raise AttributeError(f"Attribute {attr} not specified for cluster {self.name}.")
+        return value
+
+    def save(self):
+        """Save cluster config to yaml file."""
+        filepath = self.config_file()
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        cluster_cfgs = {}
+        if os.path.isfile(filepath):
+            with open(filepath, "r") as f:
+                cluster_cfgs = yaml.safe_load(f)
+
+        data = {(k[1:] if k.startswith("_") else k): v for k, v in self.__dict__.items()}
+        cluster_cfgs[self.name] = data
+
+        with open(filepath, "w") as f:
+            yaml.safe_dump(cluster_cfgs, f)
+
+    def delete(self):
+        """Deletes cluster config from yaml file."""
+        filepath = self.config_file()
+        if not os.path.isfile(filepath):
+            return
+
+        with open(filepath, "r") as f:
+            cluster_cfgs: Dict[str, Any] = yaml.safe_load(f)
+
+        if self.name not in cluster_cfgs:
+            return
+
+        cluster_cfgs.pop(self.name)
+        with open(filepath, "w") as f:
+            yaml.safe_dump(cluster_cfgs, f)
+
+    def get_path(self, key):
+        """Legacy method for fetching cluster-specific paths."""
+        return getattr(self, key)
+
+    @classmethod
+    def all_clusters(cls) -> List["Cluster"]:
+        return cls.from_config(name=None)
 
     @classmethod
     def cluster(cls):
+        """Searches saved clusters by regex matching with hostname.
+
+        Returns:
+            Cluster: The current cluster.
+
+        Note:
+            The cluster must have been saved to a config file. Also, if
+            there are multiple cluster matches, only the first (sorted alphabetically)
+            will be returned.
+        """
+        try:
+            clusters = cls.all_clusters()
+        except FileNotFoundError:
+            return _UNKNOWN
         hostname = socket.gethostname()
+        for clus in clusters:
+            if any(re.match(p, hostname) for p in clus.patterns):
+                return clus
+        return _UNKNOWN
 
-        for clus in cls:
-            for p in clus.patterns:
-                if re.match(p, hostname):
-                    return clus
-
-        return cls.UNKNOWN
-
-    def register_user(self, user_id: str, data_dir: str = "", results_dir: str = ""):
-        """Register user preferences for paths.
+    @classmethod
+    def from_config(cls, name):
+        """Loads cluster from config.
 
         Args:
-            user_id (str): User id found on the machine.
-            data_dir (str): Default data directory.
-                Paths starting with "data://" will be formated to this
-                directory as the root. For example if `data_dir=/my/path`,
-                then file path "data://data1" will be "/my/path/data1".
-            results_dir (str): Default results directory.
-                Performance is like that of data_dir expect with "results://"
-                prefix.
+            name (str | Sequence[str] | None): Cluster name(s) to load.
+                If ``None``, all clusters will be loaded.
+
+        Returns:
+            Cluster: The Cluster object(s).
         """
-        if not data_dir:
-            data_dir = os.path.abspath(os.path.join(_REPO_DIR, "datasets"))
-        if not results_dir:
-            results_dir = os.path.abspath(os.path.join(_REPO_DIR, "results"))
+        filepath = cls.config_file()
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(f"Config file not found: {filepath}")
 
-        self.dir_map[user_id] = {
-            "data_dir": data_dir,
-            "results_dir": results_dir,
-        }
+        with open(filepath, "r") as f:
+            cfg = yaml.safe_load(f)
 
-    def get_path(self, key):
-        user_id = getpass.getuser()
-        if user_id not in self.dir_map:
-            raise ValueError("User {} is not registered on cluster {}".format(user_id, self.name))
-        return self.dir_map[user_id][key]
+        if name is None:
+            return [cls(**cluster_cfg) for cluster_cfg in cfg.values()]
+        elif isinstance(name, str):
+            return cls(**cfg[name])
+        else:
+            return type(name)([cls(**cfg[n]) for n in name])
+
+    @staticmethod
+    def config_file():
+        return os.path.join(settings_dir(), "clusters.yaml")
+
+    @staticmethod
+    def working_cluster() -> "Cluster":
+        return _CLUSTER
+
+    @staticmethod
+    def set_working_cluster(cluster=None):
+        """Sets the working cluster.
+        Args:
+            cluster (`str` or `Cluster`): The cluster name or cluster.
+                If ``None``, will reset cluster to _UNKNOWN, meaning default
+                data and results dirs will be used.
+        """
+        set_cluster(cluster)
+
+    def __repr__(self):
+        return "Cluster({})".format(
+            ", ".join("{}={}".format(k, v) for k, v in self.__dict__.items())
+        )
 
 
-# Environment variable for the current cluster that is being used.
-CLUSTER = Cluster.cluster()
+def set_cluster(cluster: Union[str, Cluster] = None):
+    """Sets the working cluster.
+    Args:
+        cluster (`str` or `Cluster`): The cluster name or cluster.
+            If ``None``, will reset cluster to _UNKNOWN, meaning default
+            data and results dirs will be used.
+    """
+    if cluster is None:
+        cluster = _UNKNOWN
+    elif isinstance(cluster, str):
+        if cluster.lower() == _UNKNOWN.name.lower():
+            cluster = _UNKNOWN
+        else:
+            cluster = Cluster.from_config(cluster)
+    global _CLUSTER
+    _CLUSTER = cluster
+
+
+_UNKNOWN = Cluster("UNKNOWN", [])  # Unknown cluster
+_CLUSTER = Cluster.cluster()  # Working cluster
 
 
 class GeneralPathHandler(PathHandler, ABC):
@@ -134,14 +274,14 @@ class DataHandler(GeneralPathHandler):
     PREFIX = "data://"
 
     def _root_dir(self):
-        return CLUSTER.get_path("data_dir")
+        return _CLUSTER.get_path("data_dir")
 
 
 class ResultsHandler(GeneralPathHandler):
     PREFIX = "results://"
 
     def _root_dir(self):
-        return CLUSTER.get_path("results_dir")
+        return _CLUSTER.get_path("results_dir")
 
 
 class AnnotationsHandler(GeneralPathHandler):
@@ -154,100 +294,3 @@ class AnnotationsHandler(GeneralPathHandler):
 PathManager.register_handler(DataHandler())
 PathManager.register_handler(ResultsHandler())
 PathManager.register_handler(AnnotationsHandler())
-
-# Paths are in order data, results
-_USER_PATHS = {
-    "arjundd": {
-        CLUSTER.ROMA: (
-            "/dataNAS/people/arjun/data",
-            "/bmrNAS/people/arjun/results/ss_recon",
-        ),
-        CLUSTER.VIGATA: (
-            "/dataNAS/people/arjun/data",
-            "/bmrNAS/people/arjun/results/ss_recon",
-        ),
-        CLUSTER.NERO: (
-            "/share/pi/bah/data",
-            "/share/pi/bah/arjundd/results/ss_recon",
-        ),
-        CLUSTER.SIENA: (
-            # "/data/datasets",  # mounted on siena only
-            "/dataNAS/people/arjun/data",
-            "/bmrNAS/people/arjun/results/ss_recon",
-        ),
-        CLUSTER.TORINO: (
-            "/dataNAS/people/arjun/data",
-            "/bmrNAS/people/arjun/results/ss_recon",
-        ),
-        CLUSTER.STELVIO: (
-            "/data/arjundd/data",
-            "/data/arjundd/results/ss_recon",
-        ),
-    },
-    "ozt": {
-        CLUSTER.HARBIN: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
-        ),
-        CLUSTER.MRLEARNING: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
-        ),
-        CLUSTER.AUTOFOCUS: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
-        ),
-        CLUSTER.CINE: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
-        ),
-        CLUSTER.LOWRANK: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
-        ),
-        CLUSTER.MOTION: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
-        ),
-        CLUSTER.SPIRAL: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/ozt/dl-ss-recon/results/ss_recon",
-        ),
-    },
-    "bgunel": {
-        CLUSTER.ROMA: (
-            "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/",
-        ),
-        CLUSTER.VIGATA: (
-            "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/",
-        ),
-        CLUSTER.SIENA: (
-            "/dataNAS/people/arjun/data",  # mounted on siena only
-            "/dataNAS/people/bgunel/results/",
-        ),
-        CLUSTER.TORINO: (
-            "/dataNAS/people/arjun/data",
-            "/dataNAS/people/bgunel/results/",
-        ),
-    },
-    "harris": {
-        CLUSTER.SPIRAL: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/harris/results",
-        ),
-        CLUSTER.HARBIN: (
-            "/mnt/dense/ozt/dl-ss-recon/data",
-            "/mnt/dense/harris/results",
-        ),
-    }
-    # New users add path preference below.
-}
-
-
-# Register default user paths.
-_USER = getpass.getuser()
-if _USER in _USER_PATHS:
-    for cluster, (data_dir, results_dir) in _USER_PATHS[_USER].items():
-        cluster.register_user(_USER, data_dir, results_dir)

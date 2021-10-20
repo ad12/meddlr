@@ -47,3 +47,6 @@ slurm*.out
 # coverage files
 .coverage
 coverage.xml
+
+# settings dir
+**/.settings
