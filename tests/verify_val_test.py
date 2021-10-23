@@ -32,7 +32,7 @@ import torch
 from fvcore.common.file_io import PathManager
 from tqdm import tqdm
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 from ss_recon.checkpoint.detection_checkpoint import DetectionCheckpointer
 from ss_recon.config import get_cfg
 from ss_recon.engine import DefaultTrainer, default_setup

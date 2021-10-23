@@ -9,7 +9,7 @@ import torchvision.utils as tv_utils
 from torch import nn
 from torch.nn import functional as F
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 from ss_recon.config.config import configurable
 from ss_recon.utils import transforms as T
 from ss_recon.utils.events import get_event_storage

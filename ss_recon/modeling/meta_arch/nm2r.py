@@ -5,7 +5,7 @@ from torch import nn
 from ss_recon.config.config import configurable
 from ss_recon.data.transforms.noiseandmotion import NoiseAndMotionModel
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops.functional import complex as cplx
 from ss_recon.utils.events import get_event_storage
 
 

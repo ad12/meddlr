@@ -4,7 +4,7 @@ import torch
 from fvcore.common.registry import Registry
 
 from ss_recon.data.transforms.transform import build_normalizer
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops.functional import complex as cplx
 from ss_recon.utils import transforms as T
 
 LOSS_COMPUTER_REGISTRY = Registry("LOSS_COMPUTER")  # noqa F401 isort:skip

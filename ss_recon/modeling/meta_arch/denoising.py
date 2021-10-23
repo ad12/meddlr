@@ -4,7 +4,7 @@ import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 from ss_recon.config.config import configurable
 from ss_recon.data.transforms.noise import NoiseModel
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model

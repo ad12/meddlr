@@ -10,7 +10,6 @@ from skimage.metrics import structural_similarity
 from tqdm import tqdm
 
 from ss_recon.data.transforms.transform import build_normalizer
-from ss_recon.evaluation.metrics import compute_mse  # noqa: F401
 from ss_recon.evaluation.metrics import (
     compute_l2,
     compute_nrmse,
@@ -18,7 +17,7 @@ from ss_recon.evaluation.metrics import (
     compute_ssim,
     compute_vifp_mscale,
 )
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops.functional import complex as cplx
 from ss_recon.utils.transforms import center_crop
 
 from .evaluator import DatasetEvaluator

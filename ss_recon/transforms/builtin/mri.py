@@ -1,7 +1,7 @@
 from numbers import Number
 from typing import Dict, Sequence, Union
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 import ss_recon.utils.transforms as T
 from ss_recon.data.transforms.transform import Normalizer
 from ss_recon.evaluation.testing import flatten_results_dict

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 from PIL import Image
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.mixins import GeometricMixin
 from ss_recon.transforms.transform import Transform

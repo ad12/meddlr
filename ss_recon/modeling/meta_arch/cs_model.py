@@ -17,7 +17,7 @@ import sigpy.mri as mr
 import torch
 from torch import nn
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 from ss_recon.config.config import configurable
 from ss_recon.utils.general import move_to_device
 from ss_recon.utils.transforms import SenseModel

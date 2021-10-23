@@ -9,7 +9,7 @@ import scipy as scp
 import torch
 from skimage.metrics import structural_similarity
 
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops.functional import complex as cplx
 
 # Mapping from str to complex function name.
 _IM_TYPES_TO_FUNCS = {

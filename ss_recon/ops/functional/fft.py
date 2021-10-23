@@ -3,7 +3,7 @@ from typing import Sequence
 import numpy as np
 import torch
 
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops.functional import complex as cplx
 from ss_recon.utils import env
 
 if env.pt_version() >= [1, 6]:

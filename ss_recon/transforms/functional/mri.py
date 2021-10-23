@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 
 
 def add_even_odd_motion(

@@ -5,7 +5,7 @@ import torch
 
 from ss_recon.config import get_cfg
 from ss_recon.data.build import build_data_loaders_per_scan
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops.functional import complex as cplx
 
 
 @unittest.skipIf(

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import torch
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 from ss_recon.transforms.base import KspaceMaskTransform
 
 from ..mock import generate_mock_mri_data

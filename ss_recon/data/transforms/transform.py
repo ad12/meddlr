@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops.functional import complex as cplx
 from ss_recon.utils import transforms as T
 
 from .motion import MotionModel

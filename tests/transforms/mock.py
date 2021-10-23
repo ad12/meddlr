@@ -1,6 +1,6 @@
 import torch
 
-import ss_recon.utils.complex_utils as cplx
+import ss_recon.ops.functional.complex as cplx
 import ss_recon.utils.transforms as T
 from ss_recon.transforms.tf_scheduler import SchedulableMixin
 
