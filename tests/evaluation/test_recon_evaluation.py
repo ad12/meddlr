@@ -86,7 +86,8 @@ class TestReconEvaluator(unittest.TestCase):
             "target": torch.rand(384, 384, 1, 2),
         }
         vals = evaluator.evaluate_prediction(prediction)
-        expected = evaluator.evaluate_prediction_old(prediction)
+        with self.assertWarns(DeprecationWarning):
+            expected = evaluator.evaluate_prediction_old(prediction)
 
         # Maps from old strings to new strings
         key_mapping = {

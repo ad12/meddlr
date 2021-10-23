@@ -52,7 +52,7 @@ class GroupSampler(Sampler):
         if batch_by and not batch_size:
             raise ValueError("`batch_size` must be specified if `batched=True`")
         if batch_by and not as_batch_sampler:
-            logger.warn(
+            logger.warning(
                 "Using `batch_by` without batch sampling functionality. "
                 "To use as a batch sampler, set `as_batch_sampler=True`."
             )
