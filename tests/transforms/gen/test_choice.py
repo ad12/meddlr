@@ -13,6 +13,7 @@ class TestRandomTransformChoice(unittest.TestCase):
     def test_basic(self):
         tfms_or_gens = [RandomRot90(p=1.0), AffineTransform(angle=12)]
         choice = RandomTransformChoice(tfms_or_gens=tfms_or_gens, tfm_ps="uniform", p=1.0)
+        choice.seed(1)
 
         num_samples = 200
         tfms = [type(choice.get_transform()).__name__ for _ in range(num_samples)]
@@ -45,6 +46,7 @@ class TestRandomTransformChoice(unittest.TestCase):
             [RandomFlip(ndim=2, p=1.0), RandomTranslation(p=1.0, translate=[0.1, 0.2])],
         ]
         choice = RandomTransformChoice(tfms_or_gens=tfms_or_gens, tfm_ps="uniform", p=1.0)
+        choice.seed(1)
 
         sch1 = WarmupTF(tfms_or_gens[-1][0], params=["p"], warmup_iters=100)
         tfms_or_gens[-1][0].register_schedulers(sch1)
