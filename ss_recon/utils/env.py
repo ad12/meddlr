@@ -17,6 +17,7 @@ __all__ = []
 
 _PT_VERSION = torch.__version__
 _SETTINGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.settings"))
+_SUPPORTED_PACKAGES = {}
 
 
 def seed_all_rng(seed=None):
@@ -168,12 +169,35 @@ def get_world_size():
     return len(gpu_ids)
 
 
+def package_available(name: str):
+    """Returns if package is available.
+
+    Args:
+        name (str): Name of the package.
+
+    Returns:
+        bool: Whether module exists in environment.
+    """
+    global _SUPPORTED_PACKAGES
+    if name not in _SUPPORTED_PACKAGES:
+        _SUPPORTED_PACKAGES[name] = importlib.util.find_spec(name) is not None
+    return _SUPPORTED_PACKAGES[name]
+
+
 def is_debug() -> bool:
     return os.environ.get("SSRECON_DEBUG", "") == "True"
 
 
+def is_pt_lightning() -> bool:
+    return os.environ.get("SSRECON_PT_LIGHTNING", "") == "True"
+
+
 def is_repro() -> bool:
     return os.environ.get("SSRECON_REPRO", "") == "True"
+
+
+def is_profiling_enabled() -> bool:
+    return os.environ.get("SSRECON_PROFILE", "True") == "True"
 
 
 def profile_memory() -> bool:
@@ -182,6 +206,20 @@ def profile_memory() -> bool:
 
 def supports_wandb():
     return "wandb" in sys.modules and not is_debug()
+
+
+def supports_d2() -> bool:
+    """Supports detectron2."""
+    return "detectron2" in sys.modules
+
+
+def supports_cupy():
+    if "cupy" not in _SUPPORTED_PACKAGES:
+        try:
+            import cupy  # noqa
+        except ImportError:
+            _SUPPORTED_PACKAGES["cupy"] = False
+    return package_available("cupy")
 
 
 def pt_version(dtype=int) -> List:

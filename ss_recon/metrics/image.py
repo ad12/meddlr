@@ -13,7 +13,7 @@ from skimage.metrics import structural_similarity
 
 import ss_recon.metrics.functional as mF
 from ss_recon.metrics.metric import Metric
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops import complex as cplx
 
 # Mapping from str to complex function name.
 _IM_TYPES_TO_FUNCS = {

@@ -53,7 +53,7 @@ _BUILTIN_METRICS = {
 # fmt: on
 
 
-def build_metrics(metric_names, fmt=None, **kwargs) -> MetricCollection:
+def build_metrics(metric_names, fmt: str = None, **kwargs) -> MetricCollection:
     metrics = {}
     for name in metric_names:
         if name not in _BUILTIN_METRICS.keys():

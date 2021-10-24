@@ -53,7 +53,7 @@ setup(
         "tensorboard",
         "fvcore",
         "mridata",
-        "scikit-image",
+        "scikit-image>=0.18.2",
         "sigpy>=0.1.17",
         "ismrmrd",
         "pandas",

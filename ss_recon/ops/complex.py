@@ -142,6 +142,28 @@ def angle(x, eps=1e-11):
         return torch.atan(x[..., 1] / (x[..., 0] + eps))
 
 
+def real(x):
+    """
+    Gets real component of complex tensor.
+    """
+    assert is_complex_as_real(x) or is_complex(x)
+    if is_complex(x):
+        return x.real
+    else:
+        return x[..., 0]
+
+
+def imag(x):
+    """
+    Gets imaginary component of complex tensor.
+    """
+    assert is_complex_as_real(x) or is_complex(x)
+    if is_complex(x):
+        return x.imag
+    else:
+        return x[..., 1]
+
+
 def from_polar(magnitude, phase, return_cplx: bool = False):
     """
     Computes real and imaginary values from polar representation.
@@ -153,6 +175,14 @@ def from_polar(magnitude, phase, return_cplx: bool = False):
     real = magnitude * torch.cos(phase)
     imag = magnitude * torch.sin(phase)
     return torch.stack((real, imag), dim=-1)
+
+
+def channel_first(x: torch.Tensor):
+    assert is_complex_as_real(x) or is_complex(x)
+    if is_complex(x):
+        return x.permute((0, x.ndim - 1) + tuple(range(1, x.ndim - 1)))
+    else:
+        return x.permute((0, x.ndim - 2) + tuple(range(1, x.ndim - 2)) + (x.ndim - 1,))
 
 
 def get_mask(x, eps=1e-11):

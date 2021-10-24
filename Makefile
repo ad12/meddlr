@@ -16,5 +16,6 @@ test:
 
 dev:
 	pip install --upgrade black coverage isort flake8 flake8-bugbear flake8-comprehensions
+	pip install --upgrade pooch
 
 all: autoformat test build-docs

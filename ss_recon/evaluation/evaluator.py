@@ -4,6 +4,7 @@ import logging
 import time
 from collections import OrderedDict
 from contextlib import contextmanager
+from typing import Mapping, Sequence
 
 import torch
 
@@ -62,21 +63,35 @@ class DatasetEvaluators(DatasetEvaluator):
     def __init__(self, evaluators, as_list=False):
         assert len(evaluators)
         super().__init__()
-        evaluators = [x for x in evaluators if x is not None]
+        if isinstance(evaluators, Mapping):
+            evaluators = {k: v for k, v in evaluators.items() if v is not None}
+        else:
+            evaluators = [x for x in evaluators if x is not None]
         self._evaluators = evaluators
         self._as_list = as_list
 
+    def items(self):
+        if isinstance(self._evaluators, Mapping):
+            return self._evaluators.items()
+        return list(enumerate(self._evaluators))
+
+    def values(self) -> Sequence[DatasetEvaluator]:
+        if isinstance(self._evaluators, Mapping):
+            return self._evaluators.values()
+        else:
+            return self._evaluators
+
     def reset(self):
-        for evaluator in self._evaluators:
+        for evaluator in self.values():
             evaluator.reset()
 
     def process(self, input, output):
-        for evaluator in self._evaluators:
+        for evaluator in self.values():
             evaluator.process(input, output)
 
     def evaluate(self):
         results = [] if self._as_list else OrderedDict()
-        for evaluator in self._evaluators:
+        for evaluator in self.values():
             result = evaluator.evaluate()
             if self._as_list:
                 if result is not None:
@@ -90,6 +105,19 @@ class DatasetEvaluators(DatasetEvaluator):
                     ), "Different evaluators produce results " "with the same key {}".format(k)
                     results[k] = v
         return results
+
+    def __getitem__(self, index):
+        if isinstance(index, str):
+            if not isinstance(self._evaluators, Mapping):
+                raise ValueError("Cannot index sequence of evaluators with string key.")
+            return self._evaluators[index]
+        if isinstance(self._evaluators, Mapping):
+            return list(self.values())[index]
+        else:
+            return self._evaluators[index]
+
+    def __len__(self):
+        return len(self._evaluators)
 
 
 def inference_on_dataset(model, data_loader, evaluator):
@@ -167,7 +195,9 @@ def inference_on_dataset(model, data_loader, evaluator):
     logger.info(
         "Total inference pure compute time: "
         "{} ({:.6f} s / batch on {} devices)".format(
-            total_compute_time_str, total_compute_time / (total - num_warmup), num_devices
+            total_compute_time_str,
+            total_compute_time / (total - num_warmup),
+            num_devices,
         )
     )
 

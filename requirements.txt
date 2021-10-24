@@ -9,7 +9,7 @@ pyxb
 ismrmrd
 tqdm
 cupy
-scikit-image
+scikit-image>=0.18.2
 pandas
 silx
 torchmetrics>=0.5.1

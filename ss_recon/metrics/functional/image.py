@@ -11,7 +11,7 @@ import torch
 import torch.nn.functional as F
 from torchmetrics.functional.image.ssim import _gaussian
 
-from ss_recon.utils import complex_utils as cplx
+from ss_recon.ops import complex as cplx
 
 __all__ = ["mse", "rmse", "psnr", "nrmse", "l2_norm", "ssim"]
 
