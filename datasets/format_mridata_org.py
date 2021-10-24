@@ -38,8 +38,8 @@ from sigpy.mri import app
 from tqdm import tqdm
 from utils import fftc
 
+from ss_recon.forward import SenseModel
 from ss_recon.ops import complex as cplx
-from ss_recon.utils import transforms as T
 from ss_recon.utils.logger import setup_logger
 
 _FILE_DIR = os.path.dirname(__file__)
@@ -162,7 +162,7 @@ def process_slice(kspace, calib_method="jsense", calib_size: int = 20, device: i
     maps_tensor = cplx.to_tensor(maps).unsqueeze(0)  # 1 x Ky x Kz x #coils
 
     # Do coil combination using sensitivity maps (PyTorch)
-    A = T.SenseModel(maps_tensor)
+    A = SenseModel(maps_tensor)
     im_tensor = A(kspace_tensor, adjoint=True)
 
     # Convert tensor back to numpy array

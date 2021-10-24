@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
+from ss_recon.forward import SenseModel
 from ss_recon.ops import complex as cplx
 from ss_recon.utils import transforms as T
 
@@ -309,7 +310,7 @@ class DataTransform:
 
         # Zero-filled Sense Recon.
         if torch.is_complex(target_init):
-            A = T.SenseModel(maps, weights=mask)
+            A = SenseModel(maps, weights=mask)
             image = A(masked_kspace, adjoint=True)
         # Zero-filled RSS Recon.
         else:

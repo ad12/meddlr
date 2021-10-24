@@ -12,6 +12,7 @@ if env.pt_version() >= [1, 6]:
     import torch.fft
 
 
+@deprecated(vremoved="0.1.0", replacement="forward.SenseModel")
 class SenseModel(nn.Module):
     """
     A module that computes forward and adjoint SENSE operations.

@@ -2,9 +2,9 @@ from numbers import Number
 from typing import Dict, Sequence, Union
 
 import ss_recon.ops.complex as cplx
-import ss_recon.utils.transforms as T
 from ss_recon.data.transforms.transform import Normalizer
 from ss_recon.evaluation.testing import flatten_results_dict
+from ss_recon.forward import SenseModel
 from ss_recon.transforms.build import (
     build_iter_func,
     build_scheduler,
@@ -75,7 +75,7 @@ class MRIReconAugmentor(DeviceMixin):
         if use_img:
             if mask is True:
                 mask = cplx.get_mask(kspace)
-            A = T.SenseModel(maps, weights=mask)
+            A = SenseModel(maps, weights=mask)
             img = A(kspace, adjoint=True)
 
         if len(tfms_equivariant) > 0:
@@ -86,12 +86,12 @@ class MRIReconAugmentor(DeviceMixin):
             img, target, maps = self._permute_data(img, target, maps, spatial_last=False)
 
         if len(tfms_equivariant) > 0:
-            A = T.SenseModel(maps)
+            A = SenseModel(maps)
             kspace = A(img)
 
         if mask_gen is not None:
             kspace, mask = mask_gen(kspace)
-            img = T.SenseModel(maps, weights=mask)(kspace, adjoint=True)
+            img = SenseModel(maps, weights=mask)(kspace, adjoint=True)
 
         if normalizer:
             normalized = normalizer.normalize(
