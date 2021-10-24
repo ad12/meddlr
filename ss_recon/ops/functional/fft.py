@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops.functional.utils import roll
 from ss_recon.utils import env
 
 if env.pt_version() >= [1, 6]:
@@ -164,23 +165,6 @@ def ifft3c(input, channels_last=False, norm: str = "ortho", is_real: bool = None
     """
     dim = _get_fft_dims(input, 3, is_real=is_real, channels_last=channels_last)
     return ifftnc(input, dim=dim, norm=norm, is_real=is_real)
-
-
-def roll(x, shift, dim):
-    """
-    Similar to np.roll but applies to PyTorch Tensors
-    """
-    if isinstance(shift, (tuple, list)):
-        assert len(shift) == len(dim)
-        for s, d in zip(shift, dim):
-            x = roll(x, s, d)
-        return x
-    shift = shift % x.size(dim)
-    if shift == 0:
-        return x
-    left = x.narrow(dim, 0, x.size(dim) - shift)
-    right = x.narrow(dim, x.size(dim) - shift, shift)
-    return torch.cat((right, left), dim=dim)
 
 
 def fftshift(x, dim=None):

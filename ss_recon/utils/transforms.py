@@ -1,11 +1,12 @@
 from typing import Sequence
 
 import torch
-import torch.nn.functional as F
 from torch import nn
 
+import ss_recon.ops.functional as oF
 from ss_recon.ops.functional import complex as cplx
 from ss_recon.utils import env
+from ss_recon.utils.deprecated import deprecated
 
 if env.pt_version() >= [1, 6]:
     import torch.fft
@@ -97,6 +98,7 @@ class SenseModel(nn.Module):
         return output
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.fft2c")
 def fft2(data):
     """
     Apply centered 2 dimensional Fast Fourier Transform.
@@ -107,6 +109,7 @@ def fft2(data):
     Returns:
         torch.Tensor: The FFT of the input.
     """
+
     assert data.size(-1) == 2 or env.supports_cplx_tensor()
     if data.size(-1) != 2:
         # Complex tensors supported
@@ -142,6 +145,7 @@ def fft2(data):
     return data
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.ifft2c")
 def ifft2(data):
     """
     Apply centered 2-dimensional Inverse Fast Fourier Transform.
@@ -187,6 +191,7 @@ def ifft2(data):
     return data
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.complex.rss")
 def root_sum_of_squares(x, dim=0):
     """
     Compute the root sum-of-squares (RSS) transform along a given dimension of
@@ -196,30 +201,24 @@ def root_sum_of_squares(x, dim=0):
     return torch.sqrt((x ** 2).sum(dim=-1).sum(dim))
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.time_average")
 def time_average(data, dim, eps=1e-6, keepdim=True):
     """
     Computes time average across a specified axis.
     """
-    mask = cplx.get_mask(data)
-    return data.sum(dim, keepdim=keepdim) / (mask.sum(dim, keepdim=keepdim) + eps)
+    return oF.time_average(data, dim, eps=eps, keepdim=keepdim)
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.sliding_window")
 def sliding_window(data, dim, window_size):
     """
     Computes sliding window with circular boundary conditions across a specified
     axis.
     """
-    assert 0 < window_size <= data.shape[dim]
-
-    windows = [None] * data.shape[dim]
-    for i in range(data.shape[dim]):
-        data_slide = roll(data, int(window_size / 2) - i, dim)
-        window = data_slide.narrow(dim, 0, window_size)
-        windows[i] = time_average(window, dim)
-
-    return torch.cat(windows, dim=dim)
+    return oF.sliding_window(data, dim, window_size)
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.center_crop")
 def center_crop(data, shape):
     """
     Apply a center crop to a batch of images.
@@ -228,16 +227,13 @@ def center_crop(data, shape):
         shape (list of ints): The output shape. If shape[dim] = -1, then no crop
             will be applied in that dimension.
     """
-    for i in range(len(shape)):
-        if (shape[i] == data.shape[i]) or (shape[i] == -1):
-            continue
-        assert 0 < shape[i] <= data.shape[i]
-        idx_start = (data.shape[i] - shape[i]) // 2
-        data = data.narrow(i, idx_start, shape[i])
-
-    return data
+    return oF.center_crop(data, shape)
 
 
+@deprecated(
+    vremoved="0.1.0",
+    replacement="ops.functional.complex.complex_center_crop_2d",
+)
 def complex_center_crop_2d(data, shape):
     """
     Apply a center crop to the input image or batch of complex images.
@@ -259,6 +255,10 @@ def complex_center_crop_2d(data, shape):
     return data[..., w_from:w_to, h_from:h_to, :]
 
 
+@deprecated(
+    vremoved="0.1.0",
+    replacement="ops.functional.normalize",
+)
 def normalize(data, mean, stddev, eps=0.0):
     """
     Normalize the given tensor using:
@@ -274,6 +274,10 @@ def normalize(data, mean, stddev, eps=0.0):
     return (data - mean) / (stddev + eps)
 
 
+@deprecated(
+    vremoved="0.1.0",
+    replacement="ops.functional.normalize_instance",
+)
 def normalize_instance(data, eps=0.0):
     """
     Normalize the given tensor using:
@@ -293,51 +297,31 @@ def normalize_instance(data, eps=0.0):
 # Helper functions
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.complex.center_crop")
 def roll(x, shift, dim):
     """
     Similar to np.roll but applies to PyTorch Tensors
     """
-    if isinstance(shift, (tuple, list)):
-        assert len(shift) == len(dim)
-        for s, d in zip(shift, dim):
-            x = roll(x, s, d)
-        return x
-    shift = shift % x.size(dim)
-    if shift == 0:
-        return x
-    left = x.narrow(dim, 0, x.size(dim) - shift)
-    right = x.narrow(dim, x.size(dim) - shift, shift)
-    return torch.cat((right, left), dim=dim)
+    return oF.roll(x, shift, dim)
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.fftshift")
 def fftshift(x, dim=None):
     """
     Similar to np.fft.fftshift but applies to PyTorch Tensors
     """
-    if dim is None:
-        dim = tuple(range(x.dim()))
-        shift = [dim // 2 for dim in x.shape]
-    elif isinstance(dim, int):
-        shift = x.shape[dim] // 2
-    else:
-        shift = [x.shape[i] // 2 for i in dim]
-    return roll(x, shift, dim)
+    return oF.fftshift(x, dim=dim)
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.ifftshift")
 def ifftshift(x, dim=None):
     """
     Similar to np.fft.ifftshift but applies to PyTorch Tensors
     """
-    if dim is None:
-        dim = tuple(range(x.dim()))
-        shift = [(dim + 1) // 2 for dim in x.shape]
-    elif isinstance(dim, int):
-        shift = (x.shape[dim] + 1) // 2
-    else:
-        shift = [(x.shape[i] + 1) // 2 for i in dim]
-    return roll(x, shift, dim)
+    return oF.ifftshift(x, dim=dim)
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.pad")
 def pad(x: torch.Tensor, shape: Sequence[int], mode="constant", value=0):
     """
     Args:
@@ -345,27 +329,9 @@ def pad(x: torch.Tensor, shape: Sequence[int], mode="constant", value=0):
         shape: Shape to zero pad to. Use `None` to skip padding certain dimensions.
     Returns:
     """
-    x_shape = x.shape[1 : 1 + len(shape)]
-    assert all(
-        x_shape[i] <= shape[i] or shape[i] is None for i in range(len(shape))
-    ), f"Tensor spatial dimensions {x_shape} smaller than zero pad dimensions"
-
-    total_padding = tuple(
-        desired - current if desired is not None else 0 for current, desired in zip(x_shape, shape)
-    )
-    # Adding no padding for terminal dimensions.
-    # torch.nn.functional.pad pads dimensions in reverse order.
-    total_padding += (0,) * (len(x.shape) - 1 - len(x_shape))
-    total_padding = total_padding[::-1]
-
-    pad = []
-    for padding in total_padding:
-        pad1 = padding // 2
-        pad2 = padding - pad1
-        pad.extend([pad1, pad2])
-
-    return F.pad(x, pad, mode=mode, value=value)
+    return oF.pad(x, shape, mode=mode, value=value)
 
 
+@deprecated(vremoved="0.1.0", replacement="ops.functional.zero_pad")
 def zero_pad(x: torch.Tensor, shape: Sequence[int]):
-    return pad(x, shape, mode="constant", value=0)
+    return oF.zero_pad(x, shape)

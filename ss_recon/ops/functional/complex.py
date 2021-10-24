@@ -295,3 +295,35 @@ def rss(x: torch.Tensor, dim: int = 0) -> torch.Tensor:
         torch.Tensor: The RSS value.
     """
     return torch.sqrt((abs(x) ** 2).sum(dim))
+
+
+def center_crop(x: torch.Tensor, shape, channels_last: bool = False):
+    """
+    Apply a center crop to the input image or batch of complex images.
+
+    Args:
+        data (torch.Tensor): The complex input tensor to be center cropped.
+        shape (int, int): The output shape. The shape should be smaller than the
+            corresponding dimensions of data.
+        channels_last (bool, optional): If ``True``, crop dimensions ``range(1, 1+len(shape))``.
+            If ``False``, apply to last non-real/imaginary channel dimensions.
+
+    Returns:
+        torch.Tensor: The center cropped image.
+    """
+    if channels_last:
+        dims = range(1, 1 + len(shape))
+    elif not is_complex(x) and is_complex_as_real(x):
+        dims = range(-1 - len(shape), -1)
+    else:
+        dims = range(-len(shape), 0)
+
+    x_shape = tuple(x.shape[d] for d in dims)
+    assert all(0 < shape[idx] <= x_shape[idx] for idx in range(len(shape)))
+
+    sl = [slice(None) for _ in range(x.ndim)]
+    for d, shp, x_shp in zip(dims, shape, x_shape):
+        start = (x_shp - shp) // 2
+        end = start + shp
+        sl[d] = slice(start, end)
+    return x[sl]

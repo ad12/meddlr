@@ -3,7 +3,8 @@ import logging
 import os
 import pprint
 import sys
-from collections import Mapping, OrderedDict
+from collections import OrderedDict
+from typing import Mapping
 
 import numpy as np
 import torch
