@@ -15,6 +15,6 @@ test:
 	coverage run -m pytest tests/
 
 dev:
-	pip install black coverage isort flake8 flake8-bugbear flake8-comprehensions
+	pip install --upgrade black coverage isort flake8 flake8-bugbear flake8-comprehensions
 
 all: autoformat test build-docs

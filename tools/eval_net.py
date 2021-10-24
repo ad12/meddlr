@@ -372,7 +372,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         logger.info("No evaluation metrics were computed or available in this run")
 
     # Try to copy over old metrics information.
-    # TODO: If fails, it automatically saves the old file in a versioned form and prints logging message.
+    # TODO: If fails, it automatically saves the old file in a versioned
+    # form and prints logging message.
     if compute_metrics:
         if metrics is not None:
             try:

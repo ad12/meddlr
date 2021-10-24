@@ -1,4 +1,6 @@
-"""This script finds top weights and optionall removes all other weights from your results directory.
+"""
+This script finds top weights and optionall removes all other weights
+from your results directory.
 
 Usage:
 
@@ -6,7 +8,8 @@ Usage:
     $ python clean_results.py --dir /path/to/directory --top_k 1
 
     # Find top 3 val_psnr and val_l1 weights interactively. Delete all other weights
-    $ python clean_results.py --dir /path/to/directory --top_k 3 --metrics psnr l1 --interactive --remove
+    $ python clean_results.py --dir /path/to/directory --top_k 3 --metrics psnr l1 \
+        --interactive --remove
 """
 import argparse
 import itertools

@@ -53,10 +53,10 @@ class SeparableConv3d(nn.Module):
     def forward(self, input):
         """
         Args:
-            input (torch.Tensor): Input tensor of shape [batch_size, self.in_chans, depth, width, height]
+            input (torch.Tensor): Input tensor of shape ``(B,C_{in},D,H,W)``.
 
         Returns:
-            (torch.Tensor): Output tensor of shape [batch_size, self.out_chans, depth, width, height]
+            (torch.Tensor): Output tensor of shape ``(B,C_{in},D,H,W)``.
         """
         return self.layers(input)
 
@@ -117,10 +117,10 @@ class ConvBlock(nn.Module):
     def forward(self, input):
         """
         Args:
-            input (torch.Tensor): Input tensor of shape [batch_size, self.in_chans, depth, width, height]
+            input (torch.Tensor): Input tensor of shape ``(B,C_{in},D,H,W)``.
 
         Returns:
-            (torch.Tensor): Output tensor of shape [batch_size, self.out_chans, depth, width, height]
+            (torch.Tensor): Output tensor of shape ``(B,C_{in},D,H,W)``.
         """
         return self.layers(input)
 
@@ -158,10 +158,10 @@ class ResBlock(nn.Module):
     def forward(self, input):
         """
         Args:
-            input (torch.Tensor): Input tensor of shape [batch_size, self.in_chans, depth, width, height]
+            input (torch.Tensor): Input tensor of shape ``(B,C_{in},D,H,W)``.
 
         Returns:
-            (torch.Tensor): Output tensor of shape [batch_size, self.out_chans, depth, width, height]
+            (torch.Tensor): Output tensor of shape ``(B,C_{in},D,H,W)``.
         """
 
         # To have a residual connection, number of inputs must be equal to outputs
@@ -193,10 +193,10 @@ class ResNet(nn.Module):
     def forward(self, input):
         """
         Args:
-            input (torch.Tensor): Input tensor of shape [batch_size, self.in_chans, depth, width, height]
+            input (torch.Tensor): Input tensor of shape ``(B,C_{in},D,H,W)``.
 
         Returns:
-            (torch.Tensor): Output tensor of shape [batch_size, self.in_chans, depth, width, height]
+            (torch.Tensor): Output tensor of shape ``(B,C_{in},D,H,W)``.
         """
 
         orig_shape = input.shape

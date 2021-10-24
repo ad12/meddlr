@@ -135,8 +135,9 @@ class RandomMaskFunc1D(MaskFunc):
            prob = (N / acceleration - N_low_freqs) / (N - N_low_freqs).
     This ensures that the expected number of columns selected is equal to (N / acceleration)
     It is possible to use multiple center_fractions and accelerations, in which case one possible
-    (center_fraction, acceleration) is chosen uniformly at random each time the RandomMaskFunc object is
-    called.
+    (center_fraction, acceleration) is chosen uniformly at random each time the RandomMaskFunc
+    object is called.
+
     For example, if accelerations = [4, 8] and center_fractions = [0.08, 0.04], then there
     is a 50% probability that 4-fold acceleration with 8% center fraction is selected and a 50%
     probability that 8-fold acceleration with 4% center fraction is selected.

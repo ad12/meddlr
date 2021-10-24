@@ -18,9 +18,12 @@ Findings:
         w/ cudnn.deterministic=True (EXPECTED)
 
 To verify:
-    1. Val / Test performance and models are the same for the last iteration w/ cudnn.deterministic=False
-    2. Val / Test performance and models are the same for intermediate checkpoints (iteration 40/80)
-    3. Val / Test performance and models are the same for the last iteration w/ gradient accumulation
+    1. Val / Test performance and models are the same for the last iteration
+       w/ cudnn.deterministic=False
+    2. Val / Test performance and models are the same for intermediate checkpoints
+       (iteration 40/80)
+    3. Val / Test performance and models are the same for the last iteration
+       w/ gradient accumulation
 """
 import os
 import sys
@@ -266,6 +269,6 @@ if __name__ == "__main__":
     )
     test_results, test_model = _test(
         True,
-        weights="/bmrNAS/people/arjun/results/ss_recon/prelim_exps/baseline_12x_maxbatch/sub-1/model_0151999.pth",  # noqa: B950
+        weights="/bmrNAS/people/arjun/results/ss_recon/prelim_exps/baseline_12x_maxbatch/sub-1/model_0151999.pth",  # noqa: E501
     )
     print(test_results)

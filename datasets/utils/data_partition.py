@@ -164,7 +164,8 @@ def _greedy_balance(
         max_weight = min(uf_delta_mag, deltas[of_bin_ind])
         of_bin = bins[of_bin_ind]
 
-        # Select the element greedily from the overfilled bin that has a weight <= abs(delta[uf_bin]).
+        # Select the element greedily from the overfilled bin
+        # that has a weight <= abs(delta[uf_bin]).
         candidate_elems = []
         candidate_weight = 0
         for ind, elem in enumerate(of_bin):  # noqa: B007

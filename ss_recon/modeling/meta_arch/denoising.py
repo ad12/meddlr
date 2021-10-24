@@ -183,9 +183,11 @@ class DenoisingModel(nn.Module):
         noise_cfg.freeze()
         noiser = NoiseModel.from_cfg(noise_cfg, device=device)
 
+        use_fully_sampled_target = cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET
+        use_fully_sampled_target_eval = cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL
         return {
             "model": model,
             "noiser": noiser,
-            "use_fully_sampled_target": cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET,
-            "use_fully_sampled_target_eval": cfg.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL,
+            "use_fully_sampled_target": use_fully_sampled_target,
+            "use_fully_sampled_target_eval": use_fully_sampled_target_eval,
         }
