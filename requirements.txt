@@ -12,3 +12,4 @@ cupy
 scikit-image
 pandas
 silx
+torchmetrics>=0.5.1

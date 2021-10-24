@@ -59,6 +59,7 @@ setup(
         "pandas",
         "silx",
         "tqdm",
+        "torchmetrics>=0.5.1",  # TODO: relax version constraint
     ],
     extras_require={
         "dev": ["flake8", "isort", "black==19.3b0", "flake8-bugbear", "flake8-comprehensions"]
