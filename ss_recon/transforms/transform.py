@@ -12,10 +12,7 @@ import torch
 
 from ss_recon.transforms.mixins import DeviceMixin
 
-__all__ = [
-    "Transform",
-    "TransformList",
-]
+__all__ = ["Transform", "TransformList"]
 
 
 class Transform(DeviceMixin):

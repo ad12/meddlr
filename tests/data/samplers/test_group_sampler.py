@@ -79,10 +79,7 @@ class TestGroupSampler(unittest.TestCase):
 
         all_channels = {(x["_metadata"][batch_by],) for x in dataset.examples}
         sampler = GroupSampler(
-            dataset,
-            batch_by=batch_by,
-            as_batch_sampler=True,
-            batch_size=batch_size,
+            dataset, batch_by=batch_by, as_batch_sampler=True, batch_size=batch_size
         )
         assert all_channels == sampler._groups.keys()
 

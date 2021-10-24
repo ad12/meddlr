@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 
-import ss_recon.ops.functional as oF
-import ss_recon.ops.functional.complex as cplx
+import ss_recon.ops as oF
+import ss_recon.ops.complex as cplx
 
 __all__ = ["SenseModel"]
 

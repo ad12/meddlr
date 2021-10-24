@@ -3,8 +3,8 @@ from typing import Sequence
 import numpy as np
 import torch
 
-from ss_recon.ops.functional import complex as cplx
-from ss_recon.ops.functional.utils import roll
+from ss_recon.ops import complex as cplx
+from ss_recon.ops.utils import roll
 from ss_recon.utils import env
 
 if env.pt_version() >= [1, 6]:
@@ -196,12 +196,7 @@ def ifftshift(x, dim=None):
 
 
 def _fft_template(
-    data: torch.Tensor,
-    kind,
-    dim=None,
-    norm="ortho",
-    is_real: bool = None,
-    centered: bool = True,
+    data: torch.Tensor, kind, dim=None, norm="ortho", is_real: bool = None, centered: bool = True
 ) -> torch.Tensor:
     """Template for fft operations."""
     if isinstance(dim, int):

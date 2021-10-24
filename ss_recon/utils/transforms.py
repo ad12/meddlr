@@ -3,8 +3,8 @@ from typing import Sequence
 import torch
 from torch import nn
 
-import ss_recon.ops.functional as oF
-from ss_recon.ops.functional import complex as cplx
+import ss_recon.ops as oF
+from ss_recon.ops import complex as cplx
 from ss_recon.utils import env
 from ss_recon.utils.deprecated import deprecated
 
@@ -230,10 +230,7 @@ def center_crop(data, shape):
     return oF.center_crop(data, shape)
 
 
-@deprecated(
-    vremoved="0.1.0",
-    replacement="ops.functional.complex.complex_center_crop_2d",
-)
+@deprecated(vremoved="0.1.0", replacement="ops.functional.complex.complex_center_crop_2d")
 def complex_center_crop_2d(data, shape):
     """
     Apply a center crop to the input image or batch of complex images.
@@ -255,10 +252,7 @@ def complex_center_crop_2d(data, shape):
     return data[..., w_from:w_to, h_from:h_to, :]
 
 
-@deprecated(
-    vremoved="0.1.0",
-    replacement="ops.functional.normalize",
-)
+@deprecated(vremoved="0.1.0", replacement="ops.functional.normalize")
 def normalize(data, mean, stddev, eps=0.0):
     """
     Normalize the given tensor using:
@@ -274,10 +268,7 @@ def normalize(data, mean, stddev, eps=0.0):
     return (data - mean) / (stddev + eps)
 
 
-@deprecated(
-    vremoved="0.1.0",
-    replacement="ops.functional.normalize_instance",
-)
+@deprecated(vremoved="0.1.0", replacement="ops.functional.normalize_instance")
 def normalize_instance(data, eps=0.0):
     """
     Normalize the given tensor using:

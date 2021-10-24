@@ -77,8 +77,4 @@ class MRIMotionTransform(Transform):
         )
 
     def _eq_attrs(self) -> Tuple[str]:
-        return (
-            "std_dev",
-            "seed",
-            "_generator_state",
-        )
+        return ("std_dev", "seed", "_generator_state")

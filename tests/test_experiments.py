@@ -58,10 +58,11 @@ class TestMRIDataExperiments(unittest.TestCase):
                 for seed2, scans2 in scan_names[idx + 1 :]:
                     overlap_scans = scans1 & scans2
                     num_same = len(overlap_scans)
-                    assert (
-                        num_same <= overlap_thresh
-                    ), "Seeds {} and {} have the same " "{}/{} scan(s):\n{}".format(
-                        seed1, seed2, num_same, num_total, "\n".join(sorted(overlap_scans))
+                    assert num_same <= overlap_thresh, (
+                        "Seeds {} and {} have the same "
+                        "{}/{} scan(s):\n{}".format(
+                            seed1, seed2, num_same, num_total, "\n".join(sorted(overlap_scans))
+                        )
                     )
                     print(f"{seed1} - {seed2}: {num_same}/{num_total}")
 

@@ -120,14 +120,7 @@ class ResBlock(nn.Module):
 
         self.layers = nn.Sequential(
             ConvBlock(
-                in_chans,
-                out_chans,
-                kernel_size,
-                drop_prob,
-                act_type,
-                norm_type,
-                norm_affine,
-                order,
+                in_chans, out_chans, kernel_size, drop_prob, act_type, norm_type, norm_affine, order
             ),  # noqa
             ConvBlock(
                 out_chans,

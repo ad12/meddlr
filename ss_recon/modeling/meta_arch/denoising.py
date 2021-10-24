@@ -4,7 +4,7 @@ import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
-import ss_recon.ops.functional.complex as cplx
+import ss_recon.ops.complex as cplx
 from ss_recon.config.config import configurable
 from ss_recon.data.transforms.noise import NoiseModel
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
@@ -86,13 +86,7 @@ class DenoisingModel(nn.Module):
 
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
-                data = tv_utils.make_grid(
-                    data,
-                    nrow=1,
-                    padding=1,
-                    normalize=True,
-                    scale_each=True,
-                )
+                data = tv_utils.make_grid(data, nrow=1, padding=1, normalize=True, scale_each=True)
                 storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
 
     def forward(self, inputs, return_pp=False, vis_training=False):
@@ -169,11 +163,7 @@ class DenoisingModel(nn.Module):
             for k in inputs.keys()
         }
 
-        output_dict = self.model(
-            inputs,
-            return_pp=True,
-            vis_training=vis_training,
-        )
+        output_dict = self.model(inputs, return_pp=True, vis_training=vis_training)
 
         return output_dict
 

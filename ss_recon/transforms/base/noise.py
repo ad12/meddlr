@@ -2,7 +2,7 @@ from typing import Tuple
 
 import torch
 
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.transform import Transform
 
@@ -95,10 +95,4 @@ class NoiseTransform(Transform):
         return cls(cfg.STD_DEV, scheduler=cfg.SCHEDULER, mask=cfg.MASK, seed=seed, **kwargs)
 
     def _eq_attrs(self) -> Tuple[str]:
-        return (
-            "std_dev",
-            "use_mask",
-            "rho",
-            "seed",
-            "_generator_state",
-        )
+        return ("std_dev", "use_mask", "rho", "seed", "_generator_state")

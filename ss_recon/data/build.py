@@ -116,9 +116,7 @@ def get_recon_dataset_dicts(
     logger.info(
         "Dropped references for {}/{} scans. "
         "{} scans with reference remaining".format(
-            num_scans_subsample,
-            num_after,
-            num_after - num_scans_subsample,
+            num_scans_subsample, num_after, num_after - num_scans_subsample
         )
     )
 

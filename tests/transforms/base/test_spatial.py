@@ -17,12 +17,7 @@ class TestAffineTransform(unittest.TestCase):
         x = torch.randn(1, 3, 50, 50)
 
         expected_out = tvf.affine(
-            x,
-            angle=angle,
-            translate=translate,
-            scale=scale,
-            shear=[0.0, 0.0],
-            resample=2,
+            x, angle=angle, translate=translate, scale=scale, shear=[0.0, 0.0], resample=2
         )
 
         tfm = AffineTransform(angle=angle, translate=translate, scale=scale)

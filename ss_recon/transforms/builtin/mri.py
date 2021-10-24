@@ -1,7 +1,7 @@
 from numbers import Number
 from typing import Dict, Sequence, Union
 
-import ss_recon.ops.functional.complex as cplx
+import ss_recon.ops.complex as cplx
 import ss_recon.utils.transforms as T
 from ss_recon.data.transforms.transform import Normalizer
 from ss_recon.evaluation.testing import flatten_results_dict
@@ -26,10 +26,7 @@ class MRIReconAugmentor(DeviceMixin):
     """
 
     def __init__(
-        self,
-        tfms_or_gens: Sequence[Union[Transform, TransformGen]],
-        seed: int = None,
-        device=None,
+        self, tfms_or_gens: Sequence[Union[Transform, TransformGen]], seed: int = None, device=None
     ) -> None:
         if isinstance(tfms_or_gens, TransformList):
             tfms_or_gens = tfms_or_gens.transforms
@@ -98,12 +95,7 @@ class MRIReconAugmentor(DeviceMixin):
 
         if normalizer:
             normalized = normalizer.normalize(
-                **{
-                    "masked_kspace": kspace,
-                    "image": img,
-                    "target": target,
-                    "mask": mask,
-                }
+                **{"masked_kspace": kspace, "image": img, "target": target, "mask": mask}
             )
             kspace = normalized["masked_kspace"]
             target = normalized["target"]

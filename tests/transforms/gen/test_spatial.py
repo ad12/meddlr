@@ -93,8 +93,8 @@ class TestRandomAffine(unittest.TestCase):
 
         assert all(x > 0 for x in h_translate)
         assert all(x < 0 for x in w_translate)
-        assert all([h * t_h1 <= x <= h * t_h2 for x in h_translate])
-        assert all([w * t_w1 <= x <= w * t_w2 for x in w_translate])
+        assert all(h * t_h1 <= x <= h * t_h2 for x in h_translate)
+        assert all(w * t_w1 <= x <= w * t_w2 for x in w_translate)
 
         # Mix of range and single value
         t_h, t_w1, t_w2 = 0.1, -0.8, -0.6
@@ -110,7 +110,7 @@ class TestRandomAffine(unittest.TestCase):
         assert any(x < 0 for x in h_translate) and any(x > 0 for x in h_translate)
         assert all(x < 0 for x in w_translate)
         assert all(abs(x) <= h * t_h for x in h_translate)
-        assert all([w * t_w1 <= x <= w * t_w2 for x in w_translate])
+        assert all(w * t_w1 <= x <= w * t_w2 for x in w_translate)
 
     def test_multi_arg_param_shear(self):
         h, w = 100, 100
@@ -142,10 +142,10 @@ class TestRandomAffine(unittest.TestCase):
             h_shear.append(h_s)
             w_shear.append(w_s)
 
-        assert all([x > 0 for x in h_shear])
+        assert all(x > 0 for x in h_shear)
         assert all(x < 0 for x in w_shear)
-        assert all([s_h1 <= x <= s_h2 for x in h_shear])
-        assert all([s_w1 <= x <= s_w2 for x in w_shear])
+        assert all(s_h1 <= x <= s_h2 for x in h_shear)
+        assert all(s_w1 <= x <= s_w2 for x in w_shear)
 
         # Mix of range and single value
         s_h, s_w1, s_w2 = 10, -80, -60
@@ -161,7 +161,7 @@ class TestRandomAffine(unittest.TestCase):
         assert any(x < 0 for x in h_shear) and any(x > 0 for x in h_shear)
         assert all(x < 0 for x in w_shear)
         assert all(abs(x) <= s_h for x in h_shear)
-        assert all([s_w1 <= x <= s_w2 for x in w_shear])
+        assert all(s_w1 <= x <= s_w2 for x in w_shear)
 
 
 class TestRandomTranslation(unittest.TestCase):
@@ -208,8 +208,8 @@ class TestRandomTranslation(unittest.TestCase):
 
         assert all(x > 0 for x in h_translate)
         assert all(x < 0 for x in w_translate)
-        assert all([h * t_h1 <= x <= h * t_h2 for x in h_translate])
-        assert all([w * t_w1 <= x <= w * t_w2 for x in w_translate])
+        assert all(h * t_h1 <= x <= h * t_h2 for x in h_translate)
+        assert all(w * t_w1 <= x <= w * t_w2 for x in w_translate)
 
         # Mix of range and single value
         t_h, t_w1, t_w2 = 0.1, -0.8, -0.6
@@ -225,4 +225,4 @@ class TestRandomTranslation(unittest.TestCase):
         assert any(x < 0 for x in h_translate) and any(x > 0 for x in h_translate)
         assert all(x < 0 for x in w_translate)
         assert all(abs(x) <= h * t_h for x in h_translate)
-        assert all([w * t_w1 <= x <= w * t_w2 for x in w_translate])
+        assert all(w * t_w1 <= x <= w * t_w2 for x in w_translate)

@@ -25,10 +25,7 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
     """
 
     def __init__(
-        self,
-        params: Dict[str, Any] = None,
-        p: float = 0.0,
-        param_kinds: Dict[str, Any] = None,
+        self, params: Dict[str, Any] = None, p: float = 0.0, param_kinds: Dict[str, Any] = None
     ) -> None:
         from ss_recon.transforms.tf_scheduler import TFScheduler
 

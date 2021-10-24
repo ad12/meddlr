@@ -33,9 +33,7 @@ _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 logger = None  # initialize in setup()
 
 # Default values for parameters that may not have been initially added.
-_DEFAULT_VALS = {
-    "rescaled": True,
-}
+_DEFAULT_VALS = {"rescaled": True}
 
 
 class ZFReconEvaluator(ReconEvaluator):
@@ -489,11 +487,7 @@ if __name__ == "__main__":
             "Chooses weights at or before this time point."
         ),
     )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite existing metrics file",
-    )
+    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing metrics file")
     parser.add_argument(
         "--skip-rescale", action="store_true", help="Skip rescaling when evaluating"
     )

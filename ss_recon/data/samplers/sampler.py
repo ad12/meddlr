@@ -19,12 +19,7 @@ class AlternatingSampler(Sampler):
     """
 
     def __init__(
-        self,
-        dataset,
-        T_s: int,
-        T_us: int,
-        indices: Sequence[int] = None,
-        seed: int = None,
+        self, dataset, T_s: int, T_us: int, indices: Sequence[int] = None, seed: int = None
     ):
         """
         Args:

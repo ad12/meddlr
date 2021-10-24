@@ -115,13 +115,7 @@ class PoissonDiskMaskFunc(MaskFunc):
         # To avoid this issue this method has been duplicated from
         # sigpy and added below.
         # https://github.com/mikgroup/sigpy/issues/54
-        mask = poisson(
-            (nky, nkz),
-            acceleration,
-            calib=self.calib_size,
-            dtype=np.float32,
-            seed=seed,
-        )
+        mask = poisson((nky, nkz), acceleration, calib=self.calib_size, dtype=np.float32, seed=seed)
 
         # Reshape the mask
         mask = torch.from_numpy(mask.reshape(out_shape))

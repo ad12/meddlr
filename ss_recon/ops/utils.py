@@ -3,7 +3,7 @@ from typing import Sequence
 import torch
 import torch.nn.functional as F
 
-import ss_recon.ops.functional.complex as cplx
+import ss_recon.ops.complex as cplx
 
 __all__ = [
     "roll",

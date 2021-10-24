@@ -421,13 +421,7 @@ class WarmupMultiStepTF(TFScheduler):
         else:
             assert isinstance(value, Sequence) and len(value) == 2
 
-        alpha = _get_warmup_factor_at_iter(
-            self.warmup_method,
-            step,
-            total_steps,
-            0,
-            self.gamma,
-        )
+        alpha = _get_warmup_factor_at_iter(self.warmup_method, step, total_steps, 0, self.gamma)
         alpha = (step > 0) * alpha
 
         lb, ub = tuple(value)

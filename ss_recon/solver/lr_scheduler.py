@@ -39,8 +39,7 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     ):
         if not list(milestones) == sorted(milestones):
             raise ValueError(
-                "Milestones should be a list of" " increasing integers. Got {}",
-                milestones,
+                "Milestones should be a list of" " increasing integers. Got {}", milestones
             )
         self.milestones = milestones
         self.gamma = gamma
@@ -51,10 +50,7 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
 
     def get_lr(self) -> List[float]:
         warmup_factor = _get_warmup_factor_at_iter(
-            self.warmup_method,
-            self.last_epoch,
-            self.warmup_iters,
-            self.warmup_factor,
+            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
         )
         return [
             base_lr * warmup_factor * self.gamma ** bisect_right(self.milestones, self.last_epoch)
@@ -84,10 +80,7 @@ class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
 
     def get_lr(self) -> List[float]:
         warmup_factor = _get_warmup_factor_at_iter(
-            self.warmup_method,
-            self.last_epoch,
-            self.warmup_iters,
-            self.warmup_factor,
+            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
         )
         # Different definitions of half-cosine with warmup are possible. For
         # simplicity we multiply the standard half-cosine schedule by the warmup

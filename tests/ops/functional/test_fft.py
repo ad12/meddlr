@@ -2,13 +2,13 @@ import unittest
 
 import torch
 
-import ss_recon.ops.functional as oF
+import ss_recon.ops as oF
 import ss_recon.utils.transforms as T
 
 
 class TestFFTReproducibility(unittest.TestCase):
     """
-    Test reproducibility between ss_recon.ops.functional and ss_recon.utils.transforms.
+    Test reproducibility between ss_recon.ops and ss_recon.utils.transforms.
 
     TODO: Delete when ``ss_recon/utils/transforms.py`` is to be removed.
     """

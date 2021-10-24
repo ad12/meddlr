@@ -170,11 +170,7 @@ class SliceData(Dataset):
                 else data[self.mapping["maps"]][slice_id]
             )
 
-        return {
-            "kspace": kspace,
-            "maps": maps,
-            "target": target,
-        }
+        return {"kspace": kspace, "maps": maps, "target": target}
 
     def __getitem__(self, i):
         example = self.examples[i]
@@ -193,13 +189,7 @@ class SliceData(Dataset):
 
         fname = os.path.splitext(os.path.basename(file_path))[0]
         masked_kspace, maps, target, mean, std, norm = self.transform(
-            kspace,
-            maps,
-            target,
-            fname,
-            slice_id,
-            is_unsupervised,
-            fixed_acc,
+            kspace, maps, target, fname, slice_id, is_unsupervised, fixed_acc
         )
 
         vals = {

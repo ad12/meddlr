@@ -2,7 +2,7 @@ from typing import Sequence, Union
 
 import torch
 
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 from ss_recon.utils.events import get_event_storage
 
 

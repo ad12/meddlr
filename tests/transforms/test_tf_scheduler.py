@@ -122,12 +122,7 @@ class TestWarmupMultiStepTF(unittest.TestCase):
         b = (0.0, 1.0)
         schedulable = MockSchedulable(a=a, b=b)
 
-        warmup_milestones = (
-            2,
-            4,
-            6,
-            8,
-        )
+        warmup_milestones = (2, 4, 6, 8)
         method = "linear"
         total_iters = max(warmup_milestones) + 2
         # fmt: off

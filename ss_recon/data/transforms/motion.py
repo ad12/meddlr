@@ -39,12 +39,7 @@ class MotionModel:
         functionality, see :cls:`RandomMRIMotion` instead.
     """
 
-    def __init__(
-        self,
-        motion_range: Union[float, Sequence[float]],
-        scheduler=None,
-        seed=None,
-    ):
+    def __init__(self, motion_range: Union[float, Sequence[float]], scheduler=None, seed=None):
         """
         Args:
             motion_range (float, Tuple[float, float]): The range of motion difficulty.

@@ -60,8 +60,7 @@ def setup_logger(output=None, distributed_rank=0, *, color=True, name="ss_recon"
         abbrev_name = "ssr" if name == "ss_recon" else name
 
     plain_formatter = logging.Formatter(
-        "[%(asctime)s] %(name)s %(levelname)s: %(message)s",
-        datefmt="%m/%d %H:%M:%S",
+        "[%(asctime)s] %(name)s %(levelname)s: %(message)s", datefmt="%m/%d %H:%M:%S"
     )
     # stdout logging: master only
     if distributed_rank == 0:

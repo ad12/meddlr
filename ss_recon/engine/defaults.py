@@ -54,10 +54,7 @@ def default_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
     parser.add_argument(
-        "--num-gpus",
-        type=int,
-        default=1,
-        help="number of gpus. overrided by --devices",
+        "--num-gpus", type=int, default=1, help="number of gpus. overrided by --devices"
     )
     parser.add_argument("--devices", type=int, nargs="*", default=None)
     parser.add_argument("--debug", action="store_true", help="use debug mode")

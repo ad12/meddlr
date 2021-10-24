@@ -17,7 +17,7 @@ import sigpy.mri as mr
 import torch
 from torch import nn
 
-import ss_recon.ops.functional.complex as cplx
+import ss_recon.ops.complex as cplx
 from ss_recon.config.config import configurable
 from ss_recon.utils.general import move_to_device
 from ss_recon.utils.transforms import SenseModel
@@ -140,10 +140,7 @@ class CSModel(nn.Module):
         image = torch.as_tensor(image, device=device)
         image = image.unsqueeze(0).unsqueeze(-1)
 
-        output_dict = {
-            "pred": image,  # N x Y x Z x 1 x 2
-            "target": target,  # N x Y x Z x 1 x 2
-        }
+        output_dict = {"pred": image, "target": target}  # N x Y x Z x 1 x 2  # N x Y x Z x 1 x 2
         if return_pp:
             output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"]})
 

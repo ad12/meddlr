@@ -167,9 +167,7 @@ def inference_on_dataset(model, data_loader, evaluator):
     logger.info(
         "Total inference pure compute time: "
         "{} ({:.6f} s / batch on {} devices)".format(
-            total_compute_time_str,
-            total_compute_time / (total - num_warmup),
-            num_devices,
+            total_compute_time_str, total_compute_time / (total - num_warmup), num_devices
         )
     )
 

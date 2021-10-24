@@ -36,11 +36,7 @@ class RandomMRIMotion(TransformGen):
 
     _base_transform = MRIMotionTransform
 
-    def __init__(
-        self,
-        std_devs: Union[float, Sequence[float]],
-        p: float = 0.0,
-    ):
+    def __init__(self, std_devs: Union[float, Sequence[float]], p: float = 0.0):
         if isinstance(std_devs, (float, int)):
             std_devs = (std_devs, std_devs)
         elif len(std_devs) > 2:

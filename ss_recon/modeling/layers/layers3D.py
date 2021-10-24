@@ -15,14 +15,7 @@ class SeparableConv3d(nn.Module):
     A separable 3D convolutional operator.
     """
 
-    def __init__(
-        self,
-        in_chans,
-        out_chans,
-        kernel_size,
-        spatial_chans=None,
-        act_type="relu",
-    ):
+    def __init__(self, in_chans, out_chans, kernel_size, spatial_chans=None, act_type="relu"):
         """
         Args:
             in_chans (int): Number of channels in the input.
@@ -45,16 +38,10 @@ class SeparableConv3d(nn.Module):
 
         # Define each layer in SeparableConv3d block
         spatial_conv = nn.Conv3d(
-            in_chans,
-            spatial_chans,
-            kernel_size=sp_kernel_size,
-            padding=sp_pad_size,
+            in_chans, spatial_chans, kernel_size=sp_kernel_size, padding=sp_pad_size
         )
         temporal_conv = nn.Conv3d(
-            spatial_chans,
-            out_chans,
-            kernel_size=t_kernel_size,
-            padding=t_pad_size,
+            spatial_chans, out_chans, kernel_size=t_kernel_size, padding=t_pad_size
         )
 
         # Define choices for intermediate activation layer
@@ -124,10 +111,7 @@ class ConvBlock(nn.Module):
 
         # Define forward pass
         self.layers = nn.Sequential(
-            normalizations[norm_type],
-            activations[act_type],
-            dropout,
-            convolution,
+            normalizations[norm_type], activations[act_type], dropout, convolution
         )
 
     def forward(self, input):
@@ -191,15 +175,7 @@ class ResNet(nn.Module):
     Prototype for 3D ResNet architecture
     """
 
-    def __init__(
-        self,
-        num_resblocks,
-        in_chans,
-        chans,
-        kernel_size,
-        drop_prob,
-        circular_pad=True,
-    ):
+    def __init__(self, num_resblocks, in_chans, chans, kernel_size, drop_prob, circular_pad=True):
         """ """
         super().__init__()
 

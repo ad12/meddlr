@@ -17,7 +17,7 @@ from ss_recon.evaluation.metrics import (
     compute_ssim,
     compute_vifp_mscale,
 )
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 from ss_recon.utils.transforms import center_crop
 
 from .evaluator import DatasetEvaluator

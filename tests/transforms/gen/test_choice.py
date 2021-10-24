@@ -26,11 +26,7 @@ class TestRandomTransformChoice(unittest.TestCase):
         tfm_rand_rot = RandomRot90(p=1.0)
         tfm_aff = AffineTransform(angle=12)
         tfms_or_gens = [tfm_rand_rot, tfm_aff]
-        choice = RandomTransformChoice(
-            tfms_or_gens=tfms_or_gens,
-            tfm_ps="uniform",
-            p=1.0,
-        )
+        choice = RandomTransformChoice(tfms_or_gens=tfms_or_gens, tfm_ps="uniform", p=1.0)
         sch1 = WarmupTF(tfm_rand_rot, params=["p"], warmup_iters=100)
         tfm_rand_rot.register_schedulers(sch1)
         sch2 = WarmupTF(choice, params=["p"], warmup_iters=200)

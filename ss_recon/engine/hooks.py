@@ -294,8 +294,7 @@ class AutogradProfiler(HookBase):
             return
         self._profiler.__exit__(None, None, None)
         out_file = os.path.join(
-            self._output_dir,
-            "profiler-trace-iter{}.json".format(self.trainer.iter),
+            self._output_dir, "profiler-trace-iter{}.json".format(self.trainer.iter)
         )
         if "://" not in out_file:
             self._profiler.export_chrome_trace(out_file)

@@ -9,7 +9,7 @@ import scipy as scp
 import torch
 from skimage.metrics import structural_similarity
 
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 
 # Mapping from str to complex function name.
 _IM_TYPES_TO_FUNCS = {
@@ -94,11 +94,7 @@ def compute_nrmse(ref, x, is_batch=False, magnitude=False):
 
 
 def compute_ssim(
-    ref: torch.Tensor,
-    x: torch.Tensor,
-    multichannel: bool = False,
-    data_range=None,
-    **kwargs,
+    ref: torch.Tensor, x: torch.Tensor, multichannel: bool = False, data_range=None, **kwargs
 ):
     """Compute structural similarity index metric. Does not preserve autograd.
 

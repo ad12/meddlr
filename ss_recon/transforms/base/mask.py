@@ -2,7 +2,7 @@ from typing import Sequence, Tuple
 
 import torch
 
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.transform import Transform
 
@@ -56,12 +56,7 @@ class KspaceMaskTransform(Transform):
         func_and_kwargs = {
             "uniform": (
                 _uniform_mask,
-                {
-                    "rho": self.rho,
-                    "mask": True,
-                    "calib_size": self.calib_size,
-                    "generator": g,
-                },
+                {"rho": self.rho, "mask": True, "calib_size": self.calib_size, "generator": g},
             ),
             "gaussian": (
                 _gaussian_mask,
@@ -84,13 +79,7 @@ class KspaceMaskTransform(Transform):
         return mask * data
 
     def _eq_attrs(self) -> Tuple[str]:
-        return (
-            "std_dev",
-            "use_mask",
-            "rho",
-            "seed",
-            "_generator_state",
-        )
+        return ("std_dev", "use_mask", "rho", "seed", "_generator_state")
 
 
 def _uniform_mask(kspace, rho, mask=True, calib_size=None, generator=None):

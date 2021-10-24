@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 from ss_recon.utils import transforms as T
 
 from .motion import MotionModel
@@ -94,12 +94,7 @@ class TopMagnitudeNormalizer(Normalizer):
 
         mean = torch.tensor([0.0], dtype=torch.float32)
         std = scale.unsqueeze(-1)
-        outputs.update(
-            {
-                "mean": mean,
-                "std": std,
-            }
-        )
+        outputs.update({"mean": mean, "std": std})
 
         # Add other keys that were not computed.
         outputs.update({k: v for k, v in kwargs.items() if k not in outputs})
@@ -261,16 +256,7 @@ class DataTransform:
 
         return masked_kspace, maps, target, mean, std, norm
 
-    def __call__(
-        self,
-        kspace,
-        maps,
-        target,
-        fname,
-        slice_id,
-        is_fixed,
-        acceleration: int = None,
-    ):
+    def __call__(self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None):
         """
         Args:
             kspace (numpy.array): Input k-space of shape
@@ -333,12 +319,7 @@ class DataTransform:
 
         # Normalize
         normalized = self._normalizer.normalize(
-            **{
-                "masked_kspace": masked_kspace,
-                "image": image,
-                "target": target,
-                "mask": mask,
-            }
+            **{"masked_kspace": masked_kspace, "image": image, "target": target, "mask": mask}
         )
         masked_kspace = normalized["masked_kspace"]
         target = normalized["target"]

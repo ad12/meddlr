@@ -81,21 +81,13 @@ class TestReconEvaluator(unittest.TestCase):
     def test_evaluation_metrics(self):
         # 2D
         evaluator = MockReconEvaluator()
-        prediction = {
-            "pred": torch.rand(384, 384, 1, 2),
-            "target": torch.rand(384, 384, 1, 2),
-        }
+        prediction = {"pred": torch.rand(384, 384, 1, 2), "target": torch.rand(384, 384, 1, 2)}
         vals = evaluator.evaluate_prediction(prediction)
         with self.assertWarns(DeprecationWarning):
             expected = evaluator.evaluate_prediction_old(prediction)
 
         # Maps from old strings to new strings
-        key_mapping = {
-            "l1": "l1",
-            "l2": "l2",
-            "psnr": "psnr",
-            "ssim": "ssim_old",
-        }
+        key_mapping = {"l1": "l1", "l2": "l2", "psnr": "psnr", "ssim": "ssim_old"}
 
         assert all(
             np.allclose(vals[key_mapping[k]], expected[k]) for k in expected.keys()

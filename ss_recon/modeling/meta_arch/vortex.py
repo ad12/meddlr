@@ -6,7 +6,7 @@ from torch import nn
 
 from ss_recon.config.config import configurable
 from ss_recon.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 from ss_recon.transforms.builtin.mri import MRIReconAugmentor
 from ss_recon.utils.events import get_event_storage
 from ss_recon.utils.general import move_to_device
@@ -121,13 +121,7 @@ class VortexModel(nn.Module):
 
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
-                data = tv_utils.make_grid(
-                    data,
-                    nrow=1,
-                    padding=1,
-                    normalize=True,
-                    scale_each=True,
-                )
+                data = tv_utils.make_grid(data, nrow=1, padding=1, normalize=True, scale_each=True)
                 storage.put_image("train_aug/{}".format(name), data.numpy(), data_format="CHW")
 
     def forward(self, inputs):
@@ -153,9 +147,7 @@ class VortexModel(nn.Module):
         # Recon
         if inputs_supervised is not None:
             output_dict["recon"] = self.model(
-                inputs_supervised,
-                return_pp=True,
-                vis_training=vis_training,
+                inputs_supervised, return_pp=True, vis_training=vis_training
             )
 
         # Consistency.

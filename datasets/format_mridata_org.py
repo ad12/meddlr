@@ -38,7 +38,7 @@ from sigpy.mri import app
 from tqdm import tqdm
 from utils import fftc
 
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 from ss_recon.utils import transforms as T
 from ss_recon.utils.logger import setup_logger
 
@@ -242,10 +242,7 @@ def convert_to_h5(
             if num_workers > 0:
                 kspace_sliced = [kspace[x] for x in range(shape_x)]
                 func = functools.partial(
-                    process_slice,
-                    calib_method=calib_method,
-                    calib_size=calib_size,
-                    device=device,
+                    process_slice, calib_method=calib_method, calib_size=calib_size, device=device
                 )
                 with mp.Pool(num_workers) as pool:
                     info = pool.imap(kspace_sliced, func)
@@ -294,9 +291,7 @@ def write_ann_file(ann_file, h5_dir, split, **kwargs):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Data preparation")
     parser.add_argument(
-        "mridata_txt",
-        action="store",
-        help="Text file with mridata.org UUID datasets",
+        "mridata_txt", action="store", help="Text file with mridata.org UUID datasets"
     )
     parser.add_argument(
         "--output",
@@ -306,9 +301,7 @@ if __name__ == "__main__":
     parser.add_argument("--random_seed", default=1000, help="Random seed")
     parser.add_argument("--redownload", action="store_true", help="Redownload raw dataset")
     parser.add_argument(
-        "--recompute",
-        action="store_true",
-        help="Recompute sensitivity maps and target image",
+        "--recompute", action="store_true", help="Recompute sensitivity maps and target image"
     )
     parser.add_argument(
         "--device",

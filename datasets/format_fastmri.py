@@ -46,7 +46,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from utils import data_partition as dp
 
-from ss_recon.ops.functional import complex as cplx
+from ss_recon.ops import complex as cplx
 from ss_recon.utils import transforms as T
 
 try:
@@ -202,11 +202,7 @@ def collate_simple(batch: list):
 
 
 def process_slice(
-    kspace,
-    calib_method="jsense",
-    calib_size: int = 20,
-    device: int = -1,
-    nmaps: int = NUM_EMAPS,
+    kspace, calib_method="jsense", calib_size: int = 20, device: int = -1, nmaps: int = NUM_EMAPS
 ):
     """Process 2D multi-coil kspace slice.
 
@@ -242,11 +238,7 @@ def process_slice(
     ksp = np.transpose(kspace, [2, 1, 0])  # #coils x Kz x Ky
     if calib_method == "espirit":
         maps = app.EspiritCalib(
-            ksp,
-            calib_width=calib_size,
-            device=device,
-            show_pbar=False,
-            crop=0.1,
+            ksp, calib_width=calib_size, device=device, show_pbar=False, crop=0.1
         ).run()
         # import pdb; pdb.set_trace()
         if not isinstance(maps, np.ndarray):
@@ -345,9 +337,7 @@ def format_train_file(
                 maps[sl] = maps_slice
                 im_truth[sl] = im_slice
 
-        recon_data = {
-            group_name: {"maps": maps, "target": im_truth},
-        }
+        recon_data = {group_name: {"maps": maps, "target": im_truth}}
     else:
         logger.info(f"Skipped: {calib_method} reconstruction found")
 
@@ -618,20 +608,12 @@ def format_annotations(args, raw_root, formatted_root, base_ann_dir):
             formatted_files["train"] = formatted_files["train"][:5]
         train_files, val_files = create_dev_split(formatted_files["train"], args.seed)
         test_files = formatted_files["val"]
-        ann_files = {
-            "train": train_files,
-            "val": val_files,
-            "test": test_files,
-        }
+        ann_files = {"train": train_files, "val": val_files, "test": test_files}
         version = f"{args.version}-dev"
     elif ann_method in ("mini",):
         # Split fastMRI val set into train/val/test. Called the mini split.
         train_files, val_files, test_files = create_mini_split(formatted_files["val"], args.seed)
-        ann_files = {
-            "train": train_files,
-            "val": val_files,
-            "test": test_files,
-        }
+        ann_files = {"train": train_files, "val": val_files, "test": test_files}
         version = f"mini-{args.version}"
     else:
         raise ValueError(f"Annotation method {ann_method} is not supported")
@@ -671,10 +653,7 @@ def format_annotations(args, raw_root, formatted_root, base_ann_dir):
 
         split_info = dict(info_template)
         split_info["description"] = split_info["description"].format(args.challenge, split)
-        data = {
-            "info": split_info,
-            "images": image_data,
-        }
+        data = {"info": split_info, "images": image_data}
 
         num_scans = len(image_data)
         num_subjects = len({x["patient_id"] for x in image_data})
@@ -706,11 +685,7 @@ def add_shared_args(parser: argparse.ArgumentParser):
 
 def main():
     parser = argparse.ArgumentParser(description="Data preparation")
-    subparsers = parser.add_subparsers(
-        title="sub-commands",
-        dest="subcommand",
-        required=True,
-    )
+    subparsers = parser.add_subparsers(title="sub-commands", dest="subcommand", required=True)
 
     format_parser = subparsers.add_parser("format", help="Format fastMRI dataset")
     add_shared_args(format_parser)
@@ -765,10 +740,7 @@ def main():
         "--seed", type=int, default=1000, help="Random seed (default: 1000)"
     )
     annotate_parser.add_argument(
-        "--method",
-        required=True,
-        choices=ANN_METHODS,
-        help="Annotation split method",
+        "--method", required=True, choices=ANN_METHODS, help="Annotation split method"
     )
 
     args = parser.parse_args()

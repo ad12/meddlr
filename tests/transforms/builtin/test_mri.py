@@ -115,18 +115,8 @@ class TestMRIReconAugmentor(unittest.TestCase):
                     "params": ["p"],
                 },
             },
-            {
-                "name": "RandomFlip",
-                "p": 0.2,
-                "ndim": 2,
-            },
-            {
-                "name": "RandomAffine",
-                "p": 0.4,
-                "angle": 12.0,
-                "scale": 2.0,
-                "translate": 0.4,
-            },
+            {"name": "RandomFlip", "p": 0.2, "ndim": 2},
+            {"name": "RandomAffine", "p": 0.4, "angle": 12.0, "scale": 2.0, "translate": 0.4},
             {
                 "name": "RandomNoise",
                 "std_devs": (1, 2),
@@ -138,11 +128,7 @@ class TestMRIReconAugmentor(unittest.TestCase):
                         "max_iter": 500,
                         "params": ["p"],
                     },
-                    {
-                        "name": "WarmupTF",
-                        "params": ("std_devs",),
-                        "warmup_iters": 600,
-                    },
+                    {"name": "WarmupTF", "params": ("std_devs",), "warmup_iters": 600},
                 ],
             },
         ]
@@ -198,18 +184,8 @@ class TestMRIReconAugmentor(unittest.TestCase):
                     "params": ["p"],
                 },
             },
-            {
-                "name": "RandomFlip",
-                "p": 0.2,
-                "ndim": 2,
-            },
-            {
-                "name": "RandomAffine",
-                "p": 0.2,
-                "angle": 12.0,
-                "scale": 2.0,
-                "translate": 0.4,
-            },
+            {"name": "RandomFlip", "p": 0.2, "ndim": 2},
+            {"name": "RandomAffine", "p": 0.2, "angle": 12.0, "scale": 2.0, "translate": 0.4},
             {
                 "name": "RandomNoise",
                 "std_devs": (1, 2),
@@ -222,11 +198,7 @@ class TestMRIReconAugmentor(unittest.TestCase):
                         "delay_iters": 100,
                         "params": ["p"],
                     },
-                    {
-                        "name": "WarmupTF",
-                        "params": ("std_devs",),
-                        "warmup_iters": 600,
-                    },
+                    {"name": "WarmupTF", "params": ("std_devs",), "warmup_iters": 600},
                 ],
             },
         ]

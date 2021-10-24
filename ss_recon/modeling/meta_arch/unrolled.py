@@ -5,7 +5,7 @@ import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
-import ss_recon.ops.functional.complex as cplx
+import ss_recon.ops.complex as cplx
 from ss_recon.config.config import configurable
 from ss_recon.utils.events import get_event_storage
 from ss_recon.utils.general import move_to_device
@@ -92,13 +92,7 @@ class GeneralizedUnrolledCNN(nn.Module):
 
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
-                data = tv_utils.make_grid(
-                    data,
-                    nrow=1,
-                    padding=1,
-                    normalize=True,
-                    scale_each=True,
-                )
+                data = tv_utils.make_grid(data, nrow=1, padding=1, normalize=True, scale_each=True)
                 storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
 
     def forward(self, inputs, return_pp=False, vis_training=False):
@@ -185,10 +179,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             if use_cplx:
                 image = torch.view_as_complex(image)
 
-        output_dict = {
-            "pred": image,  # N x Y x Z x 1 x 2
-            "target": target,  # N x Y x Z x 1 x 2
-        }
+        output_dict = {"pred": image, "target": target}  # N x Y x Z x 1 x 2  # N x Y x Z x 1 x 2
 
         if return_pp:
             output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"]})

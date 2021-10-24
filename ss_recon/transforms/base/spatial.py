@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 from PIL import Image
 
-import ss_recon.ops.functional.complex as cplx
+import ss_recon.ops.complex as cplx
 from ss_recon.transforms.build import TRANSFORM_REGISTRY
 from ss_recon.transforms.mixins import GeometricMixin
 from ss_recon.transforms.transform import Transform
@@ -84,12 +84,7 @@ class AffineTransform(GeometricMixin, Transform):
             img = TF.pad(img, padding=pad, padding_mode="reflect")
 
         img = TF.affine(
-            img,
-            angle=angle,
-            translate=translate,
-            scale=scale,
-            shear=shear,
-            resample=2,  # bilinear
+            img, angle=angle, translate=translate, scale=scale, shear=shear, resample=2  # bilinear
         )
 
         if self.pad_like == "MRAugment":
@@ -123,12 +118,7 @@ class AffineTransform(GeometricMixin, Transform):
 
 @TRANSFORM_REGISTRY.register()
 class TranslationTransform(GeometricMixin, Transform):
-    def __init__(
-        self,
-        translate: Sequence[int],
-        pad_mode="constant",
-        pad_value=0,
-    ) -> None:
+    def __init__(self, translate: Sequence[int], pad_mode="constant", pad_value=0) -> None:
         super().__init__()
         self.translate = translate
         self.pad_mode = pad_mode
@@ -217,10 +207,7 @@ class Rot90Transform(GeometricMixin, Transform):
         return Rot90Transform(self.k, self.dims[::-1])
 
     def _eq_attrs(self) -> Tuple[str]:
-        return (
-            "k",
-            "dims",
-        )
+        return ("k", "dims")
 
 
 def _get_mraugment_affine_pad(im_shape, angle, translate, scale, shear):

@@ -83,10 +83,7 @@ class TestBuildTransforms(unittest.TestCase):
                     "params": ["p"],
                 },
             },
-            {
-                "name": "FlipTransform",
-                "dims": (-1,),
-            },
+            {"name": "FlipTransform", "dims": (-1,)},
             {
                 "name": "RandomNoise",
                 "std_devs": (1, 2),
@@ -99,11 +96,7 @@ class TestBuildTransforms(unittest.TestCase):
                         "delay_iters": 100,
                         "params": ["p"],
                     },
-                    {
-                        "name": "WarmupTF",
-                        "params": ("std_devs",),
-                        "warmup_iters": 600,
-                    },
+                    {"name": "WarmupTF", "params": ("std_devs",), "warmup_iters": 600},
                 ],
             },
         ]
@@ -149,10 +142,7 @@ class TestBuildTransforms(unittest.TestCase):
                     "params": ["p"],
                 },
             },
-            {
-                "name": "FlipTransform",
-                "dims": (-1,),
-            },
+            {"name": "FlipTransform", "dims": (-1,)},
             {
                 "name": "RandomNoise",
                 "std_devs": (1, 2),
@@ -165,11 +155,7 @@ class TestBuildTransforms(unittest.TestCase):
                         "delay_iters": 500,
                         "params": ["p"],
                     },
-                    {
-                        "name": "WarmupTF",
-                        "params": ("std_devs",),
-                        "warmup_iters": 600,
-                    },
+                    {"name": "WarmupTF", "params": ("std_devs",), "warmup_iters": 600},
                 ],
             },
         ]
