@@ -396,6 +396,8 @@ class ReconEvaluator(ScanEvaluator):
         return metrics.to_dict()
 
     def _append_memory(self, key):
+        if not torch.cuda.is_available():
+            return
         self._memory[key].append(torch.cuda.max_memory_allocated() / 1024.0 / 1024.0)
         mem = self._memory[key]
         if len(mem) > 1 and (mem[-1] - mem[-2] > 500):
