@@ -15,6 +15,7 @@ class MockReconEvaluator(ReconEvaluator):
         group_by_scan: bool = False,
         metrics=None,
         flush_period: int = None,
+        eval_in_process: bool = False,
     ):
         if metrics is None:
             metrics = ["nrmse", "psnr", "ssim (Wang)", "nrmse_scan", "psnr_scan"]
@@ -27,6 +28,7 @@ class MockReconEvaluator(ReconEvaluator):
             metrics=metrics,
             flush_period=flush_period,
             skip_rescale=True,
+            eval_in_process=eval_in_process,
         )
         self._output_dir = None
         self._cpu_device = torch.device("cpu")
@@ -78,24 +80,6 @@ class TestReconEvaluator(unittest.TestCase):
         for k in a.keys():
             assert cmp_func(a[k], b[k])
 
-    def test_evaluation_metrics(self):
-        # 2D
-        evaluator = MockReconEvaluator()
-        prediction = {"pred": torch.rand(384, 384, 1, 2), "target": torch.rand(384, 384, 1, 2)}
-        vals = evaluator.evaluate_prediction(prediction)
-        with self.assertWarns(DeprecationWarning):
-            expected = evaluator.evaluate_prediction_old(prediction)
-
-        # Maps from old strings to new strings
-        key_mapping = {"l1": "l1", "l2": "l2", "psnr": "psnr", "ssim": "ssim_old"}
-
-        assert all(
-            np.allclose(vals[key_mapping[k]], expected[k]) for k in expected.keys()
-        ), "\n".join(
-            "{}\tValue: {:.6f}\tExpected: {:.6f}".format(k, vals[key_mapping[k]], expected[k])
-            for k in expected
-        )
-
     def test_flush(self):
         scan_slices = (2, 2, 2)
         pred = torch.rand(sum(scan_slices), 20, 20, 1, 2)
@@ -108,7 +92,6 @@ class TestReconEvaluator(unittest.TestCase):
         for inputs, outputs in data:
             evaluator.process(inputs, outputs)
         expected_results = evaluator.evaluate()
-        expected_running_results = evaluator._running_results
 
         # Results with flushing every 3 examples.
         evaluator = MockReconEvaluator()
@@ -117,10 +100,7 @@ class TestReconEvaluator(unittest.TestCase):
             evaluator.flush(skip_last_scan=True)
             assert len(evaluator._predictions) == num_preds_remaining
         results = evaluator.evaluate()
-        running_results = evaluator._running_results
-
         self._cmp_results(results, expected_results)
-        self._cmp_results(running_results, expected_running_results)
 
         # Results with flushing every 4 examples.
         data = _build_mock_data(scan_slices=scan_slices, batch_size=4, pred=pred, target=target)
@@ -130,10 +110,7 @@ class TestReconEvaluator(unittest.TestCase):
             evaluator.flush(skip_last_scan=True)
             assert len(evaluator._predictions) == num_preds_remaining
         results = evaluator.evaluate()
-        running_results = evaluator._running_results
-
         self._cmp_results(results, expected_results)
-        self._cmp_results(running_results, expected_running_results)
 
     def test_process_flush(self):
         scan_slices = (3, 8, 2, 5, 10, 5, 17, 7)
@@ -146,17 +123,40 @@ class TestReconEvaluator(unittest.TestCase):
         for inputs, outputs in data:
             evaluator.process(inputs, outputs)
         expected_results = evaluator.evaluate()
-        expected_running_results = evaluator._running_results
 
         # Test setting flush period.
         evaluator = MockReconEvaluator(flush_period=flush_period)
         for inputs, outputs in data:
             evaluator.process(inputs, outputs)
         results = evaluator.evaluate()
-        running_results = evaluator._running_results
 
         self._cmp_results(results, expected_results)
-        self._cmp_results(running_results, expected_running_results)
+
+    def test_eval_in_process(self):
+        """Test if evaulating inside `process` works."""
+        scan_slices = (3, 8, 2, 5, 10, 5, 17, 7)
+        batch_size = 6
+        data = _build_mock_data(scan_slices=scan_slices, batch_size=batch_size)
+
+        # Expected results (evaluate after process).
+        evaluator = MockReconEvaluator()
+        for inputs, outputs in data:
+            evaluator.process(inputs, outputs)
+        expected_results = evaluator.evaluate()
+
+        # Test evaluation while processing.
+        evaluator = MockReconEvaluator(eval_in_process=True)
+        for inputs, outputs in data:
+            evaluator.process(inputs, outputs)
+        results = evaluator.evaluate()
+        self._cmp_results(results, expected_results)
+
+        flush_period = 20
+        evaluator = MockReconEvaluator(flush_period=flush_period, eval_in_process=True)
+        for inputs, outputs in data:
+            evaluator.process(inputs, outputs)
+        results = evaluator.evaluate()
+        self._cmp_results(results, expected_results)
 
 
 if __name__ == "__main__":
