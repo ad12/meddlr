@@ -42,17 +42,15 @@ class MetricCollection(_MetricCollection):
 
     def to_pandas(self, sync_dist: bool = True) -> pd.DataFrame:
         frames = []
-        m: Metric
-        for name, m in self.items():
-            df: pd.DataFrame = m.to_pandas(sync_dist=sync_dist)
+        metric: Metric
+        for name, metric in self.items():
+            df: pd.DataFrame = metric.to_pandas(sync_dist=sync_dist)
             df["Metric"] = name
             frames.append(df)
 
         return pd.concat(frames, ignore_index=True)
 
-    def to_dict(self, group_by=None, sync_dist: bool = True) -> Dict[str, Any]:
-        if group_by is None:
-            group_by = "Metric"
+    def to_dict(self, group_by="Metric", sync_dist: bool = True) -> Dict[str, Any]:
         df = self.to_pandas(sync_dist=sync_dist)
         df = df.melt(id_vars=["Metric", "id"], var_name="category", value_name="value")
         if len(np.unique(df["category"])) > 1:
@@ -78,6 +76,7 @@ class MetricCollection(_MetricCollection):
 
     def ids(self, sync_dist=True) -> Set[str]:
         _ids = set()
-        for _, m in self.items():
-            _ids |= set(m.to_pandas(sync_dist=sync_dist)["id"].to_numpy())
+        metric: Metric
+        for _, metric in self.items():
+            _ids |= set(metric.to_pandas(sync_dist=sync_dist)["id"].to_numpy())
         return _ids

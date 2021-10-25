@@ -1,29 +1,25 @@
 import copy
+import itertools
 import logging
 import os
-import warnings
-from collections import OrderedDict, defaultdict
+import time
+from collections import defaultdict
+from typing import List, Sequence, Union
 
-import numpy as np
+import pandas as pd
+import silx.io.dictdump as sio
 import torch
-from skimage.metrics import structural_similarity
 from tqdm import tqdm
 
+import ss_recon.utils.comm as comm
 from ss_recon.data.transforms.transform import build_normalizer
-from ss_recon.evaluation.metrics import (
-    compute_l2,
-    compute_nrmse,
-    compute_psnr,
-    compute_ssim,
-    compute_vifp_mscale,
-)
+from ss_recon.evaluation.scan_evaluator import ScanEvaluator, structure_scans
+from ss_recon.metrics.build import build_metrics
+from ss_recon.metrics.collection import MetricCollection
 from ss_recon.ops import complex as cplx
-from ss_recon.utils.transforms import center_crop
-
-from .evaluator import DatasetEvaluator
 
 
-class ReconEvaluator(DatasetEvaluator):
+class ReconEvaluator(ScanEvaluator):
     """
     Evaluate reconstruction quality using the metrics listed below:
 
@@ -38,42 +34,53 @@ class ReconEvaluator(DatasetEvaluator):
         self,
         dataset_name,
         cfg,
-        output_dir=None,
+        distributed=False,
+        sync_outputs=False,
+        aggregate_scans=True,
         group_by_scan=False,
+        output_dir=None,
         skip_rescale=False,
         save_scans=False,
         metrics=None,
         flush_period: int = None,
+        to_cpu=False,
+        channel_names=None,
+        eval_in_process=False,
+        structure_channel_by=None,
+        prefix="val",
     ):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
             cfg (CfgNode): config instance
-            output_dir (str, optional): an output directory to dump all
-                results predicted on the dataset. Currently not used.
+            output_dir (str): optional, an output directory to dump all
+                results predicted on the dataset.
+            distributed (bool, optional): If ``True``, collect results from all
+                ranks for evaluation. Otherwise, will evaluate the results in the
+                current process. ∂If using ``DistributedDataParallel``, this should likely
+                be ``True``.
+            sync_outputs (bool, optional): If ``True``, synchronizes all predictions
+                before evaluation. If ``False``, synchronizes metrics before reduction.
+                Ignored if ``distributed=False``.
+            aggregate_scans (bool, optional): If ``True``, also computes metrics per
+                scan under the label `'scan_{metric}'` (e.g. scan_l1).
             group_by_scan (bool, optional): If `True`, groups metrics by scan.
+                `self.evaluate()` will return a dict of scan_id -> dict[metric name, metric value]
             skip_rescale (bool, optional): If `True`, skips rescaling the output and target
                 by the mean/std.
             save_scans (bool, optional): If `True`, saves predictions to .npy file.
             metrics (Sequence[str], optional): To avoid computing metrics, set to ``False``.
-                Defaults to all supported recon metrics.
-                To process metrics on the full scan, append ``'_scan'`` to the metric name
-                (e.g. `'psnr_scan'`). Supported metrics include:
-                * 'psnr': Complex peak signal-to-noise ratio
-                * 'psnr_mag': Magnitude peak signal-to-noise ratio
-                * 'ssim_old': Old calculation for SSIM
-                * 'ssim (Wang)': SSIM following Wang, et al. protocol.
-                    https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf
-                * 'nrmse': Complex normalized root-mean-squared-error
-                * 'nrmse_mag': Magnitude normalized root-mean-squared-error.
-                * 'vif_mag': Visual information fidelity on magnitude images.
-                * 'vif_phase': Visual information fidelity on phase images.
+                Defaults to all supported recon metrics. To process metrics on the full scan,
+                append ``'_scan'`` to the metric name (e.g. `'psnr_scan'`).
             flush_period (int, optional): The approximate period over which predictions
                 are cleared and running results are computed. This parameter helps
                 mitigate OOM errors. The period is equivalent to number of examples
                 (not batches).
+            to_cpu (bool, optional): If ``True``, move all data to the cpu to do computation.
+            eval_in_process (bool, optional): If ``True``, run slice/patch evaluation
+                while processing. This may increase overall throughput.
         """
-        # self._tasks = self._tasks_from_config(cfg)
+        self._dataset_name = dataset_name
         self._output_dir = output_dir
         if self._output_dir:
             os.makedirs(self._output_dir, exist_ok=True)
@@ -82,52 +89,79 @@ class ReconEvaluator(DatasetEvaluator):
         self._logger = logging.getLogger(__name__)
         self._normalizer = build_normalizer(cfg)
         self._group_by_scan = group_by_scan
+        self._distributed = distributed
+        self._sync_outputs = sync_outputs
+        self._aggregate_scans = aggregate_scans
         self._skip_rescale = skip_rescale
-        self._save_scans = save_scans
+        self._channel_names = channel_names
+        self._structure_channel_by = structure_channel_by
+        self._prefix = prefix
 
-        if metrics is not False:
-            self._slice_metrics = (
-                [m for m in metrics if not m.endswith("_scan")] if metrics else None
-            )
-            self._scan_metrics = (
-                [m[:-5] for m in metrics if m.endswith("_scan")] if metrics else None
-            )
-        else:
-            self._slice_metrics = []
-            self._scan_metrics = []
+        if save_scans and (not output_dir or not aggregate_scans):
+            raise ValueError("`output_dir` and `aggregate_scans` must be specified to save scans.")
+        self._save_scans = save_scans
+        self._save_scan_dir = os.path.join(self._output_dir, "pred") if self._output_dir else None
+        if self._save_scan_dir:
+            os.makedirs(self._save_scan_dir, exist_ok=True)
+
+        if metrics is False:
+            metrics = []
+        elif metrics in (None, True):
+            metrics = self.default_metrics()
+        self._metric_names = metrics
+
         self._results = None
-        self._running_results = None
 
         if flush_period is None:
             flush_period = cfg.TEST.FLUSH_PERIOD
-        if flush_period is None or flush_period < 0:
-            flush_period = 0
+        if distributed and flush_period != 0:
+            raise ValueError("Result flushing is not enabled in distributed mode.")
         self.flush_period = flush_period
+        self.to_cpu = to_cpu
+        self.eval_in_process = eval_in_process
 
-        # TODO: Uncomment when metadata is supported
-        # self._metadata = MetadataCatalog.get(dataset_name)
-        # if not hasattr(self._metadata, "json_file"):
-        #     self._logger.warning(
-        #         f"json_file was not found in MetaDataCatalog for '{dataset_name}'")  # noqa
-        #
-        #     cache_path = os.path.join(output_dir,
-        #                               f"{dataset_name}_coco_format.json")
-        #     self._metadata.json_file = cache_path
-        #     convert_to_coco_json(dataset_name, cache_path)
+        self._remaining_state = None
+        self._predictions = []
+        self._is_flushing = False
+
+        # Memory
+        self._memory = defaultdict(list)
 
     @classmethod
-    def default_metrics(cls):
+    def default_metrics(cls) -> List[str]:
         """The default metrics processed by this class."""
-        metrics = ["psnr", "psnr_mag", "ssim_old", "ssim (Wang)", "nrmse", "nrmse_mag"]
+        metrics = ["psnr", "psnr_mag", "ssim (Wang)", "nrmse", "nrmse_mag"]
         metrics.extend([f"{x}_scan" for x in metrics])
         return metrics
 
     def reset(self):
+        self._remaining_state = None
         self._predictions = []
-        self._scan_map = defaultdict(dict)
-        self.scans = None
-        self._results = None
-        self._running_results = None
+        self._is_flushing = False
+        self._memory = defaultdict(list)
+
+        metrics = self._metric_names
+        prefix = self._prefix + "_" if self._prefix else ""
+        slice_metrics = [m for m in metrics if not m.endswith("_scan")]
+        scan_metrics = [m[:-5] for m in metrics if m.endswith("_scan")]
+        self.slice_metrics = build_metrics(
+            slice_metrics,
+            fmt=prefix + "{}",
+            channel_names=self._channel_names,
+        )
+        self.scan_metrics = build_metrics(
+            scan_metrics,
+            fmt=prefix + "{}_scan",
+            channel_names=self._channel_names,
+        )
+        self.slice_metrics.eval()
+        self.scan_metrics.eval()
+
+    def exit_prediction_scope(self):
+        ret_val = super().exit_prediction_scope()
+        if torch.cuda.is_available() and torch.cuda.is_initialized():
+            torch.cuda.empty_cache()
+        return ret_val
 
     def process(self, inputs, outputs):
         """
@@ -145,17 +179,33 @@ class ReconEvaluator(DatasetEvaluator):
 
         if self._skip_rescale:
             # Do not rescale the outputs
-            preds = outputs["pred"].to(self._cpu_device, non_blocking=True)
-            targets = outputs["target"].to(self._cpu_device, non_blocking=True)
+            preds = outputs["pred"]
+            targets = outputs["target"]
         else:
             normalized = self._normalizer.undo(
                 image=outputs["pred"],
                 target=outputs["target"],
                 mean=inputs["mean"],
                 std=inputs["std"],
+                channels_last=True,
             )
-            preds = normalized["image"].to(self._cpu_device, non_blocking=True)
-            targets = normalized["target"].to(self._cpu_device, non_blocking=True)
+            preds = normalized["image"]
+            targets = normalized["target"]
+
+        if self.to_cpu:
+            preds = preds.to(self._cpu_device, non_blocking=True)
+            targets = targets.to(self._cpu_device, non_blocking=True)
+
+        if self.eval_in_process:
+            self.evaluate_prediction(
+                {"pred": preds, "target": targets},
+                self.slice_metrics,
+                [
+                    "-".join([str(md[field]) for field in ("scan_id", "slice_id")])
+                    for md in inputs["metadata"]
+                ],
+                is_batch=True,
+            )
 
         self._predictions.extend(
             [
@@ -167,253 +217,187 @@ class ReconEvaluator(DatasetEvaluator):
                 for i in range(N)
             ]
         )
+        self._append_memory("after_predictions")
 
-        if self.flush_period > 0 and len(self._predictions) >= self.flush_period:
-            self.flush(skip_last_scan=True)
+        has_num_examples = self.flush_period > 0 and len(self._predictions) >= self.flush_period
+        has_num_scans = self.flush_period < 0 and len(
+            {x["metadata"]["scan_id"] for x in self._predictions}
+        ) > abs(self.flush_period)
+        if has_num_examples or has_num_scans:
+            self.flush(enter_prediction_scope=True, skip_last_scan=True)
+            self._append_memory("after_flush")
 
-        # preds = outputs["pred"].to(self._cpu_device)
-        # targets = outputs["target"].to(self._cpu_device)
-        # means = inputs["mean"].to(self._cpu_device)
-        # stds = inputs["std"].to(self._cpu_device)
-        # for i in range(N):
-        #     pred, target = preds[i], targets[i]
-        #     mean = means[i]
-        #     std = stds[i]
-        #     pred = pred * std + mean
-        #     target = target * std + mean
-
-        #     # probably isn't best practice to hang onto each prediction.
-        #     prediction = {"pred": pred, "target": target}
-
-        #     self._predictions.append(prediction)
-
-    def flush(self, skip_last_scan: bool = True):
-        """Clear predictions and computing running metrics.
-
-        Results are added to ``self._running_results``.
-
-        Args:
-            skip_last_scan (bool, optional): If ``True``, does not flush
-                most recent scan. This avoids prematurely computing metrics
-                before all slices of the scan are available.
-        """
-        remaining_preds = []
-
-        if skip_last_scan:
-            try:
-                scan_ids = np.asarray([p["metadata"]["scan_id"] for p in self._predictions])
-            except KeyError:
-                raise ValueError(
-                    "Cannot skip last scan. metadata does not contain 'scan_id' keyword."
-                )
-
-            change_idxs = np.where(scan_ids[1:] != scan_ids[:-1])[0]
-            if len(change_idxs) == 0:
-                warnings.warn(
-                    "Flushing skipped. All current predictions are from the same scan. "
-                    "To force flush, set `skip_last_scan=True`."
-                )
-                return
-
-            last_idx = int(change_idxs[-1] + 1)
-            remaining_preds = self._predictions[last_idx:]
-            self._predictions = self._predictions[:last_idx]
-
-        self._logger.info("Flushing results...")
-
-        self.evaluate()
-        self._predictions = remaining_preds
-
-    def structure_scans(self):
+    def structure_scans(self, verbose=True):
         """Structure scans into volumes to be used to evaluation."""
-        self._logger.info("Structuring slices into volumes...")
-        scan_map = defaultdict(dict)
-        for pred in self._predictions:
-            scan_map[pred["metadata"]["scan_id"]][pred["metadata"]["slice_id"]] = pred
+        structure_channel_by = self._structure_channel_by
+        structure_by = {0: "slice_id"}
+        if structure_channel_by is not None:
+            # This does not work when predictions are real/imaginary are separate channels
+            # TODO: Fix this.
+            structure_by[-1] = structure_channel_by
+        to_struct = ("pred", "target")
 
-        scans = {}
-        for scan_id, slice_idx_to_pred in tqdm(scan_map.items()):
-            min_slice, max_slice = min(slice_idx_to_pred.keys()), max(slice_idx_to_pred.keys())
-            slice_predictions = [slice_idx_to_pred[i] for i in range(min_slice, max_slice + 1)]
-            pred = {
-                k: torch.stack(
-                    [slice_pred[k] for slice_pred in slice_predictions], dim=0
-                ).contiguous()
-                for k in ("pred", "target")
-            }
-            scans[scan_id] = pred
-        return scans
+        # Making a tensor contiguous can be an expensive operation.
+        # We want to do it as few times as possible. Because we have to
+        # do it anyway when we squeeze the tensor when structuring by channel,
+        # we opt not to do when first structuring the scans.
+        contiguous = structure_channel_by is None
+
+        out = structure_scans(
+            self._predictions,
+            to_struct=to_struct,
+            dims=structure_by,
+            contiguous=contiguous,
+            verbose=verbose,
+        )
+
+        if structure_channel_by is not None:
+            for scan_id in out:
+                out[scan_id].update(
+                    {k: out[scan_id][k].squeeze(-2).contiguous() for k in to_struct}
+                )
+
+        return out
+
+    def synchronize_predictions(self):
+        comm.synchronize()
+        self._predictions = comm.gather(self._predictions, dst=0)
+        self._predictions = list(itertools.chain(*self._predictions))
+        if not comm.is_main_process():
+            self._predictions = []
 
     def evaluate(self):
-        if self._group_by_scan:
-            return self._evaluate_by_group()
+        # Sync predictions (if applicable)
+        if self._distributed and self._sync_outputs:
+            self.synchronize_predictions()
+            if not self._predictions:
+                return {}
 
         if len(self._predictions) == 0:
             self._logger.warning("[ReconEvaluator] Did not receive valid predictions.")
             return {}
 
-        pred_vals = defaultdict(list)
-        for pred in tqdm(self._predictions, desc="Slice metrics"):
-            val = self.evaluate_prediction(pred, self._slice_metrics)
-            for k, v in val.items():
-                pred_vals[f"val_{k}"].append(v)
+        # Compute metrics per slice (if not already done during process step).
+        if not self.eval_in_process:
+            for pred in tqdm(
+                self._predictions, desc="Slice metric", disable=not comm.is_main_process()
+            ):
+                self.evaluate_prediction(
+                    pred,
+                    self.slice_metrics,
+                    "-".join([str(pred["metadata"][x]) for x in ("scan_id", "slice_id")]),
+                )
 
-        scans = self.structure_scans()
-        self.scans = scans
-        scans = scans.values()
-        for pred in tqdm(scans, desc="Scan Metrics"):
-            val = self.evaluate_prediction(pred, self._scan_metrics)
-            for k, v in val.items():
-                pred_vals[f"val_{k}_scan"].append(v)
+        # Compute metrics per scan.
+        has_metadata = bool(self._predictions[0]["metadata"])
+        if self._aggregate_scans and has_metadata:
+            scans = self.structure_scans()
+            for scan_id, pred in tqdm(
+                scans.items(), desc="Scan Metrics", disable=not comm.is_main_process()
+            ):
+                self.evaluate_prediction(pred, self.scan_metrics, scan_id)
+                if self._save_scans:
+                    sio.dicttoh5(
+                        {"pred": pred["pred"].cpu()},
+                        os.path.join(self._save_scan_dir, f"{scan_id}.h5"),
+                    )
 
-        if self._running_results is None:
-            self._running_results = defaultdict(list)
-        for k, v in pred_vals.items():
-            self._running_results[k].extend(v)
+        if self._group_by_scan:
+            pred_vals = self._get_scan_results()
+        else:
+            pred_vals = self.slice_metrics.to_dict()
+            pred_vals.update(self.scan_metrics.to_dict())
 
-        self._results = OrderedDict({k: np.mean(v) for k, v in self._running_results.items()})
+        self._results = pred_vals
+
+        if not self._is_flushing:
+            self.log_summary()
 
         # Copy so the caller can do whatever with results
         return copy.deepcopy(self._results)
 
-    def _evaluate_by_group(self):
-        """Keeping this separate for now to avoid breaking existing functionality."""
-        if len(self._predictions) == 0:
-            self._logger.warning("[ReconEvaluator] Did not receive valid predictions.")
-            return {}
+    def _get_scan_results(self):
+        """Get results grouping by scan."""
+        pred_vals = defaultdict(dict)
 
-        # Per slice evaluation.
-        pred_vals = defaultdict(lambda: defaultdict(list))
-        for pred in tqdm(self._predictions, desc="Slice metrics"):
-            scan_id = pred["metadata"]["scan_id"]
-            val = self.evaluate_prediction(pred, self._slice_metrics)
-            for k, v in val.items():
-                pred_vals[scan_id][f"{k}"].append(v)
+        slice_metrics = self.slice_metrics.to_dict(group_by=["id", "Metric"])
+        for (slice_id, metric_name), value in slice_metrics.items():
+            pred_vals[slice_id.rsplit("-", 1)[0]][metric_name] = value
 
-        # Full scan evaluation
-        if self._scan_metrics or self._save_scans:
-            scans = self.structure_scans()
-        else:
-            scans = {}
-        for scan_id, pred in tqdm(scans.items(), desc="Scan metrics"):
-            val = self.evaluate_prediction(pred, self._scan_metrics)
-            for k, v in val.items():
-                pred_vals[scan_id][f"{k}_scan"].append(v)
+        scan_metrics = self.scan_metrics.to_dict(group_by=["id", "Metric"])
+        for (scan_id, metric_name), value in scan_metrics.items():
+            pred_vals[scan_id][metric_name] = value
 
-        if self._save_scans:
-            self._logger.info("Saving data...")
-            assert self._output_dir
-            for scan_id, pred in tqdm(scans.items()):
-                np.save(os.path.join(self._output_dir, f"{scan_id}.npy"), pred["pred"])
+        return pred_vals
 
-        if self._running_results is None:
-            self._running_results = defaultdict(lambda: defaultdict(list))
-        for scan_id, metrics in pred_vals.items():
-            for k, v in metrics.items():
-                self._running_results[scan_id][k].extend(v)
+    def log_summary(self):
+        if not comm.is_main_process():
+            return
 
-        self._results = OrderedDict(
-            {
-                scan_id: {k: np.mean(v) for k, v in metrics.items()}
-                for scan_id, metrics in self._running_results.items()
-            }
+        output_dir = self._output_dir
+        self._logger.info(
+            "[{}] Slice metrics summary:\n{}".format(
+                type(self).__name__, self.slice_metrics.summary()
+            )
         )
+        # TODO: Make this based off if metrics has scans
+        if self._aggregate_scans:
+            self._logger.info(
+                "[{}] Scan metrics summary:\n{}".format(
+                    type(self).__name__, self.scan_metrics.summary()
+                )
+            )
 
-        results = copy.deepcopy(self._results)
+        if not output_dir:
+            return
 
-        # if self._output_dir:
-        #     output_file = os.path.join(self._output_dir, "results.pt")
-        #     _results = {"results": results, "pred_vals": pred_vals}
-        #     import pdb; pdb.set_trace()
-        #     torch.save(_results, output_file)
+        dirpath = output_dir
+        os.makedirs(dirpath, exist_ok=True)
+        test_results_summary_path = os.path.join(dirpath, "results.txt")
+        slice_metrics_path = os.path.join(dirpath, "slice_metrics.csv")
+        scan_metrics_path = os.path.join(dirpath, "scan_metrics.csv")
 
-        # Copy so the caller can do whatever with results
-        return results
+        # Write details to test file
+        with open(test_results_summary_path, "w+") as f:
+            f.write("Results generated on %s\n" % time.strftime("%X %x %Z"))
+            # f.write("Weights Loaded: %s\n" % os.path.basename(self._config.TEST_WEIGHT_PATH))
 
-    def evaluate_prediction(self, prediction, metric_names=None):
+            f.write("--" * 40)
+            f.write("\n")
+            f.write("Slice Metrics:\n")
+            f.write(self.slice_metrics.summary())
+            f.write("--" * 40)
+            f.write("\n")
+            if self._aggregate_scans:
+                f.write("Scan Metrics:\n")
+                f.write(self.scan_metrics.summary())
+            f.write("--" * 40)
+            f.write("\n")
+
+        df: pd.DataFrame = self.slice_metrics.to_pandas()
+        df.to_csv(slice_metrics_path, header=True, index=True)
+
+        df: pd.DataFrame = self.scan_metrics.to_pandas()
+        df.to_csv(scan_metrics_path, header=True, index=True)
+
+    def evaluate_prediction(
+        self,
+        prediction,
+        metrics: MetricCollection,
+        ex_id: Union[str, Sequence[str]],
+        is_batch=False,
+    ):
         output, target = prediction["pred"], prediction["target"]
-        metric_names = list(metric_names) if metric_names is not None else None
-        metrics = {}
+        if not is_batch:
+            output, target = output.unsqueeze(0), target.unsqueeze(0)
+            ex_id = [ex_id]
+        output, target = cplx.channel_first(output), cplx.channel_first(target)
+        metrics(preds=output, targets=target, ids=ex_id)
+        return metrics.to_dict()
 
-        # Compute metrics magnitude images
-        abs_error = cplx.abs(output - target)
-        metrics["l1"] = torch.mean(abs_error).item()
-        metrics["l2"] = compute_l2(target, output).item()
-        if metric_names is None or "psnr" in metric_names:
-            metrics["psnr"] = compute_psnr(target, output).item()
-        if metric_names is None or "psnr_mag" in metric_names:
-            metrics["psnr_mag"] = compute_psnr(target, output, magnitude=True).item()
-        if metric_names is None or "ssim_old" in metric_names:
-            metrics["ssim_old"] = compute_ssim(
-                target,
-                output,
-                data_range="x-range",
-                gaussian_weights=False,
-                use_sample_covariance=True,
-            )
-
-        # Compute ssim following Wang, et al. protocol.
-        # https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf
-        # Both the target and predicted reconstructions are
-        # normalized by the maximum value of the magnitude of the target
-        if metric_names is None or "ssim (Wang)" in metric_names:
-            metrics["ssim (Wang)"] = compute_ssim(
-                target,
-                output,
-                data_range="ref-maxval",
-                gaussian_weights=True,
-                use_sample_covariance=False,
-            )
-        if metric_names is None or "ssim50 (Wang)" in metric_names:
-            shape = target.shape[:-1] if cplx.is_complex_as_real(target) else target.shape
-            shape = tuple(x // 2 if x > 1 else 1 for x in shape)
-            metrics["ssim50 (Wang)"] = compute_ssim(
-                center_crop(target, shape),
-                center_crop(output, shape),
-                data_range="ref-maxval",
-                gaussian_weights=True,
-                use_sample_covariance=False,
-            )
-        if metric_names is None or "nrmse" in metric_names:
-            metrics["nrmse"] = compute_nrmse(target, output).item()
-        if metric_names is None or "nrmse_mag" in metric_names:
-            metrics["nrmse_mag"] = compute_nrmse(target, output, magnitude=True).item()
-
-        if metric_names is None or "vif_mag" in metric_names:
-            metrics["vif_mag"] = compute_vifp_mscale(target, output, im_type="magnitude")
-        if metric_names is None or "vif_phase" in metric_names:
-            metrics["vif_phase"] = compute_vifp_mscale(target, output, im_type="phase")
-
-        # Make sure all metrics are handled.
-        if metric_names is None:
-            metric_names = ()
-        remaining = set(metric_names) - set(metrics.keys())
-        if len(remaining) > 0:
-            raise ValueError(f"Cannot handle metrics {remaining}")
-
-        return metrics
-        # return {
-        #     "l1": l1, "l2": l2, "psnr": psnr,
-        #     "ssim_old": ssim_old, "ssim (Wang)": ssim_wang,
-        #     "nrmse": nrmse, "psnr_mag": psnr_mag, "nrmse_mag": nrmse_mag
-        # }
-
-    def evaluate_prediction_old(self, prediction):
-        warnings.warn(
-            "`evaluate_prediction_old` is deprecated and is staged for removal in v0.0.2",
-            DeprecationWarning,
-        )
-        output, target = prediction["pred"], prediction["target"]
-
-        # Compute metrics magnitude images
-        abs_error = cplx.abs(output - target)
-        l1 = torch.mean(abs_error).item()
-        l2 = torch.sqrt(torch.mean(abs_error ** 2)).item()
-        psnr = 20 * torch.log10(cplx.abs(target).max() / l2).item()
-
-        output, target = cplx.abs(output), cplx.abs(target)
-        target = target.squeeze(-1).numpy()
-        output = output.squeeze(-1).numpy()
-        ssim = structural_similarity(target, output, data_range=output.max() - output.min())
-
-        return {"l1": l1, "l2": l2, "psnr": psnr, "ssim": ssim}
+    def _append_memory(self, key):
+        self._memory[key].append(torch.cuda.max_memory_allocated() / 1024.0 / 1024.0)
+        mem = self._memory[key]
+        if len(mem) > 1 and (mem[-1] - mem[-2] > 500):
+            self._logger.info(f"Memory exceeded '{key}'- previous 5 logs: {mem[-5:]}")
+            # self._logger.info(torch.cuda.memory_stats())

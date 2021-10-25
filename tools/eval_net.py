@@ -303,7 +303,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
         # Build evaluators. Only save reconstructions for last scan.
         params_str = "-".join(f"{k}={v}" for k, v in params.items() if k != "dataset")
-        exp_output_dir = os.path.join(output_dir, dataset_name, params_str) if save_scans else None
+        exp_output_dir = os.path.join(output_dir, dataset_name, params_str)
         evaluators = [
             ReconEvaluator(
                 dataset_name,
@@ -313,15 +313,13 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
                 save_scans=save_scans,
                 output_dir=exp_output_dir,
                 metrics=eval_metrics if compute_metrics else False,
+                prefix=None,
             )
         ]
         # TODO: add support for multiple evaluators.
         if zero_filled:
-            zf_output_dir = (
-                os.path.join(output_dir, dataset_name, "ZeroFilled-" + params_str)
-                if save_scans
-                else None
-            )
+            zf_output_dir = os.path.join(output_dir, dataset_name, "ZeroFilled-" + params_str)
+
             evaluators.append(
                 ZFReconEvaluator(
                     dataset_name,
@@ -331,6 +329,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
                     save_scans=save_scans,
                     output_dir=zf_output_dir,
                     metrics=eval_metrics if compute_metrics else False,
+                    prefix=None,
                 )
             )
         evaluators = DatasetEvaluators(evaluators, as_list=True)

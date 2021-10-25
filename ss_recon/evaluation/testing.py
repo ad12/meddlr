@@ -3,8 +3,7 @@ import logging
 import os
 import pprint
 import sys
-from collections import OrderedDict
-from typing import Mapping
+from typing import Dict, Mapping
 
 import numpy as np
 import torch
@@ -18,7 +17,7 @@ def print_csv_format(results):
     Args:
         results (OrderedDict[dict]): task_name -> {metric -> score}
     """
-    assert isinstance(results, OrderedDict), results  # unordered results cannot be properly printed
+    assert isinstance(results, Dict), results  # unordered results cannot be properly printed
     logger = logging.getLogger(__name__)
     important_res = [(k, v) for k, v in results.items() if "-" not in k]
     logger.info("copypaste: " + ",".join([k[0] for k in important_res]))
