@@ -73,7 +73,40 @@ class NoOpNormalizer(Normalizer):
 
 
 @NORMALIZER_REGISTRY.register()
-class TopMagnitudeNormalizer(Normalizer):
+class AffineNormalizer(Normalizer):
+    def normalize(self, scale, bias, **kwargs):
+        outputs = {}
+        for k, v in kwargs.items():
+            if k in self._keywords:
+                outputs[k] = (v - bias) / scale
+        outputs.update({"mean": bias, "std": scale})
+        return outputs
+
+    def undo(self, mean, std, channels_last=False, **kwargs):
+        image = kwargs["image"]
+        mean = self._reshape_params(mean, image.ndim, channels_last=channels_last).to(image.device)
+        std = self._reshape_params(std, image.ndim, channels_last=channels_last).to(image.device)
+
+        outputs = {}
+        for kw in ("image", "target"):
+            if kw in self._keywords:
+                outputs[kw] = unnormalize_affine(kwargs[kw], mean, std)
+        if any("kspace" in k for k in kwargs.keys()):
+            raise ValueError("Currently does not support undoing analysis on kspace")
+
+        # Add other keys that were not computed.
+        outputs.update({k: v for k, v in kwargs.items() if k not in outputs})
+        return outputs
+
+    def _reshape_params(self, param, ndim: int, channels_last: bool = False) -> torch.Tensor:
+        if not channels_last or param.ndim != 2:
+            return param.view(param.shape + (1,) * (ndim - param.ndim))
+        shape = (param.shape[0],) + (1,) * (ndim - param.ndim) + (param.shape[1],)
+        return param.reshape(shape)
+
+
+@NORMALIZER_REGISTRY.register()
+class TopMagnitudeNormalizer(AffineNormalizer):
     """Normalizes by percentile of magnitude values."""
 
     def __init__(self, keywords=None, percentile=0.95, use_mean=False):
@@ -96,22 +129,6 @@ class TopMagnitudeNormalizer(Normalizer):
         mean = torch.tensor([0.0], dtype=torch.float32)
         std = scale.unsqueeze(-1)
         outputs.update({"mean": mean, "std": std})
-
-        # Add other keys that were not computed.
-        outputs.update({k: v for k, v in kwargs.items() if k not in outputs})
-        return outputs
-
-    def undo(self, mean, std, **kwargs):
-        image = kwargs["image"]
-        mean = mean.view(mean.shape + (1,) * (image.ndim - mean.ndim)).to(image.device)
-        std = std.view(std.shape + (1,) * (image.ndim - std.ndim)).to(image.device)
-
-        outputs = {}
-        for kw in ("image", "target"):
-            if kw in self._keywords:
-                outputs[kw] = unnormalize_affine(kwargs[kw], mean, std)
-        if any("kspace" in k for k in kwargs.keys()):
-            raise ValueError("Currently does not support undoing analysis on kspace")
 
         # Add other keys that were not computed.
         outputs.update({k: v for k, v in kwargs.items() if k not in outputs})

@@ -6,7 +6,11 @@ import numpy as np
 import torch
 from torch.utils.data import Sampler, SubsetRandomSampler
 
+from ss_recon.utils import comm
+
 _UNKNOWN_TOKEN = "<UNK>"
+
+__all__ = ["GroupSampler", "AlternatingGroupSampler", "DistributedGroupSampler"]
 
 
 class GroupSampler(Sampler):
@@ -341,6 +345,58 @@ class AlternatingGroupSampler(GroupSampler):
             return [torch.tensor([])]
 
         return [self._next_batch() for _ in range(len(self))]
+
+
+class DistributedGroupSampler(Sampler):
+    """Samples examples such that examples from the same group are on the same node.
+
+    `dataset` must support the following attributes and methods
+        * `groups(group_by) -> Dict`: Returns mapping from group id to indices
+
+    dataset examples is a list of tuples (fname, instance),
+    where fname is essentially the volume name (actually a filename).
+    """
+
+    def __init__(self, dataset, group_by: str, shuffle: bool = False):
+        self.dataset = dataset
+        self.world_size = self._world_size()
+        self.rank = self._rank()
+        self.epoch = 0
+        self._group_by = group_by
+        self.shuffle = shuffle
+
+        # All nodes
+        all_groups = dataset.groups(group_by)
+        self.all_groups = np.array(sorted(all_groups.keys()))
+        self.all_groups_split = np.array_split(self.all_groups, self.world_size)
+
+        # This node
+        self.groups = self.all_groups_split[self.rank]
+        self.indices = np.concatenate([all_groups[group_id] for group_id in self.groups])
+        self.num_samples = len(self.indices)
+
+    def _world_size(self):
+        return comm.get_world_size()
+
+    def _rank(self):
+        return comm.get_rank()
+
+    def __iter__(self):
+        # deterministically shuffle based on epoch
+        if self.shuffle:
+            g = torch.Generator()
+            g.manual_seed(self.epoch)
+            ordering = torch.randperm(self.num_samples, generator=g).tolist()
+            indices = self.indices[ordering]
+        else:
+            indices = self.indices
+        return iter(indices.tolist())
+
+    def __len__(self):
+        return self.num_samples
+
+    def set_epoch(self, epoch):
+        self.epoch = epoch
 
 
 def _shuffle_groups(groups, rng):

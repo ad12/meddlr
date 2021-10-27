@@ -1,66 +1,14 @@
 import os
+from collections import defaultdict
 from typing import Dict, List
 
 import h5py
 import numpy as np
 from torch.utils.data import Dataset
-from torch.utils.data.dataloader import default_collate as _default_collate
 
 from ss_recon.data.transforms.transform import DataTransform
 
-__all__ = ["default_collate", "collate_by_supervision", "SliceData"]
-
-
-def default_collate(batch: List[Dict]):
-    """Default collate function when using :cls:`SliceDataset`.
-
-    This collate function handles metadata appropriately by returning
-    metadata as a list of dictionaries instead of a dictionary of tensors.
-    This is done because not all metadata (e.g. string values) can be
-    tensorized.
-
-    Metadata is only handled if at least one example in the batch has
-    a ``'metadata'`` key.
-
-    Args:
-        batch (list): The list of dictionaries.
-
-    Returns:
-        Dict
-    """
-    metadata = None
-    if any("metadata" in b for b in batch):
-        metadata = [b.pop("metadata", None) for b in batch]
-    out_dict = _default_collate(batch)
-    if metadata is not None:
-        out_dict["metadata"] = metadata
-    return out_dict
-
-
-def collate_by_supervision(batch: list):
-    """Collate supervised/unsupervised batch examples.
-
-    This collate function is required when training with semi-supervised
-    models, such as :cls:`N2RModel` and :cls:`VortexModel`.
-
-    Args:
-        batch (list): The list of dictionaries.
-
-    Returns:
-        Dict[str, Dict]: A dictionary with 2 keys, ``'supervised'`` and ``'unsupervised'``.
-    """
-    supervised = [x for x in batch if not x.get("is_unsupervised", False)]
-    unsupervised = [x for x in batch if x.get("is_unsupervised", False)]
-
-    out_dict = {}
-    if len(supervised) > 0:
-        supervised = default_collate(supervised)
-        out_dict["supervised"] = supervised
-    if len(unsupervised) > 0:
-        unsupervised = default_collate(unsupervised)
-        out_dict["unsupervised"] = unsupervised
-    assert len(out_dict) > 0
-    return out_dict
+__all__ = ["SliceData"]
 
 
 class SliceData(Dataset):
@@ -89,6 +37,7 @@ class SliceData(Dataset):
 
     # Default mapping for key types.
     _DEFAULT_MAPPING = {"kspace": "kspace", "maps": "maps", "target": "target"}
+    _REQUIRED_METADATA = ("file_name", "is_unsupervised", "fixed_acc")
 
     def __init__(self, dataset_dicts: List[Dict], transform, keys=None, include_metadata=False):
         """
@@ -115,14 +64,21 @@ class SliceData(Dataset):
         #   - fixed_acc (float): The fixed acceleration for unsupervised examples.
         #   - Any other keys required for data loading.
         for idx, example in enumerate(self.examples):
-            assert all(
-                k in example for k in ["file_name", "is_unsupervised", "fixed_acc"]
-            ), f"Example {idx}"
+            assert all(k in example for k in self._REQUIRED_METADATA), f"Example {idx}"
 
         self.mapping = dict(self._DEFAULT_MAPPING)
         if keys:
             self.mapping.update(keys)
         self._include_metadata = include_metadata
+
+    def groups(self, group_by):
+        _groups = defaultdict(list)
+        for idx, example in enumerate(self.examples):
+            try:
+                _groups[example[group_by]].append(idx)
+            except KeyError:
+                raise KeyError(f"Key {group_by} not found. Use one of {example.keys()}")
+        return _groups
 
     def _init_examples(self, dataset_dicts):
         examples = []

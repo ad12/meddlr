@@ -1,8 +1,16 @@
-from ss_recon.data.samplers.group_sampler import AlternatingGroupSampler, GroupSampler
+from torch.utils.data import DistributedSampler
+
+from ss_recon.data.samplers.group_sampler import (
+    AlternatingGroupSampler,
+    DistributedGroupSampler,
+    GroupSampler,
+)
 from ss_recon.data.samplers.sampler import AlternatingSampler
 
+__all__ = ["build_train_sampler", "build_val_sampler"]
 
-def build_train_sampler(cfg, dataset):
+
+def build_train_sampler(cfg, dataset, distributed=False):
     """
     Build the whole model architecture, defined by ``cfg.MODEL.META_ARCHITECTURE``.
     Note that it does not load any weights from ``cfg``.
@@ -41,14 +49,14 @@ def build_train_sampler(cfg, dataset):
             seed=seed,
         )
     elif sampler == "":
-        sampler = None
+        sampler = DistributedSampler(dataset, shuffle=True) if distributed else None
     else:
         raise ValueError("Unknown Sampler {}".format(sampler))
 
     return sampler, is_batch_sampler
 
 
-def build_val_sampler(cfg, dataset):
+def build_val_sampler(cfg, dataset, distributed: bool = False, dist_group_by="file_name"):
     """
     Build the whole model architecture, defined by ``cfg.MODEL.META_ARCHITECTURE``.
     Note that it does not load any weights from ``cfg``.
@@ -69,6 +77,12 @@ def build_val_sampler(cfg, dataset):
             drop_last=False,
             shuffle=False,
             seed=seed,
+        )
+    elif sampler == "":
+        sampler = (
+            DistributedGroupSampler(dataset, group_by=dist_group_by, shuffle=False)
+            if distributed
+            else None
         )
     else:
         sampler = None

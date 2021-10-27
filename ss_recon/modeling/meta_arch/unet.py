@@ -270,6 +270,12 @@ class UnetModel(nn.Module):
         use_cplx = cplx.is_complex(zf_image)
         if use_cplx:
             zf_image = torch.view_as_real(zf_image)
+
+        num_maps = zf_image.shape[-2]
+        if num_maps > 1:
+            output = zf_image.reshape(zf_image.shape[:-2] + (-1,)).unsqueeze(-2)
+        else:
+            output = zf_image
         output = zf_image.permute(0, 4, 1, 2, 3).squeeze(-1)
 
         # Apply down-sampling layers
@@ -298,7 +304,11 @@ class UnetModel(nn.Module):
             output = conv(output)
 
         # pred = output.view(zf_dims)
-        pred = output.unsqueeze(-1).permute(0, 2, 3, 4, 1)
+        if num_maps > 1:
+            pred = output.permute(0, 2, 3, 1)
+            pred = pred.reshape(pred.shape[:-1] + (num_maps, 2))
+        else:
+            pred = output.unsqueeze(-1).permute(0, 2, 3, 4, 1)
 
         if use_cplx:
             pred = torch.view_as_complex(pred.contiguous())
@@ -313,8 +323,9 @@ class UnetModel(nn.Module):
             if vis_training or storage.iter % self.vis_period == 0:
                 self.visualize_training(kspace, zf_image, target, pred)
 
-        if not self.training:
-            output_dict["zf_image"] = zf_image
+        if use_cplx:
+            zf_image = torch.view_as_complex(zf_image)
+        output_dict["zf_image"] = zf_image
 
         if self.use_latent:
             output_dict["latent"] = self.feats
@@ -331,7 +342,7 @@ class UnetModel(nn.Module):
             "channels": cfg.MODEL.UNET.CHANNELS,
             "num_pool_layers": cfg.MODEL.UNET.NUM_POOL_LAYERS,
             "dropout": cfg.MODEL.UNET.DROPOUT,
-            "use_latent": cfg.MODEL.CONSISTENCY.USE_LATENT,
-            "num_latent_layers": cfg.MODEL.CONSISTENCY.NUM_LATENT_LAYERS,
+            "use_latent": cfg.get_recursive("MODEL.CONSISTENCY.USE_LATENT", False),
+            "num_latent_layers": cfg.get_recursive("MODEL.CONSISTENCY.NUM_LATENT_LAYERS", 1),
             "vis_period": cfg.VIS_PERIOD,
         }

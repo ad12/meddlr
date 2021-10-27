@@ -12,7 +12,6 @@ their projects.
 """
 
 import argparse
-import logging
 import os
 import re
 import warnings
@@ -27,11 +26,7 @@ from ss_recon.utils.collect_env import collect_env_info
 from ss_recon.utils.env import get_available_gpus, seed_all_rng
 from ss_recon.utils.logger import setup_logger
 
-__all__ = [
-    "default_argument_parser",
-    "default_setup",
-    # "DefaultPredictor",
-]
+__all__ = ["default_argument_parser", "default_setup"]
 
 
 def default_argument_parser() -> argparse.ArgumentParser:
@@ -40,7 +35,7 @@ def default_argument_parser() -> argparse.ArgumentParser:
     Returns:
         argparse.ArgumentParser
     """
-    parser = argparse.ArgumentParser(description="Detectron2 Training")
+    parser = argparse.ArgumentParser(description="SS-Recon Training")
     parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
     parser.add_argument(
         "--resume",
@@ -99,7 +94,7 @@ def default_setup(cfg, args, save_cfg: bool = True):
     cfg.defrost()
     cfg.OUTPUT_DIR = PathManager.get_local_path(cfg.OUTPUT_DIR)
     if is_repro_mode:
-        _init_reproducible_mode(cfg, eval_only)
+        init_reproducible_mode(cfg, eval_only)
     cfg.freeze()
 
     output_dir = cfg.OUTPUT_DIR
@@ -191,15 +186,33 @@ def find_wandb_exp_id(cfg):
 
 
 def init_wandb_run(
-    cfg, exp_id=None, resume=False, project=None, entity=None, job_type="training", use_api=False
+    cfg,
+    exp_id=None,
+    resume=False,
+    project=None,
+    entity=None,
+    job_type: str = "training",
+    sync_tensorboard: bool = None,
+    use_api: bool = False,
 ):
+    """Helper function to initialize Weights & Biases based on project file structure.
+
+    TODO:
+        1. Configure `sync_tensorboard` with pytorch lightning once
+            new W&B version comes out. (escalated to W&B)
+        2. Configure `resume` functionality to log to the same run
+            without overwriting. (escalated to W&B)
+        3. Configure `is_eval` to use `wandb.init` (related to 2)
+
+    """
     import wandb
 
-    logger = logging.getLogger(__name__)
-
-    is_eval = job_type.lower() in ("eval", "evaluation")
+    if sync_tensorboard is not None:
+        os.environ["WANDB_SYNC_TENSORBOARD"] = "true" if sync_tensorboard else "false"
+    sync_tensorboard = os.environ.get("WANDB_SYNC_TENSORBOARD", False)
 
     # Find last run if `exp_id` not specified.
+    is_eval = job_type.lower() in ("eval", "evaluation")
     if (resume or is_eval) and not exp_id:
         exp_id = find_wandb_exp_id(cfg)
 
@@ -232,17 +245,14 @@ def init_wandb_run(
         config=cfg,
         project=project,
         entity=entity,
-        sync_tensorboard=True,
+        sync_tensorboard=sync_tensorboard,  # TODO: Change when W&B bug fixed
         job_type=job_type,
         dir=cfg.OUTPUT_DIR,
-        settings=wandb.Settings(start_method="fork"),  # to solve init error on siena
     )
 
     # Resume run and return.
     if exp_id:
-        logger.info(f"Loading W&B run {exp_id}")
-        wandb.init(id=exp_id, resume="must", **wandb_kwargs)
-        return wandb.run
+        assert False, "We should not reach this until TODOs 1-3 are resolved."
 
     # Create new run.
     exp_name = cfg.DESCRIPTION.EXP_NAME
@@ -265,7 +275,7 @@ def init_wandb_run(
     return wandb.run
 
 
-def _init_reproducible_mode(cfg: CfgNode, eval_only: bool):
+def init_reproducible_mode(cfg: CfgNode, eval_only: bool):
     """Activates reproducible mode and sets appropriate config paraemters.
 
     This method does the following:

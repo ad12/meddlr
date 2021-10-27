@@ -5,6 +5,8 @@ import numpy as np
 import torch
 from torch.utils.data import Sampler
 
+__all__ = ["AlternatingSampler"]
+
 
 class AlternatingSampler(Sampler):
     """Sampler that alternates between supervised and unsupervised examples.

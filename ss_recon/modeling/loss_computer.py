@@ -20,8 +20,8 @@ IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse", "mag_l1", "perp_loss"]
 KSPACE_LOSSES = ["k_l1", "k_l1_normalized"]
 
 
-def build_loss_computer(cfg, name):
-    return LOSS_COMPUTER_REGISTRY.get(name)(cfg)
+def build_loss_computer(cfg, name, **kwargs):
+    return LOSS_COMPUTER_REGISTRY.get(name)(cfg, **kwargs)
 
 
 class LossComputer(ABC):

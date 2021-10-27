@@ -59,7 +59,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             step_sizes = [torch.tensor(s) for s in step_sizes]
         if not fix_step_size:
             step_sizes = nn.ParameterList([nn.Parameter(s) for s in step_sizes])
-        self.step_sizes = step_sizes
+        self.step_sizes: Sequence[Union[torch.Tensor, nn.Parameter]] = step_sizes
 
         self.num_emaps = num_emaps
         self.vis_period = vis_period
@@ -189,8 +189,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             if vis_training or storage.iter % self.vis_period == 0:
                 self.visualize_training(kspace, zf_image, target, image)
 
-        if not self.training:
-            output_dict["zf_image"] = zf_image
+        output_dict["zf_image"] = zf_image
 
         return output_dict
 

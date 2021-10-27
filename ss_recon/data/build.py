@@ -7,12 +7,14 @@ from typing import Dict, Mapping, Sequence, Tuple, Union
 import numpy as np
 from torch.utils.data import DataLoader
 
+from ss_recon.data.catalog import DatasetCatalog
+from ss_recon.data.collate import collate_by_supervision, default_collate
 from ss_recon.data.samplers.build import build_train_sampler, build_val_sampler
+from ss_recon.data.slice_dataset import SliceData
+from ss_recon.data.transforms import transform as T
+from ss_recon.data.transforms.subsample import build_mask_func
 
-from .catalog import DatasetCatalog
-from .slice_dataset import SliceData, collate_by_supervision, default_collate
-from .transforms import transform as T
-from .transforms.subsample import build_mask_func
+__all__ = ["build_recon_train_loader", "build_recon_val_loader"]
 
 
 def get_recon_dataset_dicts(
@@ -153,7 +155,7 @@ def _limit_data_by_group(dataset_dicts, num_scans_total: Tuple[str, Dict]):
     return new_dataset_dicts
 
 
-def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None, is_eval=False):
+def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None, is_eval=False, **kwargs):
     keys = cfg.DATALOADER.DATA_KEYS
     if keys:
         assert all(
@@ -163,7 +165,9 @@ def _build_dataset(cfg, dataset_dicts, data_transform, dataset_type=None, is_eva
 
     if dataset_type is None:
         dataset_type = SliceData
-    return dataset_type(dataset_dicts, data_transform, keys=keys, include_metadata=is_eval)
+    return dataset_type(
+        dataset_dicts, data_transform, keys=keys, include_metadata=is_eval, **kwargs
+    )
 
 
 def _get_default_dataset_type(dataset_name):

@@ -8,6 +8,7 @@ import logging
 import re
 from typing import Mapping
 
+import numpy as np
 from fvcore.common.config import CfgNode as _CfgNode
 
 
@@ -74,11 +75,24 @@ class CfgNode(_CfgNode):
         """
         return format_config_fields(self, inplace=True)
 
-    def get_recursive(self, key):
+    def get_recursive(self, key, default=np._NoValue):
         d = self
-        for k in key.split("."):
-            d = d[k]
+        try:
+            for k in key.split("."):
+                d = d[k]
+        except KeyError as e:
+            if default != np._NoValue:
+                return default
+            raise e
         return d
+
+    def set_recursive(self, name, value):
+        cfg = self
+        keys = name.split(".")
+        for k in keys[:-1]:
+            cfg = cfg[k]
+
+        setattr(cfg, keys[-1], value)
 
     def dump(self, *args, **kwargs):
         """

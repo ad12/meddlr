@@ -7,6 +7,8 @@ import torch
 
 from ss_recon.utils import profiler
 
+__all__ = ["HDF5Manager", "structure_patches", "collect_mask"]
+
 
 class HDF5Manager:
     """Manager for opening and caching HDF5 files."""
@@ -150,6 +152,45 @@ def structure_patches(
         out = out.permute(tuple(order_dict[k] for k in sorted(order_dict.keys())))
 
     return out
+
+
+def collect_mask(
+    mask: np.ndarray,
+    index: Sequence[Union[int, Sequence[int], int]],
+    out_channel_first: bool = True,
+):
+    """Collect masks by index.
+
+    Collated indices will be summed. For example, `index=(1,(3,4))` will return
+    `np.stack(mask[...,1], mask[...,3]+mask[...,4])`.
+
+    TODO: Add support for adding background.
+
+    Args:
+        mask (ndarray): A (...)xC array.
+        index (Sequence[int]): The index/indices to select in mask.
+            If sub-indices are collated, they will be summed.
+        out_channel_first (bool, optional): Reorders dimensions of output mask to Cx(...)
+    """
+    if isinstance(index, int):
+        index = (index,)
+
+    if not any(isinstance(idx, Sequence) for idx in index):
+        mask = mask[..., index]
+    else:
+        o_seg = []
+        for idx in index:
+            c_seg = mask[..., idx]
+            if isinstance(idx, Sequence):
+                c_seg = np.sum(c_seg, axis=-1)
+            o_seg.append(c_seg)
+        mask = np.stack(o_seg, axis=-1)
+
+    if out_channel_first:
+        last_idx = len(mask.shape) - 1
+        mask = np.transpose(mask, (last_idx,) + tuple(range(0, last_idx)))
+
+    return mask
 
 
 def _recursive_stack(tensors) -> torch.Tensor:

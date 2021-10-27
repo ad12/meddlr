@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import copy
+import inspect
 import logging
 import types
 from typing import List
@@ -28,24 +29,35 @@ class DatasetCatalog(object):
     """
 
     _REGISTERED = {}
+    _ALIASES = {}
 
     @staticmethod
-    def register(name, func):
+    def register(name, func_or_name):
         """
         Args:
             name (str): the name that identifies a dataset,
                 e.g. "coco_2014_train".
-            func (callable): a callable which takes no arguments and returns a
-                list of dicts.
+            func_or_name (callable | str): a callable that returns a list of dicts
+                or the name of an existing dataset. If the latter, it will be registered
+                as a soft alias to the underlying dataset.
         """
-        assert callable(func), "You must register a function with `DatasetCatalog.register`!"
         assert name not in DatasetCatalog._REGISTERED, "Dataset '{}' is already registered!".format(
             name
         )
-        DatasetCatalog._REGISTERED[name] = func
+        if isinstance(func_or_name, str):
+            assert (
+                func_or_name in DatasetCatalog._REGISTERED
+            ), f"Target dataset '{func_or_name}' is not registered"
+            DatasetCatalog._ALIASES[name] = func_or_name
+            return
+
+        assert callable(
+            func_or_name
+        ), "You must register a function with `DatasetCatalog.register`!"
+        DatasetCatalog._REGISTERED[name] = (func_or_name, inspect.signature(func_or_name))
 
     @staticmethod
-    def get(name):
+    def get(name, *args, **kwargs):
         """
         Call the registered function and return its results.
 
@@ -57,7 +69,8 @@ class DatasetCatalog(object):
             list[dict]: dataset annotations.0
         """
         try:
-            f = DatasetCatalog._REGISTERED[name]
+            dname = DatasetCatalog._ALIASES.get(name, name)
+            f, sig = DatasetCatalog._REGISTERED[dname]
         except KeyError:
             raise KeyError(
                 "Dataset '{}' is not registered! "
@@ -65,7 +78,20 @@ class DatasetCatalog(object):
                     name, ", ".join(DatasetCatalog._REGISTERED.keys())
                 )
             )
-        return f()
+
+        logger = logging.getLogger(__name__)
+        parameters = sig.parameters
+        has_kwargs = any(v.kind == inspect.Parameter.VAR_KEYWORD for v in parameters.values())
+        if not has_kwargs:
+            missing_kwargs = [k for k in kwargs if k not in parameters]
+            valid_kwargs = {k: v for k, v in kwargs.items() if k in parameters}
+            if missing_kwargs:
+                logger.warning(
+                    "Function to load dataset {} does not support following kwargs. "
+                    "Ignoring them...\n\t{}".format(name, missing_kwargs)
+                )
+            kwargs = valid_kwargs
+        return f(*args, **kwargs)
 
     @staticmethod
     def list() -> List[str]:
@@ -75,14 +101,22 @@ class DatasetCatalog(object):
         Returns:
             list[str]
         """
-        return list(DatasetCatalog._REGISTERED.keys())
+        return list(DatasetCatalog._REGISTERED.keys()) + list(DatasetCatalog._ALIASES.keys())
 
     @staticmethod
-    def clear():
+    def clear(name=None):
         """
         Remove all registered dataset.
         """
-        DatasetCatalog._REGISTERED.clear()
+        if name is None:
+            DatasetCatalog._REGISTERED.clear()
+            DatasetCatalog._ALIASES.clear()
+            return
+
+        aliases = [name] + [k for k, v in DatasetCatalog._ALIASES.items() if v == name]
+        DatasetCatalog._REGISTERED.pop(name, None)
+        for alias in aliases:
+            DatasetCatalog._ALIASES.pop(alias, None)
 
 
 class Metadata(types.SimpleNamespace):

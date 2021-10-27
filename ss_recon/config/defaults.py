@@ -98,6 +98,11 @@ _C.MODEL.NORMALIZER.NAME = "TopMagnitudeNormalizer"
 # See ss_recon/data/transforms/transform.py for more details
 _C.MODEL.NORMALIZER.KEYWORDS = ()
 
+_C.MODEL.SEG = CN()
+_C.MODEL.SEG.CLASSES = ()
+_C.MODEL.SEG.INCLUDE_BACKGROUND = False
+_C.MODEL.SEG.ACTIVATION = "sigmoid"
+
 # -----------------------------------------------------------------------------
 # UNET model
 # -----------------------------------------------------------------------------
@@ -236,6 +241,7 @@ _C.AUG_TRAIN.UNDERSAMPLE.NAME = "PoissonDiskMaskFunc"
 _C.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6,)
 _C.AUG_TRAIN.UNDERSAMPLE.CALIBRATION_SIZE = 20
 _C.AUG_TRAIN.UNDERSAMPLE.CENTER_FRACTIONS = ()
+_C.AUG_TRAIN.UNDERSAMPLE.MAX_ATTEMPTS = 30
 # Augment with noise. See MODEL.CONSISTENCY.AUG.NOISE for parameters.
 _C.AUG_TRAIN.USE_NOISE = False
 _C.AUG_TRAIN.USE_MOTION = False

@@ -3,16 +3,8 @@ import unittest
 import numpy as np
 
 from ss_recon.data import AlternatingSampler
-from ss_recon.data.slice_dataset import SliceData
 
-
-class MockSliceDataset(SliceData):
-    def __init__(self, dataset_dicts):
-        super().__init__(dataset_dicts, None)
-
-    def __getitem__(self, item):
-        fname, slice_id, is_unsupervised = self.examples[item]
-        return fname, slice_id, is_unsupervised
+from .mock import MockSliceDataset
 
 
 class TestAlternatingSampler(unittest.TestCase):

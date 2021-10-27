@@ -4,7 +4,7 @@ import unittest
 import torch
 
 from ss_recon.config.config import get_cfg
-from ss_recon.engine.defaults import _init_reproducible_mode
+from ss_recon.engine.defaults import init_reproducible_mode
 from ss_recon.utils import env
 
 
@@ -46,7 +46,7 @@ class TestDefaultSetup(unittest.TestCase):
 
         os.environ["SSRECON_REPRO"] = ""
         cfg = base_cfg.clone()
-        _init_reproducible_mode(cfg, eval_only=False)
+        init_reproducible_mode(cfg, eval_only=False)
         assert cfg.SEED > 0
         assert cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED > 0
         assert torch.backends.cudnn.deterministic
@@ -58,7 +58,7 @@ class TestDefaultSetup(unittest.TestCase):
         cfg.defrost()
         cfg.SEED = 1000
         cfg.freeze()
-        _init_reproducible_mode(cfg, eval_only=False)
+        init_reproducible_mode(cfg, eval_only=False)
         assert cfg.SEED == 1000
         assert cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED > 0
         assert torch.backends.cudnn.deterministic
@@ -69,7 +69,7 @@ class TestDefaultSetup(unittest.TestCase):
         cfg.defrost()
         cfg.CUDNN_BENCHMARK = True
         cfg.freeze()
-        _init_reproducible_mode(cfg, eval_only=True)
+        init_reproducible_mode(cfg, eval_only=True)
         assert torch.backends.cudnn.benchmark
         self._reset_env_vars()
 
@@ -77,7 +77,7 @@ class TestDefaultSetup(unittest.TestCase):
         cfg.defrost()
         cfg.CUDNN_BENCHMARK = True
         cfg.freeze()
-        _init_reproducible_mode(cfg, eval_only=False)
+        init_reproducible_mode(cfg, eval_only=False)
         assert not torch.backends.cudnn.benchmark
         self._reset_env_vars()
 

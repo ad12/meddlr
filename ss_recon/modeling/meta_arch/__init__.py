@@ -1,4 +1,4 @@
-from .build import META_ARCH_REGISTRY, build_model  # noqa: F401
+from .build import META_ARCH_REGISTRY, build_model, initialize_model  # noqa: F401
 from .cs_model import CSModel  # noqa: F401
 from .denoising import DenoisingModel  # noqa: F401
 from .generalized_unet import GeneralizedUNet  # noqa: F401

@@ -69,6 +69,7 @@ class Cluster:
         patterns: Union[str, Sequence[str]],
         data_dir: str = None,
         results_dir: str = None,
+        cache_dir: str = None,
         **cfg_kwargs,
     ):
         """
@@ -92,20 +93,25 @@ class Cluster:
 
         self._data_dir = data_dir
         self._results_dir = results_dir
+        self._cache_dir = cache_dir
         self._cfg_kwargs = cfg_kwargs
 
     @property
     def data_dir(self):
         path = self._data_dir
-        if not path:
-            path = os.environ.get("SSRECON_DATASETS_DIR", "./datasets")
+        path = os.environ.get("SSRECON_DATASETS_DIR", path if path else "./datasets")
         return PathManager.get_local_path(path)
 
     @property
     def results_dir(self):
         path = self._results_dir
-        if not path:
-            path = os.environ.get("SSRECON_RESULTS_DIR", "./results")
+        path = os.environ.get("SSRECON_RESULTS_DIR", path if path else "./results")
+        return PathManager.get_local_path(path)
+
+    @property
+    def cache_dir(self):
+        path = self._cache_dir
+        path = os.environ.get("SSRECON_CACHE_DIR", path if path else "./cache")
         return PathManager.get_local_path(path)
 
     def __getattr__(self, attr: str):

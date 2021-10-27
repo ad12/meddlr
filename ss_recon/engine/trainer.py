@@ -90,34 +90,46 @@ def _convert_time_recursive(
         return entity
 
 
-def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int):
-    """Convert all config time-related parameters to iterations."""
+def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int, ignore_missing: bool = False):
+    """Convert all config time-related parameters to iteration scale.
+
+    Args:
+        cfg (CfgNode): The config to
+        iters_per_epoch (int): Number of iterations per epoch.
+        ignore_missing (bool, optional): If ``True``, silently skip over missing keys.
+    """
     cfg = cfg.clone()
     cfg.defrost()
 
     time_scale = cfg.TIME_SCALE
-    cfg.SOLVER.MAX_ITER = format_as_iter(cfg.SOLVER.MAX_ITER, iters_per_epoch, time_scale)
-    cfg.SOLVER.STEPS = format_as_iter(cfg.SOLVER.STEPS, iters_per_epoch, time_scale)
-    cfg.SOLVER.CHECKPOINT_PERIOD = format_as_iter(
-        cfg.SOLVER.CHECKPOINT_PERIOD, iters_per_epoch, time_scale
+
+    time_fmt = (
+        "SOLVER.MAX_ITER",
+        "SOLVER.STEPS",
+        "SOLVER.CHECKPOINT_PERIOD",
+        "TEST.EVAL_PERIOD",
+        "VIS_PERIOD",
+        "MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS",
     )
-    cfg.TEST.EVAL_PERIOD = format_as_iter(cfg.TEST.EVAL_PERIOD, iters_per_epoch, time_scale)
-    cfg.VIS_PERIOD = format_as_iter(cfg.VIS_PERIOD, iters_per_epoch, time_scale)
-    cfg.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS = format_as_iter(
-        cfg.MODEL.CONSISTENCY.AUG.NOISE.SCHEDULER.WARMUP_ITERS, iters_per_epoch, time_scale
+    recursively_fmt = (
+        "AUG_TRAIN.MRI_RECON.TRANSFORMS",
+        "AUG_TRAIN.MRI_RECON.SCHEDULER_P",
+        "MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS",
+        "MODEL.CONSISTENCY.AUG.MRI_RECON.SCHEDULER_P",
     )
-    cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS = _convert_time_recursive(
-        cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS, iters_per_epoch, time_scale
-    )
-    cfg.AUG_TRAIN.MRI_RECON.SCHEDULER_P = _convert_time_recursive(
-        cfg.AUG_TRAIN.MRI_RECON.SCHEDULER_P, iters_per_epoch, time_scale
-    )
-    cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS = _convert_time_recursive(
-        cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.TRANSFORMS, iters_per_epoch, time_scale
-    )
-    cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.SCHEDULER_P = _convert_time_recursive(
-        cfg.MODEL.CONSISTENCY.AUG.MRI_RECON.SCHEDULER_P, iters_per_epoch, time_scale
-    )
+
+    for keys_to_fmt, func in [
+        (time_fmt, format_as_iter),
+        (recursively_fmt, _convert_time_recursive),
+    ]:
+        for key in keys_to_fmt:
+            try:
+                curr_val = cfg.get_recursive(key)
+            except KeyError:
+                continue
+            value = func(curr_val, iters_per_epoch, time_scale)
+            cfg.set_recursive(key, value)
+
     cfg.TIME_SCALE = "iter"
     cfg.freeze()
     return cfg

@@ -1,3 +1,4 @@
+import inspect
 import os
 from typing import Sequence
 
@@ -18,7 +19,18 @@ def build_mask_func(cfg):
     accelerations = cfg.UNDERSAMPLE.ACCELERATIONS
     calibration_size = cfg.UNDERSAMPLE.CALIBRATION_SIZE
     center_fractions = cfg.UNDERSAMPLE.CENTER_FRACTIONS
-    return MASK_FUNC_REGISTRY.get(name)(accelerations, calibration_size, center_fractions)
+
+    klass = MASK_FUNC_REGISTRY.get(name)
+    parameters = inspect.signature(klass).parameters
+
+    # Optional args
+    mapping = {"max_attempts": cfg.UNDERSAMPLE.MAX_ATTEMPTS}
+    kwargs = {}
+    for param, value in mapping.items():
+        if param in parameters:
+            kwargs[param] = value
+
+    return klass(accelerations, calibration_size, center_fractions, **kwargs)
 
 
 class MaskFunc:

@@ -29,14 +29,6 @@ def build_model(cfg):
     return META_ARCH_REGISTRY.get(meta_arch)(cfg)
 
 
-def get_model_cfg(cfg):
-    meta_arch = cfg.MODEL.META_ARCHITECTURE
-    klass = META_ARCH_REGISTRY.get(meta_arch)
-    if hasattr(klass, "CONFIG_KEY"):
-        return cfg.MODEL[klass.CONFIG_KEY].clone()
-    raise ValueError(f"Cannot get model config from class {klass}")
-
-
 def initialize_model(model: nn.Module, initializers: Union[Dict, Tuple]):
     """Initialize the model.
 
