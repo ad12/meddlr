@@ -126,7 +126,9 @@ def convert_cfg_time_to_iter(cfg: CfgNode, iters_per_epoch: int, ignore_missing:
             try:
                 curr_val = cfg.get_recursive(key)
             except KeyError:
-                continue
+                if ignore_missing:
+                    continue
+                raise KeyError(f"cfg does not contain key '{key}'")
             value = func(curr_val, iters_per_epoch, time_scale)
             cfg.set_recursive(key, value)
 
