@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-# File:
+from fvcore.common.checkpoint import PeriodicCheckpointer
 
+from ss_recon.checkpoint.detection_checkpoint import Checkpointer
 
-from fvcore.common.checkpoint import Checkpointer, PeriodicCheckpointer
-
-from .detection_checkpoint import DetectionCheckpointer
-
-__all__ = ["Checkpointer", "PeriodicCheckpointer", "DetectionCheckpointer"]
+__all__ = ["Checkpointer", "PeriodicCheckpointer"]

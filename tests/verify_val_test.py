@@ -36,7 +36,7 @@ from fvcore.common.file_io import PathManager
 from tqdm import tqdm
 
 import ss_recon.ops.complex as cplx
-from ss_recon.checkpoint.detection_checkpoint import DetectionCheckpointer
+from ss_recon.checkpoint.detection_checkpoint import Checkpointer
 from ss_recon.config import get_cfg
 from ss_recon.engine import DefaultTrainer, default_setup
 from ss_recon.evaluation.recon_evaluation import ReconEvaluator
@@ -156,12 +156,12 @@ def _test(run_setup=False, weights=""):
     # data = torch.load(weights)
 
     model = model.to(cfg.DEVICE)
-    DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(weights, resume=False)
+    Checkpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(weights, resume=False)
     # For future comparision - deep copy does not work
     # Model must also be on the same device as the params
     # See https://github.com/pytorch/pytorch/issues/42300
     init_model = init_model.cuda()
-    DetectionCheckpointer(init_model, save_dir=cfg.OUTPUT_DIR).resume_or_load(weights, resume=False)
+    Checkpointer(init_model, save_dir=cfg.OUTPUT_DIR).resume_or_load(weights, resume=False)
 
     # Compare models at the beginning.
     # If these are not the same, there is a pytorch bug.

@@ -7,7 +7,7 @@ from typing import Mapping, Sequence, Union
 
 from torch.nn import DataParallel
 
-from ss_recon.checkpoint import DetectionCheckpointer
+from ss_recon.checkpoint import Checkpointer
 from ss_recon.config import CfgNode
 from ss_recon.data import build_recon_train_loader, build_recon_val_loader
 from ss_recon.engine import SimpleTrainer, hooks
@@ -222,7 +222,7 @@ class DefaultTrainer(SimpleTrainer):
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
         # Assume no other objects need to be checkpointed.
         # We can later make it checkpoint the stateful hooks
-        self.checkpointer = DetectionCheckpointer(
+        self.checkpointer = Checkpointer(
             # Assume you want to save checkpoints together with logs/statistics
             model,
             cfg.OUTPUT_DIR,
@@ -250,7 +250,7 @@ class DefaultTrainer(SimpleTrainer):
         if not os.path.isfile(fine_tune_weights):
             raise FileNotFoundError("weights not found: {}".format(fine_tune_weights))
 
-        temp_checkpointer = DetectionCheckpointer(self.model)
+        temp_checkpointer = Checkpointer(self.model)
         temp_checkpointer.load(fine_tune_weights)
 
     def resume_or_load(self, resume=True, restart_iter=False):

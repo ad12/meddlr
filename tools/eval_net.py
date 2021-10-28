@@ -18,7 +18,7 @@ import pandas as pd
 import torch
 from tabulate import tabulate
 
-from ss_recon.checkpoint import DetectionCheckpointer
+from ss_recon.checkpoint import Checkpointer
 from ss_recon.config import get_cfg
 from ss_recon.data.build import build_recon_val_loader
 from ss_recon.engine import DefaultTrainer, default_argument_parser, default_setup
@@ -413,9 +413,7 @@ def main(args):
             else find_weights(cfg, args.metric, args.iter_limit)
         )
         model = model.to(cfg.MODEL.DEVICE)
-        DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-            weights, resume=args.resume
-        )
+        Checkpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(weights, resume=args.resume)
 
         # See https://github.com/pytorch/pytorch/issues/42300
         logger.info("Checking weights were properly loaded...")
