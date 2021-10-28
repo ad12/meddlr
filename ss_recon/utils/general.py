@@ -5,15 +5,15 @@ import torch
 from fvcore.common.file_io import PathManager
 
 
-def move_to_device(obj, device, non_blocking=False):
-    """
-    Given a structure (possibly) containing Tensors on the CPU, move all the Tensors
-    to the specified GPU (or do nothing, if they should be on the CPU).
+def move_to_device(obj, device, non_blocking=False, base_types=None):
+    """Given a structure (possibly) containing Tensors on the CPU, move all the Tensors
+      to the specified GPU (or do nothing, if they should be on the CPU).
+        device = -1 -> "cpu"
+        device =  0 -> "cuda:0"
 
     Args:
-      obj (Any): The object to convert.
-      device (int | str | torch.Device): The device id.
-        Integers correspond to ``'cuda:{device}'``. ``-1`` corresponds to cpu.
+      obj(Any): The object to convert.
+      device(int): The device id, defaults to -1.
 
     Returns:
       Any: The converted object.
@@ -25,15 +25,25 @@ def move_to_device(obj, device, non_blocking=False):
 
     if isinstance(obj, torch.Tensor):
         return obj.to(device, non_blocking=non_blocking)  # type: ignore
+    elif base_types is not None and isinstance(obj, base_types):
+        return obj.to(device)
     elif isinstance(obj, dict):
         return {
-            key: move_to_device(value, device, non_blocking=non_blocking)
+            key: move_to_device(value, device, non_blocking=non_blocking, base_types=base_types)
             for key, value in obj.items()
         }
     elif isinstance(obj, list):
-        return [move_to_device(item, device, non_blocking=non_blocking) for item in obj]
+        return [
+            move_to_device(item, device, non_blocking=non_blocking, base_types=base_types)
+            for item in obj
+        ]
     elif isinstance(obj, tuple):
-        return tuple([move_to_device(item, device, non_blocking=non_blocking) for item in obj])
+        return tuple(
+            [
+                move_to_device(item, device, non_blocking=non_blocking, base_types=base_types)
+                for item in obj
+            ]
+        )
     else:
         return obj
 
