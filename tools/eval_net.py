@@ -63,6 +63,8 @@ def setup(args):
     global logger
     dirname = "test_results"
     logger = setup_logger(os.path.join(cfg.OUTPUT_DIR, dirname), name=_FILE_NAME)
+
+    logger.info(f"Command Line Args: {args}")
     return cfg
 
 

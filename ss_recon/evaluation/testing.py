@@ -2,10 +2,12 @@ import json
 import logging
 import os
 import pprint
+import re
 import sys
 from typing import Dict, Mapping
 
 import numpy as np
+import pandas as pd
 import torch
 
 
@@ -97,10 +99,11 @@ SUPPORTED_VAL_METRICS = {
     "l2_scan": "min",
     "psnr_scan": "max",
     "iteration": "max",  # find the last checkpoint
+    "loss": "min",
 }
 
 
-def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
+def find_weights(cfg, criterion="", iter_limit=None, file_name_fmt="model_{:07d}.pth", top_k=1):
     """Find the best weights based on a validation criterion/metric.
 
     Args:
@@ -110,6 +113,7 @@ def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
         iter_limit (int, optional): If specified, all weights will be before
             this iteration. If this value is negative, it is
             interpreted as the epoch limit.
+        file_name_fmt (int, optional): The naming format for checkpoint files.
         top_k (int, optional): The number of top weights to keep.
 
     Returns:
@@ -152,24 +156,8 @@ def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
     # We filter out metrics from datasets that contain the word "test".
     # The criterion from all other datasets are averaged and used as the
     # target criterion.
-    metrics_file = os.path.join(cfg.OUTPUT_DIR, "metrics.json")
-    metrics = []
-    with open(metrics_file, "r") as f:
-        metrics = [json.loads(line.strip()) for line in f]
-    metrics = [m for m in metrics if criterion in m or any(k.endswith(criterion) for k in m.keys())]
-    is_metric_wrapped = criterion not in metrics[0]
-    if is_metric_wrapped:
-        metrics = [
-            (
-                m["iteration"],
-                np.mean(
-                    [m[k] for k in m if k.endswith(criterion) and "test" not in k.split("/")[0]]
-                ).item(),
-            )
-            for m in metrics
-        ]
-    else:
-        metrics = [(m["iteration"], m[criterion]) for m in metrics]
+    metrics_file = os.path.join(cfg.OUTPUT_DIR, "metrics")
+    metrics = _metrics_from_x(metrics_file, criterion)
 
     # Filter out all metrics calculated above iter limit.
     if iter_limit:
@@ -191,16 +179,34 @@ def find_weights(cfg, criterion="", iter_limit=None, top_k=1):
     # Note that resuming can sometimes report metrics for the same
     # iteration. We handle this by taking the most recent metric for the
     # iteration __after__ filtering out old training runs.
-    metrics = {iteration: value for iteration, value in metrics}
-    metrics = [(k, v) for k, v in metrics.items()]
+    # metrics = {iteration: value for iteration, value in metrics}
+    metrics = [(iteration, value) for iteration, value in metrics]
+
     best_iter_and_values = sorted(metrics, key=lambda x: x[1], reverse=operation == "max")[:top_k]
 
     all_filepaths = []
     all_values = []
+    potential_ckpt_files = os.listdir(cfg.OUTPUT_DIR)
     for best_iter, best_value in best_iter_and_values:
-        file_name = "model_{:07d}.pth".format(best_iter)
-        if best_iter == last_iter and not os.path.isfile(os.path.join(cfg.OUTPUT_DIR, file_name)):
-            file_name = "model_final.pth"
+        file_name = file_name_fmt.format(best_iter)
+
+        matched_files = [x for x in potential_ckpt_files if re.match(file_name, x)]
+        if len(matched_files) > 1:
+            raise ValueError(
+                f"Too many potential checkpoint files found for iter={best_iter}, "
+                f"criterion={criterion}, value={best_value}:\n\t{matched_files}"
+            )
+        if len(matched_files) == 0:
+            if best_iter == last_iter:
+                file_name = "model_final.pth"
+            matched_files = [re.match(file_name, x) for x in potential_ckpt_files]
+        if len(matched_files) == 0:
+            raise ValueError(
+                f"Could not find potential checkpoint files for iter={best_iter}, "
+                f"criterion={criterion}, value={best_value}."
+            )
+        file_name = matched_files[0]
+
         file_path = os.path.join(cfg.OUTPUT_DIR, file_name)
 
         if not os.path.isfile(file_path):
@@ -232,6 +238,48 @@ def check_consistency(state_dict, model):
     _state_dict = model.state_dict()
     for k in state_dict:
         assert torch.equal(state_dict[k], _state_dict[k]), f"Mismatch values: {k}"
+
+
+def _metrics_from_x(metrics_file, criterion):
+    metrics_file = os.path.splitext(metrics_file)[0]
+    if os.path.isfile(f"{metrics_file}.json"):
+        return _metrics_from_json(f"{metrics_file}.json", criterion)
+    elif os.path.isfile(f"{metrics_file}.csv"):
+        return _metrics_from_csv(f"{metrics_file}.csv", criterion)
+    else:
+        raise ValueError(f"metrics file not found - {metrics_file}")
+
+
+def _metrics_from_json(metrics_file, criterion):
+    metrics = []
+    with open(metrics_file, "r") as f:
+        metrics = [json.loads(line.strip()) for line in f]
+    metrics = [m for m in metrics if criterion in m or any(k.endswith(criterion) for k in m.keys())]
+    is_metric_wrapped = criterion not in metrics[0]
+    if is_metric_wrapped:
+        metrics = [
+            (
+                int(m["iteration"]),
+                np.mean(
+                    [m[k] for k in m if k.endswith(criterion) and "test" not in k.split("/")[0]]
+                ).item(),
+            )
+            for m in metrics
+        ]
+    else:
+        metrics = [(m["iteration"], m[criterion]) for m in metrics]
+    return metrics
+
+
+def _metrics_from_csv(metrics_file, criterion):
+    def _row_has_criterion(row: pd.Series):
+        index = row.index.tolist()
+        return criterion in index and not pd.isna(row[criterion])
+
+    metrics = pd.read_csv(metrics_file)
+    metrics = [m for _, m in metrics.iterrows() if _row_has_criterion(m)]
+    metrics = [(int(m["step"]), m[criterion]) for m in metrics]
+    return metrics
 
 
 def get_iters_per_epoch_eval(cfg) -> int:

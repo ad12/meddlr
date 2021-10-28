@@ -6,6 +6,7 @@ import time
 from collections import defaultdict
 from typing import List, Sequence, Union
 
+import numpy as np
 import pandas as pd
 import silx.io.dictdump as sio
 import torch
@@ -177,6 +178,9 @@ class ReconEvaluator(ScanEvaluator):
         """
         N = outputs["pred"].shape[0]
 
+        preds: torch.Tensor
+        targets: torch.Tensor
+
         if self._skip_rescale:
             # Do not rescale the outputs
             preds = outputs["pred"]
@@ -303,7 +307,7 @@ class ReconEvaluator(ScanEvaluator):
                     )
 
         if self._group_by_scan:
-            pred_vals = self._get_scan_results()
+            pred_vals = self._group_results_by_scan()
         else:
             pred_vals = self.slice_metrics.to_dict()
             pred_vals.update(self.scan_metrics.to_dict())
@@ -316,13 +320,17 @@ class ReconEvaluator(ScanEvaluator):
         # Copy so the caller can do whatever with results
         return copy.deepcopy(self._results)
 
-    def _get_scan_results(self):
+    def _group_results_by_scan(self):
         """Get results grouping by scan."""
         pred_vals = defaultdict(dict)
 
         slice_metrics = self.slice_metrics.to_dict(group_by=["id", "Metric"])
+        agg_slice_metrics = defaultdict(lambda: defaultdict(list))
         for (slice_id, metric_name), value in slice_metrics.items():
-            pred_vals[slice_id.rsplit("-", 1)[0]][metric_name] = value
+            agg_slice_metrics[slice_id.rsplit("-", 1)[0]][metric_name].append(value)
+        for scan_id, metrics_dict in agg_slice_metrics.items():
+            for metrics_name, values in metrics_dict.items():
+                pred_vals[scan_id][metrics_name] = np.mean(values)
 
         scan_metrics = self.scan_metrics.to_dict(group_by=["id", "Metric"])
         for (scan_id, metric_name), value in scan_metrics.items():
