@@ -1,7 +1,14 @@
+import itertools
 import logging
 
 import numpy as np
 import torch
+
+try:
+    from scipy.ndimage.morphology import binary_erosion, distance_transform_edt
+except ImportError:  # pragma: no cover
+    binary_erosion = None
+    distance_transform_edt = None
 
 try:
     from medpy.metric import assd as _assd
@@ -78,7 +85,7 @@ def coefficient_variation(y_pred, y_true):
     return std / mean
 
 
-def average_symmetric_surface_distance(y_pred, y_true, spacing=None, connectivity=1):
+def average_symmetric_surface_distance(y_pred, y_true, spacing=None, connectivity=1, crop=True):
     if _assd is None:
         raise ModuleNotFoundError(
             "assd requires the medpy package. Please install using `pip install medpy`."
@@ -92,17 +99,45 @@ def average_symmetric_surface_distance(y_pred, y_true, spacing=None, connectivit
     if is_tensor:
         if y_pred.requires_grad or y_true.requires_grad:
             logger.warning("Average symmetric surface distance does not preserve gradients.")
-        y_pred = y_pred.cpu().numpy()
-        y_true = y_true.cpu().numpy()
+        y_pred = y_pred.detach().cpu().numpy()
+        y_true = y_true.detach().cpu().numpy()
+
+    label = 1
+    if y_pred.dtype not in (np.bool, bool):
+        y_pred = y_pred == label
+    if y_true.dtype not in (np.bool, bool):
+        y_true = y_true == label
 
     B, C = y_pred.shape[:2]
     out_matrix = torch.zeros(B, C) if is_tensor else np.zeros((B, C))
     for b in range(B):
         for c in range(C):
+            bc_pred, bc_true = y_pred[b, c], y_true[b, c]
+            if crop:
+                bc_pred, bc_true = _crop_to_joint_roi(bc_pred, bc_true)
+
             out_matrix[b, c] = _assd(
-                y_pred[b, c], y_true[b, c], voxelspacing=spacing, connectivity=connectivity
+                bc_pred, bc_true, voxelspacing=spacing, connectivity=connectivity
             )
     return out_matrix
+
+
+def _crop_to_joint_roi(y_pred: np.ndarray, y_true: np.ndarray):
+    joint_roi = np.asarray(y_pred | y_true)
+    ndim = joint_roi.ndim
+    if not np.any(joint_roi):
+        return y_pred, y_true
+
+    bbox = []
+    for ax in itertools.combinations(reversed(range(ndim)), ndim - 1):
+        arr = np.any(joint_roi, ax)
+        arg_max = np.where(arr == arr.max())[0]
+        min_d = max(arg_max[0], 0)
+        max_d = arg_max[-1] + 1
+        bbox.append(slice(min_d, max_d))
+    bbox = tuple(bbox)
+
+    return y_pred[bbox], y_true[bbox]
 
 
 dice = dice_score

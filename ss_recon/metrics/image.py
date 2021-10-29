@@ -26,6 +26,8 @@ _IM_TYPES_TO_FUNCS = {
     "imag": cplx.imag,
 }
 
+__all__ = ["PSNR", "MSE", "nRMSE", "RMSE", "SSIM"]
+
 
 class PSNR(Metric):
     def __init__(
