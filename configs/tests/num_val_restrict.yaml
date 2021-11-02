@@ -1,0 +1,14 @@
+# Restrict number of validation scans
+_BASE_: "fastmri_knee_mc.yaml"
+DATASETS:
+  TRAIN: ("fastMRI_knee_multicoil_dev_train",)
+  # using testing dataset for val because it has more than 1 scan
+  # expected functionality will only load 1 scan.
+  VAL: ("fastMRI_knee_multicoil_dev_test",)
+  TEST: ("fastMRI_knee_multicoil_dev_test",)
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: -1
+    NUM_VAL: 1  # only use one scan from the validation dataset
+OUTPUT_DIR: "results://tests/num_val_restrict"
+VERSION: 1

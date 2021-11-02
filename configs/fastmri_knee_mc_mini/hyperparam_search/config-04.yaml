@@ -1,0 +1,14 @@
+_BASE_: "config-02.yaml"
+SOLVER:
+  LR_SCHEDULER_NAME: "WarmupMultiStepLR"
+  GAMMA: 0.7
+  STEPS: (10, 20, 25)  # ensures learning rate does not decay
+  BASE_LR: 1e-4
+  WARMUP_FACTOR: 1.0
+  WARMUP_ITERS: 0
+OUTPUT_DIR: "results://fastmri_knee_mc_mini/hyperparam_search/config-04"
+DESCRIPTION:
+  BRIEF: "8x unrolled network, 2 blocks, 128 channels, 2x16 grad accum, 30 epochs, lr=1e-4, lr decay by 0.7 at 10/20/25 epochs, no renormalize data"
+  EXP_NAME: "fastmri_knee_mc_mini/hyperparam_search/config-04"
+  TAGS: ("fastmri_knee_mc_mini", "hyperparameter_search")
+VERSION: 1

@@ -1,0 +1,15 @@
+# 8 unrolled blocks, 512 feature maps each
+_BASE_: "template.yaml"
+MODEL:
+  META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 8
+    NUM_RESBLOCKS: 4
+    NUM_FEATURES: 128
+    DROPOUT: 0.
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER: ("act", "conv")
+OUTPUT_DIR: "results://arch_search/8x_feat-128_b-4"
+VERSION: 1

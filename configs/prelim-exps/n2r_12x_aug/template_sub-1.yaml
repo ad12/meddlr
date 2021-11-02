@@ -1,0 +1,27 @@
+_BASE_: "../n2r_template.yaml"
+MODEL:
+  CONSISTENCY:
+    AUG:
+      NOISE:
+        STD_DEV: (1,)
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_UNDERSAMPLED: 13  # 13 undersampled, 1 fully sampled
+  NUM_WORKERS: 12
+SOLVER:
+  TRAIN_BATCH_SIZE: 2
+  GRAD_ACCUM_ITERS: 4
+AUG_TRAIN:
+  UNDERSAMPLE:
+    ACCELERATIONS: (12,)
+  USE_NOISE: True
+  NOISE_P: 0.2
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (12,)
+DESCRIPTION:
+  BRIEF: "N2R 12x mridata.org w/ Noise augmentation - 1 subject"
+  EXP_NAME: "mridata_knee_2019/n2r_12x_aug"
+  TAGS: ("mridata_knee_2019", "n2r_12x", "noise_aug")
+OUTPUT_DIR: "results://prelim-exps/n2r_12x_aug"
+VERSION: 1

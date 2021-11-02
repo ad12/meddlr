@@ -1,0 +1,5310 @@
+{
+  "info": {
+    "contributor": "arjundd",
+    "description": "fastMRI brain_multicoil Dataset - train",
+    "year": "2020",
+    "date_created": "2020-10-02 13-26-39 PDT",
+    "version": "mini-v0.0.1"
+  },
+  "images": [
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002471.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002471",
+      "patient_id": "aeff17eaac60bd07c48021e57dba1802cbfa2566e49bfa7327bd41cfd7f2a9f3",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002483.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002483",
+      "patient_id": "e8a2e60be5f33ba5822b61b5697469472ee9d6960167a07e3fece7aeafc5f9a0",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002536.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002536",
+      "patient_id": "aa55fc7e511edf134b3d716b2f5d34bda2414775a2367a295052b3264f9beede",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002560.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002560",
+      "patient_id": "2ae7b49ad74155aed77128dfaccd82b9b8a6f3e1bfffd080510ad5d8b9bf00e7",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002562.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002562",
+      "patient_id": "8b22df66f13995c5cd95dc39c64d98664ec90c6f5ddac5ae39028d53067f013b",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002574.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002574",
+      "patient_id": "8bb4258ea919f6ca92c8b4f1f5358d52975b2ecdd4bf37a5f2a08ba80078c61c",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002584.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002584",
+      "patient_id": "78603c57b36f8fdd1796dc3dfb7f5db067638511770b0bb614f55658259aa468",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002603.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002603",
+      "patient_id": "efa53f490863ae4b04db913ec1763c2e18c98796019149e6022716f53d297875",
+      "acquisition": "AXFLAIR",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002605.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002605",
+      "patient_id": "533b0489a706d6324cb2c09075a49bd27eea4e5d7d4a057b1c4213f681659a98",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_200_6002652.h5",
+      "scan_id": "_brain_AXFLAIR_200_6002652",
+      "patient_id": "cdcabcacd9df2138b7378b84b86df3601bf9871b157bc9e6618a85d2fb7329d2",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002868.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002868",
+      "patient_id": "7ade28c925cdd612b1101ed5e28ba2d9c0f827c7c6e61857c7ef2adaf8956188",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002872.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002872",
+      "patient_id": "14a0495e5e04f64bcd5a9ea4e68b351f506e045c747bb9f02fc710b058e07ad3",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002899.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002899",
+      "patient_id": "75f572b82ad7c525d46209d85360a78bcc3d035141443942340acdf90d53b978",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002915.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002915",
+      "patient_id": "6739deaa6e3bdd678c9529a88cdd685fb41f2d700528cda809267726bb1a6ae6",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002936.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002936",
+      "patient_id": "1417cd2ea4c3a82130fa606b303749552897929738476ec93e952a65fff37e46",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002942.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002942",
+      "patient_id": "9b2a1d94004630c710a49f26d2ca5f46ae3190020110fc6ea70e1edc4c370478",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002968.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002968",
+      "patient_id": "4b357bde7d6354f530d44dacec3241a56b94471d41cecf2560921a2f8cf20dc5",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002969.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002969",
+      "patient_id": "3e810cb585ac046376089f5c643981b9fdc687d5a9651c80e202aefde2b77b2c",
+      "acquisition": "AXFLAIR",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002974.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002974",
+      "patient_id": "917a7693f77b8cbae0531ddb400f1f909c3782b4bbd9ebde0bda546aa5b76abb",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6002975.h5",
+      "scan_id": "_brain_AXFLAIR_201_6002975",
+      "patient_id": "27ad2e5e437b04a5c5c0b70e35c50d67a53cd4fa652072079548d20d27607394",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6003000.h5",
+      "scan_id": "_brain_AXFLAIR_201_6003000",
+      "patient_id": "ad17cf63fa27c9fae7510835da2c2d48ef8dc2e0d31b6520124a2ff02ded2655",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6003015.h5",
+      "scan_id": "_brain_AXFLAIR_201_6003015",
+      "patient_id": "8101c6bcc0e092a4b9ac344702eba23401f76e9b631f02688f118555a673eab5",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_201_6003025.h5",
+      "scan_id": "_brain_AXFLAIR_201_6003025",
+      "patient_id": "42ee1e8b70be8ba7d26cacef9bb5a439e7fc85556a4dd0ad73303cb41ca5b0f3",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000420.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000420",
+      "patient_id": "8d3be7ad192a6ac2cb940286cebf00a1cc1a563fa2e724e2a59012f24f460d19",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000423.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000423",
+      "patient_id": "a5e26579616383495e7f776a175a534c24cbd2dc163383da138393c85173ef3c",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000447.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000447",
+      "patient_id": "7e3d1350d57d1573ab9c61f5798976e27b06f03bc06e1d1f47481249d895593f",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000450.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000450",
+      "patient_id": "b517f0a9058f962acfbda8dffbf5b231d32711c4a3cb403d0c36b66d56971406",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000468.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000468",
+      "patient_id": "f934e727a8628bc6328606485a0885765545d8313f1adc13d51769da0ef631bc",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000486.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000486",
+      "patient_id": "8903f46fb30710eba598c26722e63eb3a191aa4616998e188b8e242d5f884e6f",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000499.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000499",
+      "patient_id": "8738db7f46930861024a6ea22762a6fc05034d6ad26c17eda6acf1c9713d553e",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000510.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000510",
+      "patient_id": "43b53d72c2912d01eb5075dac79a3c69193061935d5a5279ed33827c5450f73c",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000521.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000521",
+      "patient_id": "39b91aab0d48d72dfcea84715076480a21f2943f064c5eca2d029aed3daa324e",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000532.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000532",
+      "patient_id": "af2571ad08d8eb148772749fcf78f4e0b43ec40d4b911850e7729dfa7b968902",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000533.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000533",
+      "patient_id": "b2cb53b87090da722c80b1bda9bd78a6e187c7a25368a314d17b75d87e9e0758",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000569.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000569",
+      "patient_id": "5ffd60e32175e0457cb928a93d8c80fd392f668e08074c7755d471e484ddf598",
+      "acquisition": "AXFLAIR",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000571.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000571",
+      "patient_id": "a0e49edb51f8d9d0d0f400f57ce50744c24b721847ff0e9c3756d65d5b4a06d9",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_202_6000583.h5",
+      "scan_id": "_brain_AXFLAIR_202_6000583",
+      "patient_id": "6b3a4d0d4771f74b3a869d139c7eaaf9324b66381860eb33c91217e6b9921d16",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_203_6000906.h5",
+      "scan_id": "_brain_AXFLAIR_203_6000906",
+      "patient_id": "a938ab1015e6f08b6758abcdf189dce03d67a16d62019a002840df87d7fe10b8",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_203_6000925.h5",
+      "scan_id": "_brain_AXFLAIR_203_6000925",
+      "patient_id": "b0ebca8ce1882c345864be048ad5e707d5338713c695e3b08c21ef9a8e353c44",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_203_6000938.h5",
+      "scan_id": "_brain_AXFLAIR_203_6000938",
+      "patient_id": "b29f402b703a85659289b85a3c29f4bf2ec87f3985859cc638a4841bf09affee",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_203_6000962.h5",
+      "scan_id": "_brain_AXFLAIR_203_6000962",
+      "patient_id": "e8570c881398a6569233978ca3480c78da984d51468b0ceffd64d6f128a66e0b",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_206_6000238.h5",
+      "scan_id": "_brain_AXFLAIR_206_6000238",
+      "patient_id": "e2ec3984726647af1591d7727f6e0235ce36feb3d7972e3517fabd1ba5677531",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_209_6001351.h5",
+      "scan_id": "_brain_AXFLAIR_209_6001351",
+      "patient_id": "421fabd371d0bb89b3f8e699148571a9c064132e3d4ca3237041c96c4db17237",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_209_6001358.h5",
+      "scan_id": "_brain_AXFLAIR_209_6001358",
+      "patient_id": "45a6258d537eb03500b4b45f566561ec21839a6c9c7fc26c9aac7e35d6b788cb",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_209_6001366.h5",
+      "scan_id": "_brain_AXFLAIR_209_6001366",
+      "patient_id": "fa8b4b68e4cc3f9c72c9393e95015c90d83d0b5206a75464c79c1c76040872a2",
+      "acquisition": "AXFLAIR",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_209_6001370.h5",
+      "scan_id": "_brain_AXFLAIR_209_6001370",
+      "patient_id": "b354394377f2058305084a306fe9896068888a8ea4e7939b2fd474af1ce40c05",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_209_6001399.h5",
+      "scan_id": "_brain_AXFLAIR_209_6001399",
+      "patient_id": "3d017d4977dad15c5a993802f0569c00d66fe8cd177a570b73b7dee065638933",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_209_6001423.h5",
+      "scan_id": "_brain_AXFLAIR_209_6001423",
+      "patient_id": "60e2588343798cfa561afd63d65f67fd7a4c0445e072eb63ba04ccb27a1ecf28",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_210_6001492.h5",
+      "scan_id": "_brain_AXFLAIR_210_6001492",
+      "patient_id": "216b53b23fd9c6417a30583ce24451b3afeb26886c97e7df14b55dbaf5b43686",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_210_6001497.h5",
+      "scan_id": "_brain_AXFLAIR_210_6001497",
+      "patient_id": "932c18c5b932f3ff790a70eb412e86c86fe2fde56da4b928f87f6063b586bd38",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_210_6001538.h5",
+      "scan_id": "_brain_AXFLAIR_210_6001538",
+      "patient_id": "a3589f4ebb05c736913bdc2975615d7f33a47f90d7e2f63cb18aa3ed5bb4696f",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_210_6001553.h5",
+      "scan_id": "_brain_AXFLAIR_210_6001553",
+      "patient_id": "d54c51c86dfb1a74496ca710827295471f2543899e955518fa319537a0bc9382",
+      "acquisition": "AXFLAIR",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_210_6001910.h5",
+      "scan_id": "_brain_AXFLAIR_210_6001910",
+      "patient_id": "1a89dd128b6be3dff10fa0f401e7b51b5f3685a35f72097965cd7fcc5eef6731",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXFLAIR_210_6001927.h5",
+      "scan_id": "_brain_AXFLAIR_210_6001927",
+      "patient_id": "e73d1972e3b4cefe5f610283b9a644320f6c2136db3a8769a3ed8dea74e0e8ef",
+      "acquisition": "AXFLAIR",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6001979.h5",
+      "scan_id": "_brain_AXT1POST_200_6001979",
+      "patient_id": "a53b57cc1536ede35655c02698b138b674115375605fc25c5c7c9aa3bdd4278e",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002016.h5",
+      "scan_id": "_brain_AXT1POST_200_6002016",
+      "patient_id": "b679f6d7925a221ff5192d306cb3c6caaafbc52499dab17be5489cc91c4dbeaa",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002027.h5",
+      "scan_id": "_brain_AXT1POST_200_6002027",
+      "patient_id": "9eb57bab60342030fa863db0bbbf660db89adc8506f2baf5233943ae28647362",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002048.h5",
+      "scan_id": "_brain_AXT1POST_200_6002048",
+      "patient_id": "ad626a444eeb9877d2f76b8f6e78211a453121dc47b041a1047ed762d969f6c9",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002052.h5",
+      "scan_id": "_brain_AXT1POST_200_6002052",
+      "patient_id": "87b12829f022ae5cdae4d156b152f544dec4eeee04fb98655fe90a59183cc5ce",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002059.h5",
+      "scan_id": "_brain_AXT1POST_200_6002059",
+      "patient_id": "3d873fe74dee288e54b70177ff268808d41e1c57531c20dca4d25135f399b599",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002080.h5",
+      "scan_id": "_brain_AXT1POST_200_6002080",
+      "patient_id": "5c7e958cba1287fccdd812ebc16d071f3ad976b8a3411864df99d72bbd05f052",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002170.h5",
+      "scan_id": "_brain_AXT1POST_200_6002170",
+      "patient_id": "f0d4e75cda19698a22afe5331a88336c4ba69d672ba422736c9b40ddc0ebb958",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002198.h5",
+      "scan_id": "_brain_AXT1POST_200_6002198",
+      "patient_id": "52692882e95faf810d34ffad6b13e97927435d70aa70bcddde997dadd3b62127",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002200.h5",
+      "scan_id": "_brain_AXT1POST_200_6002200",
+      "patient_id": "9d1cc96a23572a49bed54a8f92dd4f8f226f84b0ef767f290215b0a281bfc4c9",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002216.h5",
+      "scan_id": "_brain_AXT1POST_200_6002216",
+      "patient_id": "5983475194e6cde6794c8f159bc7416423450117158b7ff939da384e30d9fc98",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002248.h5",
+      "scan_id": "_brain_AXT1POST_200_6002248",
+      "patient_id": "99d7d379224716fc91396397fc10c1f4884ef8b3e49e4332cfba7a22345e37bc",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002299.h5",
+      "scan_id": "_brain_AXT1POST_200_6002299",
+      "patient_id": "0a4dce65a73ce9011f1e00a2314ca27213ed98525e38498308ebab3a80b2a466",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002326.h5",
+      "scan_id": "_brain_AXT1POST_200_6002326",
+      "patient_id": "107bef2c46afe43defd4e881dd997f66d6e3f9e47744a30ddadcfc0f4ef016b1",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002353.h5",
+      "scan_id": "_brain_AXT1POST_200_6002353",
+      "patient_id": "c2243f2d81cffe74c7ab5736f0c7a345099fc1dcf6965ae2d1475ceec6b3c812",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002355.h5",
+      "scan_id": "_brain_AXT1POST_200_6002355",
+      "patient_id": "c58c4034121d737c2e877b96dd2469d68c1a2edc866c643bd0d62527ec1a6cf4",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002376.h5",
+      "scan_id": "_brain_AXT1POST_200_6002376",
+      "patient_id": "441bfa2f3b1f9f3a0984378fc993bb6b61dad827f75c033e8a245739dbf2576c",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_200_6002401.h5",
+      "scan_id": "_brain_AXT1POST_200_6002401",
+      "patient_id": "cce9c7e64c781a61c0b33db2636273bac7f247864c26537ae70030c4cf0156d2",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002665.h5",
+      "scan_id": "_brain_AXT1POST_201_6002665",
+      "patient_id": "1824725e5851cd4fe636981b9de4c89a2e497114fb729297ba9013593176665b",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002672.h5",
+      "scan_id": "_brain_AXT1POST_201_6002672",
+      "patient_id": "64b5d9251f810ff55403d85093202827972de9b983ccf556baed2300e2b78c23",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002675.h5",
+      "scan_id": "_brain_AXT1POST_201_6002675",
+      "patient_id": "5752594469e181ce2256188aea1c8477a75896da6ced597c69d5f6d13e81cee8",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002686.h5",
+      "scan_id": "_brain_AXT1POST_201_6002686",
+      "patient_id": "e54ee6d06cd792f772b1836ec09647cbdfbf1f6d20999e98635cdfcec50cd884",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002700.h5",
+      "scan_id": "_brain_AXT1POST_201_6002700",
+      "patient_id": "efbbe7b3c9905a9d895662e36d4cb6d6f60f18c82d090647965eb85643052c95",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002739.h5",
+      "scan_id": "_brain_AXT1POST_201_6002739",
+      "patient_id": "253e18218120129b05540de1309f96522a13c3eae0dcfb8ab2ba206de6485730",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002741.h5",
+      "scan_id": "_brain_AXT1POST_201_6002741",
+      "patient_id": "b170c862f5ace47d96e7d317172082f3bbc8fa3df0f7e919c526dbb975ef1d0a",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002788.h5",
+      "scan_id": "_brain_AXT1POST_201_6002788",
+      "patient_id": "9efb4fb3225e2f9ae7429e950f4d0f5f1c56dff2dd8694c391e7cbee76e8a67c",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002846.h5",
+      "scan_id": "_brain_AXT1POST_201_6002846",
+      "patient_id": "b0c58a1f1189968dde78b9f0c14c198382f9a83002acf3856ff35fb70f5381c8",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002852.h5",
+      "scan_id": "_brain_AXT1POST_201_6002852",
+      "patient_id": "65cd997e659cc37b555caa2626c1afe110af6f18a67e45a82a8bd80b1f49f4d3",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002890.h5",
+      "scan_id": "_brain_AXT1POST_201_6002890",
+      "patient_id": "d91f7912cd96ed7594d89b9978645fe3caee1a28e86be944a3149daa4269b869",
+      "acquisition": "AXT1POST",
+      "num_slices": 12
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6002952.h5",
+      "scan_id": "_brain_AXT1POST_201_6002952",
+      "patient_id": "abdf994ea33101829e11f2bc978588ebd88339a2411a052eda32337cbf6fd90f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_201_6003014.h5",
+      "scan_id": "_brain_AXT1POST_201_6003014",
+      "patient_id": "d312551c8de45638d270c3888de2e9111c52685cdfa137d3dd8a3d73170741dc",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_202_6000280.h5",
+      "scan_id": "_brain_AXT1POST_202_6000280",
+      "patient_id": "e9e7a699fbaa23fc153b2f0a0a3afb4316d188f294ea43523b850381f85bcc45",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_202_6000297.h5",
+      "scan_id": "_brain_AXT1POST_202_6000297",
+      "patient_id": "ce5832c03f9a03bb672ba9d5a14262398b14561540d0579f50fff834ac133b6f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_202_6000325.h5",
+      "scan_id": "_brain_AXT1POST_202_6000325",
+      "patient_id": "cdfd6f42bb6535dd18d0f89e54ec2e4b6e5a211891c7b8e9685f2ec432de98ee",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_202_6000348.h5",
+      "scan_id": "_brain_AXT1POST_202_6000348",
+      "patient_id": "f53092b976cae6b91c92594913d43bed3125cd72d44c00be08da2c2a3c55b470",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_202_6000362.h5",
+      "scan_id": "_brain_AXT1POST_202_6000362",
+      "patient_id": "1570651537ee605a7f823335e9203cd1d77a540dc4147651a260bc576ce66a34",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_202_6000381.h5",
+      "scan_id": "_brain_AXT1POST_202_6000381",
+      "patient_id": "6b7f5d64bf2877b671ebd2582b2549eaa5cb466bc4d15f2f290e209bf584f7c3",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_202_6000406.h5",
+      "scan_id": "_brain_AXT1POST_202_6000406",
+      "patient_id": "1bf086549fa200f7768a6e5a9b2c0362377bbfcf36fa114fef0bec4544834567",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_202_6000565.h5",
+      "scan_id": "_brain_AXT1POST_202_6000565",
+      "patient_id": "23e2b3b86f5a0b3a24b7cad003875b5324cc2b575014fe318f053c986ef146bd",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000613.h5",
+      "scan_id": "_brain_AXT1POST_203_6000613",
+      "patient_id": "d7d713e491780795e674f92bd5750c5bbf07bde9518cca0a2b1fe549a93c4e72",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000617.h5",
+      "scan_id": "_brain_AXT1POST_203_6000617",
+      "patient_id": "54ee59f703dd7d1588ebbb1e95d0a631a8bc8d369c3d33bf210a59aa923c06e4",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000663.h5",
+      "scan_id": "_brain_AXT1POST_203_6000663",
+      "patient_id": "4831e255dc628e55aedbf6725f813c69686b022d83c08b25a71e29ef30271e01",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000678.h5",
+      "scan_id": "_brain_AXT1POST_203_6000678",
+      "patient_id": "c57bbd1eb8bc51d1e3d4faf11896dfdb98ac5152ba70835a31d63804f4caebdf",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000680.h5",
+      "scan_id": "_brain_AXT1POST_203_6000680",
+      "patient_id": "505267d9da9df6ac5fb4bbe3ce9221922fba0ced5f4a039be284cb2824f2af34",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000694.h5",
+      "scan_id": "_brain_AXT1POST_203_6000694",
+      "patient_id": "842317604479e7c00551363552e67821427bca633700c6ec84ba82df42ff6e41",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000696.h5",
+      "scan_id": "_brain_AXT1POST_203_6000696",
+      "patient_id": "01fb34e20f17f587f437e9dc9fab67e614458101bfa0f70052620ecdfaf3050c",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000698.h5",
+      "scan_id": "_brain_AXT1POST_203_6000698",
+      "patient_id": "b23425df12b926be62fc035eb9304dda0e04f937ee323f715d992495ec41df88",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000702.h5",
+      "scan_id": "_brain_AXT1POST_203_6000702",
+      "patient_id": "afd9636d280bd85147f9580a0c8ef4d9c90ca99049919eab1f7a1e928637a5df",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000714.h5",
+      "scan_id": "_brain_AXT1POST_203_6000714",
+      "patient_id": "42b58610b0f0bea39973d782f7eb633d2453edbe1def8efb8f806b97fc70b946",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000745.h5",
+      "scan_id": "_brain_AXT1POST_203_6000745",
+      "patient_id": "d70b264ac9ce49791020045850ad6abce11211f8393dd83064ad17dcbd691b90",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000757.h5",
+      "scan_id": "_brain_AXT1POST_203_6000757",
+      "patient_id": "3395633d58c97bfd552ea8e5606e83536cbab11c3f72dc23bee49ca0dd3c488e",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000762.h5",
+      "scan_id": "_brain_AXT1POST_203_6000762",
+      "patient_id": "d2190a0b18b0e8570a89444c16d43ea1e0e0675ab97dc751ae0d14e49fe47c55",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000786.h5",
+      "scan_id": "_brain_AXT1POST_203_6000786",
+      "patient_id": "49d2fd6238fd35d100e498e0aa5fb119c626641281b7ac7e515cfcd193183f81",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000788.h5",
+      "scan_id": "_brain_AXT1POST_203_6000788",
+      "patient_id": "6e011b43793dc34b113d945ab3862153c038961af2eba83b2024aaaa74febb35",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000794.h5",
+      "scan_id": "_brain_AXT1POST_203_6000794",
+      "patient_id": "d52a5333e8920cfc96461328d6331ad46d4bfc52d24e0f59f7b1a7f39c25e368",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000804.h5",
+      "scan_id": "_brain_AXT1POST_203_6000804",
+      "patient_id": "5a8e19adf6d52f19070b7826af9c07ee725cd3e946a35c6f4e11ef0fff178fb2",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000810.h5",
+      "scan_id": "_brain_AXT1POST_203_6000810",
+      "patient_id": "a080eeaa8dd7d76ace711858872e69ad4a2e4bf61425a28f2fa6d0f8fa92eda4",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000818.h5",
+      "scan_id": "_brain_AXT1POST_203_6000818",
+      "patient_id": "27b67358befcd0afedb770767f488d03b147511186af1d796e4b855a30fcbff4",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000857.h5",
+      "scan_id": "_brain_AXT1POST_203_6000857",
+      "patient_id": "f28138e91bc10ec46edf1d176219dde2f7f4e0c241d0de731481583ff2a0bbca",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000863.h5",
+      "scan_id": "_brain_AXT1POST_203_6000863",
+      "patient_id": "25e88aab48a9cf9d917d14ddbd28f96938073f8efd68835709b15ce9665e216a",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000865.h5",
+      "scan_id": "_brain_AXT1POST_203_6000865",
+      "patient_id": "6db892fefe93d3cca7756c68fafe2c252df085d69d1bd841621849771f6cbcb2",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000874.h5",
+      "scan_id": "_brain_AXT1POST_203_6000874",
+      "patient_id": "c258eedd4bbab9b09986d3b737a9b6cbf8b64e864e80f7b72aa7181c3732e954",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_203_6000892.h5",
+      "scan_id": "_brain_AXT1POST_203_6000892",
+      "patient_id": "190d0b564de545c262a7569da7257a59aac67934449fd5fcae974da02b815cda",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050004.h5",
+      "scan_id": "_brain_AXT1POST_205_2050004",
+      "patient_id": "e181d71eab52a4fdf69f23652d8f295d766d3eed674b302b7a909c2005278a27",
+      "acquisition": "AXT1POST",
+      "num_slices": 12
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050032.h5",
+      "scan_id": "_brain_AXT1POST_205_2050032",
+      "patient_id": "cf104e998d11928c6e52e26393d85125cda82b456269047870df7fe74ffc2479",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050039.h5",
+      "scan_id": "_brain_AXT1POST_205_2050039",
+      "patient_id": "63e07e6529b4da79ca51e1fb04b48c3ed3f31393dacdf85519dad08d121728c0",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050057.h5",
+      "scan_id": "_brain_AXT1POST_205_2050057",
+      "patient_id": "445a4f778f5f6a2287dcf3eab1170309fb1d22f79413e933c4f71038fa743797",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050092.h5",
+      "scan_id": "_brain_AXT1POST_205_2050092",
+      "patient_id": "0986c6c0bda32531b18ff50a4cb37e1ad88680506246ab85d4e58fcd2791494a",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050116.h5",
+      "scan_id": "_brain_AXT1POST_205_2050116",
+      "patient_id": "4cc176022c92fceac038204873eb9e8340a0746787e68298e0be22229e5815d1",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050164.h5",
+      "scan_id": "_brain_AXT1POST_205_2050164",
+      "patient_id": "5977018720904b08c1ac28f81d6518fce428aef61e3448a32571fbfec0a77fac",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050166.h5",
+      "scan_id": "_brain_AXT1POST_205_2050166",
+      "patient_id": "7b4748e6a94a51a1147e971e9069c739a0c1c6337907a7ab29e630ab18906cc4",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050207.h5",
+      "scan_id": "_brain_AXT1POST_205_2050207",
+      "patient_id": "6ee5a1190c40331a64321b11e8f5928e67fea6ce0cd140714fa6d30fbbb2b1b2",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_2050228.h5",
+      "scan_id": "_brain_AXT1POST_205_2050228",
+      "patient_id": "f06461dff384bff86f2977caa6d66690de8a633f9e039ad3f69ace6cae4e47d7",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_6000065.h5",
+      "scan_id": "_brain_AXT1POST_205_6000065",
+      "patient_id": "2dd3245e163d30948438a03ba45df4ae2ee82933683498646c94978ab5c04f37",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_6000071.h5",
+      "scan_id": "_brain_AXT1POST_205_6000071",
+      "patient_id": "fd001d30948fb1a3a97de3a88b5faa4c1629eaf0b587d263bfea5bd536b6abb7",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_6000081.h5",
+      "scan_id": "_brain_AXT1POST_205_6000081",
+      "patient_id": "10397342c7d0bfeed12f1ad71dbdcf48e7c14574daa9a2cb4ff3c8f1957680ed",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_6000087.h5",
+      "scan_id": "_brain_AXT1POST_205_6000087",
+      "patient_id": "c17d22c8c6632027395a0e6682b3f3c1d8a7e7df9363e7b67b74b6b20a419379",
+      "acquisition": "AXT1POST",
+      "num_slices": 12
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_6000151.h5",
+      "scan_id": "_brain_AXT1POST_205_6000151",
+      "patient_id": "bd98f6648600f78332b0f2a9f51d3c2e73a697a5ae0b1ddbd434d81de6cebe1f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_205_6000158.h5",
+      "scan_id": "_brain_AXT1POST_205_6000158",
+      "patient_id": "1038ec9744f73ac5e1b0aa71966cf9c9f792798b8d07ce70cacd065f6862ace8",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_206_6000209.h5",
+      "scan_id": "_brain_AXT1POST_206_6000209",
+      "patient_id": "50351051554fb789787191b16d73e935c77e11af5cda4689aed7e9273ef3c0d1",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070005.h5",
+      "scan_id": "_brain_AXT1POST_207_2070005",
+      "patient_id": "2e375a474c6af1e91f660fbfc2199b3dd119aa3a2b5950ce6e04efb047d41333",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070047.h5",
+      "scan_id": "_brain_AXT1POST_207_2070047",
+      "patient_id": "98041f5dbe129348fd29bb7e32b4d3c8dbf4ef5213e7fe6ec779534267eeb320",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070061.h5",
+      "scan_id": "_brain_AXT1POST_207_2070061",
+      "patient_id": "dfe73bc2194570666dbfa62fe1b4e020be8cdb2c676b1a64c84a17c66e84095f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070067.h5",
+      "scan_id": "_brain_AXT1POST_207_2070067",
+      "patient_id": "1deeeca732818085a16a195900598c09468d14dbacba311ec2c91bbe755b4b09",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070076.h5",
+      "scan_id": "_brain_AXT1POST_207_2070076",
+      "patient_id": "a9b111fd72472efcacb3e9f5c8ccf1713821da9ac1be54e40dc7f4cedfd44fec",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070093.h5",
+      "scan_id": "_brain_AXT1POST_207_2070093",
+      "patient_id": "783d1a111870dc98cf62ef3e5de183015dce75c0c4cf18098f4d671623776631",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070130.h5",
+      "scan_id": "_brain_AXT1POST_207_2070130",
+      "patient_id": "76407fd182ed40567f49d6006f67133eaf487f89174d553d77f225642e0c15fc",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070186.h5",
+      "scan_id": "_brain_AXT1POST_207_2070186",
+      "patient_id": "024751fef4f71e5bc48b053718f32f360fad45470530cc4e428cb34ee9404e08",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070206.h5",
+      "scan_id": "_brain_AXT1POST_207_2070206",
+      "patient_id": "4d2804b376d6e3fbefaead79b8099ce96713cd975872625f67ff2edbd1f39e34",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070213.h5",
+      "scan_id": "_brain_AXT1POST_207_2070213",
+      "patient_id": "10d379a71d0e6fcabd4c0696bebe397162991195a0d1e68121b5f348d97a1d8f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070218.h5",
+      "scan_id": "_brain_AXT1POST_207_2070218",
+      "patient_id": "3fc1fc2c94c9c2d7b272a844bc638435daaccb268b2538b18270b5c5420d0092",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070230.h5",
+      "scan_id": "_brain_AXT1POST_207_2070230",
+      "patient_id": "06d6217a15c60246604450aad975424c9dbff88d5b20d08d6c851020151a1c61",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070238.h5",
+      "scan_id": "_brain_AXT1POST_207_2070238",
+      "patient_id": "8f7ee75db137ff782d2e853c9ef227ab3f07ce069bc0f4892340970c64f03a44",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070267.h5",
+      "scan_id": "_brain_AXT1POST_207_2070267",
+      "patient_id": "82976a76081ea892e1faa171ca3e6a1fbfae2e5d95c33a858e1b4617aa74ef4d",
+      "acquisition": "AXT1POST",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070299.h5",
+      "scan_id": "_brain_AXT1POST_207_2070299",
+      "patient_id": "e00cd0488661569769072fe349adbf760f33e9b543914df4111a44c9b972d8e5",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070304.h5",
+      "scan_id": "_brain_AXT1POST_207_2070304",
+      "patient_id": "a2c7cc2e4fcdde3a89c8874b173fb9517d42aa17c8e99478e6e9222a518d3afa",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070336.h5",
+      "scan_id": "_brain_AXT1POST_207_2070336",
+      "patient_id": "71888bfd6b720d7cf310103d04b5a791d6696aaa6bcd9727376a9c5ed3c297a4",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070347.h5",
+      "scan_id": "_brain_AXT1POST_207_2070347",
+      "patient_id": "041efcc5752097a551afe7ebb3b8fd7c2f818c90421a99cb50f188aaf56e6075",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070353.h5",
+      "scan_id": "_brain_AXT1POST_207_2070353",
+      "patient_id": "e409758b1015f9bf30595941d9ff5d34d877936c3c95e5aa3bf99beb471b6f37",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070375.h5",
+      "scan_id": "_brain_AXT1POST_207_2070375",
+      "patient_id": "ae4e2e06143bf13330ec56ce9110708f7206899965a099097533fe7945fb9f21",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070399.h5",
+      "scan_id": "_brain_AXT1POST_207_2070399",
+      "patient_id": "73e2a96781b4a74aecc2991334a09164ea02604897c6005314dab841b77b62c7",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070539.h5",
+      "scan_id": "_brain_AXT1POST_207_2070539",
+      "patient_id": "6eb620549fcf34642ccd424709f3b7e7dbd7bc9dab0831bb87ae9e8215e09dbc",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070589.h5",
+      "scan_id": "_brain_AXT1POST_207_2070589",
+      "patient_id": "993dcf798fe79427bf0b9f7ecdfca5978c73cfaa7b429b013c4d6c0a19b0f4ca",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070696.h5",
+      "scan_id": "_brain_AXT1POST_207_2070696",
+      "patient_id": "096d8c9f0ebe0c9abc9cfa5bab9b2c9afa439a24a1fbfe9cee971e50bc927c6f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070754.h5",
+      "scan_id": "_brain_AXT1POST_207_2070754",
+      "patient_id": "9de6c6eb63802f86ff975a74b75778cb26aaeb9648b673fed98e7559f7a573aa",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070784.h5",
+      "scan_id": "_brain_AXT1POST_207_2070784",
+      "patient_id": "16afc0cfec53444148235b66d162d714d3045fed1f556434a25b3d0b3d0ae89e",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070785.h5",
+      "scan_id": "_brain_AXT1POST_207_2070785",
+      "patient_id": "612d91a76395486ac20c047db2d75b31a56779e93f06277975d2d47b8fab28af",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_207_2070817.h5",
+      "scan_id": "_brain_AXT1POST_207_2070817",
+      "patient_id": "45a68cccc26f48ef3bef982a0312e9f11084d88516a35e1873c1af4fa0dca5ef",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080068.h5",
+      "scan_id": "_brain_AXT1POST_208_2080068",
+      "patient_id": "0f55de173168dd774a0d857497e62e6cbdd0884aa38fedef592cb4ed7d3e44a6",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080086.h5",
+      "scan_id": "_brain_AXT1POST_208_2080086",
+      "patient_id": "55e55e799822aee266f3d0405f67eab5f72cdc204d6c96bda82f8c5858c87827",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080090.h5",
+      "scan_id": "_brain_AXT1POST_208_2080090",
+      "patient_id": "93bc921e344366d1847b271bd7851a178986ed36256658f188263205a8f729d1",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080094.h5",
+      "scan_id": "_brain_AXT1POST_208_2080094",
+      "patient_id": "24587bcd626bcb2e89dcd8e0ad7509fa9d703dd3877fb16a114de4a48361e416",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080107.h5",
+      "scan_id": "_brain_AXT1POST_208_2080107",
+      "patient_id": "2d7c6731eb944d708faaaaa3e340f4eb2116f03b580d2cef05ae35d93d94716f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080153.h5",
+      "scan_id": "_brain_AXT1POST_208_2080153",
+      "patient_id": "df08d71c48e4bcae109aca13258c8f5e05d88f571672ccf6c586c2eef60a0180",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080165.h5",
+      "scan_id": "_brain_AXT1POST_208_2080165",
+      "patient_id": "69f860719b744da4905fb40e336c09331d34ebe3af2878282b9b926e41be6166",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080169.h5",
+      "scan_id": "_brain_AXT1POST_208_2080169",
+      "patient_id": "c75856384e6246441cf24fb0146c8cb2f49ed5a17a47f2d343a69d67ca58210d",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080171.h5",
+      "scan_id": "_brain_AXT1POST_208_2080171",
+      "patient_id": "692ce2a935b3765a5209438aa5a7965fd9740080f31261911f50a1a5f0dd4d34",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080189.h5",
+      "scan_id": "_brain_AXT1POST_208_2080189",
+      "patient_id": "2ad700e71515cd6017e544ce0f6ad1034d38a17e2a0fa80e0df5a9a2b03ff43f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080249.h5",
+      "scan_id": "_brain_AXT1POST_208_2080249",
+      "patient_id": "02271dd3e7d658802f54e2a33189fcea6e73d74c768b1b8078d48f867ea696c1",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080256.h5",
+      "scan_id": "_brain_AXT1POST_208_2080256",
+      "patient_id": "c74baf42fabe443619f91747740723c3946f8cbdb56cd52c8de893f26ab18e5f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080261.h5",
+      "scan_id": "_brain_AXT1POST_208_2080261",
+      "patient_id": "8a29dd3bf10505f94ea8f01937a0358db92a147e5980c015bb354e5f0f11c0d2",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080270.h5",
+      "scan_id": "_brain_AXT1POST_208_2080270",
+      "patient_id": "7b04282edb29b4ec00ef993d44a548d8616b8a9da66faaddf76d2d0146631147",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080281.h5",
+      "scan_id": "_brain_AXT1POST_208_2080281",
+      "patient_id": "155607ad4bf7e6c2e684477a363b969fc049ac3d1ba25f85dc8bd6f99798281e",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080300.h5",
+      "scan_id": "_brain_AXT1POST_208_2080300",
+      "patient_id": "b0620bd79df50458e068c2f8b981700ca8132889036a19d03f64f0b17a1bcfbf",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080342.h5",
+      "scan_id": "_brain_AXT1POST_208_2080342",
+      "patient_id": "5f5f654db553827f082feede5fca8ea8b116be4d80fa04a05aeda1ecd14487b5",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080411.h5",
+      "scan_id": "_brain_AXT1POST_208_2080411",
+      "patient_id": "a848065caa1b18bce38b3322817895fadf2a0f9c4dd6cb9e3b4a95368b136093",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080456.h5",
+      "scan_id": "_brain_AXT1POST_208_2080456",
+      "patient_id": "6fbc28740fc86d17d2035c5f82aa2980e7099a1796417ec2dea1d9625fa51705",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080512.h5",
+      "scan_id": "_brain_AXT1POST_208_2080512",
+      "patient_id": "d1813f41291ed46d994b9780b67be718508d50a7de271f5cb4435e2040c34260",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080550.h5",
+      "scan_id": "_brain_AXT1POST_208_2080550",
+      "patient_id": "df73a772ed33b38c1c2ed2750781adf4b525e3a8ee2e0c7fefffdd1953bb9ef9",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080615.h5",
+      "scan_id": "_brain_AXT1POST_208_2080615",
+      "patient_id": "f9259b416d942bb9fe19a3ec10e1e2089a3516ba370e326115851d9c203e86ef",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080617.h5",
+      "scan_id": "_brain_AXT1POST_208_2080617",
+      "patient_id": "36d8c6f15fb6856c6f0490546931e5e1596f076fea35de3511517d3609a2927f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080645.h5",
+      "scan_id": "_brain_AXT1POST_208_2080645",
+      "patient_id": "ee0fb5b231746efd0242bbbc583bfcc2b10542a6615e833fe367de5d231ef365",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080696.h5",
+      "scan_id": "_brain_AXT1POST_208_2080696",
+      "patient_id": "617027dadf8ab663bd731d60b45bb025782dc330d032fe39e317fe8c5d85c5cf",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080708.h5",
+      "scan_id": "_brain_AXT1POST_208_2080708",
+      "patient_id": "11e5b8b5aa155c95634a19c3c139a82feb01bd6102fbf297c5834a1203bbb06b",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_208_2080732.h5",
+      "scan_id": "_brain_AXT1POST_208_2080732",
+      "patient_id": "6852df73cb46bf35e9540caa869d5dc773119d1ffa5cc49cff29e43f73f5a3fb",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001068.h5",
+      "scan_id": "_brain_AXT1POST_209_6001068",
+      "patient_id": "8ea479a24539f96b0e023b9f84b6e9a2f317a20d55e30cd3a9dca78afa48b193",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001081.h5",
+      "scan_id": "_brain_AXT1POST_209_6001081",
+      "patient_id": "7032abbec56b6811795acf14e94b605f9ef2c11978a46ba5039b0ee81e75f36b",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001120.h5",
+      "scan_id": "_brain_AXT1POST_209_6001120",
+      "patient_id": "d3b9a9ff7669ffde38637bb8f5aff08248937beb53b20ff2ef1bc072e6459045",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001187.h5",
+      "scan_id": "_brain_AXT1POST_209_6001187",
+      "patient_id": "0642995d1d294eb51f1eb6de47150aebe118597b260c5cf537eedd2ab5a362e3",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001196.h5",
+      "scan_id": "_brain_AXT1POST_209_6001196",
+      "patient_id": "f0c3c46a34595cf83f36d189ad6c7b671aad2cdd6960e9c274a177c0b0e9e74f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001205.h5",
+      "scan_id": "_brain_AXT1POST_209_6001205",
+      "patient_id": "45883d670a9397bac76669867cff7d4c1ae4e6e9ce21c4bc5888fcb27320d53d",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001286.h5",
+      "scan_id": "_brain_AXT1POST_209_6001286",
+      "patient_id": "d3825d03f5aee6648aea28a5823742767de68a04ea37d3e880055c6c8fcd96b8",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001291.h5",
+      "scan_id": "_brain_AXT1POST_209_6001291",
+      "patient_id": "aa293e2d874d75bad76a9baa8690f1fcdc44f55b50c99a4a08148e10964f8a5d",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001294.h5",
+      "scan_id": "_brain_AXT1POST_209_6001294",
+      "patient_id": "86076c4a61d11e574c7b6cc9571ceac7543057f1554484a9fe7aec8373926021",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_209_6001325.h5",
+      "scan_id": "_brain_AXT1POST_209_6001325",
+      "patient_id": "aa477dcec5ce37ddfb535750c076120e96d0d9f4bd926845b799fc6e8a0aa4a9",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001595.h5",
+      "scan_id": "_brain_AXT1POST_210_6001595",
+      "patient_id": "b9e0d0877477b4d08e6775c5a1cb85f07b7d7c572399d61ccf31d9e7dfcf63a7",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001625.h5",
+      "scan_id": "_brain_AXT1POST_210_6001625",
+      "patient_id": "1c8946af977cace797021c1bbc2dc65c0e7b28489b2ac9a1211fefda733b1d20",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001655.h5",
+      "scan_id": "_brain_AXT1POST_210_6001655",
+      "patient_id": "8c1cada538983cc096433322858f18c782e52862d71b53450da9829bf720870f",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001664.h5",
+      "scan_id": "_brain_AXT1POST_210_6001664",
+      "patient_id": "2243fc7838b345cd56c07bda0cf6f7ef1e9a479bc9e47d68417f8524aa5d0be1",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001685.h5",
+      "scan_id": "_brain_AXT1POST_210_6001685",
+      "patient_id": "d8c50a2ff70aa705cf4a76ba2d711fc35fea942407e27af47c83674d37e448f0",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001690.h5",
+      "scan_id": "_brain_AXT1POST_210_6001690",
+      "patient_id": "225bbdeccd7bc60260f6cb6fc67f48302450079fbc0b3e41e9836c543c889606",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001705.h5",
+      "scan_id": "_brain_AXT1POST_210_6001705",
+      "patient_id": "e0cb5a23a5ec6ebfca7d56ea21b9814e8d762b954e15491964b456acc18ddf16",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001782.h5",
+      "scan_id": "_brain_AXT1POST_210_6001782",
+      "patient_id": "d155dcaf2f185ccf9fde91b2d9d97cb5a16998f2d4ed046d1050b379cf50fde2",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001824.h5",
+      "scan_id": "_brain_AXT1POST_210_6001824",
+      "patient_id": "52e772a105b3da13619be3e67027e1938822a73a56fb172c5629386201464785",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001828.h5",
+      "scan_id": "_brain_AXT1POST_210_6001828",
+      "patient_id": "b046690975c72b8ffad8ae876d3efa1d7258b35f15630650beb62a333ecceb6d",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001862.h5",
+      "scan_id": "_brain_AXT1POST_210_6001862",
+      "patient_id": "3459bde2e4e6a045410f9d3e7a9f0d7aa76a4354482206746fec0361e99757a1",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001892.h5",
+      "scan_id": "_brain_AXT1POST_210_6001892",
+      "patient_id": "585a17e9d28d673af796341423bb4adc1a17d4ecd7193b6a33a91d348278d7f9",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002079.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002079",
+      "patient_id": "da468a300d0bf1ac213e72d5e6b18e0720d3e10a0af4b8f314697e2db7996717",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002087.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002087",
+      "patient_id": "33a6baac85770c6b09a70233fc30fc64f1c29d5d343ba35d22339571c461b597",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002101.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002101",
+      "patient_id": "ba9e002ec4dcab5f1d8cf62d14940fe51715946ef36d0e7eb46e1327dc9b4285",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002108.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002108",
+      "patient_id": "0d1ebc02bc8d1624b3644fc47adef13fcfb00581c39e8f83acf99e41b7937947",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002120.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002120",
+      "patient_id": "0ae35975c2b13ceeca163b77700eacfa2ba49f2008e557540121346da0d98b2a",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002183.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002183",
+      "patient_id": "bdba868d35aca31d81e39c6a216759ce8724b064559d248015d82123aa3c8eaf",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002195.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002195",
+      "patient_id": "55a1e81b43ef0da854de9f36bae4a1ea31db5215ac43dfb9dddebfd81ca50472",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002286.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002286",
+      "patient_id": "c49cab40fb1b804824cb818149efb61d5b3d365a41d8080108ab8e9ee9a6d641",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002327.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002327",
+      "patient_id": "fa7f56bd67906a27b34855cf653efbb732e99ff38d98dbedc8f75f92bad1454f",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002348.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002348",
+      "patient_id": "78181b8b9188540ae006ecbaadb80b263144d409404784f6d76dc7b6904f4fd3",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002366.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002366",
+      "patient_id": "129143171f119c00589307115961ce3e6668dacbd902a21e919a614eac73134f",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002391.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002391",
+      "patient_id": "9a6b2bc96cbda1039b72495ddca58a26210c8013e11565583d45a871229418ed",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002412.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002412",
+      "patient_id": "90135df6c872d1e07d7e4a3abcc4d2498bccca57f183a31cffd9d69bbf2b1e6b",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_200_6002417.h5",
+      "scan_id": "_brain_AXT1PRE_200_6002417",
+      "patient_id": "07b74615f86ae278d802e4b682efa8e46275f2f9a68f45b56976e96009d40f5e",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000618.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000618",
+      "patient_id": "4097eb29bd9241bb31a65ca0b03d88a70a44a924754572cb10ebb30620401de1",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000637.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000637",
+      "patient_id": "10ddc061b56a6dce14c0b0bf0a97526cb5b138cb843c6ec0ae9c54426bbc1616",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000656.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000656",
+      "patient_id": "7210e93a907cffaca5fc46d1ca36e35290ee56b9ffa8fd9d13b9fe976313c812",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000670.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000670",
+      "patient_id": "4cdc6e3c5616887bb0d1cda5a31a401b6cf27acc9161b5d7e4fe51c56b9b732c",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000732.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000732",
+      "patient_id": "b49848b28e79618f6de357d6ce37a5c87930d5567ee4dbbc802212c25e16f1a2",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000754.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000754",
+      "patient_id": "f049c11b2f90f038135d5f80749dda58ab1b719f6aa269917e16df3a86df23b9",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000783.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000783",
+      "patient_id": "f31af933cd8b9f36ae8a3cb55dac80298202078f1cd7aa7536595ccfaa5e36d4",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000793.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000793",
+      "patient_id": "085a7a1ad9c779900b844b1cc6afad0fbcd2aaab06f2c95757b1a7ac4f1babe4",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000797.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000797",
+      "patient_id": "3437da590b57b576f0dd7a29b90f42174cc2c1a81f6407cb6fca0f9577758af6",
+      "acquisition": "AXT1PRE",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000809.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000809",
+      "patient_id": "5190c07bf5c65ea851ae76f33b3e426a677ad28e16ffc8e52e775e96f121d57f",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000813.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000813",
+      "patient_id": "02eac93a9dcbc8c5ba6512b37fea10a1004ce799bbbd081d68214f82ecfa834f",
+      "acquisition": "AXT1PRE",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000815.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000815",
+      "patient_id": "926ce47124e2b0e16bb8898c44d3dfc629f19e042167c73395ecb2e0a0839744",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000841.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000841",
+      "patient_id": "1ec4bd2f3a06e7bc1b8940e72952732880f90424152f333c56970a900646aa69",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000866.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000866",
+      "patient_id": "5c4b85d6769bd179340edfca476412a3674b75068f0dfd9f269fa1a75b6faed6",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000868.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000868",
+      "patient_id": "6accda62efcbcc6a40ba14bea638c9b6943d8e273e89e06045821c1b6ea1c0d7",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_205_6000033.h5",
+      "scan_id": "_brain_AXT1PRE_205_6000033",
+      "patient_id": "7c322f14b8e4e374c54b53ad573d73273f622183829915f0caeeef296d83e192",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_205_6000053.h5",
+      "scan_id": "_brain_AXT1PRE_205_6000053",
+      "patient_id": "3371d005b6dd5678068e3f31d16abdccd22f7a47d8d7300f925b1a05e5c2488f",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_205_6000075.h5",
+      "scan_id": "_brain_AXT1PRE_205_6000075",
+      "patient_id": "694abc7c19053585a725b42d59f30f4be0635e5cda5453325790f43c7acb97de",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_205_6000107.h5",
+      "scan_id": "_brain_AXT1PRE_205_6000107",
+      "patient_id": "ba042e09f0fdb83adf4455b5d2c1d405039673b67b64a4918a08b926cedb4c8b",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_205_6000118.h5",
+      "scan_id": "_brain_AXT1PRE_205_6000118",
+      "patient_id": "d255d5519eb64d7438d0031d23f4a49ebe3532022d5131f1372e261cb7ac5e21",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_205_6000125.h5",
+      "scan_id": "_brain_AXT1PRE_205_6000125",
+      "patient_id": "d4a95215a402cdc7a0775c2b7c24332d90af1d01cb5afde6041a1400addd87b3",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_205_6000128.h5",
+      "scan_id": "_brain_AXT1PRE_205_6000128",
+      "patient_id": "fc5d30e93b6c02ddf941b5bc3aaabbc818e28666f0b478896d3728ab38f33e92",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_209_6000968.h5",
+      "scan_id": "_brain_AXT1PRE_209_6000968",
+      "patient_id": "3f88b8872a62552cd142f951bae5696c0f0691e4b4d200b5358cac1ec5aa6b72",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_209_6001033.h5",
+      "scan_id": "_brain_AXT1PRE_209_6001033",
+      "patient_id": "9d8a0df363d265b699252db445f87ba80d9e62be6d52a37bf0ee380470829b78",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_209_6001141.h5",
+      "scan_id": "_brain_AXT1PRE_209_6001141",
+      "patient_id": "7c2dac902ca31eb28a99bb0fdf1e136ba28c2f30b56e483ffd60166fdde5fb48",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_209_6001152.h5",
+      "scan_id": "_brain_AXT1PRE_209_6001152",
+      "patient_id": "f07a4d2dd378b39dbd3028c75505478d3676c9186825c8beb7225c34645e0935",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_209_6001188.h5",
+      "scan_id": "_brain_AXT1PRE_209_6001188",
+      "patient_id": "1b5646e4bd7b269fe6aa94cc1d4e1dd7c30aba54ab1675efcc7f0888ec34c3df",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_209_6001194.h5",
+      "scan_id": "_brain_AXT1PRE_209_6001194",
+      "patient_id": "a5c7a582a1f23425afe7e8587595ff3accf800d4a056e94be49c07da346e1a83",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_209_6001444.h5",
+      "scan_id": "_brain_AXT1PRE_209_6001444",
+      "patient_id": "463a4d11bc7533506b295e31790635a787437768e09b2b29da3afcd05d84e023",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_210_6001675.h5",
+      "scan_id": "_brain_AXT1PRE_210_6001675",
+      "patient_id": "5dbfb1649a523581f2e74bfd3258d0d38324c2765136615fc7e4660c9b09015c",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_210_6001707.h5",
+      "scan_id": "_brain_AXT1PRE_210_6001707",
+      "patient_id": "a52ca400c51477c91cf31965f5b4b64b44203245ef879f6985a95621fc141d9e",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_210_6001810.h5",
+      "scan_id": "_brain_AXT1PRE_210_6001810",
+      "patient_id": "3d5ae1a7a39fe95ce711900aa51d5ecb919762c4cbb2c683c7fa274ef6753dc6",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_201_6002740.h5",
+      "scan_id": "_brain_AXT1_201_6002740",
+      "patient_id": "a35088a99f7dfe00e067fa5018bcf7ed4e0dd6fb8226f20076f5b5441a0e31c3",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_201_6002759.h5",
+      "scan_id": "_brain_AXT1_201_6002759",
+      "patient_id": "23db781df60b7065ab50a175adc31f207e3e05919ab49d82dd58fe28669e1aa9",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_201_6002786.h5",
+      "scan_id": "_brain_AXT1_201_6002786",
+      "patient_id": "941843426276ce06a6382546c87a2578e132fbf6d825b91e3d9d048f4fb7a608",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_201_6002841.h5",
+      "scan_id": "_brain_AXT1_201_6002841",
+      "patient_id": "acfd19b315466467be96cb7eae0b64114aff2d9bd425f1818a875deeedd29345",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_201_6002885.h5",
+      "scan_id": "_brain_AXT1_201_6002885",
+      "patient_id": "bcb9127dcc543cf2206fb7ae4b7236454e2aaee59b9289f8679ddbf2966b2779",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020003.h5",
+      "scan_id": "_brain_AXT1_202_2020003",
+      "patient_id": "a67b1c09738d22109bd03fcee9ddd1241b7f1b2bd580ba16d78a9d0b3ed6c258",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020029.h5",
+      "scan_id": "_brain_AXT1_202_2020029",
+      "patient_id": "562228919fc9725b5a2a06a00a1230bd1e9f9307466180b15e360371a128be1e",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020033.h5",
+      "scan_id": "_brain_AXT1_202_2020033",
+      "patient_id": "ae3b5af2e5d6da23cdca75edaa9642f5f0a18259f803b848597354c35b41eb68",
+      "acquisition": "AXT1",
+      "num_slices": 12
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020038.h5",
+      "scan_id": "_brain_AXT1_202_2020038",
+      "patient_id": "a11edc9c878ad4db17a99d345ddf63bc17336c091739cd2c3001181e15a682f8",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020093.h5",
+      "scan_id": "_brain_AXT1_202_2020093",
+      "patient_id": "2d23dc25fa2b017f66b3727a58fbbaa13e3574562b7a9f13e57fe42d450f4d8c",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020126.h5",
+      "scan_id": "_brain_AXT1_202_2020126",
+      "patient_id": "fbc75dcc443a075da1b0646d51f520da82dbbfa08c9d3b5b65b41b1d779b0edf",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020158.h5",
+      "scan_id": "_brain_AXT1_202_2020158",
+      "patient_id": "458c19b28f5c9bf966b30775338ccfcc4afe8b869c159ee32c8c1874a49c8d53",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020181.h5",
+      "scan_id": "_brain_AXT1_202_2020181",
+      "patient_id": "8d54f06c4c01a40ba1d226c50807bf9a4fd31057f01d6f887cc8697ba168360f",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020188.h5",
+      "scan_id": "_brain_AXT1_202_2020188",
+      "patient_id": "44e472f170f8ba25cb7f6735a49f790756fad199bb39d48aee5b5524d00b83f9",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020197.h5",
+      "scan_id": "_brain_AXT1_202_2020197",
+      "patient_id": "8ebf6b804a087724b91655b722fb49f7fbd9538531da43c65ddfa7641fbc4a83",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020228.h5",
+      "scan_id": "_brain_AXT1_202_2020228",
+      "patient_id": "0f4ccb687fea14bf07dd202c42bb0ad31ac318d563af7db9bde0caaff3ec065b",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020270.h5",
+      "scan_id": "_brain_AXT1_202_2020270",
+      "patient_id": "284483491681a39eec1be5d6f3a18a38f9887b3072413ba7dca624c4844810af",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020281.h5",
+      "scan_id": "_brain_AXT1_202_2020281",
+      "patient_id": "fe22408884c911103e7ced39e4d25ac131c8f8617319f283d0530cbbe149bfa4",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020283.h5",
+      "scan_id": "_brain_AXT1_202_2020283",
+      "patient_id": "ae8aa8b5f83e33f9c6b9a56d9651e23981caa1df2037ad3bd648142bf0a3f77e",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020302.h5",
+      "scan_id": "_brain_AXT1_202_2020302",
+      "patient_id": "9f0f0d61190df1433e97d699afb742350a8e188ae79e85901a1b4c36bb7cfaf8",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020368.h5",
+      "scan_id": "_brain_AXT1_202_2020368",
+      "patient_id": "0ecf95e69a6ae56d202fa1220eb2ca0061b91e9ca7927130ade5e44cc137d915",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020414.h5",
+      "scan_id": "_brain_AXT1_202_2020414",
+      "patient_id": "6da40d1c7256687b74533bd6757437bc25ae7675675bd91217d94f15c29f2d9a",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020438.h5",
+      "scan_id": "_brain_AXT1_202_2020438",
+      "patient_id": "2aa4c8b2eeca87ef70e681c89d63f9d9b29a5b6a42c081d0f7c92347f7f0cd40",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020444.h5",
+      "scan_id": "_brain_AXT1_202_2020444",
+      "patient_id": "8b31c096d5ba95f9d08757a0818afc0ea0521874b6f6a514019366eb5f27f28a",
+      "acquisition": "AXT1",
+      "num_slices": 10
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020446.h5",
+      "scan_id": "_brain_AXT1_202_2020446",
+      "patient_id": "84b6c093bc4f2a50793425d4df004338523e83a79f1a637268fdb2434e4f5ca9",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020474.h5",
+      "scan_id": "_brain_AXT1_202_2020474",
+      "patient_id": "32415e7c2edec0cd6c8ce25581998778886d6c151a1890d761aeedce5568729d",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020518.h5",
+      "scan_id": "_brain_AXT1_202_2020518",
+      "patient_id": "098c859453d9058009586af26cc07b96c463423a2dc4bf2d7c2c94adb9d1f248",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020526.h5",
+      "scan_id": "_brain_AXT1_202_2020526",
+      "patient_id": "a2a289887419fdb01408bdadb2c61f475bef53afe20184ffdae008f72d44dcd9",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020530.h5",
+      "scan_id": "_brain_AXT1_202_2020530",
+      "patient_id": "081c0bbf9bda85acb45640c7619e78f052552a688a420cd872fa7d06057ae950",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020538.h5",
+      "scan_id": "_brain_AXT1_202_2020538",
+      "patient_id": "28e927edaf7c00af9c34d43904d5d47ca38e220710a990fa2d1dffc45aba0ee0",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020561.h5",
+      "scan_id": "_brain_AXT1_202_2020561",
+      "patient_id": "3d674e2ee2488bc949537c087e40b5a5e48e90ae6c8f451de8855e2ce9c5d851",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020563.h5",
+      "scan_id": "_brain_AXT1_202_2020563",
+      "patient_id": "ad9e55b625a572178d136075f43001cd0b85addd872ff8487d746eb7f11d1b84",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020567.h5",
+      "scan_id": "_brain_AXT1_202_2020567",
+      "patient_id": "c01e004ca3ab5268ccb1caa8e3171781e714e1e3db6ec42b07747099524d3564",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020576.h5",
+      "scan_id": "_brain_AXT1_202_2020576",
+      "patient_id": "b34796ff8bdf11203fcdeab82aabd37f993723690f971362504a86776de3630e",
+      "acquisition": "AXT1",
+      "num_slices": 12
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020581.h5",
+      "scan_id": "_brain_AXT1_202_2020581",
+      "patient_id": "4853c125062fbbcfbd5df38657216b779725fe8121bdf34378bb1ab6e2876fe6",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2020590.h5",
+      "scan_id": "_brain_AXT1_202_2020590",
+      "patient_id": "02e70c71169572adc5faf4d58877ad749054e90a05f84d650f2850c2a5cd4e43",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_2120022.h5",
+      "scan_id": "_brain_AXT1_202_2120022",
+      "patient_id": "ddb8c7caf0358a64c51cccd902b7ae4e0c11b30dbc2f7fdfb6e6f5880db551f9",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000292.h5",
+      "scan_id": "_brain_AXT1_202_6000292",
+      "patient_id": "226e3cbce7a46de62d5c1331ef16360c4d0ae8904c8259a7cd8a8bb2f2ec5811",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000296.h5",
+      "scan_id": "_brain_AXT1_202_6000296",
+      "patient_id": "bf4c3c2bd2a2fb8d592e1e91dede47c0fb0b940a95a420712bcc819f9c817629",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000303.h5",
+      "scan_id": "_brain_AXT1_202_6000303",
+      "patient_id": "fc126d6b463b448444c2ebbbd10adf5ee7e30b7090f65bcf2ee41b0af6332e7a",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000308.h5",
+      "scan_id": "_brain_AXT1_202_6000308",
+      "patient_id": "d4af15f2fdbe4f361a3832bc0f9820fb9b44ef9f3864b31f637bd05ee34e98be",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000326.h5",
+      "scan_id": "_brain_AXT1_202_6000326",
+      "patient_id": "657ff2ea0e6a9fb8069bc1f2c95662a91a5adfcd14546ac4dd751dd850b3013f",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000372.h5",
+      "scan_id": "_brain_AXT1_202_6000372",
+      "patient_id": "8812f279cf3e03ee88b8eac1387706325ab45a8411dc3cf5933fc6ece0c15916",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000389.h5",
+      "scan_id": "_brain_AXT1_202_6000389",
+      "patient_id": "18c686b0206788ba5337a1c5ef66f9529cc7a838fdf1b1c262814c64dac2a069",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000416.h5",
+      "scan_id": "_brain_AXT1_202_6000416",
+      "patient_id": "1cb3ebe9a506c81f2ce5c85d62bd69a9f2ca8ac7324cf79a88640576b972a79b",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000434.h5",
+      "scan_id": "_brain_AXT1_202_6000434",
+      "patient_id": "bf1c70c685b9a2f119b8532491577dc8adc5782ce2714b236ecbc857789833f0",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000451.h5",
+      "scan_id": "_brain_AXT1_202_6000451",
+      "patient_id": "03c83a2f01d598781c1882c47d1a2f31a38a13b5ed89f88cca049c0050d6f8d4",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000503.h5",
+      "scan_id": "_brain_AXT1_202_6000503",
+      "patient_id": "978cee11332585c9c218dfabd5311b97651e427399cdda9e4d5439d64d03eb49",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000505.h5",
+      "scan_id": "_brain_AXT1_202_6000505",
+      "patient_id": "644faf32359c79d9c544480ba0e0e8af02162f315fa57d26fc78e4150a710fbb",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000515.h5",
+      "scan_id": "_brain_AXT1_202_6000515",
+      "patient_id": "c6260982008a2e6448888f8886ce1b9fefa1cd0f8d17e5b0998d7f5df04a9384",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000537.h5",
+      "scan_id": "_brain_AXT1_202_6000537",
+      "patient_id": "8c8eff8f7c8d1977c73f3b5cee94113f7b4a7392092447742693caa5e7c0d038",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000564.h5",
+      "scan_id": "_brain_AXT1_202_6000564",
+      "patient_id": "1eb2f87b2a84b606406cd19ba151bad155308886a59ed9aa70d727e79c9c8d79",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000577.h5",
+      "scan_id": "_brain_AXT1_202_6000577",
+      "patient_id": "dd5867d63b6e824b51fe07254447bf47f540d61664729121cb154ad5013865a0",
+      "acquisition": "AXT1",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT1_202_6000591.h5",
+      "scan_id": "_brain_AXT1_202_6000591",
+      "patient_id": "00960d8a4b7847b44c69136db706189dd0dbf0f901f2a78a35ecbba1b6c11f6b",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_206_2060024.h5",
+      "scan_id": "_brain_AXT1_206_2060024",
+      "patient_id": "d892eb95ba55a300e551e92bdb9327d076f7a45884208aa48e35f7baefbd7bbb",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1_206_2060056.h5",
+      "scan_id": "_brain_AXT1_206_2060056",
+      "patient_id": "60834cacfa9bb7bfa2b42456af094267a257b0f78fa6d3aae989cff1fe6ceaad",
+      "acquisition": "AXT1",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000024.h5",
+      "scan_id": "_brain_AXT2_200_2000024",
+      "patient_id": "71e75143c8ae08323b50cfb957dc192157dee84f0d628471b7fb12f3f5bc3dc9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000045.h5",
+      "scan_id": "_brain_AXT2_200_2000045",
+      "patient_id": "cedbdcc5dc93ee926774de5bb8c20ea9c317cbcf11e435954b7134c63260f8cf",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000069.h5",
+      "scan_id": "_brain_AXT2_200_2000069",
+      "patient_id": "5950da4525f973710e24d28dfbe533e06d011172a1bd60895686c4c42e8fa428",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000082.h5",
+      "scan_id": "_brain_AXT2_200_2000082",
+      "patient_id": "7f12f742d73c586c572eb1c0d57cca1dcbe7146d1bc4e590ac924f7f785f87d4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000084.h5",
+      "scan_id": "_brain_AXT2_200_2000084",
+      "patient_id": "764e0eed4a9006504ac092b5c3ca7ffbec80a3dc03af7a3dc3d809c36268a543",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000093.h5",
+      "scan_id": "_brain_AXT2_200_2000093",
+      "patient_id": "1f748d4fbada8f330a4ec261eaf523ddecd6b4d983044fe9556567e102c5b1d7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000130.h5",
+      "scan_id": "_brain_AXT2_200_2000130",
+      "patient_id": "69a076623b8cb10a351c4cd59b93c8d4b2762cc38fcc76d0ec0ca0aae6e0987d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000133.h5",
+      "scan_id": "_brain_AXT2_200_2000133",
+      "patient_id": "55f004d294b7b18bfb44f213ea93bd209d22b857366b3850fc279a0fdf35fabd",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000160.h5",
+      "scan_id": "_brain_AXT2_200_2000160",
+      "patient_id": "0f4b2e0be0393cce9fa5ceac8993f80f641cea326f9afb49b172ec4be8709904",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000169.h5",
+      "scan_id": "_brain_AXT2_200_2000169",
+      "patient_id": "aa2e838713f4cf1c3e11e1541670f04be50df373c0de8124dc07d21d40930a80",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000182.h5",
+      "scan_id": "_brain_AXT2_200_2000182",
+      "patient_id": "e9cec88c06f323ffdf5afd900afaa6b975557ec30bab9031b8f21e26a081a8dc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000185.h5",
+      "scan_id": "_brain_AXT2_200_2000185",
+      "patient_id": "6a5ea33185d8254e73f8b031ea57d5e711aeda3c5b6768f6f42b47c8ee9342e3",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000213.h5",
+      "scan_id": "_brain_AXT2_200_2000213",
+      "patient_id": "f5bb548cd9b8c84fb9599e7eeb5415156a7ca4f1638367733b2be75dc8c87681",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000223.h5",
+      "scan_id": "_brain_AXT2_200_2000223",
+      "patient_id": "d85333b7ecca8a49820c9f0da9fa0ec2439e029c52488efc9ecfcfc7661ed7a9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000226.h5",
+      "scan_id": "_brain_AXT2_200_2000226",
+      "patient_id": "8634b93836985008f5673110dbc664be373cf0377779532b93f6686b2406951a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000248.h5",
+      "scan_id": "_brain_AXT2_200_2000248",
+      "patient_id": "5cb0d545b1dde02160495b2dc152ada9b05dbe08653c97e21d6233915289b4ba",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000250.h5",
+      "scan_id": "_brain_AXT2_200_2000250",
+      "patient_id": "0e7b259219a77096c5cc6ba51c77f31ad1cd54d674483f95fffeae5eb0c831f9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000300.h5",
+      "scan_id": "_brain_AXT2_200_2000300",
+      "patient_id": "31ed4ea3be56858ca77cd3890110852799050bd703a50621ae3259d4fdd284a6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000309.h5",
+      "scan_id": "_brain_AXT2_200_2000309",
+      "patient_id": "72da76e5d1f4e5af352ee924b2c94618262484f1602e129a1a9cfb9779bce662",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000314.h5",
+      "scan_id": "_brain_AXT2_200_2000314",
+      "patient_id": "c6210b1274ab192760fe2944e27938f68816f7a8a46ed347e5d077a891580672",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000327.h5",
+      "scan_id": "_brain_AXT2_200_2000327",
+      "patient_id": "0ca6e31abd3d76bbc55b227aca691ce5cbaff33185f907cdfc452d1694faa8e3",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000337.h5",
+      "scan_id": "_brain_AXT2_200_2000337",
+      "patient_id": "847cebde9459bb03c8f68f2d44861563670fc096096439409b5368bc8605d41a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000345.h5",
+      "scan_id": "_brain_AXT2_200_2000345",
+      "patient_id": "e09034cd0e9cd2feab641f4e10f5d151c9262828c64ea668c1be7ed5ec9cfb7d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000350.h5",
+      "scan_id": "_brain_AXT2_200_2000350",
+      "patient_id": "bd07d3a21b8234d75335efc34b3d6598beec6d33d26001fea127b371a455fab1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000358.h5",
+      "scan_id": "_brain_AXT2_200_2000358",
+      "patient_id": "96315f47dc06ec443b2b8af67a5114b4606443074803f24313ac4421a666d0b9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000371.h5",
+      "scan_id": "_brain_AXT2_200_2000371",
+      "patient_id": "5fd4074ec1fb6ba26a1f6771c89dde24c33680a9d4cf0df39f8550a0161c6c25",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000377.h5",
+      "scan_id": "_brain_AXT2_200_2000377",
+      "patient_id": "e25548faffc84f8f634a101fac9463f5f391ddfa65b5b747e93555596cc9b400",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000389.h5",
+      "scan_id": "_brain_AXT2_200_2000389",
+      "patient_id": "c9965ba767b193c8c360bc7004d8a13af11422402c759786213675b9d045b853",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000392.h5",
+      "scan_id": "_brain_AXT2_200_2000392",
+      "patient_id": "760964d1e2401d1de752575f4d5c0d8717c4af0bb57dd8707298def456fc4e12",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000396.h5",
+      "scan_id": "_brain_AXT2_200_2000396",
+      "patient_id": "6a366c4484b9f54529524df99c29e7b24441ce7db803f8e86c80e9890e1275dc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000402.h5",
+      "scan_id": "_brain_AXT2_200_2000402",
+      "patient_id": "772144950e3c87664fe80032468a8d566240b4874cc7d3cba12c9cbee450282c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000414.h5",
+      "scan_id": "_brain_AXT2_200_2000414",
+      "patient_id": "cb015ef92ff0351d2ca371d357894d7fb00b0c122fad95cceb74fdfe041102cf",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000433.h5",
+      "scan_id": "_brain_AXT2_200_2000433",
+      "patient_id": "a4c2091c0bcda7833762332044375c66a932374168cd66f72ecf489407af8ad6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000442.h5",
+      "scan_id": "_brain_AXT2_200_2000442",
+      "patient_id": "99602f0d713659239f4cc40402bbfc51cc2fe43fc28a1c29bb991ad777ebbc29",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000464.h5",
+      "scan_id": "_brain_AXT2_200_2000464",
+      "patient_id": "4a55a838904deed31f24445a5ad6c8968c4a6cccf28373320a9fdb8b8e0653c7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000501.h5",
+      "scan_id": "_brain_AXT2_200_2000501",
+      "patient_id": "d32f5754213df48f1793dc292edc051f058ada763821126a88a794e15c6661ae",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000573.h5",
+      "scan_id": "_brain_AXT2_200_2000573",
+      "patient_id": "9d2702dbf1cbc8f86269f6c1456e387220741faa1056c3b0f6d5e464e547fc6e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000577.h5",
+      "scan_id": "_brain_AXT2_200_2000577",
+      "patient_id": "6a54f0026695e6ce1afb23c6d70fea1486ab74a8de6ed6b545169f2fb53a7d88",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000583.h5",
+      "scan_id": "_brain_AXT2_200_2000583",
+      "patient_id": "d502fa42836f87789d53e5e6c335579059ecdeb2ec27c515c887d45a47816440",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000590.h5",
+      "scan_id": "_brain_AXT2_200_2000590",
+      "patient_id": "0b1e13e1f6a422e98ce55df4edb42a0d470feeee4ec961cf70e62a8f5836fb99",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000612.h5",
+      "scan_id": "_brain_AXT2_200_2000612",
+      "patient_id": "cd5ce6948655de794d3ed16c060df9778e252a79b27097649ba26024f8b660a3",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000617.h5",
+      "scan_id": "_brain_AXT2_200_2000617",
+      "patient_id": "5dd4f8b9f5f76419ecc6413bf817fb0039b01d14b61456ebb150d34151bc4a7e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000628.h5",
+      "scan_id": "_brain_AXT2_200_2000628",
+      "patient_id": "65b3c9f7c19bb8d5d43e5cafb6f0c843e12ea4388287bf3a9b7cb5de8aee79f1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000635.h5",
+      "scan_id": "_brain_AXT2_200_2000635",
+      "patient_id": "798bf4138b37bb97580f9a04b9121d8ed688fe6ac3e31881406d23275719eb16",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_2000641.h5",
+      "scan_id": "_brain_AXT2_200_2000641",
+      "patient_id": "af4d706ce9fe7d3e770fa4711a150649f97f03d8426e07c3b9ad4bdc4e431b80",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6001966.h5",
+      "scan_id": "_brain_AXT2_200_6001966",
+      "patient_id": "84e15e45039ae20282ded2a5edab25d310abf7b16bc6c2e75b467d80fa9a323c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002001.h5",
+      "scan_id": "_brain_AXT2_200_6002001",
+      "patient_id": "34943b21fe14b0901b26e5f3332f656f7673d2f95e6d2be1dd00a23f6972e583",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002020.h5",
+      "scan_id": "_brain_AXT2_200_6002020",
+      "patient_id": "857c49aa1e8b70cb7a5bef6fabcf3cef3e9ab9f374eb948a50351f89450d1d94",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002022.h5",
+      "scan_id": "_brain_AXT2_200_6002022",
+      "patient_id": "778d2edb02de2801eb7ff8ed6fbfa19910a7d88957cd251cfff598384eb0ae7f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002045.h5",
+      "scan_id": "_brain_AXT2_200_6002045",
+      "patient_id": "c4160c9dd685ad9d5a266a7d1438129a4ea0aa1abc2a0849c381339275bc416f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002058.h5",
+      "scan_id": "_brain_AXT2_200_6002058",
+      "patient_id": "daa6f36e8fd5dc4d35e24abcfc444a650882708c8be19f76c4a9721e6a69d095",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002063.h5",
+      "scan_id": "_brain_AXT2_200_6002063",
+      "patient_id": "5307b7db7acbce7e331af7de7667a11dad038f772761caea3b075d13f8faa502",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002098.h5",
+      "scan_id": "_brain_AXT2_200_6002098",
+      "patient_id": "e2a200f5cea6b9d8144ca0ba75ffd9b42c0bf5da0b573df56ef5262f20270e90",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002172.h5",
+      "scan_id": "_brain_AXT2_200_6002172",
+      "patient_id": "73672dfadd41f983240aaa54794a0390a6f089032a2ef0c96cc5faf770939a0b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002181.h5",
+      "scan_id": "_brain_AXT2_200_6002181",
+      "patient_id": "8c9d7810efb9e43ff965b418a8fe0781be49faa67850c5c9529e59887f53cc3a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002187.h5",
+      "scan_id": "_brain_AXT2_200_6002187",
+      "patient_id": "b6ca261a1c1ee1fd83851034baf7239cd91a0c7222d495f5ae565e827f6fb1f6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002219.h5",
+      "scan_id": "_brain_AXT2_200_6002219",
+      "patient_id": "669f6de52228e782a93bb6ca3e1856cb7e6a34f29af93792ddf0c06bc555d003",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002225.h5",
+      "scan_id": "_brain_AXT2_200_6002225",
+      "patient_id": "e1c915449152a85d10498ffdcc5e6ebd020b71a0d6107c0f6cecda532afdb549",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002266.h5",
+      "scan_id": "_brain_AXT2_200_6002266",
+      "patient_id": "bdbacec5bea0ec13e552daf8b7419e61c57bf756b2e844549ef8dbd4ab53fcf7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002269.h5",
+      "scan_id": "_brain_AXT2_200_6002269",
+      "patient_id": "8842e1c8912e68849af1bbed85f2a1f72639d95d4369a1de123b5506f599f667",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002274.h5",
+      "scan_id": "_brain_AXT2_200_6002274",
+      "patient_id": "949b181ddf611792a1ba7b1c132d2a8842b9efd5151d0e0820567e44db575a92",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002320.h5",
+      "scan_id": "_brain_AXT2_200_6002320",
+      "patient_id": "105ac04659f2a70ea2a90c10307002f39058564e1968e2cd4a391fdc558619d8",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002351.h5",
+      "scan_id": "_brain_AXT2_200_6002351",
+      "patient_id": "244c8f3a0f20889f577886d1ff38b8a56564b244be6af8134b6966e83f973007",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002357.h5",
+      "scan_id": "_brain_AXT2_200_6002357",
+      "patient_id": "2c75d83c081fa551b14afb522c44e0742486a03fa3636031944a31daa14e2629",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002359.h5",
+      "scan_id": "_brain_AXT2_200_6002359",
+      "patient_id": "21ea7573ef4fcbdde2e83f60aa1f71fe3469ea7f849145dab40503572de98ceb",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002365.h5",
+      "scan_id": "_brain_AXT2_200_6002365",
+      "patient_id": "853ebc946c38cb2161b5d0a0f48638a4dfdfea71de3d8d2ec7dc7cf24b8813f0",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002414.h5",
+      "scan_id": "_brain_AXT2_200_6002414",
+      "patient_id": "8b817997d00c458885ac227b1eef463f6e1100f71b8df65b42cca27cbfcdea2c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002453.h5",
+      "scan_id": "_brain_AXT2_200_6002453",
+      "patient_id": "e323acd876ab47d2218ed337b4878f75da71767df962727aca507f8aa8fad9f1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002457.h5",
+      "scan_id": "_brain_AXT2_200_6002457",
+      "patient_id": "59c9782d1f2687f51309a2f8e48d173ffcbd1305177b39dcfaf30ef651d64d61",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002459.h5",
+      "scan_id": "_brain_AXT2_200_6002459",
+      "patient_id": "c29deeb61aefb218f270cf269861906c18fc301906e6809d47e719a73a3fa877",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002485.h5",
+      "scan_id": "_brain_AXT2_200_6002485",
+      "patient_id": "6cf6e438df075d8064f5f0df375562df652291c3f42b68ade8b2dad3b093cb39",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002505.h5",
+      "scan_id": "_brain_AXT2_200_6002505",
+      "patient_id": "246ecdc15384150360870acb2d09a49b602ccc354b0b959f27c957f45815249c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002519.h5",
+      "scan_id": "_brain_AXT2_200_6002519",
+      "patient_id": "0d45be91248d1890d19083b581b40f9e5768a1be1264c5e499b6b7420542f022",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002540.h5",
+      "scan_id": "_brain_AXT2_200_6002540",
+      "patient_id": "a9ed38803c9e985fda3e9ae7e1298554f4d694446d6dceb2297499de8e1f58c8",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002555.h5",
+      "scan_id": "_brain_AXT2_200_6002555",
+      "patient_id": "4eb9845fb049e06fa0337b93436a70b1b189b7dbd107eb16224d8d8cf9e7e16f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002559.h5",
+      "scan_id": "_brain_AXT2_200_6002559",
+      "patient_id": "6488ce91d0146a05bf5201f343bab43e805ab4fb4444377f2b73ebcf1b390d4c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002575.h5",
+      "scan_id": "_brain_AXT2_200_6002575",
+      "patient_id": "f949631f41a8608a9823580d97f804a7ce1950f59ca86cfc6b5c54e7918fcffc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002578.h5",
+      "scan_id": "_brain_AXT2_200_6002578",
+      "patient_id": "313501c089376eb4b52dc486c308be6d3d96f402d40f9748c79b69d0a493cc65",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002607.h5",
+      "scan_id": "_brain_AXT2_200_6002607",
+      "patient_id": "63b0462781ebe7812bcd96af2d82b6bd311d18d6891f50cf40a0672b40406a1b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002654.h5",
+      "scan_id": "_brain_AXT2_200_6002654",
+      "patient_id": "3f759c696c2868bf97f1ced2998d5b12cadd5efee07809c657d40d959ce3ae99",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_200_6002657.h5",
+      "scan_id": "_brain_AXT2_200_6002657",
+      "patient_id": "4fb8c7c953c2507a1154657746c5e1f605fe6164d5f4b00dcdf03eabc52bdac1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010037.h5",
+      "scan_id": "_brain_AXT2_201_2010037",
+      "patient_id": "8699478e4ab407ab2cb21a9f7c078c63af49907f1ab921fb8c57b371062da26c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010062.h5",
+      "scan_id": "_brain_AXT2_201_2010062",
+      "patient_id": "f294a7bb138cd057740eeea8683dd6c57683c2419e24c5d9092e46101cb7d1d4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010064.h5",
+      "scan_id": "_brain_AXT2_201_2010064",
+      "patient_id": "ff25ab7757929059586c5950cbe5e978bb17178054eefc8f213d20ebaa2d87b8",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010066.h5",
+      "scan_id": "_brain_AXT2_201_2010066",
+      "patient_id": "26be2b58472b6987a1845e8fb901d18af63f946d981a856bcfdc6b18d1c41019",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010074.h5",
+      "scan_id": "_brain_AXT2_201_2010074",
+      "patient_id": "36d41ec443f9cbb24bb3780a0423076e8644ecdd9ffdf26708ea7692876e0b2c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010082.h5",
+      "scan_id": "_brain_AXT2_201_2010082",
+      "patient_id": "ee54735c0a43e752213d5b8068f6505eefb0e32e24740a315bd43684adeee993",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010084.h5",
+      "scan_id": "_brain_AXT2_201_2010084",
+      "patient_id": "15bbbf40b8ab900fd94027085797b865c8d4a4bf8c9957d5757aaf125240e333",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010106.h5",
+      "scan_id": "_brain_AXT2_201_2010106",
+      "patient_id": "884cd7bf4dd4e6a8d4ed1bf27df7e0b8e76692d3462d59d2cde9563d31910cf7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010117.h5",
+      "scan_id": "_brain_AXT2_201_2010117",
+      "patient_id": "f2588535777ae0f1a57693bbc70d8cfdb57203a9cea2f43a24b9d44d58b04236",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010129.h5",
+      "scan_id": "_brain_AXT2_201_2010129",
+      "patient_id": "95ed1169f09b69b28c743af57e1f19495f63b9e7e20124681030f8a232f39353",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010138.h5",
+      "scan_id": "_brain_AXT2_201_2010138",
+      "patient_id": "2bb04f54a9833b19caefa79da7fe238f9a552e495f78f1462875e90e858ca55c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010144.h5",
+      "scan_id": "_brain_AXT2_201_2010144",
+      "patient_id": "c57d9fea91ddde0afbe4513060116a4020ea01f59060b596643c5d7cfdd0b063",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010147.h5",
+      "scan_id": "_brain_AXT2_201_2010147",
+      "patient_id": "275b3d3a732178e0d65287a30a42335841ed6936b9eb2fbcf9c86a06aa2d5883",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010159.h5",
+      "scan_id": "_brain_AXT2_201_2010159",
+      "patient_id": "97ad33f315b2a40a66c5a7d7617e1ab12fa66de186d79e80564079ca95f8fb63",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010167.h5",
+      "scan_id": "_brain_AXT2_201_2010167",
+      "patient_id": "9c4cfe54eb38babd345ec12d2e9e9eee78106c8a88157c84390407671e8d4c4a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010185.h5",
+      "scan_id": "_brain_AXT2_201_2010185",
+      "patient_id": "6a62a49cacb82b02c74c9a481042a22af1a05d65e06e8a99860ba0fe2c8cfa4f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010192.h5",
+      "scan_id": "_brain_AXT2_201_2010192",
+      "patient_id": "34a073b4323f5ca845fdfd9fd9e8961ddbd40e97f1663d071d4de23fd0894a63",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010200.h5",
+      "scan_id": "_brain_AXT2_201_2010200",
+      "patient_id": "1301c2d823d2ae90acae1efa75380ffb1d5ff06fb6373dcd87d188c428087dc9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010249.h5",
+      "scan_id": "_brain_AXT2_201_2010249",
+      "patient_id": "137663e186aebf90823b9612d02b2ca7b6228141f329cedeb8202a08ca37b9dc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010253.h5",
+      "scan_id": "_brain_AXT2_201_2010253",
+      "patient_id": "7d1c870a25a8ab003884714ee65b1c0331321825bd7cb056b5a110df23383b81",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010258.h5",
+      "scan_id": "_brain_AXT2_201_2010258",
+      "patient_id": "a5069a69e63163e2d38be542fbbd8203ffc39e761e7d2f965eb8c949625cfda8",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010270.h5",
+      "scan_id": "_brain_AXT2_201_2010270",
+      "patient_id": "fad0e6d379be7831edba0569876abad9c5fb25485783899c05619038098c8320",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010310.h5",
+      "scan_id": "_brain_AXT2_201_2010310",
+      "patient_id": "3c3c1e6fa682e62115f4c73193f12a7ce7e1c706892bb7247620c6945fd0d8d0",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010312.h5",
+      "scan_id": "_brain_AXT2_201_2010312",
+      "patient_id": "ce0cac79136c07807b0cf325c972d999cac2b243f3f568dc14d2a705a505b8e9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010327.h5",
+      "scan_id": "_brain_AXT2_201_2010327",
+      "patient_id": "7f3a07816e935cef9a53a02267ff7d50b8ca3591f5cca22a27e19165c68759e2",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010343.h5",
+      "scan_id": "_brain_AXT2_201_2010343",
+      "patient_id": "e733e364f204a4ecd3bdc2ad23e49a59de7467a9f9dd03c3b743514e0758b4bb",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010391.h5",
+      "scan_id": "_brain_AXT2_201_2010391",
+      "patient_id": "ff9890e07714c6b746d7515cd771324a6ee5bed8177c4ae1ff528d7d02b75673",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010417.h5",
+      "scan_id": "_brain_AXT2_201_2010417",
+      "patient_id": "b32475fe07c4f1aebb398a8be91972d65cbc56ac4e8d614b885f8702267d27c6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010458.h5",
+      "scan_id": "_brain_AXT2_201_2010458",
+      "patient_id": "5ade2e4b35f66f8496eb925b0be3003402db461bb540d476df00f435936c527b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010461.h5",
+      "scan_id": "_brain_AXT2_201_2010461",
+      "patient_id": "375fbf97b6cce1b5ffeb645025f5fe1c9d757579851aad944f64295d30fdc185",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010470.h5",
+      "scan_id": "_brain_AXT2_201_2010470",
+      "patient_id": "c1cd70f37247deff92bcf86688ee4f7f6a9702fba4605d8fa6284ab297511e42",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010484.h5",
+      "scan_id": "_brain_AXT2_201_2010484",
+      "patient_id": "c331fff6b4fc0212d7937162fe0398e4b83a430586ddd78759dc52bc1d41fb7a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010503.h5",
+      "scan_id": "_brain_AXT2_201_2010503",
+      "patient_id": "ff746904c8a3d8465e42cbc391588375f81456116b54ea9e6ae69fde230426ce",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010504.h5",
+      "scan_id": "_brain_AXT2_201_2010504",
+      "patient_id": "e37e3600c700edbb0830af729b869bbd01c8ae38ddebb84a0e65e49533291c9f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010527.h5",
+      "scan_id": "_brain_AXT2_201_2010527",
+      "patient_id": "bf407d6b12a83aae35a53acd3721f641042afa8dad61c1b789ddff88ad7d1b23",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010530.h5",
+      "scan_id": "_brain_AXT2_201_2010530",
+      "patient_id": "2d9c90d3e5999bebcd47819681cd6154027ae6a05fc06a8eaf54173271263f6f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010540.h5",
+      "scan_id": "_brain_AXT2_201_2010540",
+      "patient_id": "31ed5f6cc6b36458bc336b49f9cd3ec181256cd73011b6429b0070e5bd01418a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010552.h5",
+      "scan_id": "_brain_AXT2_201_2010552",
+      "patient_id": "0258d2222ade20c1221b274d3332653e8a7217971c13a96c565d8b0ffaf07570",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_201_2010574.h5",
+      "scan_id": "_brain_AXT2_201_2010574",
+      "patient_id": "7a4704d38227c128dc205ff3f51ae7daa0c0e72bcdeb0173cdb0338673e2d799",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020010.h5",
+      "scan_id": "_brain_AXT2_202_2020010",
+      "patient_id": "12c6b472376a5f9ba430e6d8670c5109fa6c8f01138bb947ae5b79a79a7d4072",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020013.h5",
+      "scan_id": "_brain_AXT2_202_2020013",
+      "patient_id": "307019d3e1df77b952a747c03cb484506169583c17fce5584aa1bdd76f607084",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020040.h5",
+      "scan_id": "_brain_AXT2_202_2020040",
+      "patient_id": "883c69fcd66118723fdf101c288970a63e124f5bb2fc9e70f91a7aa066d089af",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020043.h5",
+      "scan_id": "_brain_AXT2_202_2020043",
+      "patient_id": "9d3f60057e415d97372a9fd1fc3059272bd575effaf486e8e5e2c2e0ecab6840",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020112.h5",
+      "scan_id": "_brain_AXT2_202_2020112",
+      "patient_id": "1f4fb90004e0d7ba943a14867891ce659cf6ecbcd790aba64cc97216c2e49776",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020130.h5",
+      "scan_id": "_brain_AXT2_202_2020130",
+      "patient_id": "14203da6dfe791b2b32aff0e62a3775561bc4168669f95f2fd003b9639064eac",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020140.h5",
+      "scan_id": "_brain_AXT2_202_2020140",
+      "patient_id": "a789ebdff9ac619921b9e77539455c80caec9cf228dc40828811f0f0d8387215",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020142.h5",
+      "scan_id": "_brain_AXT2_202_2020142",
+      "patient_id": "23aecb4d21cdacc7fa0cdee1150a1965bbfe7e384034731cdb7bc291381c56f8",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020145.h5",
+      "scan_id": "_brain_AXT2_202_2020145",
+      "patient_id": "4e37a68abc7349e51a67675e277b254517f88b34886127a736211dc293ffdd1f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020165.h5",
+      "scan_id": "_brain_AXT2_202_2020165",
+      "patient_id": "f845f76f3154a9492cba2e9bb34373fb18f6147bb39e618c8166dd490d5df180",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020193.h5",
+      "scan_id": "_brain_AXT2_202_2020193",
+      "patient_id": "efa029c6a0b995b3e003a96394a9cb840d77aed5a6b845334326aae6a564c3e4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020220.h5",
+      "scan_id": "_brain_AXT2_202_2020220",
+      "patient_id": "216317cf123ce2b46097fd6588838070a5e723c5c5ccca7c4d26e59b4aee0db4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020227.h5",
+      "scan_id": "_brain_AXT2_202_2020227",
+      "patient_id": "3618061fbfda5fe33db3933c11f43a479cc72886aa068280345545c9248411be",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020244.h5",
+      "scan_id": "_brain_AXT2_202_2020244",
+      "patient_id": "cb75c31b62fb04a787d90816378bf249512bf2523a72b5200f34873d0e466d45",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020251.h5",
+      "scan_id": "_brain_AXT2_202_2020251",
+      "patient_id": "bc454a027710bf7bb7028c4233597331c9cd6f79e79545516036047dbc9f0d94",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020296.h5",
+      "scan_id": "_brain_AXT2_202_2020296",
+      "patient_id": "bc76f71c934b158106bd1196b4eacc1b481464ef21f01fba6853c582791ec4b4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020306.h5",
+      "scan_id": "_brain_AXT2_202_2020306",
+      "patient_id": "3945c86f7ee6db3dccd986b1e07cfdbd5eecd26461aa0df380c2317c46a76adb",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020390.h5",
+      "scan_id": "_brain_AXT2_202_2020390",
+      "patient_id": "34c552b775ce6c814312598cd644a985ff1a3ce9b20b6f94838468c8731deb64",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020406.h5",
+      "scan_id": "_brain_AXT2_202_2020406",
+      "patient_id": "d674d4b15c41a8785c30912df07201468df1d024d4f4a75e4633df1018961fc1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020423.h5",
+      "scan_id": "_brain_AXT2_202_2020423",
+      "patient_id": "a6606d29d44edd7e12c55cdb1026e65a42db28842e4fa824b210ec4c541543d9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020436.h5",
+      "scan_id": "_brain_AXT2_202_2020436",
+      "patient_id": "72a21caf9f06f85db1dc74e77aa98c89aba797acff0921277a87492c454bd1dc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020442.h5",
+      "scan_id": "_brain_AXT2_202_2020442",
+      "patient_id": "1b9032b983b50ecfa03665becabc8d54338cf6545823fae7c3ce130a2182f22f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020445.h5",
+      "scan_id": "_brain_AXT2_202_2020445",
+      "patient_id": "e3c9566cc1129e57c8c6ffd3cb2582e49ac8a5efbc78990ca95e56d7cfe73164",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020449.h5",
+      "scan_id": "_brain_AXT2_202_2020449",
+      "patient_id": "c186ed78878af67557fa476ee458f8147cec979ad78b9e9cd45125664f16d581",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020459.h5",
+      "scan_id": "_brain_AXT2_202_2020459",
+      "patient_id": "45e6eb5f8cfaa34bfa7cead2e690942d9acc488ba5e735839e5ce369c1467391",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020485.h5",
+      "scan_id": "_brain_AXT2_202_2020485",
+      "patient_id": "a62104e4391f6637f6514a514fb7e7e74e36b397d11807859ebce6997a211021",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_202_2020572.h5",
+      "scan_id": "_brain_AXT2_202_2020572",
+      "patient_id": "1a1811772be58ed3a515fc2a9a81d5e03e3ecae577557b62aff49e766c070705",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030032.h5",
+      "scan_id": "_brain_AXT2_203_2030032",
+      "patient_id": "e35bee311f883cd3d24f18fab7511d4b3948feb1cc233ccc7a557bc0340966e7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030039.h5",
+      "scan_id": "_brain_AXT2_203_2030039",
+      "patient_id": "77a6149578f8624c1427de02188befa7583428d49d155cc329e9bb68005c2781",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030053.h5",
+      "scan_id": "_brain_AXT2_203_2030053",
+      "patient_id": "1995a1b982ee9a3933ad007e43efb883f9835376e3352ec77a752e10af430f21",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030063.h5",
+      "scan_id": "_brain_AXT2_203_2030063",
+      "patient_id": "81ff4813dc1a0120ab0162397ae4d8ea61f5f672e52e71bc189074fa094e28df",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030102.h5",
+      "scan_id": "_brain_AXT2_203_2030102",
+      "patient_id": "001bc7a6b9c84623fd1407e973e2b0d4c1808099045067ca1206e39ac3092a82",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030106.h5",
+      "scan_id": "_brain_AXT2_203_2030106",
+      "patient_id": "10c20c68754bf7b5721f58f58c720b47872df2823f97aa58faa43f93bf3c0ae6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030127.h5",
+      "scan_id": "_brain_AXT2_203_2030127",
+      "patient_id": "f964a13bfa7db707d1b0acf0ba153fab2125281f2fcb6fe814005bc6dac729a7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030153.h5",
+      "scan_id": "_brain_AXT2_203_2030153",
+      "patient_id": "92bef131763f6b4d4b3d8b25d52385adca8e003d1ec4c9b544ff06748e326044",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030155.h5",
+      "scan_id": "_brain_AXT2_203_2030155",
+      "patient_id": "663e1982a72f8ecf181c3a4e71bc4c3da86098155497948b821f4014948bb21b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030157.h5",
+      "scan_id": "_brain_AXT2_203_2030157",
+      "patient_id": "90b4bd828bee9cd4d67ba2c9797112fa709a14d45a161b6c9916399a446f9502",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030167.h5",
+      "scan_id": "_brain_AXT2_203_2030167",
+      "patient_id": "959204451714f147ee5c32430fc9294730e3bd74f6403a3d42ea97d95bc30bcc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030169.h5",
+      "scan_id": "_brain_AXT2_203_2030169",
+      "patient_id": "f3c209b30664ef2afef8ef4da7f493460b91f209c26ae27e351e6e512c8faf89",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030173.h5",
+      "scan_id": "_brain_AXT2_203_2030173",
+      "patient_id": "78cbc7a3bfd639a17fcbac7988bca4518a166fd2b1610d6ffffa7abcf501c1ef",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030225.h5",
+      "scan_id": "_brain_AXT2_203_2030225",
+      "patient_id": "a00b1cbee771cb8271b6713bfb96c414f8ce6ac1cc8ec3446b957f91fc2ceee7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030231.h5",
+      "scan_id": "_brain_AXT2_203_2030231",
+      "patient_id": "5b7440ab150dbbb76ce21705b749f1f5113ba35e7696c10ec04b77f3f2306ae3",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030237.h5",
+      "scan_id": "_brain_AXT2_203_2030237",
+      "patient_id": "da7b5a3aa654fe3c60e287bc19dfe4bdc4182eeb8cfd350cec452f0979355e70",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030268.h5",
+      "scan_id": "_brain_AXT2_203_2030268",
+      "patient_id": "0bb7057bcbbc3378c2ac5523ac9dbeb005cf261800fb45c87e7f594bc986b4fe",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030272.h5",
+      "scan_id": "_brain_AXT2_203_2030272",
+      "patient_id": "67d118ec0ad8ea5d5acdb9b20cef30c9ed57120e1bc042917dff25a73d68b029",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030274.h5",
+      "scan_id": "_brain_AXT2_203_2030274",
+      "patient_id": "5399bba40e0d4a5155632bf4ef52edf73ffe08dfcbbe701f8f32ca8e4a278a61",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030284.h5",
+      "scan_id": "_brain_AXT2_203_2030284",
+      "patient_id": "16119718c3b804beef41064e3a6df4521da22dc19c6172340eb4ebc2ce29d81c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030306.h5",
+      "scan_id": "_brain_AXT2_203_2030306",
+      "patient_id": "c35313b9b468c7260d458391086357adeb333e1dc85eed106c53cc38cd57c74c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030309.h5",
+      "scan_id": "_brain_AXT2_203_2030309",
+      "patient_id": "90ee9a6ef1651440c40296ca18eaafbde57edf48a4abea6c4e7314a13a3a1763",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030311.h5",
+      "scan_id": "_brain_AXT2_203_2030311",
+      "patient_id": "9d5c64a0ed3c097f3d551539f1f04b0bff0430f3b7cb02f5b05dda7b82d52214",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030321.h5",
+      "scan_id": "_brain_AXT2_203_2030321",
+      "patient_id": "326deaf8dbd92ce561e623191fb6c76b17c3dfa9f2ad03772bd41cb510e55751",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030325.h5",
+      "scan_id": "_brain_AXT2_203_2030325",
+      "patient_id": "f435b5e18de30a2af57ea1c42de70bc2b0e5b8c347aa2afced93bc3339666589",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030337.h5",
+      "scan_id": "_brain_AXT2_203_2030337",
+      "patient_id": "74a1d5bdab7000e2b833d8b549ad92d22443ffc019e566b2d825b833a9884c4e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030348.h5",
+      "scan_id": "_brain_AXT2_203_2030348",
+      "patient_id": "c50bbf6d8634fa0e7a07fa4e87b7cab3d047f331095845d3329213a9a2a0a819",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030361.h5",
+      "scan_id": "_brain_AXT2_203_2030361",
+      "patient_id": "b2b7222e686b40d679c38764f2646b8db4a3a42038e57383fdd5ebd373ff0941",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_203_2030395.h5",
+      "scan_id": "_brain_AXT2_203_2030395",
+      "patient_id": "792b6ab1f6ed8a843c14afd4a591ed634227ff03e3f1658da4779a08577af2b7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040004.h5",
+      "scan_id": "_brain_AXT2_204_2040004",
+      "patient_id": "84b1bec9c8779093573f48ed054426b1b0d4927c81ba9ee4abf72e72a0d3848f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040006.h5",
+      "scan_id": "_brain_AXT2_204_2040006",
+      "patient_id": "ca61022ae9376402b6a91489e386442c7c52a1ef7696792c60577cdba7e0cca8",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040010.h5",
+      "scan_id": "_brain_AXT2_204_2040010",
+      "patient_id": "1e3d0149ddc90722c0f9bd9246d69fbc17a97ba8edd56c4a12ffdbbc2c7ab7bf",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040014.h5",
+      "scan_id": "_brain_AXT2_204_2040014",
+      "patient_id": "6656132c45819f3e455366856be110b733bebace33c9252ca5be19878f8e44df",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040029.h5",
+      "scan_id": "_brain_AXT2_204_2040029",
+      "patient_id": "32f16234313a82343ef628af80a95c05fe11b068a4a7a270ac576dde310b5486",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040061.h5",
+      "scan_id": "_brain_AXT2_204_2040061",
+      "patient_id": "8aec5fef1b79d0059a82f70e3fef1750b2d7fb978378b658f36ed462a1cfa62c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040067.h5",
+      "scan_id": "_brain_AXT2_204_2040067",
+      "patient_id": "462097d9db70f2e41dcb1843269907a98399d9611b12f6e8aff166376afc6bdf",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040074.h5",
+      "scan_id": "_brain_AXT2_204_2040074",
+      "patient_id": "8b3dda2c0254df4e783fa3da2287c94a3061498085e03b46522e8ff196db0a23",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040085.h5",
+      "scan_id": "_brain_AXT2_204_2040085",
+      "patient_id": "8dbe0865460425d21b4af796ca0b75e3f4143b9fb0402db90ceaf51810a64526",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2040095.h5",
+      "scan_id": "_brain_AXT2_204_2040095",
+      "patient_id": "6f6ff0eb21a7a506de0bd68024f4796f761a39f18fa0a078d3e245566ace3a89",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_204_2130024.h5",
+      "scan_id": "_brain_AXT2_204_2130024",
+      "patient_id": "7dbfbdba915c96e119247a37c835d643b50c0cd98c3d94898bbbcd9e91197dac",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050006.h5",
+      "scan_id": "_brain_AXT2_205_2050006",
+      "patient_id": "c5475076abad220dd08f6166222cf987c243f6cfe8abcb497cb3d5f57dfbb69c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050024.h5",
+      "scan_id": "_brain_AXT2_205_2050024",
+      "patient_id": "3e1fc8d70c556f20b7994b10b48707d352d66f50ec998171a611efe170976b3e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050048.h5",
+      "scan_id": "_brain_AXT2_205_2050048",
+      "patient_id": "a2d6d62032ccb03660305941b4f7efe8095d28861cd05f19c0aaed0dc88c7788",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050056.h5",
+      "scan_id": "_brain_AXT2_205_2050056",
+      "patient_id": "3ce65bc76706bcf5da3390d8674fc5ca657a04ebaa5c44d9f24653989a110ab3",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050069.h5",
+      "scan_id": "_brain_AXT2_205_2050069",
+      "patient_id": "9c962836ebd95330cf34c918c9b37af463a8aa3c8374dc7132424455fb2066c4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050114.h5",
+      "scan_id": "_brain_AXT2_205_2050114",
+      "patient_id": "875e3450ce5c723f72d60159f9da1f38d7a3697c4492a98c02a7811879ab21fa",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050122.h5",
+      "scan_id": "_brain_AXT2_205_2050122",
+      "patient_id": "aab5c1cd212292e0cb81292e070d70010a6d74dab1e531fab06c5271518b6fdb",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050155.h5",
+      "scan_id": "_brain_AXT2_205_2050155",
+      "patient_id": "ef8fba41464e37b446a2ad51c3f506bd150ba3776a0a54ea09308d604a357dbe",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050183.h5",
+      "scan_id": "_brain_AXT2_205_2050183",
+      "patient_id": "a0d332c9a879652d40ac30593bc7b5334f64bdb6ae4d0e07fe7e2d8a6bf79e49",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050188.h5",
+      "scan_id": "_brain_AXT2_205_2050188",
+      "patient_id": "d648bb8186b1ee9685d5c66dd921feacc83ce125da0d59b61d4357d390f5b852",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050190.h5",
+      "scan_id": "_brain_AXT2_205_2050190",
+      "patient_id": "009d301b80e67ef63955a3c86944a543d531cedf93158dad9084fd041e1d7f44",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050200.h5",
+      "scan_id": "_brain_AXT2_205_2050200",
+      "patient_id": "1c582ef67d5cd6aafea25e056d8f112c6239633123bf2a762ae5d10eb96e2653",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050211.h5",
+      "scan_id": "_brain_AXT2_205_2050211",
+      "patient_id": "5fd273c8d1f890862c01934d39eb180df4cac41a3493193bff370c45f0ed943b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050217.h5",
+      "scan_id": "_brain_AXT2_205_2050217",
+      "patient_id": "2db5b468bd038f9e4d9a65d53f8a328d4aa853583c2d3b542e6ff78cb1b601c0",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050238.h5",
+      "scan_id": "_brain_AXT2_205_2050238",
+      "patient_id": "37060c6b5d57c2f33277a2f28ec17aedfb16d80c112652c9a6c649f12a365c64",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050240.h5",
+      "scan_id": "_brain_AXT2_205_2050240",
+      "patient_id": "1cf95c918397cde565edbc9de0947204b2fd251ceaebfffc0de5ecb8e4d89933",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050264.h5",
+      "scan_id": "_brain_AXT2_205_2050264",
+      "patient_id": "485a68a895017e30e463d780817d403d5a07f82585bbf6d99912bf473cac0d81",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_2050268.h5",
+      "scan_id": "_brain_AXT2_205_2050268",
+      "patient_id": "7670e3a86f2f89c49117996e5b6b6be78c125bccf204dbccdf6363f0abf806c8",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000011.h5",
+      "scan_id": "_brain_AXT2_205_6000011",
+      "patient_id": "b766e805fef38e4aebb116b8c5089155e89df266fee19cb0f1595ca53e5fcc49",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000020.h5",
+      "scan_id": "_brain_AXT2_205_6000020",
+      "patient_id": "780d2d552cf182d82acf283200605c5170024f69f7fdde9d57d58a0b0f6ecde1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000034.h5",
+      "scan_id": "_brain_AXT2_205_6000034",
+      "patient_id": "b92f8976973508fc44a6ddb7113b848bbcc92fabf46251b2925e269dbbe5d44a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000043.h5",
+      "scan_id": "_brain_AXT2_205_6000043",
+      "patient_id": "0f48afb3640f3732a621537997b9ce8181158ecf2d01ac7fb77e76bbd0171e34",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000045.h5",
+      "scan_id": "_brain_AXT2_205_6000045",
+      "patient_id": "90456d2977f23b9439e2c2cd5e2486f1e9447cdfc550fcca45b153125f171d9e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000050.h5",
+      "scan_id": "_brain_AXT2_205_6000050",
+      "patient_id": "56e2408e4c1a386f4ede92e00daeb4b0d7061a512e3799b2513378641164556d",
+      "acquisition": "AXT2",
+      "num_slices": 12
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000051.h5",
+      "scan_id": "_brain_AXT2_205_6000051",
+      "patient_id": "3b0f84cc11c6844dd98f2eaa8ab319d634e56ef592bcef94302277c3f2e78dea",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000052.h5",
+      "scan_id": "_brain_AXT2_205_6000052",
+      "patient_id": "b62e87b421d3792ea9eaa5df47eee98bf6835e183319e4120b502c42e1e3bf91",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000054.h5",
+      "scan_id": "_brain_AXT2_205_6000054",
+      "patient_id": "74cbaa325ce806c025848dbd8205f72ac93243166ac49a55c58718cd7461a6b9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000072.h5",
+      "scan_id": "_brain_AXT2_205_6000072",
+      "patient_id": "cf2b3b6d5c7aa3b08f619815ea72e05cc45c67183cc93b10cf7ec9ddab9b92fd",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000074.h5",
+      "scan_id": "_brain_AXT2_205_6000074",
+      "patient_id": "52d09bb3e23427bc8f927d80d299fcc311ed31aad77a8dd6b89b4e99fd36835d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000099.h5",
+      "scan_id": "_brain_AXT2_205_6000099",
+      "patient_id": "2dc5051cadc193b63c9c39588437fcd029898347b45953bef8f0d04cba194773",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000106.h5",
+      "scan_id": "_brain_AXT2_205_6000106",
+      "patient_id": "74b45ff9ee19f691e36be479b1f62ac7d7458d7459cf1fcc91b74fdab5469dae",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_205_6000144.h5",
+      "scan_id": "_brain_AXT2_205_6000144",
+      "patient_id": "65cfa1ffe65dd72e135fdb697b7ec1531fa806c57520c4e35bfd3a0819e247c6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_206_2060008.h5",
+      "scan_id": "_brain_AXT2_206_2060008",
+      "patient_id": "a02ce3b6e4ad0367abd2cb69279a50e4f98c39df363ad18906ad8a42ea3fd3ee",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_206_2060038.h5",
+      "scan_id": "_brain_AXT2_206_2060038",
+      "patient_id": "cffed98ee79a7390f203516322d5198edc36b5dd4ffa0ef254679946723ae57d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_206_2060045.h5",
+      "scan_id": "_brain_AXT2_206_2060045",
+      "patient_id": "66305e332e3d5f0a284c5ae07dcde6ab215b2c0860608a56b2e630a3af95414e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_206_6000231.h5",
+      "scan_id": "_brain_AXT2_206_6000231",
+      "patient_id": "980ccc490ee4c230ed599a9a90c7144c2459810248f432ab964049b2fda64071",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_206_6000233.h5",
+      "scan_id": "_brain_AXT2_206_6000233",
+      "patient_id": "4f9f90214e7ef4f04dbf731ef6a2270f81e7faa37f1735ea694eb687821dcd69",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070008.h5",
+      "scan_id": "_brain_AXT2_207_2070008",
+      "patient_id": "2194f6fb87fdd6e1cbf84e0a1eb681aaaaaccd50cc244cbc53c7d3e55f57c601",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070021.h5",
+      "scan_id": "_brain_AXT2_207_2070021",
+      "patient_id": "ffe1098344a05060943d8d966bba037a43e803a863b83a0ce55357d8e623710b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070036.h5",
+      "scan_id": "_brain_AXT2_207_2070036",
+      "patient_id": "1f19efd8e4bdd07f22f9bf0f960cdd48ec6d6fe160626096950dfb79090527a7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070044.h5",
+      "scan_id": "_brain_AXT2_207_2070044",
+      "patient_id": "ea6317b48a81769bb8bb28d1c790563ddc2e8709c1bc540fcadd9fe8739f2379",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070046.h5",
+      "scan_id": "_brain_AXT2_207_2070046",
+      "patient_id": "a5dbf0e23ceb394720d18f83a3c954789032ff4881d828fe317bc5d5303fb81e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070070.h5",
+      "scan_id": "_brain_AXT2_207_2070070",
+      "patient_id": "815fa84f44aa62ee0852c200144945136e008cea9c87cf9817b5872d55004d7b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070075.h5",
+      "scan_id": "_brain_AXT2_207_2070075",
+      "patient_id": "c04f006590d23df68cffff1b391d1de9938ac95b20dcc93fd12b585fd72811da",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070077.h5",
+      "scan_id": "_brain_AXT2_207_2070077",
+      "patient_id": "7a0e44908a67b8be9af882c335124f3779f8f8c193a89b5ea2e748f5911d3d85",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070091.h5",
+      "scan_id": "_brain_AXT2_207_2070091",
+      "patient_id": "422c90f65ddf2a9c4dfa3a7c913c45af2238807b3382075d0f275ccdc4c4ed66",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070092.h5",
+      "scan_id": "_brain_AXT2_207_2070092",
+      "patient_id": "52d8019ff62494d2c735371cc157d6b7dbbe1fea4253ddcb1403befcb6402051",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070108.h5",
+      "scan_id": "_brain_AXT2_207_2070108",
+      "patient_id": "837c0698d1cfa3313c8b61e1ea92daceda3bea232cf1ef9cad8effc1253d818a",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070110.h5",
+      "scan_id": "_brain_AXT2_207_2070110",
+      "patient_id": "6111e834a16a5880d42bf426459bce5abbddf64b1c44c370083dad6df558c3a1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070115.h5",
+      "scan_id": "_brain_AXT2_207_2070115",
+      "patient_id": "91468a09e3189d5d983a66c74eb0c2584b6d50b30728efcda6c900f80c516949",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070146.h5",
+      "scan_id": "_brain_AXT2_207_2070146",
+      "patient_id": "f2c69e7a7740ea17178baae1aec6e93d9388105a2ca84eb4fb7ce9c53cfe3fff",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070156.h5",
+      "scan_id": "_brain_AXT2_207_2070156",
+      "patient_id": "353ecc6680348500fa36ac68571111d1f0250a92bf7eff1cc1a02a864a7de61d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070158.h5",
+      "scan_id": "_brain_AXT2_207_2070158",
+      "patient_id": "256246a05e4b6748ad4c65ca154fb07f00ec2bb33253ad0965920e8f7c9d324c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070188.h5",
+      "scan_id": "_brain_AXT2_207_2070188",
+      "patient_id": "e806fcbba7738f329ef6bb64634b52c5760d8ed2b4411b37e566885c2e9a34b4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070200.h5",
+      "scan_id": "_brain_AXT2_207_2070200",
+      "patient_id": "ee873cbbe2fabb2b902b3a41bd005df7bd038119c46d90398e5263ee9ff8dfd7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070202.h5",
+      "scan_id": "_brain_AXT2_207_2070202",
+      "patient_id": "8a9216566a1a36e7ec7420a044a3b69c879507e917d4c87ebf62ffbbeb524134",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070232.h5",
+      "scan_id": "_brain_AXT2_207_2070232",
+      "patient_id": "66d5f1794e5c830b49ba524d940b970c4cf8bb7470220c3d8e37c7de4eba6ea5",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070235.h5",
+      "scan_id": "_brain_AXT2_207_2070235",
+      "patient_id": "8ebe948b1a26a890bacfdf3a5c8e1505d6225b7ab14fa12e9af808e85d459e2c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070239.h5",
+      "scan_id": "_brain_AXT2_207_2070239",
+      "patient_id": "c52a45e243cfb54b7ae78a7eb901a0c28f5b36eeb5078e5e81a93aef456ed313",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070258.h5",
+      "scan_id": "_brain_AXT2_207_2070258",
+      "patient_id": "e404ede43226c9dfffed8b7d57d630c0da341ecc20ea47eb7f880d91d58c2bad",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070265.h5",
+      "scan_id": "_brain_AXT2_207_2070265",
+      "patient_id": "25ef4d89e0ef56a395c20bb1e18a1abbafb5f338aed494a276867f79d0ab086d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070269.h5",
+      "scan_id": "_brain_AXT2_207_2070269",
+      "patient_id": "4ad5e648394867da93620bff75f81d2241eb7043012d060e11a1a870e4feb3fc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070282.h5",
+      "scan_id": "_brain_AXT2_207_2070282",
+      "patient_id": "d845de2f91242b94298f11de2d748afe944545e2293929bb5a9f12667d7dd631",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070287.h5",
+      "scan_id": "_brain_AXT2_207_2070287",
+      "patient_id": "a577be055c78a60529f7802424fa90fb8d6e13b4fdb95c5ff8f2562da759f679",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070288.h5",
+      "scan_id": "_brain_AXT2_207_2070288",
+      "patient_id": "237e38d7cb316c637cc9103e9bdee133898f8c0c43618b732a0a23b464c1e0a6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070295.h5",
+      "scan_id": "_brain_AXT2_207_2070295",
+      "patient_id": "32cdf0c0bedefcf0fd41ec1200bb1c5845e415da421044fa76d883c10ce81634",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070297.h5",
+      "scan_id": "_brain_AXT2_207_2070297",
+      "patient_id": "14e27a908a959d879f4e779e1f98570313f143cbd6aff881c8d53eb067af35b5",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070316.h5",
+      "scan_id": "_brain_AXT2_207_2070316",
+      "patient_id": "54ef9ad9d7d3f42991247de907ea4450e9b494a2a6c4e2fb84acf6b0affa9767",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070323.h5",
+      "scan_id": "_brain_AXT2_207_2070323",
+      "patient_id": "28d79265343565d00ac539142f1c66b3a93918d287df19dcf673e0ad40aef162",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070328.h5",
+      "scan_id": "_brain_AXT2_207_2070328",
+      "patient_id": "991768b1ee19c65922bcca87c6496855f5efe85f2367441aac2af78533236ce2",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070344.h5",
+      "scan_id": "_brain_AXT2_207_2070344",
+      "patient_id": "ebed6c66bec4449d935a1c84b83e49ff4a360489cf631faf20c946ec7ba61c74",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070346.h5",
+      "scan_id": "_brain_AXT2_207_2070346",
+      "patient_id": "38400c2520892f4313852b8c9d627b82231f4ff928c50867865708fff04ad328",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070368.h5",
+      "scan_id": "_brain_AXT2_207_2070368",
+      "patient_id": "601b24da6b98e409b8ca91f669421825a37bb6898a70a6c0370037eb81914049",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070371.h5",
+      "scan_id": "_brain_AXT2_207_2070371",
+      "patient_id": "bb4e99428a24eb24a7f54604326d270b6a11fa476e7021b4798eb2ff93bc52cf",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070373.h5",
+      "scan_id": "_brain_AXT2_207_2070373",
+      "patient_id": "1eea20bd9a664e92f7ab4423a87eaf95c6e1a5e960c3f701c901590f8544524a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070378.h5",
+      "scan_id": "_brain_AXT2_207_2070378",
+      "patient_id": "126f90126d6b68ddc1e46f5b959f55cbd86af76cf0801cf863bd9b89ca25e6fb",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070393.h5",
+      "scan_id": "_brain_AXT2_207_2070393",
+      "patient_id": "05c8669ee95b0937662f71fba75cbb73992f2598781c7d28c19e7b0c7c8df477",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070396.h5",
+      "scan_id": "_brain_AXT2_207_2070396",
+      "patient_id": "5ef66198697ead32cc23201054f6e1a7d917e713513411bcfb768b6ddef7c97a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070419.h5",
+      "scan_id": "_brain_AXT2_207_2070419",
+      "patient_id": "e6a8a4a562c9fdbf146cf0e45186a9f5826ea7b1619a3b85d122a45ca54675c9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070431.h5",
+      "scan_id": "_brain_AXT2_207_2070431",
+      "patient_id": "bfa2b73c021a7b852d7b5a310a9b12a2e03be625a344712d3dc048ae24346255",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070441.h5",
+      "scan_id": "_brain_AXT2_207_2070441",
+      "patient_id": "1b1604ca7cb1c8528cdc551f82d34c77d97efceab36a8e6b3869f7d4eea952b0",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070443.h5",
+      "scan_id": "_brain_AXT2_207_2070443",
+      "patient_id": "f2a0cd0b56a8a16bc8aca7e28de8d6e3fa06b6fea4f5358f8caa5c0f6e319fba",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070463.h5",
+      "scan_id": "_brain_AXT2_207_2070463",
+      "patient_id": "e8ff7b8d6073688476755cf2b8c8e57cc9a735a9663925d41557fb3293058c40",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070470.h5",
+      "scan_id": "_brain_AXT2_207_2070470",
+      "patient_id": "5cacef66197b2a6a639dcbf90d20f97d5dc8eda2507f3362b7ee9d337a587944",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070476.h5",
+      "scan_id": "_brain_AXT2_207_2070476",
+      "patient_id": "4de4aae11f480fa1e1389ac373aa2acb3c0e07a5c20dc0813cdc9ff456e78dda",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070494.h5",
+      "scan_id": "_brain_AXT2_207_2070494",
+      "patient_id": "c7e9c2e4c24482db3aeb89ac68e30cca755e9d0afb089beb004b6a2cc967169c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070507.h5",
+      "scan_id": "_brain_AXT2_207_2070507",
+      "patient_id": "34c093f2320aedf2525a508882e7314004f6ff2e37b922c58b7ad4cca1bb7ae0",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070578.h5",
+      "scan_id": "_brain_AXT2_207_2070578",
+      "patient_id": "4b55456690919ba0170927eb7e939e2f1cd31d7f5793db99707c76f53745d7ed",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070593.h5",
+      "scan_id": "_brain_AXT2_207_2070593",
+      "patient_id": "bf125304fb190dbd8b1807b425408ca8f9d744661282bc2c2ddf2527a4e8fa0e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070597.h5",
+      "scan_id": "_brain_AXT2_207_2070597",
+      "patient_id": "d455334c68addbf23b5389bd561f0162d697197ecfcba2a3a188015982968d34",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070614.h5",
+      "scan_id": "_brain_AXT2_207_2070614",
+      "patient_id": "1aacec92bebf5e8ed2df6d5ca8f58da0975f9653fc8b6359954df6d6aa50124c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070617.h5",
+      "scan_id": "_brain_AXT2_207_2070617",
+      "patient_id": "9f4e9f5bf92042a453dedfb1aca052d6128847ff495e1a1ff31efda52e3d357e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070634.h5",
+      "scan_id": "_brain_AXT2_207_2070634",
+      "patient_id": "3343e070b89eb2e197b8ef3d4368a6b8aa59389b804c56b664afd591f92ff5ed",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070645.h5",
+      "scan_id": "_brain_AXT2_207_2070645",
+      "patient_id": "d72c2c9eff4bab3fd4d7ac9df47df107a023858f2c137a60186c5c3c9c1764a1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070657.h5",
+      "scan_id": "_brain_AXT2_207_2070657",
+      "patient_id": "96ac4c425efbf6b1ab29c982e6ac278ffc7548b0b59e6429dfd0835c3a696c0f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070663.h5",
+      "scan_id": "_brain_AXT2_207_2070663",
+      "patient_id": "4416c2818cc2085954bbe398bb6303f56b9597a6ed5c4003477efa74c822ced3",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070672.h5",
+      "scan_id": "_brain_AXT2_207_2070672",
+      "patient_id": "ec8549669832298d8c73094da88421c9d21cb6dc96c67e0eda3ef2d84b8990cc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070706.h5",
+      "scan_id": "_brain_AXT2_207_2070706",
+      "patient_id": "94e11968085d5b0680474e128e256e81e494615ca3f17be01dde400c44fa40b7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070718.h5",
+      "scan_id": "_brain_AXT2_207_2070718",
+      "patient_id": "7dba31720b1c937814091bc214c3bcc02af10b11b876e5da3c55244be35e1983",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070723.h5",
+      "scan_id": "_brain_AXT2_207_2070723",
+      "patient_id": "15fe59d927e2e46796ab9fe6ad06844c8f37238ef71d5694bd6f87dc76e1eb8b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070745.h5",
+      "scan_id": "_brain_AXT2_207_2070745",
+      "patient_id": "0e64a7d58e21f9f250205cb0463df8acee9310e981df717b6bb3885a6bc8e25f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070748.h5",
+      "scan_id": "_brain_AXT2_207_2070748",
+      "patient_id": "bfb3af9536adc0aacfb6b96862d5b4abc9ffcbe357aeab1398fad897d125c815",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070759.h5",
+      "scan_id": "_brain_AXT2_207_2070759",
+      "patient_id": "04b687a1d561548d64b07a1b0f4c0aeb4d0dc1607fb6278df9fab06ec3e7f217",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070798.h5",
+      "scan_id": "_brain_AXT2_207_2070798",
+      "patient_id": "501a213250f452721d591ece8f217adc10037feb1452c4d774a14dd8237bb007",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070803.h5",
+      "scan_id": "_brain_AXT2_207_2070803",
+      "patient_id": "e93f4e77163cddbc877c7cf737ca1dc1b9efea714cfc21d75d7e1ccf79f68391",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_207_2070831.h5",
+      "scan_id": "_brain_AXT2_207_2070831",
+      "patient_id": "955334b3e0fb110bfbbcfaaf250e591970ae00ddc4f371c611d6584169ba7b7e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080041.h5",
+      "scan_id": "_brain_AXT2_208_2080041",
+      "patient_id": "66ab9a35a9dde411ce1b91ce56cc8c0791f16b064067df275d6f8d2ad9c3ca56",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080058.h5",
+      "scan_id": "_brain_AXT2_208_2080058",
+      "patient_id": "b03b5963de1ef7ba33b4e744fe7071f05f5e6175f8ef0b1475d020b7f13aa3e9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080074.h5",
+      "scan_id": "_brain_AXT2_208_2080074",
+      "patient_id": "097795877be67acd9cf1885bee9930b47a0bd0f28f4b515a2c875ed2ef270da7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080125.h5",
+      "scan_id": "_brain_AXT2_208_2080125",
+      "patient_id": "9b81095192a96a26e528d0ea9b60e8562de2b7e61d3278a01b7675ce58dc3f56",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080129.h5",
+      "scan_id": "_brain_AXT2_208_2080129",
+      "patient_id": "5f113666cf23c154505e7769a50bbaa6be69a8dc8df3464785993b717ff50800",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080136.h5",
+      "scan_id": "_brain_AXT2_208_2080136",
+      "patient_id": "d962690345dc03ae01008441186314d48c5ffb5ba21a39c9e80cabf96e655c53",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080147.h5",
+      "scan_id": "_brain_AXT2_208_2080147",
+      "patient_id": "e71723a66c8f667a9824932606b5b531fbf157d72e8fb76ede2830ea049bab44",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080164.h5",
+      "scan_id": "_brain_AXT2_208_2080164",
+      "patient_id": "2440b61da70c1ed070e16b0530cfe9dbff1f95d16baed44afca89ad995bdc91e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080199.h5",
+      "scan_id": "_brain_AXT2_208_2080199",
+      "patient_id": "13ec825cc3cea694410215300c4fe285b9bda7b1a59a87884eaf83f7636ee2fc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080226.h5",
+      "scan_id": "_brain_AXT2_208_2080226",
+      "patient_id": "744ac829518108620e3d60577d213f43de38e36d0714a1435d3d54f463e1a96f",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080253.h5",
+      "scan_id": "_brain_AXT2_208_2080253",
+      "patient_id": "d004c7bd795c747e0f81475eeb33f47e256242b40deea48d17aeee14cdbd4a48",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080266.h5",
+      "scan_id": "_brain_AXT2_208_2080266",
+      "patient_id": "48a3d1248c0bbdfad39b9f2f8f61694c53d38d586a4984eb238f2f2c8b8504e5",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080268.h5",
+      "scan_id": "_brain_AXT2_208_2080268",
+      "patient_id": "d93dd82df6183402c2d57246bc960c3b125b50a728a16bb27ca04cd0c56531f7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080276.h5",
+      "scan_id": "_brain_AXT2_208_2080276",
+      "patient_id": "01b0fdf8caf466ba4de6a9a9c9a7de1b2691907fa9573d925491b7703b5415e4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080305.h5",
+      "scan_id": "_brain_AXT2_208_2080305",
+      "patient_id": "3b376c49eecafaf984cab49992f9e4f1993540f3d3019b95f43ee51b30f4f878",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080325.h5",
+      "scan_id": "_brain_AXT2_208_2080325",
+      "patient_id": "169ae918235bcb960ca68da69a6065ec25cdbceaf155e1cd2ea3dd60d9a6cbd9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080349.h5",
+      "scan_id": "_brain_AXT2_208_2080349",
+      "patient_id": "03802f35f4198c144da94e8ee7fbf92a36908c4861e0268de0a51e82f32c5f15",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080355.h5",
+      "scan_id": "_brain_AXT2_208_2080355",
+      "patient_id": "496e20a8fe73cdef936bf7bc41edc7971f6268e9dfe2a10abf50320bc2ef567f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080358.h5",
+      "scan_id": "_brain_AXT2_208_2080358",
+      "patient_id": "9c77234a8e6e58204698bd4fd356f0adfc9148343afaa8a24eee32118e37615a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080366.h5",
+      "scan_id": "_brain_AXT2_208_2080366",
+      "patient_id": "2bea1ac44a5792f4dcc6d95c487660554bab5edc6d0a9c4161aa9a2bb2da8200",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080404.h5",
+      "scan_id": "_brain_AXT2_208_2080404",
+      "patient_id": "1157db0a8623f9825a6f57b4fdee3437648a951df2c59570950566c2af9cc62f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080441.h5",
+      "scan_id": "_brain_AXT2_208_2080441",
+      "patient_id": "5e92b1ac099b4628eef9485740399ea99499701b3d4b7291a6933b4df6b0ca17",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080454.h5",
+      "scan_id": "_brain_AXT2_208_2080454",
+      "patient_id": "739ace83ee0c840394925cbc0be686bbdf519ebafe1d184874a608cd7a804d53",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080483.h5",
+      "scan_id": "_brain_AXT2_208_2080483",
+      "patient_id": "7f4f5ea56020d05856f019039b906135d9581d8fe15692223f616ea6fdae602b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080492.h5",
+      "scan_id": "_brain_AXT2_208_2080492",
+      "patient_id": "7660e742d4e3cf93180addd27eb42e9146cadc0340fb96667d307351f749ec98",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080508.h5",
+      "scan_id": "_brain_AXT2_208_2080508",
+      "patient_id": "a2c6c20be2ef4c63fbdbdc973bc91e62821ed2ff88fdd67a7b0c9b12cbf53e69",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080539.h5",
+      "scan_id": "_brain_AXT2_208_2080539",
+      "patient_id": "1f8bf33b755ecfab4b6e996ab7d620a5413784d08bd4ad19bfc6da8debb45f5b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080541.h5",
+      "scan_id": "_brain_AXT2_208_2080541",
+      "patient_id": "d90cf8fb49a7c6e647bbd795833a2cfe7f6060403a971cf5a5066779cfdbfe07",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080544.h5",
+      "scan_id": "_brain_AXT2_208_2080544",
+      "patient_id": "019505b03115e9f44422281a489655ac5b285b30e1c92fbb0aeda6afcd30e04c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080548.h5",
+      "scan_id": "_brain_AXT2_208_2080548",
+      "patient_id": "605d0ac6d4d358ccd5e22a872ea9f45badb6f53b51f97a1b7ee5d21766fdc833",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080555.h5",
+      "scan_id": "_brain_AXT2_208_2080555",
+      "patient_id": "434ce263b8e0ba64b4b3456e57fcab51c4c8c51e83c5e3ad2ee4a53efa975c86",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080557.h5",
+      "scan_id": "_brain_AXT2_208_2080557",
+      "patient_id": "de77b65c0d016fcdcb96d395ea702e62c0acd89ca725a1183564a2a4e2215678",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080564.h5",
+      "scan_id": "_brain_AXT2_208_2080564",
+      "patient_id": "17e44cf6a89bf24c8e238d1a54281dd1a2975f6d0b0c657742fc402f8542b5da",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080592.h5",
+      "scan_id": "_brain_AXT2_208_2080592",
+      "patient_id": "139805612f9e77d5b14f32512f7e53f383f43ca7ddd675f790022804e837d0c6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080605.h5",
+      "scan_id": "_brain_AXT2_208_2080605",
+      "patient_id": "39f889f3abb93f0d9aa41319d7760315ac1bec9e2cb51ba349d04ffc617a0ced",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080610.h5",
+      "scan_id": "_brain_AXT2_208_2080610",
+      "patient_id": "e5176850398b3ba9ffe6e1e830c7f96e7fa6f2b4ae4047b61143fb6ac5b41eff",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080622.h5",
+      "scan_id": "_brain_AXT2_208_2080622",
+      "patient_id": "f364fdb362f3563a3b2fe604610ca5a62ec676c2fb4cd10f11cbb2dfdb7ee8d5",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080633.h5",
+      "scan_id": "_brain_AXT2_208_2080633",
+      "patient_id": "480ffc770b760a5bd323e3a1868bf47ec0672cec0839f0ad3c17d2609af73fdf",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080648.h5",
+      "scan_id": "_brain_AXT2_208_2080648",
+      "patient_id": "2fe2b6d94ec048520429d64825fe401463b05ed799a9e573b7bab359b6475f92",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080670.h5",
+      "scan_id": "_brain_AXT2_208_2080670",
+      "patient_id": "b2c101ce42259aaddbef4a431eef2766bb4f694ff91641d953135afceea7d69d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080672.h5",
+      "scan_id": "_brain_AXT2_208_2080672",
+      "patient_id": "7ac2ddeae9b99bac8d16c5bb27e6ab6f1ddd3ef24a04c12942100230ce2f102c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080697.h5",
+      "scan_id": "_brain_AXT2_208_2080697",
+      "patient_id": "6e5a99d1bad09fd9ff77ef81ac806c914887ec8c2ce39571bbca80201ea0d95f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080709.h5",
+      "scan_id": "_brain_AXT2_208_2080709",
+      "patient_id": "3d13504a5552479e5c3927f0bf50e9eb79e0f3383e1cc5076eafd048dc532f83",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080724.h5",
+      "scan_id": "_brain_AXT2_208_2080724",
+      "patient_id": "f08bcbcda472588c2b8100d3584b0b0eab9b26f4274d84cb9115cd8943f4479d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_208_2080729.h5",
+      "scan_id": "_brain_AXT2_208_2080729",
+      "patient_id": "13e192a0842a9240b31abec9ad6bab6ce8851d09c63436c7533b31095ae90850",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090004.h5",
+      "scan_id": "_brain_AXT2_209_2090004",
+      "patient_id": "7e3d081959c3d37dd5e1fe59cd0f4c2e1debacc64fe3d13074f919683c8f5293",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090009.h5",
+      "scan_id": "_brain_AXT2_209_2090009",
+      "patient_id": "b9e48c371440d520a613615e3d7a2b85ea1d167ed2ddadd0fd764fa40ae69597",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090034.h5",
+      "scan_id": "_brain_AXT2_209_2090034",
+      "patient_id": "c5b8959a143063745154ee3a3a83dea9031b885d2992059b05bc8cc8f962e77c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090060.h5",
+      "scan_id": "_brain_AXT2_209_2090060",
+      "patient_id": "b9010d6e33049584af60128ce30b6a359173882f303a315480d0a3b606c8f41d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090103.h5",
+      "scan_id": "_brain_AXT2_209_2090103",
+      "patient_id": "86adb839e77c63b771132b9b1c96fdff63bb750e08f5dcab40ea9b15444a6751",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090127.h5",
+      "scan_id": "_brain_AXT2_209_2090127",
+      "patient_id": "49af437e9f88c184d417a1b367cf6d4ca25d5696d79f4d59371b26f114402a5c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090142.h5",
+      "scan_id": "_brain_AXT2_209_2090142",
+      "patient_id": "716167645dd196bb9128b4e575cd63ef79efafc6292b575d9b90ad5bc800ceb9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090148.h5",
+      "scan_id": "_brain_AXT2_209_2090148",
+      "patient_id": "589f618a3f8b6596b82f786b4f7628fc1eab0dd2b2a4e41331f5c7d3e0c37382",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090152.h5",
+      "scan_id": "_brain_AXT2_209_2090152",
+      "patient_id": "32bdc58f82828163925167adbfb08a31917fa54bb6012e54006bb3f19aa76aaa",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090178.h5",
+      "scan_id": "_brain_AXT2_209_2090178",
+      "patient_id": "a38abe9ee680872620312bcf2ffabcd9b913d3223aa44cb0bbaa49f4ff6e6d3b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090180.h5",
+      "scan_id": "_brain_AXT2_209_2090180",
+      "patient_id": "89cb2921d16de23da2418d5dcfcff0bbcc92db507505cfdd957b7004fc1d0fd0",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090188.h5",
+      "scan_id": "_brain_AXT2_209_2090188",
+      "patient_id": "5371a773014cfa13efa939617573efb66600dd3fe6761cdaea7b1c4dcf92ba69",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090191.h5",
+      "scan_id": "_brain_AXT2_209_2090191",
+      "patient_id": "952b26c8cb2eb6e9a4190cd9d4cca5df4500e31ab60b1607655d804b3c2c863c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090209.h5",
+      "scan_id": "_brain_AXT2_209_2090209",
+      "patient_id": "2cd2047998ec01db25e6e5a35a2854b82a1ba113b45cedfc7b283dd72e8e9a71",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090235.h5",
+      "scan_id": "_brain_AXT2_209_2090235",
+      "patient_id": "01046064f4d1d5846c69a3ddb59da518ded6cd353198429e4c07402938973681",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090237.h5",
+      "scan_id": "_brain_AXT2_209_2090237",
+      "patient_id": "f2da48e1d005ffb0844fdd3f845c5e30c3a529bba4cb865166b16c5880beba8b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090253.h5",
+      "scan_id": "_brain_AXT2_209_2090253",
+      "patient_id": "78b9df5340ec8a9d5aa6a630ba693c81715e9fe1044ff2753d9d723efc70de70",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090265.h5",
+      "scan_id": "_brain_AXT2_209_2090265",
+      "patient_id": "b60e20ebc8e585a05d72dbb45ef9c87e655085ea4dc61fa439550ab9e06493e9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090272.h5",
+      "scan_id": "_brain_AXT2_209_2090272",
+      "patient_id": "c45edc6f285a7304e8c6a470a0020514b6999f49e9e6a1fed36edd5abdcf418f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090275.h5",
+      "scan_id": "_brain_AXT2_209_2090275",
+      "patient_id": "cd677f121c48c2d8f49e755d6c3186aab3123a441417a7dc608a696246e9764f",
+      "acquisition": "AXT2",
+      "num_slices": 12
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090277.h5",
+      "scan_id": "_brain_AXT2_209_2090277",
+      "patient_id": "faa1e1ce452d33236342a9473afded08b08ec64176cb45b5fa973814c851a5d9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090293.h5",
+      "scan_id": "_brain_AXT2_209_2090293",
+      "patient_id": "b6879d8c47e992f11b54046c3a967620a087bad594a99369513b9fc79fb8083b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090296.h5",
+      "scan_id": "_brain_AXT2_209_2090296",
+      "patient_id": "4344dbcc07766c5a8dfbeea9c0407719307093d486bca691feb351caa40c9a14",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090301.h5",
+      "scan_id": "_brain_AXT2_209_2090301",
+      "patient_id": "0c99954e7cd3f803829b48e2b17c7fdcc143bfa9f887a9f0920af9c443a5e9ad",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090323.h5",
+      "scan_id": "_brain_AXT2_209_2090323",
+      "patient_id": "cf482dd40f4a0c1f4aa7a51a67252ad83c2da852939577fad313ecc6a3f49314",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090330.h5",
+      "scan_id": "_brain_AXT2_209_2090330",
+      "patient_id": "e08b19e9db9b1e3ba1a2ca7eb4a928523a2393591b5e8eb35cb4ac7af593d422",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090346.h5",
+      "scan_id": "_brain_AXT2_209_2090346",
+      "patient_id": "d4b2ada9d3c11eb0deadd521a8c2290b3edfd047eed8730a482fd23d7e20afdd",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090371.h5",
+      "scan_id": "_brain_AXT2_209_2090371",
+      "patient_id": "adf06ba12822ea08684edcf31ab2970ecb3b5f736f176c58602bc73f687263a9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090399.h5",
+      "scan_id": "_brain_AXT2_209_2090399",
+      "patient_id": "0ce984d3782e0a66301fd34ff88da258f6eecdf773bf284656d9f0f7128147da",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_2090419.h5",
+      "scan_id": "_brain_AXT2_209_2090419",
+      "patient_id": "cc94ee3e19e9e014dd16d186b7a2387bdd1825c056d2a104cca3275fd128c7bd",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6000974.h5",
+      "scan_id": "_brain_AXT2_209_6000974",
+      "patient_id": "6c429e0a8f7e9d15c38f11f894096daba6b0c7cf83daae4ae51a120be2aec7c5",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6000992.h5",
+      "scan_id": "_brain_AXT2_209_6000992",
+      "patient_id": "0827a8b770825ddc4347d7e6656ab03dce261dd01dd2144bcc6b1652fb537820",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6000999.h5",
+      "scan_id": "_brain_AXT2_209_6000999",
+      "patient_id": "1849671b883170a5096b95cff8f20151e0e5f6a3f414418c2a7f67ee446b0a6b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001008.h5",
+      "scan_id": "_brain_AXT2_209_6001008",
+      "patient_id": "67de09d6a726b56c4fb7e9b5532f6d5314a8cce285ca9ed210bb6485d9fe1ccb",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001045.h5",
+      "scan_id": "_brain_AXT2_209_6001045",
+      "patient_id": "d1b9c7b46df0edf66eefa9044b425267d77b83d06592053d4444e001223786bd",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001048.h5",
+      "scan_id": "_brain_AXT2_209_6001048",
+      "patient_id": "46f6a75777895f57cf490a5d5b0a392836b70451ee316ca61c66cb174c65a62a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001066.h5",
+      "scan_id": "_brain_AXT2_209_6001066",
+      "patient_id": "5f11c811afc54170a78b3fccc03e35dd5036f6cd8c4ac9904817a5898169a343",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001069.h5",
+      "scan_id": "_brain_AXT2_209_6001069",
+      "patient_id": "dac5b7a23bac7b44875a64ec2ffabb0a0009f550b071c31ae0fa55b5bae8266f",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001075.h5",
+      "scan_id": "_brain_AXT2_209_6001075",
+      "patient_id": "d5fcd875de9e07d54d178bfd86831500655729d6437d9d9497ff19dd3f91213b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001085.h5",
+      "scan_id": "_brain_AXT2_209_6001085",
+      "patient_id": "7a21f47aec54d327da8b54de63c3406b869133e180fe71e83fbcfd164c6de669",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001098.h5",
+      "scan_id": "_brain_AXT2_209_6001098",
+      "patient_id": "405ec3c66ed5b0d33b4347964d28b773844130b487dde5c92b12789782aa5108",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001112.h5",
+      "scan_id": "_brain_AXT2_209_6001112",
+      "patient_id": "aa2100d0712eea4e1c264982c714d62d7c2b84fe9bd20f992cd7b10db3e72f75",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001121.h5",
+      "scan_id": "_brain_AXT2_209_6001121",
+      "patient_id": "c4ea91824a276b3d2f2fbabe73c5f83f5b74c5eb876ced8e590da7c6ff698143",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001125.h5",
+      "scan_id": "_brain_AXT2_209_6001125",
+      "patient_id": "73e99e33c9c2ca1e0d27d12ea6fc28ccb5e2c26178b2beba13e4222739c08017",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001136.h5",
+      "scan_id": "_brain_AXT2_209_6001136",
+      "patient_id": "b66baf79f1af37fdda282d4748c99bf93fff16eecc65d1373798b054d66f1ca9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001157.h5",
+      "scan_id": "_brain_AXT2_209_6001157",
+      "patient_id": "e7148cd2ec68ad75103ad92d32636c51f8a84f45411bc8eb80b510f7b6383409",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001164.h5",
+      "scan_id": "_brain_AXT2_209_6001164",
+      "patient_id": "8a240f93f44a6b14cf52dc3516f30e554c52bb355a92a934fbd6076fa649ed05",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001170.h5",
+      "scan_id": "_brain_AXT2_209_6001170",
+      "patient_id": "1862b0215a4c84f68a26198831880347920db30d51631db480ec03e3f8a4304b",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001197.h5",
+      "scan_id": "_brain_AXT2_209_6001197",
+      "patient_id": "14a65a62d9035882ec36045198447382120ebd199b7fd4be883927495d819289",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001218.h5",
+      "scan_id": "_brain_AXT2_209_6001218",
+      "patient_id": "1fb2e706750878981920e7eb3798b71d70942ac9de81b06224662020493eb8f5",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001237.h5",
+      "scan_id": "_brain_AXT2_209_6001237",
+      "patient_id": "270a0d8dbeb04c21b38a75304c9a3e0077ba99cbd7876a15825dc304294cd2dd",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001260.h5",
+      "scan_id": "_brain_AXT2_209_6001260",
+      "patient_id": "8cc577560a88077cdf8365e9f736be63aef593503d7971cda4b791d188a23f51",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001271.h5",
+      "scan_id": "_brain_AXT2_209_6001271",
+      "patient_id": "ec405cc41fec7e7eaa2275f4028d113a42b36c787f37dbb2d4a7c1aef67f3a8a",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001277.h5",
+      "scan_id": "_brain_AXT2_209_6001277",
+      "patient_id": "4df23c21eb9ebf8d9c5c90c0432e5224fa3968251c60953d9e2c195d3b0eb214",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001280.h5",
+      "scan_id": "_brain_AXT2_209_6001280",
+      "patient_id": "b5f137bbc302aec935cf5b8ea6b8869beec595fda15e6605f11f829796976835",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001306.h5",
+      "scan_id": "_brain_AXT2_209_6001306",
+      "patient_id": "57ce58bba624754f06037539e355e967caa88e3e5fac952b49837de35f8dd0b4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001308.h5",
+      "scan_id": "_brain_AXT2_209_6001308",
+      "patient_id": "60fd5e244e86524e6595b63513bd0d3ed5a8710eb5ad452f6247df0032650afa",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001341.h5",
+      "scan_id": "_brain_AXT2_209_6001341",
+      "patient_id": "a2f1077eb58d3fa63383d3276c731e353faaf389665737450f6445978c24dc40",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001350.h5",
+      "scan_id": "_brain_AXT2_209_6001350",
+      "patient_id": "4fac998cf585175a7afa74d7dce44a4611eb58dc0cda2d5d684b8cf63a57f027",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001452.h5",
+      "scan_id": "_brain_AXT2_209_6001452",
+      "patient_id": "8b7ce24ef70a907198a0dd18bab23820a85f3f6895ead15cd24478077065a28e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001462.h5",
+      "scan_id": "_brain_AXT2_209_6001462",
+      "patient_id": "4467252ba27a31ab25794850883fbcf27e82c550fa6126824bd0bf2b6da15b46",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_209_6001464.h5",
+      "scan_id": "_brain_AXT2_209_6001464",
+      "patient_id": "ba7cbc2a27f2f3394a0d3a746393e8a9eba8367c5d2c1b775ae7baa67b2864e0",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100014.h5",
+      "scan_id": "_brain_AXT2_210_2100014",
+      "patient_id": "681a1fa336288f08f4c0d15c2390ac3fbcd05ef34118068092b0507db750e8b1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100025.h5",
+      "scan_id": "_brain_AXT2_210_2100025",
+      "patient_id": "2e711096e8b493d3bcb94f8ae9379b3c41ba7e5280e80465fd60de85d0f00365",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100027.h5",
+      "scan_id": "_brain_AXT2_210_2100027",
+      "patient_id": "671c82191b98d876cc76759392fe59cc19ba626815a707838f763aa354ed8515",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100039.h5",
+      "scan_id": "_brain_AXT2_210_2100039",
+      "patient_id": "21a5ed8e1c2f1b277c19e3bf6f22e7b3a7d67a5f8387c5f9af8a46e82b418619",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100054.h5",
+      "scan_id": "_brain_AXT2_210_2100054",
+      "patient_id": "e41fd74c111fb6868b7436a19d0e5bc5ff3cc7b169550cf2ca8b2f46c2e13139",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100085.h5",
+      "scan_id": "_brain_AXT2_210_2100085",
+      "patient_id": "8c59a6aa44e0144a4f85d28ce72efa861ac08ed4b860976f7ef682d6006e2231",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100109.h5",
+      "scan_id": "_brain_AXT2_210_2100109",
+      "patient_id": "63e8540e3a59cba6a3aa0c29f95a37e58c91e4a299d2b867a6251c2059462038",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100123.h5",
+      "scan_id": "_brain_AXT2_210_2100123",
+      "patient_id": "8c78eb78d14760fd4a3685e8bc9f90c0daa19fecb9794c8251e2de41caecdd49",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100125.h5",
+      "scan_id": "_brain_AXT2_210_2100125",
+      "patient_id": "530fa3fbd45e18c228554f591b39da167c15a805daa935ca4ac2bff900d02fcf",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100130.h5",
+      "scan_id": "_brain_AXT2_210_2100130",
+      "patient_id": "e72a2a1599168fd5361c4ec5ccbf75dedf31c0d4441a7d695cfc7c8d265a94c7",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100132.h5",
+      "scan_id": "_brain_AXT2_210_2100132",
+      "patient_id": "6abcc7d71a30e416f82b4f2f72053b0015cceded17485003a7ffa797b8f49ed9",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100154.h5",
+      "scan_id": "_brain_AXT2_210_2100154",
+      "patient_id": "139ae1f4c325d760b2cbe0972ce9ebbbd657c4d7a163f860c8a955c4902ed999",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100159.h5",
+      "scan_id": "_brain_AXT2_210_2100159",
+      "patient_id": "f2747875dcdda5540a2b53afa9e6d3185a47cd33237be2c975325a6b38cb08ab",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100171.h5",
+      "scan_id": "_brain_AXT2_210_2100171",
+      "patient_id": "133907b54d2b5f736047b14d189d9196b4495a4b8a7191c6ec1d02b83fbafddd",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100189.h5",
+      "scan_id": "_brain_AXT2_210_2100189",
+      "patient_id": "29ded9651a7100d123afeca0aeea9c3f9542860b4d516ac2dc86c9ec8acc895d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100190.h5",
+      "scan_id": "_brain_AXT2_210_2100190",
+      "patient_id": "9538cd779f4a1fa124f92aa030f1bea1c40a755b9430f69a7c86a04c90bc2049",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100218.h5",
+      "scan_id": "_brain_AXT2_210_2100218",
+      "patient_id": "9ab011713cf166dad9cd279e8e3fc1cd330c74abcfff8cfa7301fb7c09c97aec",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100228.h5",
+      "scan_id": "_brain_AXT2_210_2100228",
+      "patient_id": "9d6e21dcbbd83a8712da9ad06627a07fa6377eb1f31abaacb40a49133c6b137e",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100248.h5",
+      "scan_id": "_brain_AXT2_210_2100248",
+      "patient_id": "e3d9752e674462fc8eea78a13683cd63dd1611a0b58f506d37bc2872e3a7e1bd",
+      "acquisition": "AXT2",
+      "num_slices": 14
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100261.h5",
+      "scan_id": "_brain_AXT2_210_2100261",
+      "patient_id": "8c90700883c5e7430b9fb83984d2784da8a20b8eb792fdff009d4b2e5fede7bd",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100386.h5",
+      "scan_id": "_brain_AXT2_210_2100386",
+      "patient_id": "2a6ee0ac254de545ffd026d691124d30bf35ae1a61b07e9bc7d6d104a09faac4",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100392.h5",
+      "scan_id": "_brain_AXT2_210_2100392",
+      "patient_id": "90d74ef1dcb8a2ceaf8cf91ed8ac3a53ed14df8b2a7805874251b7e1394e7b9d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_2100395.h5",
+      "scan_id": "_brain_AXT2_210_2100395",
+      "patient_id": "b68d2b931a1c32f1f18af3bf5b2e157d897bb9dd9e5bf452cca954efd88322bf",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001486.h5",
+      "scan_id": "_brain_AXT2_210_6001486",
+      "patient_id": "708686bee91ec4dd29b87e155f05df060f3c57270254591b5e66f1e710c6c058",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001500.h5",
+      "scan_id": "_brain_AXT2_210_6001500",
+      "patient_id": "0c680488ab7b2fdc097dcc9067a0f1dc0ca49fec0ea7111899cd07eae5678e07",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001501.h5",
+      "scan_id": "_brain_AXT2_210_6001501",
+      "patient_id": "c08549e30f7cd73e13269dfa2ea2ed1c3b17d575c65969ee30dda0050def9ecc",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001540.h5",
+      "scan_id": "_brain_AXT2_210_6001540",
+      "patient_id": "121eb077fd57a5ae57aa348cdfd2a4c2657202b5d105fde4ed9c3c49442171ac",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001570.h5",
+      "scan_id": "_brain_AXT2_210_6001570",
+      "patient_id": "780cda18ea44c494baf01a3e619c43acf4c731d55b45da454c0cf373e4c07b51",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001575.h5",
+      "scan_id": "_brain_AXT2_210_6001575",
+      "patient_id": "50c403b75929baaac6413adffa835a152ed2f5054a61de5dce6c848810f418d7",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001600.h5",
+      "scan_id": "_brain_AXT2_210_6001600",
+      "patient_id": "4f38c8f6a5ce0004e25f71cc68707cc611bc64dc11e7655546fb9c3daf7cea25",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001627.h5",
+      "scan_id": "_brain_AXT2_210_6001627",
+      "patient_id": "d39b4827ba36cbc1f816b2aa8b423e83fa177a4de4a9448b0897e1b66236d416",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001636.h5",
+      "scan_id": "_brain_AXT2_210_6001636",
+      "patient_id": "bb8007e6be6836a4fd6e9aa44e6bb7255e6563c84cbdf02ccd785a63ec25dfa3",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001654.h5",
+      "scan_id": "_brain_AXT2_210_6001654",
+      "patient_id": "b03fbb8b6bd711d8492b94dd75a2f9324ad3c45fc6def0ee94fc1ff9ef70c139",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001670.h5",
+      "scan_id": "_brain_AXT2_210_6001670",
+      "patient_id": "de720f31292e3ba96d06e67eba6c4a3627d81616b1150a24c6b3d06f22c9a82d",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001688.h5",
+      "scan_id": "_brain_AXT2_210_6001688",
+      "patient_id": "e83f571e77e43d4eca5c7169f98bfe1722470a58c149225e3921e46b9955fa28",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001745.h5",
+      "scan_id": "_brain_AXT2_210_6001745",
+      "patient_id": "382813dd10fb2248b99d40bf62d310600282675ad6378e26996dbf49454e3d6a",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001801.h5",
+      "scan_id": "_brain_AXT2_210_6001801",
+      "patient_id": "5c1c541e0337dd2b522437f12b35ddd2d5e6ee32433a075f52c387db7ed8ee67",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001805.h5",
+      "scan_id": "_brain_AXT2_210_6001805",
+      "patient_id": "f22b0e87c2c151366a41f785a01ff4f9b3f89be270293ea67ea2b43372991439",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001813.h5",
+      "scan_id": "_brain_AXT2_210_6001813",
+      "patient_id": "c250b3061aca963e1e53ae6481ed1f9533c6f184ddc12725784cc47d2ccee310",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001817.h5",
+      "scan_id": "_brain_AXT2_210_6001817",
+      "patient_id": "a358ec8815185b1506f6e8f2f19b3be667e0285dccfb9c11cc803a2edc3d96f1",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001856.h5",
+      "scan_id": "_brain_AXT2_210_6001856",
+      "patient_id": "a2923cb1604a9862d214266c6fa03e5b3a78250d4bdab96bb807513b02eb6aa6",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001879.h5",
+      "scan_id": "_brain_AXT2_210_6001879",
+      "patient_id": "29793fc6de6dd9dd485719bd82adfc9d374d9219746656ff0204e1b7e5b8c42c",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001888.h5",
+      "scan_id": "_brain_AXT2_210_6001888",
+      "patient_id": "120356ebf23fa9121d32aacc914c4b29b2be656000227e5a178ddc7efe0d4667",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT2_210_6001947.h5",
+      "scan_id": "_brain_AXT2_210_6001947",
+      "patient_id": "2dabcf0111326a55f83470eed680ee338037c3b535bf551904f8ea901e220ac0",
+      "acquisition": "AXT2",
+      "num_slices": 16
+    }
+  ]
+}

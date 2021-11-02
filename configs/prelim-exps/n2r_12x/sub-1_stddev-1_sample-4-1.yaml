@@ -1,0 +1,20 @@
+_BASE_: "sub-1_stddev-1_batch-2_ga-4_val-test.yaml"
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_UNDERSAMPLED: 13  # 13 undersampled, 1 fully sampled
+  NUM_WORKERS: 12
+  SAMPLER_TRAIN: "AlternatingSampler"
+  ALT_SAMPLER:
+    PERIOD_UNSUPERVISED: 1
+    PERIOD_SUPERVISED: 4
+SOLVER:
+  TRAIN_BATCH_SIZE: 2
+  GRAD_ACCUM_ITERS: 4
+TEST:
+  VAL_AS_TEST: True
+DESCRIPTION:
+  BRIEF: "N2R 12x - 1 subjects w/ 4:1 supervised:unsupervised ratio"
+  EXP_NAME: "mridata_knee_2019/n2r_12x/sub-1_stddev-1_sample-4-1"
+  TAGS: ("n2r", "mridata_knee_2019")
+OUTPUT_DIR: "results://prelim-exps/n2r_12x/sub-1_stddev-1_sample-4-1"
+VERSION: 1

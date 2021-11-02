@@ -1,0 +1,13 @@
+# Train fastmri mini dataset on 10 supervised examples and 98 unsupervised examples
+_BASE_: "template.yaml"
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: -1  # 108 training examples
+    NUM_UNDERSAMPLED: 98  # 98/108 have fixed undersampled masks
+# To set in experiment configs that inherit from this template
+DESCRIPTION:
+  BRIEF: "fastMRI knee mini N2R 10 subjects"
+  EXP_NAME: "fastmri_knee_mc_mini/n2r-unrolled-v1_4x/sub-10"
+  TAGS: ("fastMRI_knee", "N2R")
+OUTPUT_DIR: "results://fastmri_knee_mc_mini/n2r-unrolled-v1_4x/sub-10" # Use prefix "results://fastmri_knee_mc_mini/n2r-unet-v1_4x"
+VERSION: 1

@@ -1,0 +1,16 @@
+# Template for N2R experiments.
+# Uses GeneralizedUnrolledCNN
+# By default, it uses an alternating sampler that returns 1 supervised and 1 unsupervised scan
+
+_BASE_: "template.yaml"
+MODEL:
+  META_ARCHITECTURE: "N2RModel"
+  N2R:
+    META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+DATALOADER:
+  SAMPLER_TRAIN: "AlternatingSampler"
+  ALT_SAMPLER:
+    PERIOD_UNSUPERVISED: 1
+    PERIOD_SUPERVISED: 1
+OUTPUT_DIR: ""
+VERSION: 1

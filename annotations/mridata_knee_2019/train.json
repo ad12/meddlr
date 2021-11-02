@@ -1,0 +1,137 @@
+{
+  "info": {
+    "contributor": "arjundd",
+    "description": "2019 MRIData.org Knee Dataset - train",
+    "year": "2020",
+    "date_created": "2020-06-11 19-03-43 PDT",
+    "version": "v1.0.0"
+  },
+  "images": [
+    {
+      "file_name": "1b197efe-9865-43be-ac24-f237c380513e.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "226e710b-725b-4bec-840e-bf47be2b8a44.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "280cf3f9-3b7e-4738-84e0-f72b21aa5266.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "38b9a8e8-2779-4979-8602-5e8e5f902863.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "52c2fd53-d233-4444-8bfd-7c454240d314.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "530a812a-4870-4d01-9db4-772c853d693c.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "54c077b2-7d68-4e77-b729-16afbccae9ac.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "7a9f028c-8667-48aa-8e08-0acf3320c8d4.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "8ad53ab7-07f9-4864-98d0-dc43145ff588.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "8eff1229-8074-41fa-8b5e-441b501f10e3.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "9a740e7b-8fc3-46f9-9f70-1b7bedec37e4.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "b65b9167-a0d0-4295-9dd5-74641b3dd7e6.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "b7d435a1-2421-48d2-946c-d1b3372f7c60.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    },
+    {
+      "file_name": "cc70c22f-1ddc-4a53-9503-e33d613de321.h5",
+      "kspace_size": [
+        320,
+        320,
+        256,
+        8
+      ]
+    }
+  ]
+}

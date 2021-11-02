@@ -1,0 +1,8 @@
+# Test poisson undersampling config.
+# Based on basic.yaml config.
+_BASE_: "basic.yaml"
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "PoissonDiskMaskFunc"
+OUTPUT_DIR: "results://tests/poisson"
+VERSION: 1

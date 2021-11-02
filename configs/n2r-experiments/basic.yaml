@@ -1,0 +1,9 @@
+# N2R basic setup
+# The alternating sampler switches between periods of supervised examples and unsupervised examples
+_BASE_: "template.yaml"
+OUTPUT_DIR: "results://n2r-experiments/basic"
+DESCRIPTION:
+  BRIEF: "N2R with standard sampling - basic configuration"
+  EXP_NAME: "n2r_search/basic"
+  TAGS: ("n2r". "mridata_knee_2019", "standard_sampler")
+VERSION: 1

@@ -1,0 +1,25 @@
+# Requires at minimum 24GB gpu
+_BASE_: "../n2r_template.yaml"
+MODEL:
+  CONSISTENCY:
+    AUG:
+      NOISE:
+        STD_DEV: (1,)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_UNDERSAMPLED: 13
+SOLVER:
+  TRAIN_BATCH_SIZE: 8
+  TEST_BATCH_SIZE: 12
+OUTPUT_DIR: "results://prelim-exps/n2r_16x/sub-1_stddev-1"
+DESCRIPTION:
+  BRIEF: "N2R - 1 subject recon / 13 subjects undersample, 16x undersampling"
+  EXP_NAME: "mridata_knee_2019/n2r_16x/sub-1_stddev-1"
+  TAGS: ("n2r", "mridata_knee_2019", "sub-1", "16x")
+VERSION: 1

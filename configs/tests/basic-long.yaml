@@ -1,0 +1,30 @@
+# Basic testing config
+# Use this for any testing you may want to do in the future.
+# The model will be trained for 60 iterations (not epochs)
+# on the mridata.org 2019 knee dataset.
+MODEL:
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 8
+    NUM_RESBLOCKS: 2
+    NUM_FEATURES: 128
+    DROPOUT: 0.
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+DATALOADER:
+  NUM_WORKERS: 0  # for debugging purposes
+SOLVER:
+  TRAIN_BATCH_SIZE: 1
+  TEST_BATCH_SIZE: 2
+  CHECKPOINT_PERIOD: 200
+  MAX_ITER: 400
+TEST:
+  EVAL_PERIOD: 800  # dont eval till end
+DESCRIPTION:
+  EXP_NAME: "tests/basic-long"
+  BRIEF: "Tests basic configuration training for a slightly longer period of time"
+  TAGS: ("test",)
+VIS_PERIOD: 100
+TIME_SCALE: "iter"
+OUTPUT_DIR: "results://tests/basic-long"
+VERSION: 1

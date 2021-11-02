@@ -1,0 +1,39 @@
+{
+  "info": {
+    "contributor": "arjundd",
+    "description": "fastMRI brain_multicoil Dataset - train",
+    "year": "2020",
+    "date_created": "2020-09-30 19-26-45 PDT",
+    "version": "vtoy-dev"
+  },
+  "images": [
+    {
+      "file_name": "file_brain_AXT1POST_207_2070196.h5",
+      "scan_id": "_brain_AXT1POST_207_2070196",
+      "patient_id": "f2dcbb350211fd34e515c1a9b2907f3175a64b53f39823d92789029a37071bbb",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1POST_210_6001592.h5",
+      "scan_id": "_brain_AXT1POST_210_6001592",
+      "patient_id": "98b9307a597c1334c28903e8b1a73b96be6201ba2a761a0651a0ecd58de7ef3d",
+      "acquisition": "AXT1POST",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000771.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000771",
+      "patient_id": "8c18bfea898e92f6f35731c3a1d0a9023bdb355d8e8b7a3ab5f86a51ad7e776b",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    },
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000805.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000805",
+      "patient_id": "03887be598974c6f565612ff2aa2c9ecc249a1a267a19eb95b39eb830dec34b6",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    }
+  ]
+}

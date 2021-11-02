@@ -1,0 +1,16 @@
+_BASE_: "sub-1_stddev-1.yaml"
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_UNDERSAMPLED: 12  # 12 undersampled, 2 fully sampled
+  NUM_WORKERS: 12
+SOLVER:
+  TRAIN_BATCH_SIZE: 2
+  GRAD_ACCUM_ITERS: 4
+TEST:
+  VAL_AS_TEST: True
+DESCRIPTION:
+  BRIEF: "N2R 12x - 2 subjects"
+  EXP_NAME: "mridata_knee_2019/n2r_12x/sub-2_stddev-1"
+  TAGS: ("n2r", "mridata_knee_2019")
+OUTPUT_DIR: "results://prelim-exps/n2r_12x/sub-2_stddev-1"
+VERSION: 1

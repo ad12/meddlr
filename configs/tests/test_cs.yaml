@@ -1,0 +1,17 @@
+# Basic testing config for Compressed Sensing (CS) Reconstruction.
+# NOTE: CS can only be used at evaluation time.
+# Run this config with eval_net.py for testing.
+MODEL:
+  META_ARCHITECTURE: "CSModel"
+  CS:
+    MAX_ITER: 200
+    REGULARIZATION: 0.005
+DATASETS:
+  TEST: ("mridata_knee_2019_test",)
+DATALOADER:
+  NUM_WORKERS: 0  # for debugging purposes
+SOLVER:
+  TEST_BATCH_SIZE: 1
+TIME_SCALE: "iter"
+OUTPUT_DIR: "results://tests/test_cs"
+VERSION: 1

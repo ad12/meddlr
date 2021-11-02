@@ -1,0 +1,67 @@
+# mridata.org baseline experiments at 16x acceleration at the maximum batch size
+# This requires a GPU with at least 24GB memory
+#
+# Model: 
+# - Unrolled network with 8 unrolled steps
+# - Each step has 2 resblocks
+# - conv blocks are conv -> relu (no normalization)
+#
+# Seeds:
+# - General: 1000
+# - DataLoader: 1000
+MODEL:
+  META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 8
+    NUM_RESBLOCKS: 2
+    NUM_FEATURES: 128
+    NUM_EMAPS: 1
+    DROPOUT: 0.
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER: ("act", "conv")
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+AUG_TRAIN:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    # change NUM_TOTAL to control how many scans should be included for training. 
+    # `-1` -> all scans will be included
+    NUM_TOTAL: -1
+    SEED: 1000
+  NUM_WORKERS: 4
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: ""
+  TRAIN_BATCH_SIZE: 8
+  TEST_BATCH_SIZE: 12
+  MAX_ITER: 160000
+  GAMMA: 1.0 # do not decrease learning rate.
+  STEPS: ()  # ensures learning rate does not decay
+  BASE_LR: 1e-4
+  BIAS_LR_FACTOR: 1.0
+  WEIGHT_DECAY: 0.0001
+  WEIGHT_DECAY_BIAS: 0.0001
+  CHECKPOINT_PERIOD: -1
+DESCRIPTION:
+  BRIEF: "Baseline (acceleration 16x) experiments with mridata.org 3D FSE dataset with maximum batch size"
+  EXP_NAME: ""
+  TAGS: ("mridata_knee_2019", "unrolled", "baseline_16x")
+TEST:
+  EVAL_PERIOD: -1
+VIS_PERIOD: 400
+TIME_SCALE: "iter"
+OUTPUT_DIR: ""  # template should not have an output directory
+SEED: 1000
+VERSION: 1

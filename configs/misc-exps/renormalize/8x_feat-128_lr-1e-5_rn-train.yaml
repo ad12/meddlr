@@ -1,0 +1,9 @@
+# Renormalize data when computing training loss.
+_BASE_: "8x_feat-128_rn-train.yaml"
+MODEL:
+  RECON_LOSS:
+    RENORMALIZE_DATA: True
+SOLVER:
+  BASE_LR: 1e-5
+OUTPUT_DIR: "results://misc-exps/renormalize/8x_feat-128_lr-1e-5_rn-train"
+VERSION: 1
