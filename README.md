@@ -29,12 +29,12 @@ make dev
 #### Registering New Users
 To register users to existing machines, add your username and machines to support
 with that username to the `_USER_PATHS` dictionary in
-[ss_recon/utils/cluster.py](ss_recon/utils/cluster.py).
+[meddlr/utils/cluster.py](meddlr/utils/cluster.py).
 
 #### Registering New Machines/Clusters
 To register new machines, you will have to find the regex pattern(s) that can be used to
 identify the machine or set of machines you want to add functionality for. See
-[ss_recon/utils/cluster.py](ss_recon/utils/cluster.py) for more details.
+[meddlr/utils/cluster.py](meddlr/utils/cluster.py) for more details.
 
 #### Weights and Biases
 Weights and Biases (W&B) is a convenient online experiment visualizer (like Tensorboard) that is currently free for academics. It's useful for sharing training runs, creating reports, and making other data-driven decisions.

@@ -1,9 +1,9 @@
 import unittest
 from collections import defaultdict
 
-from ss_recon.config import get_cfg
-from ss_recon.data import build_recon_train_loader
-from ss_recon.data.slice_dataset import SliceData
+from meddlr.config import get_cfg
+from meddlr.data import build_recon_train_loader
+from meddlr.data.slice_dataset import SliceData
 
 
 class MockSliceData(SliceData):

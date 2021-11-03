@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from ss_recon.metrics import Metric
+from meddlr.metrics import Metric
 
 
 def metric_func(preds, targets, alpha, beta=0.1):

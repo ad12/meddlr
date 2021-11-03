@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 
-from ss_recon.solver.optimizer import GradAccumOptimizer
+from meddlr.solver.optimizer import GradAccumOptimizer
 
 
 def _is_zero_grad(optimizer):

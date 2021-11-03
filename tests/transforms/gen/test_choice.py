@@ -2,11 +2,11 @@ import unittest
 
 import numpy as np
 
-from ss_recon.transforms.base import AffineTransform
-from ss_recon.transforms.gen import RandomRot90, RandomTransformChoice
-from ss_recon.transforms.gen.spatial import RandomFlip, RandomTranslation
-from ss_recon.transforms.tf_scheduler import WarmupTF
-from ss_recon.utils.events import EventStorage
+from meddlr.transforms.base import AffineTransform
+from meddlr.transforms.gen import RandomRot90, RandomTransformChoice
+from meddlr.transforms.gen.spatial import RandomFlip, RandomTranslation
+from meddlr.transforms.tf_scheduler import WarmupTF
+from meddlr.utils.events import EventStorage
 
 
 class TestRandomTransformChoice(unittest.TestCase):

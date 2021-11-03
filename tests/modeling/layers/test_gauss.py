@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from ss_recon.modeling.layers.gauss import GaussianBlur, get_gaussian_kernel
+from meddlr.modeling.layers.gauss import GaussianBlur, get_gaussian_kernel
 
 
 class TestGaussianBlur(unittest.TestCase):

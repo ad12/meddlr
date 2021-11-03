@@ -8,8 +8,10 @@ sigpy>=0.1.17
 pyxb
 ismrmrd
 tqdm
-cupy
 scikit-image>=0.18.2
 pandas
 silx
 torchmetrics>=0.5.1
+omegaconf
+torch>=1.6
+torchvision

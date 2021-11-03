@@ -22,10 +22,10 @@ from typing import Collection, Sequence, Union
 import pandas as pd
 from tabulate import tabulate
 
-from ss_recon.config import get_cfg
-from ss_recon.evaluation.testing import find_weights
-from ss_recon.utils import cluster  # noqa
-from ss_recon.utils.general import find_experiment_dirs
+from meddlr.config import get_cfg
+from meddlr.evaluation.testing import find_weights
+from meddlr.utils import cluster  # noqa
+from meddlr.utils.general import find_experiment_dirs
 
 
 def clean_results(

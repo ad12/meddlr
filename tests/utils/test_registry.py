@@ -1,4 +1,4 @@
-from ss_recon.utils.registry import Registry
+from meddlr.utils.registry import Registry
 
 _MOCK_REGISTRY = Registry("MOCK_REGISTRY")
 

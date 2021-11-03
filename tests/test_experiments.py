@@ -1,7 +1,7 @@
 """Verify experimental configurations (random seeds, etc.)."""
 import unittest
 
-from ss_recon.data.build import get_recon_dataset_dicts
+from meddlr.data.build import get_recon_dataset_dicts
 
 
 class TestMRIDataExperiments(unittest.TestCase):

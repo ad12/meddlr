@@ -3,8 +3,8 @@ import unittest
 
 import torch
 
-from ss_recon.data.transforms.motion import MotionModel
-from ss_recon.transforms.base.motion import MRIMotionTransform
+from meddlr.data.transforms.motion import MotionModel
+from meddlr.transforms.base.motion import MRIMotionTransform
 
 from ..mock import generate_mock_mri_data
 

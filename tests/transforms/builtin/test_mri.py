@@ -3,18 +3,18 @@ import unittest
 import numpy as np
 import torch
 
-from ss_recon.config.config import get_cfg
-from ss_recon.transforms.base import AffineTransform, FlipTransform, NoiseTransform, Rot90Transform
-from ss_recon.transforms.builtin.mri import MRIReconAugmentor
-from ss_recon.transforms.gen import (
+from meddlr.config.config import get_cfg
+from meddlr.transforms.base import AffineTransform, FlipTransform, NoiseTransform, Rot90Transform
+from meddlr.transforms.builtin.mri import MRIReconAugmentor
+from meddlr.transforms.gen import (
     RandomAffine,
     RandomFlip,
     RandomMRIMotion,
     RandomNoise,
     RandomRot90,
 )
-from ss_recon.transforms.tf_scheduler import WarmupMultiStepTF, WarmupTF
-from ss_recon.utils.events import EventStorage
+from meddlr.transforms.tf_scheduler import WarmupMultiStepTF, WarmupTF
+from meddlr.utils.events import EventStorage
 
 from ..mock import generate_mock_mri_data
 

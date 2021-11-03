@@ -3,9 +3,9 @@ import unittest
 
 import torch
 
-from ss_recon.config.config import get_cfg
-from ss_recon.engine.defaults import init_reproducible_mode
-from ss_recon.utils import env
+from meddlr.config.config import get_cfg
+from meddlr.engine.defaults import init_reproducible_mode
+from meddlr.utils import env
 
 
 class TestDefaultSetup(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestDefaultSetup(unittest.TestCase):
         base_cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED = -1
         base_cfg.freeze()
 
-        os.environ["SSRECON_REPRO"] = ""
+        os.environ["MEDDLR_REPRO"] = ""
         cfg = base_cfg.clone()
         init_reproducible_mode(cfg, eval_only=False)
         assert cfg.SEED > 0

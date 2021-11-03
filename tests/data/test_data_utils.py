@@ -1,6 +1,6 @@
 import torch
 
-from ss_recon.data.data_utils import structure_patches
+from meddlr.data.data_utils import structure_patches
 
 
 def test_structuring_patches():

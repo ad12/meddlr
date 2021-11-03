@@ -1,6 +1,6 @@
 import unittest
 
-from ss_recon.config.config import get_cfg
+from meddlr.config.config import get_cfg
 
 
 class TestConfig(unittest.TestCase):

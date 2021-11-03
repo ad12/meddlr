@@ -3,7 +3,7 @@ import unittest
 
 import torch
 
-from ss_recon.utils import env
+from meddlr.utils import env
 
 
 class TestEnvVariables(unittest.TestCase):
@@ -29,7 +29,7 @@ class TestEnvVariables(unittest.TestCase):
             os.environ[env_var] = value
 
     def test_supports_cplx_tensors(self):
-        env_var = "SSRECON_ENABLE_CPLX_TENSORS"
+        env_var = "MEDDLR_ENABLE_CPLX_TENSORS"
         orig_val = os.environ.get(env_var, "")
         is_pt17 = [int(x) for x in torch.__version__.split(".")] >= [1, 7]
 
@@ -58,7 +58,7 @@ class TestEnvVariables(unittest.TestCase):
         self._reset_var(env_var, orig_val)
 
     def test_debug(self):
-        env_var = "SSRECON_DEBUG"
+        env_var = "MEDDLR_DEBUG"
         orig_val = os.environ.get(env_var, "")
 
         os.environ[env_var] = ""
@@ -70,7 +70,7 @@ class TestEnvVariables(unittest.TestCase):
         self._reset_var(env_var, orig_val)
 
     def test_reproducibility_mode(self):
-        env_var = "SSRECON_REPRO"
+        env_var = "MEDDLR_REPRO"
         orig_val = os.environ.get(env_var, "")
 
         os.environ[env_var] = ""

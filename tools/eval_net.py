@@ -18,14 +18,14 @@ import pandas as pd
 import torch
 from tabulate import tabulate
 
-from ss_recon.checkpoint import Checkpointer
-from ss_recon.config import get_cfg
-from ss_recon.data.build import build_recon_val_loader
-from ss_recon.engine import DefaultTrainer, default_argument_parser, default_setup
-from ss_recon.evaluation import DatasetEvaluators, ReconEvaluator, inference_on_dataset
-from ss_recon.evaluation.testing import SUPPORTED_VAL_METRICS, check_consistency, find_weights
-from ss_recon.modeling.meta_arch import CSModel
-from ss_recon.utils.logger import setup_logger
+from meddlr.checkpoint import Checkpointer
+from meddlr.config import get_cfg
+from meddlr.data.build import build_recon_val_loader
+from meddlr.engine import DefaultTrainer, default_argument_parser, default_setup
+from meddlr.evaluation import DatasetEvaluators, ReconEvaluator, inference_on_dataset
+from meddlr.evaluation.testing import SUPPORTED_VAL_METRICS, check_consistency, find_weights
+from meddlr.modeling.meta_arch import CSModel
+from meddlr.utils.logger import setup_logger
 
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)

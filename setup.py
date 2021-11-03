@@ -8,14 +8,14 @@ from setuptools import find_packages, setup
 
 
 def get_version():
-    init_py_path = path.join(path.abspath(path.dirname(__file__)), "ss_recon", "__init__.py")
+    init_py_path = path.join(path.abspath(path.dirname(__file__)), "meddlr", "__init__.py")
     init_py = open(init_py_path, "r").readlines()
     version_line = [l.strip() for l in init_py if l.startswith("__version__")][0]  # noqa: E741
     version = version_line.split("=")[-1].strip().strip("'\"")
 
     # The following is used to build release packages.
     # Users should never use it.
-    suffix = os.getenv("SSRECON_VERSION_SUFFIX", "")
+    suffix = os.getenv("MEDDLR_VERSION_SUFFIX", "")
     version = version + suffix
     if os.getenv("BUILD_NIGHTLY", "0") == "1":
         from datetime import datetime
@@ -31,11 +31,11 @@ def get_version():
 
 
 setup(
-    name="ss_recon",
+    name="meddlr",
     version=get_version(),
-    author="Arjun Desai",
+    author="The Meddlr Team",
     url="",
-    description="SSRecon is a framework for semi-supervised MR reconstruction",
+    description="Meddlr is a framework for semi-supervised MR reconstruction",
     packages=find_packages(exclude=("configs", "tests")),
     python_requires=">=3.6",
     install_requires=[
@@ -52,9 +52,20 @@ setup(
         "pandas",
         "silx",
         "tqdm",
-        "torchmetrics>=0.5.1",  # TODO: relax version constraint
+        "omegaconf",
+        "torchmetrics>=0.5.1",
+        "torch>=1.6",
+        "torchvision",
     ],
     extras_require={
-        "dev": ["flake8", "isort", "black==19.3b0", "flake8-bugbear", "flake8-comprehensions"]
+        "dev": [
+            "flake8",
+            "isort",
+            "black==19.3b0",
+            "flake8-bugbear",
+            "flake8-comprehensions",
+            "medpy",
+        ],
+        "benchmarking": ["medpy"],
     },
 )

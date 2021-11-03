@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from ss_recon.data import AlternatingSampler
+from meddlr.data import AlternatingSampler
 
 from .mock import MockSliceDataset
 

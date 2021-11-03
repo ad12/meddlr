@@ -15,10 +15,10 @@ You may want to write your own script with your datasets and other
 customizations.
 """
 
-from ss_recon.config import get_cfg
-from ss_recon.engine import DefaultTrainer, default_argument_parser, default_setup
-from ss_recon.engine.defaults import init_wandb_run
-from ss_recon.utils.env import supports_wandb
+from meddlr.config import get_cfg
+from meddlr.engine import DefaultTrainer, default_argument_parser, default_setup
+from meddlr.engine.defaults import init_wandb_run
+from meddlr.utils.env import supports_wandb
 
 
 def setup(args):

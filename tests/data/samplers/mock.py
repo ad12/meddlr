@@ -1,4 +1,4 @@
-from ss_recon.data.slice_dataset import SliceData
+from meddlr.data.slice_dataset import SliceData
 
 
 class MockSliceDataset(SliceData):

@@ -3,7 +3,7 @@ import unittest
 
 from torch import nn
 
-from ss_recon.modeling.blocks.conv_blocks import (
+from meddlr.modeling.blocks.conv_blocks import (
     SimpleConvBlock2d,
     SimpleConvBlock3d,
     SimpleConvBlockNd,

@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from ss_recon.transforms.gen import RandomMRIMotion
+from meddlr.transforms.gen import RandomMRIMotion
 
 from ..mock import generate_mock_mri_data
 

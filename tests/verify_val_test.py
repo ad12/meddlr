@@ -35,13 +35,13 @@ import torch
 from fvcore.common.file_io import PathManager
 from tqdm import tqdm
 
-import ss_recon.ops.complex as cplx
-from ss_recon.checkpoint.detection_checkpoint import Checkpointer
-from ss_recon.config import get_cfg
-from ss_recon.engine import DefaultTrainer, default_setup
-from ss_recon.evaluation.recon_evaluation import ReconEvaluator
-from ss_recon.evaluation.testing import find_weights
-from ss_recon.utils.logger import setup_logger
+import meddlr.ops.complex as cplx
+from meddlr.checkpoint.detection_checkpoint import Checkpointer
+from meddlr.config import get_cfg
+from meddlr.engine import DefaultTrainer, default_setup
+from meddlr.evaluation.recon_evaluation import ReconEvaluator
+from meddlr.evaluation.testing import find_weights
+from meddlr.utils.logger import setup_logger
 
 # Set seed and cuda deterministic to true to be able to reproduce.
 SEED = 0

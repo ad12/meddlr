@@ -3,7 +3,7 @@ import unittest
 import torch
 import torchvision.transforms.functional as tvf
 
-from ss_recon.transforms.base.spatial import (
+from meddlr.transforms.base.spatial import (
     AffineTransform,
     FlipTransform,
     Rot90Transform,

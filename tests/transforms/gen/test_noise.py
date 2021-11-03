@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from ss_recon.transforms.gen import RandomNoise
+from meddlr.transforms.gen import RandomNoise
 
 from ..mock import generate_mock_mri_data
 

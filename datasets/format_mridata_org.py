@@ -38,9 +38,9 @@ from sigpy.mri import app
 from tqdm import tqdm
 from utils import fftc
 
-from ss_recon.forward import SenseModel
-from ss_recon.ops import complex as cplx
-from ss_recon.utils.logger import setup_logger
+from meddlr.forward import SenseModel
+from meddlr.ops import complex as cplx
+from meddlr.utils.logger import setup_logger
 
 _FILE_DIR = os.path.dirname(__file__)
 _FILE_NAME = os.path.splitext(os.path.basename(__file__))[0]

@@ -2,8 +2,8 @@ import unittest
 
 import torch
 
-from ss_recon.config import get_cfg
-from ss_recon.modeling.meta_arch import GeneralizedUNet
+from meddlr.config import get_cfg
+from meddlr.modeling.meta_arch import GeneralizedUNet
 
 
 class TestGeneralizedUnet(unittest.TestCase):

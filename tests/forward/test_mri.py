@@ -2,12 +2,14 @@ import unittest
 
 import torch
 
-import ss_recon.ops.complex as cplx
-import ss_recon.utils.transforms as T
-from ss_recon.forward import SenseModel
+import meddlr.ops.complex as cplx
+import meddlr.utils.transforms as T
+from meddlr.forward import SenseModel
+from meddlr.utils import env
 
 
 class TestSenseModel(unittest.TestCase):
+    @unittest.skipIf(env.pt_version() >= [1, 8], "Old SENSE model requires torch.fft module")
     def test_reproducibility(self):
         ky = 20
         kz = 20

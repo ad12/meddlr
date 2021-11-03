@@ -2,13 +2,13 @@ import unittest
 
 import numpy as np
 
-from ss_recon.data import DatasetCatalog
-from ss_recon.data.samplers.group_sampler import (
+from meddlr.data import DatasetCatalog
+from meddlr.data.samplers.group_sampler import (
     AlternatingGroupSampler,
     DistributedGroupSampler,
     GroupSampler,
 )
-from ss_recon.data.slice_dataset import SliceData
+from meddlr.data.slice_dataset import SliceData
 
 from .mock import MockSliceDataset, _MockDataset
 
@@ -48,8 +48,12 @@ class TestGroupSampler(unittest.TestCase):
 
     def test_fastmri_brain(self):
         """Utility test for fastmri brain split."""
-        dataset_dicts = DatasetCatalog.get("fastMRI_brain_multicoil_mini_v0.0.1_val")
-        dataset = SliceData(dataset_dicts, transform=None)
+        try:
+            dataset_dicts = DatasetCatalog.get("fastMRI_brain_multicoil_mini_v0.0.1_val")
+            dataset = SliceData(dataset_dicts, transform=None)
+        except FileNotFoundError:
+            self.skipTest("fastMRI files not found")
+
         batch_by = "receiverChannels"
         batch_size = 7
 

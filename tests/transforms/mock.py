@@ -1,8 +1,8 @@
 import torch
 
-import ss_recon.ops.complex as cplx
-from ss_recon.forward import SenseModel
-from ss_recon.transforms.tf_scheduler import SchedulableMixin
+import meddlr.ops.complex as cplx
+from meddlr.forward import SenseModel
+from meddlr.transforms.tf_scheduler import SchedulableMixin
 
 
 def generate_mock_mri_data(ky=20, kz=20, nc=8, nm=1, bsz=1, scale=1.0, rand_func="randn"):

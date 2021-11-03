@@ -3,13 +3,13 @@ import unittest
 
 import torch
 
-from ss_recon.config import get_cfg
-from ss_recon.data.build import build_data_loaders_per_scan
-from ss_recon.ops import complex as cplx
+from meddlr.config import get_cfg
+from meddlr.data.build import build_data_loaders_per_scan
+from meddlr.ops import complex as cplx
 
 
 @unittest.skipIf(
-    os.environ.get("SSRECON_TEST_REPRO", "").lower() != "true", "Repro eval is time-consuming"
+    os.environ.get("MEDDLR_TEST_REPRO", "").lower() != "true", "Repro eval is time-consuming"
 )
 def test_eval_reproducibility():
     cfg = get_cfg()

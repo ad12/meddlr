@@ -4,8 +4,8 @@ from typing import Mapping
 import numpy as np
 import torch
 
-from ss_recon.config.config import get_cfg
-from ss_recon.evaluation.recon_evaluation import ReconEvaluator
+from meddlr.config.config import get_cfg
+from meddlr.evaluation.recon_evaluation import ReconEvaluator
 
 
 class MockReconEvaluator(ReconEvaluator):

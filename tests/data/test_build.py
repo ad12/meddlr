@@ -1,7 +1,7 @@
 import numpy as np
 
-from ss_recon.data.build import _limit_data_by_group, get_recon_dataset_dicts
-from ss_recon.data.catalog import DatasetCatalog
+from meddlr.data.build import _limit_data_by_group, get_recon_dataset_dicts
+from meddlr.data.catalog import DatasetCatalog
 
 
 def test_filter_by_metadata():

@@ -5,7 +5,7 @@ from skimage import data
 from skimage.metrics import structural_similarity
 from torchmetrics.functional.regression import ssim as tm_ssim
 
-from ss_recon.metrics.functional.image import (
+from meddlr.metrics.functional.image import (
     _pad,
     _pad_3d_tensor_with_2d_padding,
     mse,
@@ -13,7 +13,7 @@ from ss_recon.metrics.functional.image import (
     psnr,
     ssim,
 )
-from ss_recon.metrics.image import compute_mse, compute_nrmse, compute_psnr, compute_ssim
+from meddlr.metrics.image import compute_mse, compute_nrmse, compute_psnr, compute_ssim
 
 
 def test_mse_legacy():
@@ -73,7 +73,7 @@ def test_nrmse_legacy():
     assert torch.allclose(out, legacy_value)
 
 
-def test_ssim_ssrecon_torchvision():
+def test_ssim_torchmetrics_reproducibility():
     """
     Test reproducibility between SSIM implementations in ss_recon and torchmetrics.
 
@@ -115,7 +115,7 @@ def test_ssim_ssrecon_torchvision():
     assert torch.allclose(ssim_val, expected_ssim_val)
 
 
-def test_ssim_ssrecon_scikit_image():
+def test_ssim_scikit_image_reproducibility():
     """Test reproducibility between SSIM implementations in ss_recon and scikit-image.
 
     Scikit-image supports 3D multichannel SSIM.

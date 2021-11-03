@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from ss_recon.metrics.functional.sem_seg import assd
+from meddlr.metrics.functional.sem_seg import assd
 
 
 def _generate_3d_mock_masks(num_classes=4):

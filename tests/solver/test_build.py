@@ -2,9 +2,9 @@ import unittest
 
 from torch.optim import Adam
 
-from ss_recon.config import get_cfg
-from ss_recon.solver import GradAccumOptimizer
-from ss_recon.solver.build import build_optimizer
+from meddlr.config import get_cfg
+from meddlr.solver import GradAccumOptimizer
+from meddlr.solver.build import build_optimizer
 
 from .test_optimizer import build_mock_model
 

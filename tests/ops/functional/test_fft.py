@@ -2,8 +2,9 @@ import unittest
 
 import torch
 
-import ss_recon.ops as oF
-import ss_recon.utils.transforms as T
+import meddlr.ops as oF
+import meddlr.utils.transforms as T
+from meddlr.utils import env
 
 
 class TestFFTReproducibility(unittest.TestCase):
@@ -13,6 +14,7 @@ class TestFFTReproducibility(unittest.TestCase):
     TODO: Delete when ``ss_recon/utils/transforms.py`` is to be removed.
     """
 
+    @unittest.skipIf(env.pt_version() >= [1, 8], "torch.fft not supported in torch>=1.8")
     def test_fft2(self):
         g = torch.Generator().manual_seed(1)
 
@@ -38,6 +40,7 @@ class TestFFTReproducibility(unittest.TestCase):
         X2 = oF.fft2c(x, channels_last=True)
         assert torch.allclose(X2, X)
 
+    @unittest.skipIf(env.pt_version() >= [1, 8], "torch.fft not supported in torch>=1.8")
     def test_ifft2(self):
         g = torch.Generator().manual_seed(1)
 

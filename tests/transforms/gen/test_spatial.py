@@ -3,10 +3,10 @@ import unittest
 import numpy as np
 import torch
 
-from ss_recon.transforms.base.spatial import AffineTransform, TranslationTransform
-from ss_recon.transforms.gen import RandomAffine
-from ss_recon.transforms.gen.spatial import RandomTranslation
-from ss_recon.transforms.tf_scheduler import WarmupTF
+from meddlr.transforms.base.spatial import AffineTransform, TranslationTransform
+from meddlr.transforms.gen import RandomAffine
+from meddlr.transforms.gen.spatial import RandomTranslation
+from meddlr.transforms.tf_scheduler import WarmupTF
 
 from ..mock import MockIterTracker
 

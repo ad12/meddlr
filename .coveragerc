@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = ss_recon
+source = meddlr
 
 [report]
 exclude_lines =
@@ -10,6 +10,6 @@ exclude_lines =
     if __name__ == .__main__.:
 ignore_errors = True
 include =
-    ss_recon/*
+    meddlr/*
 omit =
-    ss_recon/modeling/*
+    meddlr/modeling/*

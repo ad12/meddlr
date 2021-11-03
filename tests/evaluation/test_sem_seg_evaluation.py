@@ -3,8 +3,8 @@ import unittest
 
 import torch
 
-from ss_recon.config import get_cfg
-from ss_recon.evaluation.seg_evaluation import SemSegEvaluator
+from meddlr.config import get_cfg
+from meddlr.evaluation.seg_evaluation import SemSegEvaluator
 
 
 def _simulate_data(shape, num_scans=10, batch_size: int = None):

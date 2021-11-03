@@ -2,8 +2,8 @@ import unittest
 
 from torch import nn
 
-from ss_recon.modeling import layers
-from ss_recon.modeling.layers.build import CUSTOM_LAYERS_REGISTRY, get_layer_type
+from meddlr.modeling import layers
+from meddlr.modeling.layers.build import CUSTOM_LAYERS_REGISTRY, get_layer_type
 
 
 class TestGetLayerType(unittest.TestCase):

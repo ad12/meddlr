@@ -1,7 +1,7 @@
 import torch
 
-from ss_recon.modeling.meta_arch import GeneralizedUNet
-from ss_recon.modeling.meta_arch.build import _get_model_layers, initialize_model
+from meddlr.modeling.meta_arch import GeneralizedUNet
+from meddlr.modeling.meta_arch.build import _get_model_layers, initialize_model
 
 
 def test_initialize_model():

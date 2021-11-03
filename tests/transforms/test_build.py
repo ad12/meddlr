@@ -2,14 +2,14 @@ import unittest
 
 import torch
 
-from ss_recon.config import get_cfg
-from ss_recon.engine.trainer import convert_cfg_time_to_iter
-from ss_recon.transforms.base import Rot90Transform
-from ss_recon.transforms.base.spatial import FlipTransform
-from ss_recon.transforms.build import build_transforms
-from ss_recon.transforms.gen import RandomNoise, RandomRot90
-from ss_recon.transforms.tf_scheduler import WarmupMultiStepTF, WarmupTF
-from ss_recon.transforms.transform_gen import TransformGen
+from meddlr.config import get_cfg
+from meddlr.engine.trainer import convert_cfg_time_to_iter
+from meddlr.transforms.base import Rot90Transform
+from meddlr.transforms.base.spatial import FlipTransform
+from meddlr.transforms.build import build_transforms
+from meddlr.transforms.gen import RandomNoise, RandomRot90
+from meddlr.transforms.tf_scheduler import WarmupMultiStepTF, WarmupTF
+from meddlr.transforms.transform_gen import TransformGen
 
 
 class TestBuildTransforms(unittest.TestCase):

@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from ss_recon.transforms.tf_scheduler import TFScheduler, WarmupMultiStepTF, WarmupTF
+from meddlr.transforms.tf_scheduler import TFScheduler, WarmupMultiStepTF, WarmupTF
 
 from .mock import MockIterTracker, MockSchedulable
 
