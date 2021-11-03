@@ -13,5 +13,3 @@ pandas
 silx
 torchmetrics>=0.5.1
 omegaconf
-torch>=1.6
-torchvision

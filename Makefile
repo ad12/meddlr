@@ -15,7 +15,6 @@ test:
 	coverage run -m pytest tests/
 
 dev:
-	pip install --upgrade black coverage isort flake8 flake8-bugbear flake8-comprehensions
-	pip install --upgrade pooch
+	pip install --upgrade black coverage isort flake8 flake8-bugbear flake8-comprehensions pre-commit pooch
 
 all: autoformat test build-docs

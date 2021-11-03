@@ -5,6 +5,7 @@ import torch
 import meddlr.utils.transforms as T
 from meddlr.utils import env
 
+
 class TestFFT(unittest.TestCase):
     @unittest.skipIf(env.pt_version() >= [1, 8], "torch.fft not supported in torch>=1.8")
     def test_fft2_cplx_tensors(self):
