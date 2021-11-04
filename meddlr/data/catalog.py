@@ -1,9 +1,11 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import copy
 import inspect
 import logging
 import types
+from collections import defaultdict
 from typing import List
+
+from tabulate import tabulate
 
 from meddlr.utils.logger import log_first_n
 
@@ -11,21 +13,25 @@ __all__ = ["DatasetCatalog", "MetadataCatalog"]
 
 
 class DatasetCatalog(object):
-    """
-    A catalog that stores information about the datasets and how to obtain them.
+    """A catalog that stores information about the datasets and how to fetch them.
+
+    This catalog makes it easy to choose different datasets based on a config string.
 
     It contains a mapping from strings
-    (which are names that identify a dataset, e.g. "coco_2014_train")
+    (which are names that identify a dataset, e.g. "mridata_knee_2019_train")
     to a function which parses the dataset and returns the samples in the
     format of `list[dict]`.
 
-    The returned dicts should be in Detectron2 Dataset format
-    (See DATASETS.md for details)
-    if used with the data loader functionalities in
-    `data/build.py,data/detection_transform.py`.
+    The returned dicts should be in Meddlr Dataset format
+    (See datasets/README.md for details). For a list of built-in datasets,
+    see `data/datasets/builtin.py`.
 
-    The purpose of having this catalog is to make it easy to choose
-    different datasets, by just using the strings in the config.
+    This catalog also supports aliases for different datasets. This is useful for
+    backwards compatibility and easy config access.
+
+    Adapted from https://github.com/facebookresearch/detectron2.
+
+    TODO (arjundd): Make this based off Registry.
     """
 
     _REGISTERED = {}
@@ -35,15 +41,14 @@ class DatasetCatalog(object):
     def register(name, func_or_name):
         """
         Args:
-            name (str): the name that identifies a dataset,
-                e.g. "coco_2014_train".
-            func_or_name (callable | str): a callable that returns a list of dicts
+            name (str): The name that identifies a dataset,
+                e.g. "mridata_knee_2019_train".
+            func_or_name (callable | str): A callable that returns a list of dicts
                 or the name of an existing dataset. If the latter, it will be registered
                 as a soft alias to the underlying dataset.
         """
-        assert name not in DatasetCatalog._REGISTERED, "Dataset '{}' is already registered!".format(
-            name
-        )
+        if name in DatasetCatalog._REGISTERED:
+            raise ValueError("Dataset '{}' is already registered!".format(name))
         if isinstance(func_or_name, str):
             assert (
                 func_or_name in DatasetCatalog._REGISTERED
@@ -95,8 +100,9 @@ class DatasetCatalog(object):
 
     @staticmethod
     def list() -> List[str]:
-        """
-        List all registered datasets.
+        """List all registered datasets (including aliases).
+
+        For a more decorated output, see :func:`DatasetCatalog.__repr__`.
 
         Returns:
             list[str]
@@ -105,8 +111,11 @@ class DatasetCatalog(object):
 
     @staticmethod
     def clear(name=None):
-        """
-        Remove all registered dataset.
+        """Remove the registered dataset and it's aliases.
+
+        Args:
+            name (str): The name of the dataset to be removed.
+                If None, all datasets are removed.
         """
         if name is None:
             DatasetCatalog._REGISTERED.clear()
@@ -117,6 +126,22 @@ class DatasetCatalog(object):
         DatasetCatalog._REGISTERED.pop(name, None)
         for alias in aliases:
             DatasetCatalog._ALIASES.pop(alias, None)
+
+    def __repr__(self) -> str:
+        base_to_aliases = defaultdict(list)
+        for alias, base in self._ALIASES.items():
+            base_to_aliases[base].append(alias)
+
+        datasets = [
+            {
+                "name": name,
+                "aliases": base_to_aliases.get(name, None),
+                **MetadataCatalog.get(name, {}).__dict__,  # use protected variable to avoid a copy
+            }
+            for name in self._REGISTERED
+        ]
+        table = tabulate(datasets, headers="keys", tablefmt="fancy_grid")
+        return "Cataloged Datasets:\n{}".format(table)
 
 
 class Metadata(types.SimpleNamespace):
@@ -218,6 +243,8 @@ class MetadataCatalog:
     It's like global variables, so don't abuse it.
     It's meant for storing knowledge that's constant and shared across the
     execution of the program, e.g.: the class names in COCO.
+
+    Adapted from https://github.com/facebookresearch/detectron2.
     """
 
     _NAME_TO_META = {}
@@ -235,19 +262,6 @@ class MetadataCatalog:
         assert len(name)
         if name in MetadataCatalog._NAME_TO_META:
             ret = MetadataCatalog._NAME_TO_META[name]
-            # TODO this is for the BC breaking change in D15247032.
-            # Remove this in the future.
-            if hasattr(ret, "dataset_name"):
-                logger = logging.getLogger()
-                logger.warning(
-                    """
-The 'dataset_name' key in metadata is no longer used for
-sharing metadata among splits after D15247032! Add
-metadata to each split (now called dataset) separately!
-                    """
-                )
-                parent_meta = MetadataCatalog.get(ret.dataset_name).as_dict()
-                ret.set(**parent_meta)
             return ret
         else:
             m = MetadataCatalog._NAME_TO_META[name] = Metadata(name=name)

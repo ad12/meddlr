@@ -1,6 +1,7 @@
-"""CfgNode implementation adapted from Detectron2.
+"""CfgNode implementation.
 
-Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+Adapted from
+https://github.com/facebookresearch/detectron2
 """
 import functools
 import inspect
@@ -122,7 +123,7 @@ def get_cfg() -> CfgNode:
     Get a copy of the default config.
 
     Returns:
-        a detectron2 CfgNode instance.
+        a meddlr CfgNode instance.
     """
     from .defaults import _C
 
@@ -151,7 +152,7 @@ def set_global_cfg(cfg: CfgNode) -> None:
 
     .. code-block:: python
 
-        from detectron2.config import global_cfg
+        from meddlr.config import global_cfg
         print(global_cfg.KEY)
 
     By using a hacky global config, you can access these configs anywhere,

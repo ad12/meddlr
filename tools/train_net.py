@@ -9,7 +9,7 @@ this script contains logic that are specific to these built-in models and
 therefore may not be suitable for your own project.
 For example, your research project perhaps only needs a single "evaluator".
 
-Therefore, we recommend you to use detectron2 as an library and take
+Therefore, we recommend you to use meddlr as an library and take
 this file as an example of how to use the library.
 You may want to write your own script with your datasets and other
 customizations.

@@ -1,4 +1,7 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""
+Adapted from
+https://github.com/facebookresearch/detectron2
+"""
 import importlib
 import os
 import re
@@ -25,11 +28,6 @@ def collect_torch_env():
         from torch.utils.collect_env import get_pretty_env_info
 
         return get_pretty_env_info()
-
-
-def get_env_module():
-    var_name = "DETECTRON2_ENV_MODULE"
-    return var_name, os.environ.get(var_name, "<not set>")
 
 
 def detect_compute_compatibility(CUDA_HOME, so_file):
@@ -61,7 +59,6 @@ def collect_env_info():
     data.append(("Python", sys.version.replace("\n", "")))
     data.append(("numpy", np.__version__))
 
-    data.append(get_env_module())
     data.append(("PyTorch", torch.__version__ + " @" + os.path.dirname(torch.__file__)))
     data.append(("PyTorch debug build", torch.version.debug))
 
@@ -74,7 +71,7 @@ def collect_env_info():
             data.append(("GPU " + ",".join(devids), name))
 
         # NOTE: the use of CUDA_HOME requires the CUDA build deps, though in
-        # theory detectron2 should be made runnable with only the CUDA runtime
+        # theory meddlr should be made runnable with only the CUDA runtime
         from torch.utils.cpp_extension import CUDA_HOME
 
         data.append(("CUDA_HOME", str(CUDA_HOME)))

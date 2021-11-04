@@ -1,7 +1,9 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
 This file contains primitives for multi-gpu communication.
 This is useful when doing distributed training.
+
+This file was adapted from Facebook's detectron2.
+https://github.com/facebookresearch/detectron2
 """
 import functools
 import logging

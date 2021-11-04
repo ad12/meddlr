@@ -48,12 +48,6 @@ class SemSegEvaluator(ScanEvaluator):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
-                It must have either the following corresponding metadata:
-
-                    "json_file": the path to the COCO format annotation
-
-                Or it must be in detectron2's standard dataset format
-                so it can be converted to COCO format automatically.
             cfg (CfgNode): config instance
             output_dir (str): optional, an output directory to dump all
                 results predicted on the dataset. The dump contains two files:

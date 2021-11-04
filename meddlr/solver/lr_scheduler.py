@@ -1,4 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import math
 from bisect import bisect_right
 from typing import List
@@ -9,9 +8,6 @@ import torch
 # only on epoch boundaries. We typically use iteration based schedules instead.
 # As a result, "epoch" (e.g., as in self.last_epoch) should be understood to
 # mean "iteration" instead.
-
-# FIXME: ideally this would be achieved with a CombinedLRScheduler, separating
-# MultiStepLR with WarmupLR but the current LRScheduler design doesn't allow it.
 
 
 class NoOpLR(torch.optim.lr_scheduler._LRScheduler):
@@ -27,6 +23,12 @@ class NoOpLR(torch.optim.lr_scheduler._LRScheduler):
 
 
 class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
+    """
+
+    Adapted from
+    https://github.com/facebookresearch/detectron2
+    """
+
     def __init__(
         self,
         optimizer: torch.optim.Optimizer,
@@ -72,6 +74,10 @@ class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
         warmup_method: str = "linear",
         last_epoch: int = -1,
     ):
+        """
+        Adapted from
+        https://github.com/facebookresearch/detectron2
+        """
         self.max_iters = max_iters
         self.warmup_factor = warmup_factor
         self.warmup_iters = warmup_iters

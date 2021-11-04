@@ -1,4 +1,8 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""Logger utility functions.
+
+This file was adapted from Facebook's detectron2.
+https://github.com/facebookresearch/detectron2
+"""
 import functools
 import logging
 import os
@@ -35,7 +39,9 @@ class _ColorfulFormatter(logging.Formatter):
 @functools.lru_cache()
 def setup_logger(output=None, distributed_rank=0, *, color=True, name="meddlr", abbrev_name=None):
     """
-    Initialize the detectron2 logger and set its verbosity level to "INFO".
+    Initialize loggers for different modules.
+
+    By default, the logger of the module will be set to logging.DEBUG level.
 
     Args:
         output (str): a file name or a directory to save log. If None, will not
@@ -46,7 +52,7 @@ def setup_logger(output=None, distributed_rank=0, *, color=True, name="meddlr", 
         abbrev_name (str): an abbreviation of the module, to avoid long names
             in logs.
             Set to "" to not log the root module in logs.
-            By default, will abbreviate "detectron2" to "d2" and leave other
+            By default, will abbreviate "meddlr" to "mr" and leave other
             modules unchanged.
 
     Returns:

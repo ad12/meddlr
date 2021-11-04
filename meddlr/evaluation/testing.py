@@ -12,9 +12,7 @@ import torch
 
 
 def print_csv_format(results):
-    """
-    Print main metrics in a format similar to Detectron,
-    so that they are easy to copypaste into a spreadsheet.
+    """Print metrics for easy copypaste.
 
     Args:
         results (OrderedDict[dict]): task_name -> {metric -> score}

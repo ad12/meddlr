@@ -1,4 +1,8 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""Event utilities.
+
+This file was adapted from Facebook's detectron2.
+https://github.com/facebookresearch/detectron2
+"""
 import datetime
 import json
 import logging

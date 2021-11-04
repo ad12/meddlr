@@ -298,10 +298,6 @@ _C.SOLVER.CHECKPOINT_PERIOD = 1
 _C.SOLVER.TRAIN_BATCH_SIZE = 16
 _C.SOLVER.TEST_BATCH_SIZE = 16
 
-# Detectron v1 (and previous detection code) used a 2x higher LR and 0 WD for
-# biases. This is not useful (at least for recent models). You should avoid
-# changing these and they exist only to reproduce Detectron v1 training if
-# desired.
 _C.SOLVER.BIAS_LR_FACTOR = 1.0
 _C.SOLVER.WEIGHT_DECAY_BIAS = _C.SOLVER.WEIGHT_DECAY
 

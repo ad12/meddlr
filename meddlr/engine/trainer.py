@@ -165,7 +165,7 @@ class DefaultTrainer(SimpleTrainer):
     this file, is not stable, since it is meant to represent the
     "common default behavior".
     It is only guaranteed to work well with the standard models and training
-    workflow in detectron2.
+    workflow in meddlr.
     To obtain more stable behavior, write your own training logic with other
     public APIs.
 
@@ -365,7 +365,7 @@ class DefaultTrainer(SimpleTrainer):
         Returns:
             torch.nn.Module:
 
-        It now calls :func:`detectron2.modeling.build_model`.
+        It now calls :func:`meddlr.modeling.build_model`.
         Overwrite it if you'd like a different model.
         """
         model = build_model(cfg)
@@ -392,7 +392,7 @@ class DefaultTrainer(SimpleTrainer):
         Returns:
             torch.optim.Optimizer:
 
-        It now calls :func:`detectron2.solver.build_optimizer`.
+        It now calls :func:`meddlr.solver.build_optimizer`.
         Overwrite it if you'd like a different optimizer.
         """
         return build_optimizer(cfg, model)
@@ -400,7 +400,7 @@ class DefaultTrainer(SimpleTrainer):
     @classmethod
     def build_lr_scheduler(cls, cfg, optimizer):
         """
-        It now calls :func:`detectron2.solver.build_lr_scheduler`.
+        It now calls :func:`meddlr.solver.build_lr_scheduler`.
         Overwrite it if you'd like a different scheduler.
         """
         return build_lr_scheduler(cfg, optimizer)
@@ -411,7 +411,7 @@ class DefaultTrainer(SimpleTrainer):
         Returns:
             iterable
 
-        It now calls :func:`detectron2.data.build_detection_train_loader`.
+        It now calls :func:`meddlr.data.build_recon_train_loader`.
         Overwrite it if you'd like a different data loader.
         """
         return build_recon_train_loader(cfg)
@@ -422,7 +422,7 @@ class DefaultTrainer(SimpleTrainer):
         Returns:
             iterable
 
-        It now calls :func:`detectron2.data.build_detection_test_loader`.
+        It now calls :func:`meddlr.data.build_recon_val_loader`.
         Overwrite it if you'd like a different data loader.
         """
         if is_val:

@@ -1,5 +1,8 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""Training hooks/callbacks.
+
+Adapted from
+https://github.com/facebookresearch/detectron2
+"""
 
 import datetime
 import logging
@@ -184,7 +187,7 @@ class PeriodicWriter(HookBase):
 
 class PeriodicCheckpointer(_PeriodicCheckpointer, HookBase):
     """
-    Same as :class:`detectron2.checkpoint.PeriodicCheckpointer`, but as a hook.
+    Same as :class:`meddlr.checkpoint.PeriodicCheckpointer`, but as a hook.
 
     Note that when used as a hook,
     it is unable to save additional data other than what's defined

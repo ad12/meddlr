@@ -1,4 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
 Backward compatibility of configs.
 
@@ -20,6 +19,9 @@ Instructions to bump version:
       (i.e., the input is not a partial config).
     3. Run the tests (test_config.py) to make sure the upgrade & downgrade
        functions are consistent.
+
+Adapted from
+https://github.com/facebookresearch/detectron2
 """
 
 import logging

@@ -1,5 +1,8 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""Training loop.
+
+Adapted from
+https://github.com/facebookresearch/detectron2
+"""
 
 import logging
 import time

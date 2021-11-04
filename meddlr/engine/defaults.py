@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""Default setup in meddlr.
 
-"""
 This file contains components with some default boilerplate logic user may need
 in training / testing. They will not work for everyone, but many users may find
 them useful.
