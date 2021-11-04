@@ -1,8 +1,6 @@
 import os
 import unittest
 
-import torch
-
 from meddlr.utils import env
 
 
@@ -31,7 +29,7 @@ class TestEnvVariables(unittest.TestCase):
     def test_supports_cplx_tensors(self):
         env_var = "MEDDLR_ENABLE_CPLX_TENSORS"
         orig_val = os.environ.get(env_var, "")
-        is_pt17 = [int(x) for x in torch.__version__.split(".")] >= [1, 7]
+        is_pt17 = env.pt_version() >= [1, 7]
 
         # auto
         os.environ[env_var] = "auto"
@@ -42,7 +40,7 @@ class TestEnvVariables(unittest.TestCase):
 
         # True
         os.environ[env_var] = "True"
-        is_pt16 = [int(x) for x in torch.__version__.split(".")] >= [1, 6]
+        is_pt16 = env.pt_version() >= [1, 6]
         if is_pt17:
             assert env.supports_cplx_tensor()
         elif is_pt16:
