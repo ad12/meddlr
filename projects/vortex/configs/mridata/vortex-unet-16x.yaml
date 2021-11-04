@@ -1,0 +1,61 @@
+DESCRIPTION:
+  BRIEF: VORTEX trained with 1 supervised scan, and 5 unsupervised scans at 16x acceleration from 3D FSE mridata knee dataset
+  EXP_NAME: mridata/vortex/unet_16x
+  PROJECT_NAME: vortex
+  TAGS: ("mridata_knee_2019", "unet", "16x", "vortex")
+OUTPUT_DIR: "results://vortex/mridata/vortex/unet_16x"
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "PoissonDiskMaskFunc"
+    ACCELERATIONS: (16,)
+    CALIBRATION_SIZE: 20
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+DATALOADER:
+  NUM_WORKERS: 8
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 6  # Number of total scans to use
+    NUM_UNDERSAMPLED: 5  # Number of undersampled scans to use
+  SAMPLER_TRAIN: "AlternatingSampler"  # Choices: ["", "AlternatingSampler"]
+  ALT_SAMPLER:
+    PERIOD_SUPERVISED: 1
+    PERIOD_UNSUPERVISED: 1
+MODEL:
+  META_ARCHITECTURE: "VortexModel"
+  UNET:
+    CHANNELS: 32
+    DROPOUT: 0.0
+    IN_CHANNELS: 2
+    NUM_POOL_LAYERS: 4
+    OUT_CHANNELS: 2
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+  A2R:
+    META_ARCHITECTURE: "UnetModel"
+  CONSISTENCY:
+    AUG:
+      MRI_RECON:
+        TRANSFORMS: ()  # TODO: This must be filled in
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: ""
+  TRAIN_BATCH_SIZE: 24
+  TEST_BATCH_SIZE: 24
+  CHECKPOINT_PERIOD: -10
+  MAX_ITER: -200
+  BASE_LR: 0.001
+  STEPS: ()
+TEST:
+  EVAL_PERIOD: -10
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim_old", "ssim (Wang)")
+TIME_SCALE: "iter"
+SEED: 1000
+VIS_PERIOD: 100
+VERSION: 1

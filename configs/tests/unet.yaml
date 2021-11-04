@@ -1,0 +1,15 @@
+# Configuration for DL-CS Paper
+_BASE_: "basic.yaml"
+MODEL:
+  META_ARCHITECTURE: "UnetModel"
+  UNET:
+    IN_CHANNELS: 2
+    OUT_CHANNELS: 2
+    CHANNELS: 32
+    NUM_POOL_LAYERS: 4
+    DROPOUT: 0.
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+OUTPUT_DIR: "results://tests/u-net"
+VERSION: 1

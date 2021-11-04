@@ -36,21 +36,12 @@ jobs:
       - name: Lint with isort, black, docformatter, flake8
         run: |
           make lint
-
   Build:
-    needs: Linting
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.6", "3.7", "3.8"]
-        pytorch-version: ["latest"]
-        include:
-          - python-version: 3.7
-            pytorch-version: 1.7.1
-
-    env:
-      PYTORCH: ${{ matrix.pytorch-version }}
+        python-version: ["3.7", "3.8"]
 
     steps:
       - uses: actions/checkout@v2
@@ -63,11 +54,7 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ $PYTORCH == "latest" ]; then
-            pip install torch torchvision
-          else
-            pip install torch==$PYTORCH torchvision
-          fi
+          pip install torch torchvision
           make dev
           pip install -e '.[dev]'
 
@@ -80,6 +67,7 @@ jobs:
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
           flags: unittests
           name: codecov-umbrella

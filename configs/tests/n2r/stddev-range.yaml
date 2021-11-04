@@ -1,0 +1,15 @@
+# N2R standard testing config
+# The model will be trained for 60 iterations (not epochs)
+# on the mridata.org 2019 knee dataset.
+_BASE_: "standard.yaml"
+MODEL:
+  CONSISTENCY:
+    AUG:
+      NOISE:
+        STD_DEV: (0.05, 1.0)
+DESCRIPTION:
+  BRIEF: "Test using range of standard deviations for consistency"
+  EXP_NAME: "tests/n2r/stddev-range"
+  TAGS: ("tests",)
+OUTPUT_DIR: "results://tests/n2r/stddev-range"
+VERSION: 1

@@ -1,0 +1,18 @@
+{
+  "info": {
+    "contributor": "arjundd",
+    "description": "fastMRI brain_multicoil Dataset - test",
+    "year": "2020",
+    "date_created": "2020-09-30 19-26-45 PDT",
+    "version": "vtoy-dev"
+  },
+  "images": [
+    {
+      "file_name": "file_brain_AXT1PRE_203_6000631.h5",
+      "scan_id": "_brain_AXT1PRE_203_6000631",
+      "patient_id": "33e83b3da081223916e1104c55b89db8b0bfe8122049c111db39d7194ab11fa9",
+      "acquisition": "AXT1PRE",
+      "num_slices": 16
+    }
+  ]
+}
