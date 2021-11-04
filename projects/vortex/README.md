@@ -4,7 +4,7 @@
 Arjun D Desai\*, Beliz Gunel\*, Batu M Ozturkler, Harris Beg, Shreyas Vasanawala, Brian A Hargreaves, Christopher Ré, John M Pauly, and Akshay S Chaudhari.
 
 <div align="center">
-    <img src="https://drive.google.com/file/d/11ESUcZzfy4x4YGiBNqhNAXhqn4y9RWU-/view?usp=sharing" alt="Vortex Schematic" width="700px" />
+    <img src="https://drive.google.com/uc?export=view&id=11ESUcZzfy4x4YGiBNqhNAXhqn4y9RWU-" alt="Vortex Schematic" width="700px" />
 </div>
 
 This project implements VORTEX in Meddlr. This is the official project hub for VORTEX.
