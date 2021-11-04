@@ -1,0 +1,15 @@
+# Configuration for DL-CS Paper
+_BASE_: "template.yaml"
+MODEL:
+  META_ARCHITECTURE: "UnetModel"
+  UNET:
+    IN_CHANNELS: 2
+    OUT_CHANNELS: 2
+    CHANNELS: 32
+    NUM_POOL_LAYERS: 4
+    DROPOUT: 0.
+SOLVER:
+  TRAIN_BATCH_SIZE: 16
+  TEST_BATCH_SIZE: 16
+  BASE_LR: 1e-3
+OUTPUT_DIR: "results://mri-recon/mridata-3dfse-knee/unet"
