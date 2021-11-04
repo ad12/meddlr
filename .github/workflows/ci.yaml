@@ -51,8 +51,7 @@ jobs:
     
     env:
       PYTORCH: ${{ matrix.pytorch-version }}
-    
-    timeout-minutes: 50
+
     steps:
       - uses: actions/checkout@v2
             
