@@ -1,7 +1,0 @@
-# Train with all scans
-_BASE_: "template.yaml"
-DATALOADER:
-  SUBSAMPLE_TRAIN:
-    NUM_TOTAL: -1
-OUTPUT_DIR: "results://dl-recon-subsampled_acc/24x/full"
-VERSION: 1

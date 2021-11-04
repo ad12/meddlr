@@ -1,8 +1,0 @@
-# Configuration for DL-CS Paper w/ renormalizing data
-_BASE_: "dl-cs-paper.yaml"
-MODEL:
-  UNROLLED:
-    CONV_BLOCK:
-      NORM_AFFINE: True
-OUTPUT_DIR: "results://arch_search/dl-cs-paper_affine"
-VERSION: 1

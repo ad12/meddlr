@@ -1,7 +1,0 @@
-_BASE_: "unrolled_8x_feat-128.yaml"
-OUTPUT_DIR: "results://fastmri_knee_mc/preliminary/unrolled_8x_feat-128_v2"
-DESCRIPTION:
-  BRIEF: "8x unrolled network, 2 blocks, 128 channels w/ renormalization broadcast bug fix"
-  EXP_NAME: "fastmri_knee_mc/preliminary/unrolled_8x_feat-128_v2"
-  TAGS: ("fastMRI_knee_mc", "unrolled")
-VERSION: 1

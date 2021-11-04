@@ -1,7 +1,0 @@
-# Train with only 2 scans.
-_BASE_: "template.yaml"
-DATALOADER:
-  SUBSAMPLE_TRAIN:
-    NUM_TOTAL: 2
-OUTPUT_DIR: "results://dl-recon-subsampled/sub-2"
-VERSION: 1

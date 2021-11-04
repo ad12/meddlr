@@ -1,7 +1,0 @@
-# Renormalize data when computing training loss.
-_BASE_: "../../arch_search/8x_feat-128.yaml"
-MODEL:
-  RECON_LOSS:
-    RENORMALIZE_DATA: True
-OUTPUT_DIR: "results://misc-exps/renormalize/8x_feat-128_rn-train"
-VERSION: 1

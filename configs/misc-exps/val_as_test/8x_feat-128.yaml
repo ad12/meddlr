@@ -1,6 +1,0 @@
-# Run validation with fixed undersampling masks.
-_BASE_: "../../arch_search/8x_feat-128.yaml"
-TEST:
-  VAL_AS_TEST: True
-OUTPUT_DIR: "results://misc-exps/val_as_test/8x_feat-128"
-VERSION: 1
