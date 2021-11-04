@@ -78,7 +78,8 @@ def get_version():
 # ---------------------------------------------------
 NAME = "meddlr"
 DESCRIPTION = (
-    "Meddlr is a framework for experimenting with medical image reconstruction and analysis"
+    "Meddlr is a config-driven framework built to simplify ML-based "
+    "medical image reconstruction and analysis."
 )
 VERSION = get_version()
 AUTHOR = "The Meddlr Team"
@@ -132,8 +133,9 @@ setup(
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        "Programming Language :: Python",
         "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     # $ setup.py publish support.

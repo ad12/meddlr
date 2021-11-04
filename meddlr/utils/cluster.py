@@ -111,7 +111,7 @@ class Cluster:
     @property
     def cache_dir(self):
         path = self._cache_dir
-        path = os.environ.get("MEDDLR_CACHE_DIR", path if path else "./cache")
+        path = os.environ.get("MEDDLR_CACHE_DIR", path if path else "~/cache/meddl")
         return PathManager.get_local_path(path)
 
     def __getattr__(self, attr: str):
@@ -294,6 +294,8 @@ class AnnotationsHandler(GeneralPathHandler):
     PREFIX = "ann://"
 
     def _root_dir(self):
+        # TODO: Support downloading annotations on the fly
+        # when library is pip installed.
         return os.path.abspath(os.path.join(_REPO_DIR, "annotations"))
 
 
