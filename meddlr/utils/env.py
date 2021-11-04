@@ -224,6 +224,7 @@ def supports_cupy():
 
 def pt_version(dtype=int) -> List:
     version = list(_PT_VERSION.split("."))
+    version[-1] = version[-1].split("+")[0]
     if not issubclass(dtype, str):
         version = [dtype(x) for x in version]
     return version
