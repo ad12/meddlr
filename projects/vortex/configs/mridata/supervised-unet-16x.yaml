@@ -1,0 +1,51 @@
+DESCRIPTION:
+  BRIEF: Superivsed baseline trained with 1 supervised scan at 16x acceleration from 3D FSE mridata knee dataset
+  EXP_NAME: mridata/supervised-baseline/unet_16x
+  PROJECT_NAME: vortex
+  TAGS: ("mridata_knee_2019", "unet", "16x", "supervised", "baseline")
+OUTPUT_DIR: "results://vortex/mridata/supervised-baseline/unet-16x"
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "PoissonDiskMaskFunc"
+    ACCELERATIONS: (16,)
+    CALIBRATION_SIZE: 20
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+DATALOADER:
+  NUM_WORKERS: 8
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 1  # Number of total scans to use
+    NUM_UNDERSAMPLED: 0  # Undersampled scans cannot be used for supervised training
+MODEL:
+  META_ARCHITECTURE: "UnetModel"
+  UNET:
+    CHANNELS: 32
+    DROPOUT: 0.0
+    IN_CHANNELS: 2
+    NUM_POOL_LAYERS: 4
+    OUT_CHANNELS: 2
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: ""
+  TRAIN_BATCH_SIZE: 24
+  TEST_BATCH_SIZE: 24
+  CHECKPOINT_PERIOD: -10
+  MAX_ITER: -200
+  BASE_LR: 0.001
+  STEPS: ()
+TEST:
+  EVAL_PERIOD: -10
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim_old", "ssim (Wang)")
+TIME_SCALE: "iter"
+SEED: 1000
+VIS_PERIOD: 400
+VERSION: 1

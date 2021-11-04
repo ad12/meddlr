@@ -30,6 +30,9 @@ make dev
 ### Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
+### Acknowledgements
+Meddlr's design for rapid experimentation and benchmarking is inspired by [detectron2](https://github.com/facebookresearch/detectron2).
+
 ### About
 If you use Meddlr for your work, please consider citing the following work:
 
