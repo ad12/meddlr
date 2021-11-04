@@ -18,14 +18,14 @@ def one_hot_to_categorical(pred, channel_dim: int = 1, background=False):
         background: If ``True``, assumes first channel is the background.
 
     Returns:
-        out: Categorical array or tensor. If ``includes_background=False``, the output
-            will be 1-indexed such that 0 corresponds to the background.
+        torch.Tensor | np.ndarray: Categorical array or tensor. If ``background=False``,
+            the output will be 1-indexed such that ``0`` corresponds to the background.
     """
     is_ndarray = isinstance(pred, np.ndarray)
     if is_ndarray:
         pred = torch.as_tensor(pred)
 
-    if background:
+    if background is not None and background is not False:
         out = torch.argmax(pred, channel_dim)
     else:
         out = torch.argmax(pred.type(torch.long), dim=channel_dim) + 1
@@ -76,10 +76,15 @@ def logits_to_prob(logits, activation, channel_dim: int = 1):
     is_ndarray = isinstance(logits, np.ndarray)
     if is_ndarray:
         logits = torch.from_numpy(logits)
+
     if activation == "sigmoid":
-        return torch.sigmoid(logits)
+        out = torch.sigmoid(logits)
     elif activation == "softmax":
-        return F.softmax(logits, dim=channel_dim)
+        out = F.softmax(logits, dim=channel_dim)
+
+    if is_ndarray:
+        out = out.numpy()
+    return out
 
 
 def pred_to_categorical(pred_or_logits, activation, channel_dim: int = 1, threshold: float = 0.5):
