@@ -5,10 +5,10 @@ TCallable = TypeVar("TCallable", bound=Callable[..., Any])
 
 
 def deprecated(
-    reason=None, vdeprecated=None, vremoved=None, replacement=None
+    reason=None, vdeprecated=None, vremove=None, replacement=None
 ) -> Callable[[TCallable], TCallable]:
     def fn(func: TCallable) -> TCallable:
-        msg = _get_deprecated_msg(func, reason, vdeprecated, vremoved, replacement)
+        msg = _get_deprecated_msg(func, reason, vdeprecated, vremove, replacement)
         warnings.warn(msg, DeprecationWarning)
         return func
 
@@ -26,7 +26,7 @@ def _get_deprecated_msg(wrapped, reason, vdeprecated, vremoved, replacement=None
     if reason:
         fmt += " ({reason})"
     if replacement:
-        fmt += " -- Use {replacement} instead."
+        fmt += " -- Use meddlr.{replacement} instead."
 
     return fmt.format(
         name=wrapped.__name__,

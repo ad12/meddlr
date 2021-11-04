@@ -70,6 +70,5 @@ class Registry(_Registry):
 
     def __repr__(self) -> str:
         metadata = [v for v in self._metadata_map.values() if not v.get("is_alias", False)]
-        metadata = sorted(metadata, key=lambda x: x["name"])
         table = tabulate(metadata, headers="keys", tablefmt="fancy_grid")
         return "Registry of {}:\n{}".format(self._name, table)

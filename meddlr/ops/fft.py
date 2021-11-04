@@ -77,8 +77,6 @@ def ifftnc(input: torch.Tensor, dim=None, norm="ortho", is_real: bool = None) ->
 def fftc(input: torch.Tensor, norm: str = "ortho", is_real: bool = None, channels_last=False):
     """Apply 1D centered Fast Fourier Transform (FFT).
 
-
-
     Args:
         input (torch.Tensor): A tensor.
         norm (str | bool, optional): The normalization method.

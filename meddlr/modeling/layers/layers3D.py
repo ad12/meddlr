@@ -1,8 +1,5 @@
 """
-Implementations of different CNNs
-
-by Christopher M. Sandino (sandino@stanford.edu), 2019.
-
+Implementations of different CNNs.
 """
 
 from torch import nn

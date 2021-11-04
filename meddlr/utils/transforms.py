@@ -12,7 +12,7 @@ if env.pt_version() >= [1, 6]:
     import torch.fft
 
 
-@deprecated(vremoved="0.1.0", replacement="forward.SenseModel")
+@deprecated(vremove="0.1.0", replacement="forward.SenseModel")
 class SenseModel(nn.Module):
     """
     A module that computes forward and adjoint SENSE operations.
@@ -99,7 +99,7 @@ class SenseModel(nn.Module):
         return output
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.fft2c")
+@deprecated(vremove="0.1.0", replacement="ops.fft2c")
 def fft2(data):
     """
     Apply centered 2 dimensional Fast Fourier Transform.
@@ -146,7 +146,7 @@ def fft2(data):
     return data
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.ifft2c")
+@deprecated(vremove="0.1.0", replacement="ops.ifft2c")
 def ifft2(data):
     """
     Apply centered 2-dimensional Inverse Fast Fourier Transform.
@@ -192,7 +192,7 @@ def ifft2(data):
     return data
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.complex.rss")
+@deprecated(vremove="0.1.0", replacement="ops.complex.rss")
 def root_sum_of_squares(x, dim=0):
     """
     Compute the root sum-of-squares (RSS) transform along a given dimension of
@@ -202,7 +202,7 @@ def root_sum_of_squares(x, dim=0):
     return torch.sqrt((x ** 2).sum(dim=-1).sum(dim))
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.time_average")
+@deprecated(vremove="0.1.0", replacement="ops.time_average")
 def time_average(data, dim, eps=1e-6, keepdim=True):
     """
     Computes time average across a specified axis.
@@ -210,7 +210,7 @@ def time_average(data, dim, eps=1e-6, keepdim=True):
     return oF.time_average(data, dim, eps=eps, keepdim=keepdim)
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.sliding_window")
+@deprecated(vremove="0.1.0", replacement="ops.sliding_window")
 def sliding_window(data, dim, window_size):
     """
     Computes sliding window with circular boundary conditions across a specified
@@ -219,7 +219,7 @@ def sliding_window(data, dim, window_size):
     return oF.sliding_window(data, dim, window_size)
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.center_crop")
+@deprecated(vremove="0.1.0", replacement="ops.center_crop")
 def center_crop(data, shape):
     """
     Apply a center crop to a batch of images.
@@ -231,7 +231,7 @@ def center_crop(data, shape):
     return oF.center_crop(data, shape)
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.complex.complex_center_crop_2d")
+@deprecated(vremove="0.1.0", replacement="ops.complex.complex_center_crop_2d")
 def complex_center_crop_2d(data, shape):
     """
     Apply a center crop to the input image or batch of complex images.
@@ -253,7 +253,7 @@ def complex_center_crop_2d(data, shape):
     return data[..., w_from:w_to, h_from:h_to, :]
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.normalize")
+@deprecated(vremove="0.1.0", replacement="ops.normalize")
 def normalize(data, mean, stddev, eps=0.0):
     """
     Normalize the given tensor using:
@@ -269,7 +269,7 @@ def normalize(data, mean, stddev, eps=0.0):
     return (data - mean) / (stddev + eps)
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.normalize_instance")
+@deprecated(vremove="0.1.0", replacement="ops.normalize_instance")
 def normalize_instance(data, eps=0.0):
     """
     Normalize the given tensor using:
@@ -289,7 +289,7 @@ def normalize_instance(data, eps=0.0):
 # Helper functions
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.complex.center_crop")
+@deprecated(vremove="0.1.0", replacement="ops.complex.center_crop")
 def roll(x, shift, dim):
     """
     Similar to np.roll but applies to PyTorch Tensors
@@ -297,7 +297,7 @@ def roll(x, shift, dim):
     return oF.roll(x, shift, dim)
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.fftshift")
+@deprecated(vremove="0.1.0", replacement="ops.fftshift")
 def fftshift(x, dim=None):
     """
     Similar to np.fft.fftshift but applies to PyTorch Tensors
@@ -305,7 +305,7 @@ def fftshift(x, dim=None):
     return oF.fftshift(x, dim=dim)
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.ifftshift")
+@deprecated(vremove="0.1.0", replacement="ops.ifftshift")
 def ifftshift(x, dim=None):
     """
     Similar to np.fft.ifftshift but applies to PyTorch Tensors
@@ -313,7 +313,7 @@ def ifftshift(x, dim=None):
     return oF.ifftshift(x, dim=dim)
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.pad")
+@deprecated(vremove="0.1.0", replacement="ops.pad")
 def pad(x: torch.Tensor, shape: Sequence[int], mode="constant", value=0):
     """
     Args:
@@ -324,6 +324,6 @@ def pad(x: torch.Tensor, shape: Sequence[int], mode="constant", value=0):
     return oF.pad(x, shape, mode=mode, value=value)
 
 
-@deprecated(vremoved="0.1.0", replacement="ops.zero_pad")
+@deprecated(vremove="0.1.0", replacement="ops.zero_pad")
 def zero_pad(x: torch.Tensor, shape: Sequence[int]):
     return oF.zero_pad(x, shape)

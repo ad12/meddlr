@@ -85,10 +85,10 @@ class GaussianBlur(nn.Module):
         - Input: :math:`(B, C, H, W)`
         - Output: :math:`(B, C, H, W)`
 
-    Examples::
+    Examples:
 
         >>> input = torch.rand(2, 4, 5, 5)
-        >>> gauss = medsegpy.layers.GaussianBlur((3, 3), (1.5, 1.5))
+        >>> gauss = GaussianBlur((3, 3), (1.5, 1.5))
         >>> output = gauss(input)  # 2x4x5x5
     """
 
