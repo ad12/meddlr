@@ -12,7 +12,7 @@ from meddlr.utils.general import move_to_device
 from meddlr.utils.transforms import SenseModel
 
 from ..layers.layers2D import ResNet
-from .build import META_ARCH_REGISTRY
+from .build import META_ARCH_REGISTRY, build_model
 
 __all__ = ["GeneralizedUnrolledCNN"]
 
@@ -126,7 +126,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         if vis_training and not self.training:
             raise ValueError("vis_training is only applicable in training mode.")
         # Need to fetch device at runtime for proper data transfer.
-        device = self.resnets[0].final_layer.weight.device
+        device = next(self.resnets[0].parameters()).device
         inputs = move_to_device(inputs, device)
         kspace = inputs["kspace"]
         target = inputs.get("target", None)
@@ -173,9 +173,14 @@ class GeneralizedUnrolledCNN(nn.Module):
 
             # prox update
             image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(0, 3, 1, 2)
-            image = resnet(image)
+            if hasattr(resnet, "base_forward") and callable(resnet.base_forward):
+                image = resnet.base_forward(image)
+            else:
+                image = resnet(image)
 
             image = image.permute(0, 2, 3, 1).reshape(dims[0:3] + (self.num_emaps, 2))
+            if not image.is_contiguous():
+                image = image.contiguous()
             if use_cplx:
                 image = torch.view_as_complex(image)
 
@@ -202,37 +207,27 @@ class GeneralizedUnrolledCNN(nn.Module):
         """
         # Extract network parameters
         num_grad_steps = cfg.MODEL.UNROLLED.NUM_UNROLLED_STEPS
-        num_resblocks = cfg.MODEL.UNROLLED.NUM_RESBLOCKS
-        num_features = cfg.MODEL.UNROLLED.NUM_FEATURES
-        kernel_size = cfg.MODEL.UNROLLED.KERNEL_SIZE
-        if len(kernel_size) == 1:
-            kernel_size = kernel_size[0]
-        drop_prob = cfg.MODEL.UNROLLED.DROPOUT
-        circular_pad = cfg.MODEL.UNROLLED.PADDING == "circular"
         share_weights = cfg.MODEL.UNROLLED.SHARE_WEIGHTS
 
         # Data dimensions
         num_emaps = cfg.MODEL.UNROLLED.NUM_EMAPS
 
-        # ResNet parameters
-        resnet_params = dict(
-            num_resblocks=num_resblocks,
-            in_chans=2 * num_emaps,
-            chans=num_features,
-            kernel_size=kernel_size,
-            drop_prob=drop_prob,
-            circular_pad=circular_pad,
-            act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
-            norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
-            norm_affine=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE,
-            order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
-        )
+        # Determine block to use for each unrolled step.
+        if cfg.MODEL.UNROLLED.BLOCK_ARCHITECTURE == "ResNet":
+            builder = lambda: _build_resblock(cfg)  # noqa: E731
+        else:
+            # TODO: Fix any inconsistencies between config's IN_CHANNELS
+            # and the number of channels that the unrolled net expects.
+            mcfg = cfg.clone().defrost()
+            mcfg.MODEL.META_ARCHITECTURE = cfg.MODEL.UNROLLED.BLOCK_ARCHITECTURE
+            mcfg = mcfg.freeze()
+            builder = lambda: build_model(mcfg)  # noqa: E731
 
         # Declare ResNets and RNNs for each unrolled iteration
         if share_weights:
-            blocks = nn.ModuleList([ResNet(**resnet_params)] * num_grad_steps)
+            blocks = nn.ModuleList([builder()] * num_grad_steps)
         else:
-            blocks = nn.ModuleList([ResNet(**resnet_params) for _ in range(num_grad_steps)])
+            blocks = nn.ModuleList([builder() for _ in range(num_grad_steps)])
 
         return {
             "blocks": blocks,
@@ -240,3 +235,37 @@ class GeneralizedUnrolledCNN(nn.Module):
             "num_emaps": num_emaps,
             "vis_period": cfg.VIS_PERIOD,
         }
+
+
+def _build_resblock(cfg):
+    """Build the resblock for unrolled network.
+
+    Args:
+        cfg (CfgNode): The network configuration.
+
+    Note:
+        This is a temporary method used as a base case for building
+        unrolled networks with the default resblocks. In the future,
+        this will be handled by :func:`meddlr.modeling.meta_arch.build_model`.
+    """
+    # Data dimensions
+    num_emaps = cfg.MODEL.UNROLLED.NUM_EMAPS
+
+    # ResNet parameters
+    kernel_size = cfg.MODEL.UNROLLED.KERNEL_SIZE
+    if len(kernel_size) == 1:
+        kernel_size = kernel_size[0]
+    resnet_params = dict(
+        num_resblocks=cfg.MODEL.UNROLLED.NUM_RESBLOCKS,
+        in_chans=2 * num_emaps,  # complex -> real/imag
+        chans=cfg.MODEL.UNROLLED.NUM_FEATURES,
+        kernel_size=kernel_size,
+        drop_prob=cfg.MODEL.UNROLLED.DROPOUT,
+        circular_pad=cfg.MODEL.UNROLLED.PADDING == "circular",
+        act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
+        norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
+        norm_affine=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE,
+        order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
+    )
+
+    return ResNet(**resnet_params)

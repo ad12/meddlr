@@ -34,6 +34,7 @@ _C.MODEL.WEIGHTS = ""
 # Unrolled model - TODO: Deprecate
 # -----------------------------------------------------------------------------
 _C.MODEL.UNROLLED = CN()
+_C.MODEL.UNROLLED.BLOCK_ARCHITECTURE = "ResNet"
 _C.MODEL.UNROLLED.NUM_UNROLLED_STEPS = 5
 _C.MODEL.UNROLLED.NUM_RESBLOCKS = 2
 _C.MODEL.UNROLLED.NUM_FEATURES = 256
@@ -112,6 +113,7 @@ _C.MODEL.UNET.IN_CHANNELS = 2
 _C.MODEL.UNET.CHANNELS = 32
 _C.MODEL.UNET.NUM_POOL_LAYERS = 4
 _C.MODEL.UNET.DROPOUT = 0.0
+_C.MODEL.UNET.NORMALIZE = False
 
 # -----------------------------------------------------------------------------
 # Denoising model
