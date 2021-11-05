@@ -2,6 +2,7 @@ import inspect
 import os
 from typing import Sequence
 
+import numba as nb
 import numpy as np
 import sigpy.mri
 import torch
@@ -120,15 +121,19 @@ class PoissonDiskMaskFunc(CacheableMaskMixin, MaskFunc):
         center_fractions=None,
         max_attempts=30,
         crop_corner=True,
+        module="internal",
     ):
         if center_fractions:
             raise ValueError(f"center_fractions not yet supported for class {type(self)}.")
+        if module not in ("internal", "sigpy"):
+            raise ValueError("`module` must be one of ('internal', 'sigpy')")
         super().__init__(accelerations)
         if isinstance(calib_size, int):
             calib_size = (calib_size, calib_size)
         self.calib_size = calib_size
         self.max_attempts = max_attempts
         self.crop_corner = crop_corner
+        self.module = module
 
     def __call__(self, out_shape, seed=None, acceleration=None):
         # Design parameters for mask
@@ -146,15 +151,30 @@ class PoissonDiskMaskFunc(CacheableMaskMixin, MaskFunc):
             shape = (nky, nkz)
             transpose = False
 
-        mask = sigpy.mri.poisson(
-            shape,
-            acceleration,
-            calib=self.calib_size,
-            dtype=np.float32,
-            seed=seed,
-            max_attempts=self.max_attempts,
-            crop_corner=self.crop_corner,
-        )
+        # Issue #2: Due to some optimization reasons, using the internal
+        # poisson disc module has been faster than using sigpy's
+        # default one. In many cases, the call to sigpy hangs.
+        module = self.module
+        if module == "internal":
+            mask = poisson(
+                shape,
+                acceleration,
+                calib=self.calib_size,
+                dtype=np.float32,
+                seed=seed,
+                K=self.max_attempts,
+                crop_corner=self.crop_corner,
+            )
+        elif module == "sigpy":
+            mask = sigpy.mri.poisson(
+                shape,
+                acceleration,
+                calib=self.calib_size,
+                dtype=np.float32,
+                seed=seed,
+                max_attempts=self.max_attempts,
+                crop_corner=self.crop_corner,
+            )
         if transpose:
             mask = mask.transpose()
 
@@ -306,3 +326,151 @@ class MaskLoader(MaskFunc):
 
         mask = mask.reshape(out_shape)
         return torch.from_numpy(mask)
+
+
+# ================================================================ #
+# Adapted from sigpy.
+# Duplicated because of https://github.com/mikgroup/sigpy/issues/54
+# TODO: Remove once https://github.com/mikgroup/sigpy/issues/54 is
+# solved and added to release.
+# ================================================================ #
+def poisson(
+    img_shape,
+    accel,
+    K=30,
+    calib=(0, 0),
+    dtype=np.complex,
+    crop_corner=True,
+    return_density=False,
+    seed=0,
+):
+    """Generate Poisson-disc sampling pattern
+
+    Args:
+        img_shape (tuple of ints): length-2 image shape.
+        accel (float): Target acceleration factor. Greater than 1.
+        K (float): maximum number of samples to reject.
+        calib (tuple of ints): length-2 calibration shape.
+        dtype (Dtype): data type.
+        crop_corner (bool): Toggle whether to crop sampling corners.
+        return_density (bool): Toggle whether to return sampling density.
+        seed (int): Random seed.
+
+    Returns:
+        array: Poisson-disc sampling mask.
+
+    References:
+        Bridson, Robert. "Fast Poisson disk sampling in arbitrary dimensions."
+        SIGGRAPH sketches. 2007.
+
+    """
+    y, x = np.mgrid[: img_shape[-2], : img_shape[-1]]
+    x = np.maximum(abs(x - img_shape[-1] / 2) - calib[-1] / 2, 0)
+    x /= x.max()
+    y = np.maximum(abs(y - img_shape[-2] / 2) - calib[-2] / 2, 0)
+    y /= y.max()
+    r = np.sqrt(x ** 2 + y ** 2)
+
+    slope_max = 40
+    slope_min = 0
+    if seed is not None:
+        rand_state = np.random.get_state()
+    else:
+        seed = -1  # numba does not play nicely with None types
+    while slope_min < slope_max:
+        slope = (slope_max + slope_min) / 2.0
+        R = 1.0 + r * slope
+        mask = _poisson(img_shape[-1], img_shape[-2], K, R, calib, seed)
+        if crop_corner:
+            mask *= r < 1
+
+        est_accel = img_shape[-1] * img_shape[-2] / np.sum(mask[:])
+
+        if abs(est_accel - accel) < 0.1:
+            break
+        if est_accel < accel:
+            slope_min = slope
+        else:
+            slope_max = slope
+
+    if seed is not None and seed > 0:
+        np.random.set_state(rand_state)
+    mask = mask.reshape(img_shape).astype(dtype)
+    if return_density:
+        return mask, r
+    else:
+        return mask
+
+
+@nb.jit(nopython=True, cache=True)  # pragma: no cover
+def _poisson(nx, ny, K, R, calib, seed=None):
+
+    mask = np.zeros((ny, nx))
+    f = ny / nx
+
+    if seed is not None and seed > 0:
+        np.random.seed(int(seed))
+
+    pxs = np.empty(nx * ny, np.int32)
+    pys = np.empty(nx * ny, np.int32)
+    pxs[0] = np.random.randint(0, nx)
+    pys[0] = np.random.randint(0, ny)
+    m = 1
+    while m > 0:
+
+        i = np.random.randint(0, m)
+        px = pxs[i]
+        py = pys[i]
+        rad = R[py, px]
+
+        # Attempt to generate point
+        done = False
+        k = 0
+        while not done and k < K:
+
+            # Generate point randomly from R and 2R
+            rd = rad * (np.random.random() * 3 + 1) ** 0.5
+            t = 2 * np.pi * np.random.random()
+            qx = px + rd * np.cos(t)
+            qy = py + rd * f * np.sin(t)
+
+            # Reject if outside grid or close to other points
+            if qx >= 0 and qx < nx and qy >= 0 and qy < ny:
+
+                startx = max(int(qx - rad), 0)
+                endx = min(int(qx + rad + 1), nx)
+                starty = max(int(qy - rad * f), 0)
+                endy = min(int(qy + rad * f + 1), ny)
+
+                done = True
+                for x in range(startx, endx):
+                    for y in range(starty, endy):
+                        if mask[y, x] == 1 and (
+                            ((qx - x) / R[y, x]) ** 2 + ((qy - y) / (R[y, x] * f)) ** 2 < 1
+                        ):
+                            done = False
+                            break
+
+                    if not done:
+                        break
+
+            k += 1
+
+        # Add point if done else remove active
+        if done:
+            pxs[m] = qx
+            pys[m] = qy
+            mask[int(qy), int(qx)] = 1
+            m += 1
+        else:
+            pxs[i] = pxs[m - 1]
+            pys[i] = pys[m - 1]
+            m -= 1
+
+    # Add calibration region
+    mask[
+        int(ny / 2 - calib[-2] / 2) : int(ny / 2 + calib[-2] / 2),
+        int(nx / 2 - calib[-1] / 2) : int(nx / 2 + calib[-1] / 2),
+    ] = 1
+
+    return mask
