@@ -163,5 +163,8 @@ class GeneralizedUNet(nn.Module):
             "channels": num_channels,
             "dropout": cfg.DROPOUT,
         }
+        block_order = cfg.get("BLOCK_ORDER", None)
+        if block_order is not None:
+            init_args["block_order"] = block_order
         init_args.update(**kwargs)
         return init_args

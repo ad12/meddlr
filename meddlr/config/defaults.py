@@ -105,7 +105,7 @@ _C.MODEL.SEG.INCLUDE_BACKGROUND = False
 _C.MODEL.SEG.ACTIVATION = "sigmoid"
 
 # -----------------------------------------------------------------------------
-# UNET model
+# UNET model - shared by UNetModel and GeneralizedUNet modules
 # -----------------------------------------------------------------------------
 _C.MODEL.UNET = CN()
 _C.MODEL.UNET.OUT_CHANNELS = 2
@@ -114,6 +114,8 @@ _C.MODEL.UNET.CHANNELS = 32
 _C.MODEL.UNET.NUM_POOL_LAYERS = 4
 _C.MODEL.UNET.DROPOUT = 0.0
 _C.MODEL.UNET.NORMALIZE = False
+# BLOCK_ORDER only applies to GeneralizedUNet
+_C.MODEL.UNET.BLOCK_ORDER = ("conv", "relu", "conv", "relu", "batchnorm", "dropout")
 
 # -----------------------------------------------------------------------------
 # Denoising model
