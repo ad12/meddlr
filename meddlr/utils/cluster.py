@@ -40,7 +40,7 @@ class Cluster:
 
     To use the configurations of a particular cluster, set the working cluster:
 
-    >>> Cluster.set_working_cluster(cluster)
+    >>> cluster.use()
 
     Configs can be persisted by saving to a file. If the config has been saved,
     future sessions will attempt to auto-detect the set of saved configs:
@@ -110,6 +110,11 @@ class Cluster:
         return PathManager.get_local_path(path)
 
     @property
+    def datasets_dir(self):
+        """Alias for ``self.data_dir``."""
+        return self.data_dir
+
+    @property
     def results_dir(self):
         path = self._results_dir
         path = os.environ.get("MEDDLR_RESULTS_DIR", path if path else "./results")
@@ -129,6 +134,11 @@ class Cluster:
 
         Examples:
             >>> cluster.set(data_dir="/path/to/datasets", results_dir="/path/to/results")
+
+        Note:
+            Setting attributes for the cluster will not override environment variables.
+            For example, if ``os.environ['MEDDLR_DATASETS_DIR']`` is set, setting ``data_dir``
+            will have no effect.
         """
         for k, v in kwargs.items():
             private_key = f"_{k}"
@@ -140,7 +150,7 @@ class Cluster:
     def __getattr__(self, attr: str):
         attr_env = f"MEDDLR_{attr.upper()}"
         try:
-            value = self._cfg_kwargs.get(attr, os.environ[attr_env])
+            value = os.environ.get(attr_env, self._cfg_kwargs[attr])
         except KeyError:
             raise AttributeError(f"Attribute {attr} not specified for cluster {self.name}.")
         return value
@@ -240,15 +250,20 @@ class Cluster:
     def working_cluster() -> "Cluster":
         return _CLUSTER
 
-    @staticmethod
-    def set_working_cluster(cluster=None):
-        """Sets the working cluster.
-        Args:
-            cluster (`str` or `Cluster`): The cluster name or cluster.
-                If ``None``, will reset cluster to _UNKNOWN, meaning default
-                data and results dirs will be used.
+    def use(self):
+        """Sets ``self`` to be the working cluster of the project.
+
+        The working cluster is the default cluster that is used to manage
+        paths and other configuration variables.
+
+        Examples:
+            >>> cluster.use()
+
+        Note:
+            This function does not override environment variables.
+            All environment variables will take priority over this clusters
         """
-        set_cluster(cluster)
+        set_cluster(self)
 
     def __repr__(self):
         return "Cluster({})".format(
