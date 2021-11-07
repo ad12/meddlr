@@ -1,7 +1,6 @@
-from .utils.env import setup_environment
+# flake8: noqa: F401
 
-setup_environment()
-
+from meddlr.utils.cluster import Cluster
 
 # This line will be programatically read/write by setup.py.
 # Leave them at the bottom of this file and don't touch them.

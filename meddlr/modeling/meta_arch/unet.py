@@ -122,6 +122,7 @@ class UnetModel(nn.Module):
         dropout: float = 0.0,
         use_latent: bool = False,
         num_latent_layers: int = 1,
+        normalize: bool = False,
         vis_period: int = -1,
     ):
         """
@@ -131,6 +132,7 @@ class UnetModel(nn.Module):
             chans (int): Number of output channels of the first convolution layer.
             num_pool_layers (int): Number of down-sampling and up-sampling layers.
             drop_prob (float): Dropout probability.
+            normalize (bool, optional): If ``True``, normalize the input for stability.
         """
         super().__init__()
 
@@ -141,6 +143,7 @@ class UnetModel(nn.Module):
         self.drop_prob = dropout
         self.use_latent = use_latent
         self.num_latent_layers = num_latent_layers
+        self.normalize = normalize
 
         self.down_sample_layers = nn.ModuleList([ConvBlock(in_channels, channels, dropout)])
         ch = channels
@@ -226,6 +229,70 @@ class UnetModel(nn.Module):
                 data = tv_utils.make_grid(data, nrow=1, padding=1, normalize=True, scale_each=True)
                 storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
 
+    def norm(self, x):
+        """
+        Args:
+            x (torch.Tensor): Input tensor. Shape [B, 2*C, H, W, ...]
+        """
+        ndim = x.ndim
+        x = x.view(x.shape[:2] + (-1,))
+
+        mean = x.mean(dim=-1).reshape(x.shape[:2] + (1,) * (ndim - 2))
+        std = x.std(dim=-1).reshape(x.shape[:2] + (1,) * (ndim - 2))
+
+        return (x - mean) / std, mean, std
+
+    def unnorm(self, x, mean, std):
+        return x * std + mean
+
+    def base_forward(self, zf_image):
+        """The base forward function.
+
+        Args:
+            zf_image (torch.Tensor): Zero-filled image. Shape [B, C, ..., H, W].
+                The real and imaginary channels should be part of the channels
+                dimension if the input is complex and the model does not have
+                complex weights.
+
+        Returns:
+            torch.Tensor: Reconstructed image. Shape [B, C, ..., H, W].
+        """
+        x = zf_image
+
+        stack = []
+        if self.normalize:
+            x, mean, std = self.norm(x)
+
+        # Apply down-sampling layers
+        for layer in self.down_sample_layers:
+            x = layer(x)
+            stack.append(x)
+            x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=0)
+
+        x = self.conv(x)
+
+        # Apply up-sampling layers
+        for transpose_conv, conv in zip(self.up_transpose_conv, self.up_conv):
+            downsample_layer = stack.pop()
+            x = transpose_conv(x)
+
+            # Reflect pad on the right/botton if needed to handle odd input dimensions.
+            padding = [0, 0, 0, 0]
+            if x.shape[-1] != downsample_layer.shape[-1]:
+                padding[1] = 1  # Padding right
+            if x.shape[-2] != downsample_layer.shape[-2]:
+                padding[3] = 1  # Padding bottom
+            if sum(padding) != 0:
+                x = F.pad(x, padding, "reflect")
+
+            x = torch.cat([x, downsample_layer], dim=1)
+            x = conv(x)
+
+        if self.normalize:
+            x = self.unnorm(x, mean, std)
+
+        return x
+
     def forward(self, input, return_pp=False, vis_training=False):
         """
         Args:
@@ -234,7 +301,6 @@ class UnetModel(nn.Module):
             (torch.Tensor): Output tensor of shape [batch_size, self.out_chans, height, width]
         """
         self.register_hooks()
-        stack = []
 
         # Need to fetch device at runtime for proper data transfer.
         inputs = input
@@ -244,11 +310,6 @@ class UnetModel(nn.Module):
         mask = inputs["mask"].to(device) if "mask" in inputs else None
         A = inputs["signal_model"].to(device) if "signal_model" in inputs else None
         maps = inputs["maps"].to(device)
-        # num_maps_dim = -2 if cplx.is_complex_as_real(maps) else -1
-        # if self.num_emaps != maps.size()[num_maps_dim]:
-        #     raise ValueError(
-        #         "Incorrect number of ESPIRiT maps! Re-prep data..."
-        #     )
 
         if mask is None:
             mask = cplx.get_mask(kspace)
@@ -278,32 +339,9 @@ class UnetModel(nn.Module):
             output = zf_image
         output = zf_image.permute(0, 4, 1, 2, 3).squeeze(-1)
 
-        # Apply down-sampling layers
-        for layer in self.down_sample_layers:
-            output = layer(output)
-            stack.append(output)
-            output = F.avg_pool2d(output, kernel_size=2, stride=2, padding=0)
+        # Run U-Net.
+        output = self.base_forward(output)
 
-        output = self.conv(output)
-
-        # Apply up-sampling layers
-        for transpose_conv, conv in zip(self.up_transpose_conv, self.up_conv):
-            downsample_layer = stack.pop()
-            output = transpose_conv(output)
-
-            # Reflect pad on the right/botton if needed to handle odd input dimensions.
-            padding = [0, 0, 0, 0]
-            if output.shape[-1] != downsample_layer.shape[-1]:
-                padding[1] = 1  # Padding right
-            if output.shape[-2] != downsample_layer.shape[-2]:
-                padding[3] = 1  # Padding bottom
-            if sum(padding) != 0:
-                output = F.pad(output, padding, "reflect")
-
-            output = torch.cat([output, downsample_layer], dim=1)
-            output = conv(output)
-
-        # pred = output.view(zf_dims)
         if num_maps > 1:
             pred = output.permute(0, 2, 3, 1)
             pred = pred.reshape(pred.shape[:-1] + (num_maps, 2))
@@ -344,5 +382,6 @@ class UnetModel(nn.Module):
             "dropout": cfg.MODEL.UNET.DROPOUT,
             "use_latent": cfg.get_recursive("MODEL.CONSISTENCY.USE_LATENT", False),
             "num_latent_layers": cfg.get_recursive("MODEL.CONSISTENCY.NUM_LATENT_LAYERS", 1),
+            "normalize": cfg.MODEL.UNET.NORMALIZE,
             "vis_period": cfg.VIS_PERIOD,
         }
