@@ -1,13 +1,10 @@
 """CfgNode implementation.
-
-Adapted from
-https://github.com/facebookresearch/detectron2
 """
 import functools
 import inspect
 import logging
 import re
-from typing import Mapping
+from typing import Any, Mapping
 
 import numpy as np
 from fvcore.common.config import CfgNode as _CfgNode
@@ -28,6 +25,9 @@ class CfgNode(_CfgNode):
 
     # Note that the default value of allow_unsafe is changed to True
     def merge_from_file(self, cfg_filename: str, allow_unsafe: bool = True) -> None:
+        """
+        Adapted from https://github.com/facebookresearch/detectron2
+        """
         loaded_cfg = _CfgNode.load_yaml_with_base(cfg_filename, allow_unsafe=allow_unsafe)
         loaded_cfg = type(self)(loaded_cfg)
 
@@ -69,14 +69,37 @@ class CfgNode(_CfgNode):
             self.clear()
             self.update(new_config)
 
-    def format_fields(self):
+    def format_fields(self, unroll: bool = False):
         """
         Format string fields in the config by filling them in
         with different parameter values.
-        """
-        return format_config_fields(self, inplace=True)
 
-    def get_recursive(self, key, default=np._NoValue):
+        The operation is done in place.
+
+        Args:
+            unroll (bool, optional): If ``True``, sequence types (e.g. tuple, list)
+                stringified as ``seq[0]-seq[1]-...``. Dict types will be
+                stringified as ``k[0]=v[0]-k[1]=v[1]-...``.
+
+        Returns:
+            CfgNode: self
+        """
+        return format_config_fields(self, unroll=unroll, inplace=True)
+
+    def get_recursive(self, key, default: Any = np._NoValue):
+        """Get a key recursively from the config.
+
+        Args:
+            key (str): The dot-separated key.
+            default (Any, optional): The value to return if the key is not found.
+                If not provided, a KeyError will be raised.
+
+        Returns:
+            object: The value corresponding to the key.
+
+        Raises:
+            KeyError: If the key is not found and no default was provided.
+        """
         d = self
         try:
             for k in key.split("."):
@@ -87,7 +110,13 @@ class CfgNode(_CfgNode):
             raise e
         return d
 
-    def set_recursive(self, name, value):
+    def set_recursive(self, name: str, value: Any):
+        """Set a key recursively in the config.
+
+        Args:
+            name (str): The dot-separated key.
+            value (object): The value to set.
+        """
         cfg = self
         keys = name.split(".")
         for k in keys[:-1]:
@@ -104,12 +133,20 @@ class CfgNode(_CfgNode):
         return super().dump(*args, **kwargs)
 
     def freeze(self):
-        """Make this CfgNode and all of its children immutable."""
+        """Make this CfgNode and all of its children immutable.
+
+        Returns:
+            CfgNode: self
+        """
         super().freeze()
         return self
 
     def defrost(self):
-        """Make this CfgNode and all of its children mutable."""
+        """Make this CfgNode and all of its children mutable.
+
+        Returns:
+            CfgNode: self
+        """
         super().defrost()
         return self
 
@@ -170,6 +207,9 @@ def configurable(init_func=None, *, from_config=None):
     Decorate a function or a class's __init__ method so that it can be called
     with a :class:`CfgNode` object using a :func:`from_config` function that translates
     :class:`CfgNode` to arguments.
+
+    Adapted from https://github.com/facebookresearch/detectron2
+
     Examples:
     ::
         # Usage 1: Decorator on __init__:
@@ -308,7 +348,16 @@ def _find_format_str_keys(cfg: Mapping, prefix="", accum=()):
     return accum
 
 
-def format_config_fields(cfg: CfgNode, inplace=False):
+def _unroll_value_to_str(value) -> str:
+    if isinstance(value, (tuple, list)):
+        return "-".join(_unroll_value_to_str(v) for v in value)
+    elif isinstance(value, dict):
+        return "-".join(f"{k}={_unroll_value_to_str(v)}" for k, v in value.items())
+    else:
+        return str(value)
+
+
+def format_config_fields(cfg: CfgNode, unroll=False, inplace=False):
     keys_and_val_str = _find_format_str_keys(cfg)
     values_list = []
     for k, val_str in keys_and_val_str:
@@ -317,6 +366,8 @@ def format_config_fields(cfg: CfgNode, inplace=False):
         assert len(start) == len(end), f"Could not determine formatting string: {val_str}"
         cfg_keys_to_search = [val_str[s + 1 : e] for s, e in zip(start, end)]
         values = [cfg.get_recursive(v) for v in cfg_keys_to_search]
+        if unroll:
+            values = [_unroll_value_to_str(v) for v in values]
 
         fmt_str = ""
         idxs = [0] + [y for x in zip(start, end) for y in x] + [len(val_str)]

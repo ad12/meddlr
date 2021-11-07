@@ -17,6 +17,8 @@ from .env import settings_dir
 # TODO: make this cleaner
 _REPO_DIR = os.path.join(os.path.dirname(__file__), "../..")
 
+__all__ = ["Cluster", "set_cluster"]
+
 
 class Cluster:
     """Manages configurations for different nodes/clusters.
@@ -65,8 +67,8 @@ class Cluster:
 
     def __init__(
         self,
-        name: str,
-        patterns: Union[str, Sequence[str]],
+        name: str = None,
+        patterns: Union[str, Sequence[str]] = None,
         data_dir: str = None,
         results_dir: str = None,
         cache_dir: str = None,
@@ -78,6 +80,7 @@ class Cluster:
             patterns (Sequence[str]): Regex pattern(s) for identifying nodes
                 in the cluster. Cluster will be identified by
                 ``any(re.match(p, socket.gethostname()) for p in patterns)``.
+                If ``None``, defaults to current hostname.
             data_dir (str, optional): The data directory. Defaults to
                 ``os.environ['MEDDLR_DATASETS_DIR']`` or ``"./datasets"``.
             results_dir (str, optional): The results directory. Defaults to
@@ -85,10 +88,14 @@ class Cluster:
             cfg_kwargs (optional): Any other configurations you would like to
                 store for the cluster.
         """
+        if name is None:
+            name = socket.gethostname()
         self.name = name
 
+        if patterns is None:
+            patterns = socket.gethostname()
         if isinstance(patterns, str):
-            patterns = patterns
+            patterns = [patterns]
         self.patterns = patterns
 
         self._data_dir = data_dir
@@ -111,8 +118,24 @@ class Cluster:
     @property
     def cache_dir(self):
         path = self._cache_dir
-        path = os.environ.get("MEDDLR_CACHE_DIR", path if path else "~/cache/meddl")
+        path = os.environ.get("MEDDLR_CACHE_DIR", path if path else "~/cache/meddlr")
         return PathManager.get_local_path(path)
+
+    def set(self, **kwargs):
+        """Set cluster configuration properties.
+
+        Args:
+            kwargs: Keyword arguments to set.
+
+        Examples:
+            >>> cluster.set(data_dir="/path/to/datasets", results_dir="/path/to/results")
+        """
+        for k, v in kwargs.items():
+            private_key = f"_{k}"
+            if hasattr(self, private_key):
+                setattr(self, private_key, v)
+            else:
+                self._cfg_kwargs[k] = v
 
     def __getattr__(self, attr: str):
         attr_env = f"MEDDLR_{attr.upper()}"
