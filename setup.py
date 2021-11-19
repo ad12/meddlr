@@ -104,7 +104,7 @@ setup(
         "dev": [
             "flake8",
             "isort",
-            "black==19.3b0",
+            "black==21.10b0",
             "flake8-bugbear",
             "flake8-comprehensions",
             "pre-commit>=2.9.3",
@@ -121,7 +121,5 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     # $ setup.py publish support.
-    cmdclass={
-        "upload": UploadCommand,
-    },
+    cmdclass={"upload": UploadCommand},
 )

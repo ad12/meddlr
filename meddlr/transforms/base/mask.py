@@ -1,3 +1,4 @@
+import warnings
 from typing import Sequence, Tuple
 
 import torch
@@ -21,9 +22,13 @@ class KspaceMaskTransform(Transform):
         calib_size=None,
         generator: torch.Generator = None,
     ):
+        """
+        Args:
+            rho (float): The fraction of pixels to drop.
+        """
         if seed is None and generator is None:
             raise ValueError("One of `seed` or `generator` must be specified.")
-        if kind not in ("uniform",):
+        if kind not in ("uniform", "gaussian"):
             raise ValueError(f"Unknown kspace mask kind={kind}")
         self.rho = rho
         self.kind = kind
@@ -37,8 +42,51 @@ class KspaceMaskTransform(Transform):
             gen_state = generator.get_state()
         self._generator_state = gen_state
 
+    def generate_mask(
+        self, kspace: torch.Tensor, mask: torch.Tensor = None, channels_last: bool = False
+    ):
+        """Generates mask with approximiately ``1-self.rho`` times number of pixels."""
+        g = self._generator(kspace)
+        if mask is None:
+            mask = True
+
+        if channels_last:
+            kspace = cplx.channels_first(kspace)
+            if isinstance(mask, torch.Tensor):
+                order = (0, mask.ndim - 1) + tuple(range(1, mask.ndim - 1))
+                mask = mask.permute(order)
+
+        func_and_kwargs = {
+            "uniform": (
+                _uniform_mask,
+                {"rho": self.rho, "mask": mask, "calib_size": self.calib_size, "generator": g},
+            ),
+            "gaussian": (
+                _gaussian_mask,
+                {
+                    "rho": self.rho,
+                    "mask": mask,
+                    "std_scale": self.std_scale,
+                    "calib_size": self.calib_size,
+                    "generator": g,
+                },
+            ),
+        }
+        func, kwargs = func_and_kwargs[self.kind]
+
+        if self.per_example:
+            mask = torch.cat([func(kspace[i : i + 1], **kwargs) for i in range(len(kspace))], dim=0)
+        else:
+            mask = func(kspace, **kwargs)
+
+        if channels_last:
+            order = (0,) + tuple(range(2, mask.ndim)) + (1,)
+            mask = mask.permute(order)
+        return mask
+
     def apply_kspace(self, kspace: torch.Tensor):
-        return self._subsample(kspace)
+        mask = self.generate_mask(kspace)
+        return mask * kspace
 
     def _generator(self, data):
         seed = self.seed
@@ -51,31 +99,13 @@ class KspaceMaskTransform(Transform):
         return g
 
     def _subsample(self, data: torch.Tensor):
-        g = self._generator(data)
+        klass_name = {type(self).__name__}
+        warnings.warn(
+            f"{klass_name}._subsample is deprecated. Use {klass_name}.apply_kspace instead",
+            DeprecationWarning,
+        )
 
-        func_and_kwargs = {
-            "uniform": (
-                _uniform_mask,
-                {"rho": self.rho, "mask": True, "calib_size": self.calib_size, "generator": g},
-            ),
-            "gaussian": (
-                _gaussian_mask,
-                {
-                    "rho": self.rho,
-                    "mask": True,
-                    "std_scale": self.std_scale,
-                    "calib_size": self.calib_size,
-                    "generator": g,
-                },
-            ),
-        }
-        func, kwargs = func_and_kwargs[self.kind]
-
-        if self.per_example:
-            mask = torch.cat([func(data[i : i + 1], **kwargs) for i in range(len(data))], dim=0)
-        else:
-            mask = func(data, **kwargs)
-
+        mask = self.generate_mask(data)
         return mask * data
 
     def _eq_attrs(self) -> Tuple[str]:
@@ -85,22 +115,21 @@ class KspaceMaskTransform(Transform):
 def _uniform_mask(kspace, rho, mask=True, calib_size=None, generator=None):
     """
     Args:
+        kspace (torch.Tensor): The kspace to mask. Shape: ``BxCxHxWx...``.
         rho (float): Fraction of samples to drop.
     """
     kspace = kspace[:, 0:1, ...]
-    shape = kspace.shape
+    orig_mask = cplx.get_mask(kspace) if mask is True else mask
+    shape = orig_mask.shape
+    ndim = orig_mask.ndim
 
-    if mask is True:
-        orig_mask = cplx.get_mask(kspace)
-    else:
-        orig_mask = mask
     mask = orig_mask.clone()
 
     calib_region = None
     if calib_size is not None:
         if not isinstance(calib_size, Sequence):
-            calib_size = (calib_size,) * (kspace.ndim - 2)
-        center = tuple(s // 2 for s in kspace.shape[2:])[-len(calib_size) :]
+            calib_size = (calib_size,) * (ndim - 2)
+        center = tuple(s // 2 for s in shape[2:])[-len(calib_size) :]
         calib_region = tuple(slice(s - cs // 2, s + cs // 2) for s, cs in zip(center, calib_size))
         calib_region = (Ellipsis,) + calib_region
         mask[calib_region] = 0
@@ -129,6 +158,9 @@ def _gaussian_mask(kspace, rho, std_scale, mask=True, calib_size=None, generator
     Note:
         Currently this creates the same mask for all the examples.
         Make sure to use per_example=True in :cls:`KspaceMaskTransform`.
+
+    Note:
+        This method is currently very slow.
     """
     kspace = kspace[:, 0:1, ...]
     shape = kspace.shape
@@ -159,12 +191,13 @@ def _gaussian_mask(kspace, rho, std_scale, mask=True, calib_size=None, generator
     count = 0
     while count <= num_samples:
         idxs = [
-            torch.round(torch.normal(c, (s - 1) / std_scale)).type(torch.long)
+            torch.round(torch.normal(float(c), (s - 1) / std_scale, (1,))).type(torch.long)
             for c, s in zip(center, spatial_shape)
         ]
         if any(i < 0 for i in idxs) or any(i >= s for i, s in zip(idxs, spatial_shape)):
             continue
-        if mask[idxs] == 0 or temp_mask[idxs] == 1:
+        idxs.insert(0, Ellipsis)
+        if torch.all(mask[idxs] == 0) or torch.all(temp_mask[idxs] == 1):
             continue
         temp_mask[idxs] = 1
         count += 1
@@ -177,9 +210,3 @@ def _gaussian_mask(kspace, rho, std_scale, mask=True, calib_size=None, generator
     if calib_region:
         mask[calib_region] = orig_mask[calib_region]
     return mask
-
-
-# def _multivariate_normal_weights(shape, loc=None):
-#     if loc is None:
-#         loc = [s // 2 for s in shape]
-#     grids = torch.meshgrid(*[torch.arange(s) for s in shape])

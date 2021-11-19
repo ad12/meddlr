@@ -4,6 +4,7 @@ Utilities for doing complex-valued operations.
 import numpy as np
 import torch
 
+from meddlr.utils.deprecated import deprecated
 from meddlr.utils.env import supports_cplx_tensor
 
 
@@ -177,12 +178,34 @@ def from_polar(magnitude, phase, return_cplx: bool = False):
     return torch.stack((real, imag), dim=-1)
 
 
-def channel_first(x: torch.Tensor):
+def channels_first(x: torch.Tensor):
     assert is_complex_as_real(x) or is_complex(x)
     if is_complex(x):
         return x.permute((0, x.ndim - 1) + tuple(range(1, x.ndim - 1)))
     else:
         return x.permute((0, x.ndim - 2) + tuple(range(1, x.ndim - 2)) + (x.ndim - 1,))
+
+
+@deprecated(reason="Renamed to channels_first", vremove="v0.1.0")
+def channel_first(x: torch.Tensor):
+    """Deprecated alias for channels_first"""
+    return channels_first(x)
+
+
+def channels_last(x: torch.Tensor):
+    """
+    Args:
+        x (torch.Tensor): A tensor of shape [B,C,H,W,...] or [B,C,H,W,...,2].
+
+    Returns:
+        torch.Tensor: A tensor of shape [B,H,W,...,C] or [B,H,W,...,C,2].
+    """
+    assert is_complex_as_real(x) or is_complex(x)
+    if is_complex(x):
+        return x.permute((0,) + tuple(range(2, x.ndim) + (1,)))
+    else:
+        order = (0,) + tuple(range(2, x.ndim - 2)) + (1, x.ndim - 1)
+        return x.permute(order)
 
 
 def get_mask(x, eps=1e-11):

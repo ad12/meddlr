@@ -356,7 +356,9 @@ class UnetModel(nn.Module):
         if return_pp:
             output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"]})
 
-        if self.training and (vis_training or self.vis_period > 0):
+        # TODO (arjundd): Figure out why this is needed during SSDU training.
+        images_available = all(x is not None for x in [kspace, zf_image, target, pred])
+        if images_available and self.training and (vis_training or self.vis_period > 0):
             storage = get_event_storage()
             if vis_training or storage.iter % self.vis_period == 0:
                 self.visualize_training(kspace, zf_image, target, pred)

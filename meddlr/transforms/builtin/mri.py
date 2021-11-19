@@ -26,11 +26,21 @@ class MRIReconAugmentor(DeviceMixin):
     """
 
     def __init__(
-        self, tfms_or_gens: Sequence[Union[Transform, TransformGen]], seed: int = None, device=None
+        self,
+        tfms_or_gens: Sequence[Union[Transform, TransformGen]],
+        aug_sensitivity_maps: bool = True,
+        seed: int = None,
+        device=None,
     ) -> None:
+        """
+        Args:
+            aug_sensitivity_maps (bool, optional): If ``True``, apply equivariant,
+                image-based transforms to the sensivitiy map.
+        """
         if isinstance(tfms_or_gens, TransformList):
             tfms_or_gens = tfms_or_gens.transforms
         self.tfms_or_gens = tfms_or_gens
+        self.aug_sensitivity_maps = aug_sensitivity_maps
 
         if device is not None:
             self.to(device)
@@ -181,7 +191,7 @@ class MRIReconAugmentor(DeviceMixin):
             image = tfm.apply_image(image)
             if target is not None:
                 target = tfm.apply_image(target)
-            if maps is not None:
+            if maps is not None and self.aug_sensitivity_maps:
                 maps = tfm.apply_maps(maps)
             tfms.append(tfm)
         return image, target, maps, TransformList(tfms, ignore_no_op=True)
@@ -240,4 +250,9 @@ class MRIReconAugmentor(DeviceMixin):
                 for s in tfm._schedulers:
                     s._iter_fn = func
 
-        return cls(tfms_or_gens, seed=seed, device=device)
+        return cls(
+            tfms_or_gens,
+            aug_sensitivity_maps=mri_tfm_cfg.AUG_SENSITIVITY_MAPS,
+            seed=seed,
+            device=device,
+        )
