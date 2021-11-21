@@ -43,7 +43,7 @@ def setup(args):
     # So for now, even if you are resuming your experiment, it will be logged
     # as a separate run in W&B.
     if supports_wandb():
-        init_wandb_run(cfg, resume=False, job_type="training")
+        init_wandb_run(cfg, resume=False, job_type="training", sync_tensorboard=True)
 
     return cfg
 

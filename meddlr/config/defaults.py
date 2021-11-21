@@ -17,6 +17,7 @@ _MRI_RECON_TFM = CN()
 _MRI_RECON_TFM.TRANSFORMS = ()
 _MRI_RECON_TFM.SCHEDULER_P = CN(new_allowed=True)
 _MRI_RECON_TFM.SCHEDULER_P.IGNORE = False
+_MRI_RECON_TFM.AUG_SENSITIVITY_MAPS = True
 
 # -----------------------------------------------------------------------------
 # Config definition
@@ -149,13 +150,6 @@ _C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
 # Use MODEL.CONSISTENCY.AUG.NOISE.STD_DEV to control noise parameters.
 
 # -----------------------------------------------------------------------------
-# Aug2Recon (A2R) model
-# -----------------------------------------------------------------------------
-_C.MODEL.A2R = CN()
-_C.MODEL.A2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
-_C.MODEL.A2R.USE_SUPERVISED_CONSISTENCY = False
-
-# -----------------------------------------------------------------------------
 # Motion2Recon (M2R) model
 # -----------------------------------------------------------------------------
 _C.MODEL.M2R = CN()
@@ -170,6 +164,21 @@ _C.MODEL.NM2R = CN()
 _C.MODEL.NM2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.NM2R.USE_SUPERVISED_CONSISTENCY = False
 # Use MODEL.CONSISTENCY.AUG.MOTION_RANGE to control motion parameters.
+
+# -----------------------------------------------------------------------------
+# Aug2Recon (A2R) / VORTEX model
+# -----------------------------------------------------------------------------
+_C.MODEL.A2R = CN()
+_C.MODEL.A2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.A2R.USE_SUPERVISED_CONSISTENCY = False
+
+# -----------------------------------------------------------------------------
+# SSDU model
+# -----------------------------------------------------------------------------
+_C.MODEL.SSDU = CN()
+_C.MODEL.SSDU.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+_C.MODEL.SSDU.MASKER = CN()
+_C.MODEL.SSDU.MASKER.PARAMS = CN(new_allowed=True)
 
 # -----------------------------------------------------------------------------
 # Dataset

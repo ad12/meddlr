@@ -102,13 +102,15 @@ setup(
     ],
     extras_require={
         "dev": [
+            "coverage",
             "flake8",
             "isort",
-            "black==19.3b0",
+            "black==21.10b0",
             "flake8-bugbear",
             "flake8-comprehensions",
             "pre-commit>=2.9.3",
             "medpy",
+            "pooch",
         ],
         "benchmarking": ["medpy"],
     },
@@ -121,7 +123,5 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     # $ setup.py publish support.
-    cmdclass={
-        "upload": UploadCommand,
-    },
+    cmdclass={"upload": UploadCommand},
 )

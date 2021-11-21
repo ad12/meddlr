@@ -12,7 +12,7 @@ __all__ = ["RandomKspaceMask"]
 
 @TRANSFORM_REGISTRY.register()
 class RandomKspaceMask(TransformGen):
-    """A model that adds additive white noise."""
+    """A model that generates random masks."""
 
     _base_transform = KspaceMaskTransform
     _param_names = ["rhos"]
@@ -59,4 +59,5 @@ class RandomKspaceMask(TransformGen):
             per_example=self.per_example,
             calib_size=self.calib_size,
             generator=gen,
+            std_scale=self.std_scale,
         )

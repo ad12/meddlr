@@ -17,7 +17,7 @@ and expected to return a LossComputer object.
 
 EPS = 1e-11
 IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse", "mag_l1", "perp_loss"]
-KSPACE_LOSSES = ["k_l1", "k_l1_normalized"]
+KSPACE_LOSSES = ["k_l1", "k_l1_normalized", "k_l1_l2_sum_normalized"]
 
 
 def build_loss_computer(cfg, name, **kwargs):
@@ -71,6 +71,12 @@ class LossComputer(ABC):
                 metrics_dict["loss"] = torch.mean(abs_error)
             elif loss_name == "k_l1_normalized":
                 metrics_dict["loss"] = torch.mean(abs_error / (cplx.abs(target) + EPS))
+            elif loss_name == "k_l1_l2_sum_normalized":
+                kl1_norm = torch.sum(abs_error) / torch.sum(cplx.abs(target))
+                kl2_norm = torch.sqrt(torch.sum(abs_error ** 2)) / torch.sqrt(
+                    torch.sum(cplx.abs(target) ** 2)
+                )  # noqa: E501
+                metrics_dict["loss"] = 0.5 * kl1_norm + 0.5 * kl2_norm
             else:
                 assert False  # should not reach here
         else:
