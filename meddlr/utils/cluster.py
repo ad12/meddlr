@@ -2,20 +2,25 @@
 
 DO NOT MOVE THIS FILE.
 """
+import logging
 import os
 import re
+import shutil
 import socket
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Sequence, Union
 
 import yaml
-from fvcore.common.file_io import PathHandler, PathManager
+from iopath.common.file_io import PathHandler
 
-from .env import settings_dir
+import meddlr as mr
+from meddlr.utils import env
 
 # Path to the repository directory.
 # TODO: make this cleaner
 _REPO_DIR = os.path.join(os.path.dirname(__file__), "../..")
+_PATH_MANAGER = env.get_path_manager()
+_LOGGER = logging.getLogger(__name__)
 
 __all__ = ["Cluster", "set_cluster"]
 
@@ -107,7 +112,7 @@ class Cluster:
     def data_dir(self):
         path = self._data_dir
         path = os.environ.get("MEDDLR_DATASETS_DIR", path if path else "./datasets")
-        return PathManager.get_local_path(path)
+        return _PATH_MANAGER.get_local_path(path)
 
     @property
     def datasets_dir(self):
@@ -118,13 +123,13 @@ class Cluster:
     def results_dir(self):
         path = self._results_dir
         path = os.environ.get("MEDDLR_RESULTS_DIR", path if path else "./results")
-        return PathManager.get_local_path(path)
+        return _PATH_MANAGER.get_local_path(path)
 
     @property
     def cache_dir(self):
         path = self._cache_dir
         path = os.environ.get("MEDDLR_CACHE_DIR", path if path else "~/cache/meddlr")
-        return PathManager.get_local_path(path)
+        return _PATH_MANAGER.get_local_path(path)
 
     def set(self, **kwargs):
         """Set cluster configuration properties.
@@ -244,7 +249,7 @@ class Cluster:
 
     @staticmethod
     def config_file():
-        return os.path.join(settings_dir(), "clusters.yaml")
+        return os.path.join(env.settings_dir(), "clusters.yaml")
 
     @staticmethod
     def working_cluster() -> "Cluster":
@@ -304,7 +309,7 @@ class GeneralPathHandler(PathHandler, ABC):
         return os.path.join(self._root_dir(), name)
 
     def _open(self, path, mode="r", **kwargs):
-        return PathManager.open(self._get_local_path(path), mode, **kwargs)
+        return _PATH_MANAGER.open(self._get_local_path(path), mode, **kwargs)
 
     def _mkdirs(self, path: str, **kwargs):
         os.makedirs(self._get_local_path(path), exist_ok=True)
@@ -328,15 +333,93 @@ class ResultsHandler(GeneralPathHandler):
         return _CLUSTER.get_path("results_dir")
 
 
+class CacheHandler(GeneralPathHandler):
+    PREFIX = "cache://"
+
+    def _root_dir(self):
+        return _CLUSTER.get_path("cache_dir")
+
+
 class AnnotationsHandler(GeneralPathHandler):
     PREFIX = "ann://"
 
+    def _get_cache_path(self):
+        return os.path.join(
+            env.get_path_manager().get_local_path(_CLUSTER.cache_dir),
+            f"annotations/v{mr.__version__}",
+        )
+
     def _root_dir(self):
-        # TODO: Support downloading annotations on the fly
-        # when library is pip installed.
-        return os.path.abspath(os.path.join(_REPO_DIR, "annotations"))
+        local_path = os.path.abspath(os.path.join(_REPO_DIR, "annotations"))
+        if os.path.isdir(local_path):
+            return local_path
+
+        cache_path = self._get_cache_path()
+        if not os.path.isdir(cache_path):
+            self._download()
+        return cache_path
+
+    def _download(self):
+        """Downloads annotations from meddlr github.
+
+        Note:
+            This method downloads the full repository of the current
+            meddlr version and then copies the annotation files to
+            the respective directory. This may not be very efficient,
+            but it ensures that the annotation download process is
+            less onerous on the user.
+        """
+        _LOGGER.info("Downloading annotations...")
+        repo_path = download_repository()
+        cache_path = env.get_path_manager().get_local_path(self._get_cache_path())
+        os.makedirs(cache_path, exist_ok=True)
+        retval = os.system(f"cp -r {repo_path}/annotations {cache_path}/")
+        if retval != 0:
+            raise RuntimeError("Could not download annotations.")
 
 
-PathManager.register_handler(DataHandler())
-PathManager.register_handler(ResultsHandler())
-PathManager.register_handler(AnnotationsHandler())
+_PATH_MANAGER.register_handler(DataHandler())
+_PATH_MANAGER.register_handler(ResultsHandler())
+_PATH_MANAGER.register_handler(CacheHandler())
+_PATH_MANAGER.register_handler(AnnotationsHandler())
+
+
+def download_repository(version=None, path="cache://github-repo/{version}", force=False) -> str:
+    """Downloads the repository from GitHub.
+
+    Args:
+        version (str): The version to download. Defaults to the
+            version of the current codebase.
+        path (str): The path to download the repository to.
+            Defaults to the the cache directory.
+        force (bool): Whether to overwrite existing files.
+
+    Returns:
+        str: The path to the downloaded repository.
+    """
+    if version is None:
+        version = f"v{mr.__version__}"
+    path = str(path)
+    path = path.format(version=version)
+    path = env.get_path_manager().get_local_path(path)
+
+    dir_exists_and_not_empty = os.path.isdir(path) and os.listdir(path)
+    if dir_exists_and_not_empty:
+        if not force:
+            return path
+        shutil.rmtree(path)
+    os.makedirs(path, exist_ok=True)
+
+    retval = os.system(f"wget -O - {env.get_github_url()}/tarball/{version} | tar xz -C {path}")
+    if retval != 0:
+        raise RuntimeError("Could not download repository.")
+
+    folders = os.listdir(path)
+    assert len(folders) == 1
+    curr_path = os.path.join(path, folders[0])
+    retval = os.system(f"mv {curr_path}/* {path}")
+    if retval != 0:
+        raise RuntimeError("Could not download repository.")
+    shutil.rmtree(curr_path)
+
+    return path

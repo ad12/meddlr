@@ -7,11 +7,12 @@ import time
 
 import h5py
 import pandas as pd
-from fvcore.common.file_io import PathManager
 
 from meddlr.data import DatasetCatalog, MetadataCatalog
+from meddlr.utils import env
 
 logger = logging.getLogger(__name__)
+_PATH_MANAGER = env.get_path_manager()
 
 __all__ = ["load_mrco_json", "register_mrco_scans"]
 
@@ -38,7 +39,7 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
         1. This function does not read the image files.
            The results do not have the "kspace", "target", or "maps" fields.
     """
-    json_file = PathManager.get_local_path(json_file)
+    json_file = _PATH_MANAGER.get_local_path(json_file)
     start_time = time.perf_counter()
     with open(json_file, "r") as f:
         data = json.load(f)
@@ -51,9 +52,9 @@ def load_mrco_json(json_file: str, image_root: str, dataset_name: str):
     for d in data["images"]:
         dd = dict(d)
         if image_root is not None:
-            file_name = PathManager.get_local_path(os.path.join(image_root, d["file_name"]))
+            file_name = _PATH_MANAGER.get_local_path(os.path.join(image_root, d["file_name"]))
         else:
-            file_name = PathManager.get_local_path(d["file_path"])
+            file_name = _PATH_MANAGER.get_local_path(d["file_path"])
         dd["file_name"] = file_name
 
         # TODO: Clean this up
@@ -109,7 +110,7 @@ def _load_metadata(metadata_file, dataset_dicts):
         dataset_dicts: The dataset dictionaries with "_metadata" key.
             This key maps to the dictionary of metadata.
     """
-    metadata = pd.read_csv(PathManager.get_local_path(metadata_file))
+    metadata = pd.read_csv(_PATH_MANAGER.get_local_path(metadata_file))
     metadata = metadata.loc[:, ~metadata.columns.str.contains("^Unnamed")]
 
     for dd in dataset_dicts:

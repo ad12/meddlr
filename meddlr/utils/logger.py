@@ -10,9 +10,12 @@ import sys
 import time
 from collections import Counter
 
-from fvcore.common.file_io import PathManager
 from tabulate import tabulate
 from termcolor import colored
+
+from meddlr.utils import env
+
+_PATH_MANAGER = env.get_path_manager()
 
 
 class _ColorfulFormatter(logging.Formatter):
@@ -92,7 +95,7 @@ def setup_logger(output=None, distributed_rank=0, *, color=True, name="meddlr", 
             filename = os.path.join(output, "log.txt")
         if distributed_rank > 0:
             filename = filename + ".rank{}".format(distributed_rank)
-        PathManager.mkdirs(os.path.dirname(filename))
+        _PATH_MANAGER.mkdirs(os.path.dirname(filename))
 
         fh = logging.StreamHandler(_cached_log_stream(filename))
         fh.setLevel(logging.DEBUG)
@@ -106,7 +109,7 @@ def setup_logger(output=None, distributed_rank=0, *, color=True, name="meddlr", 
 # with the same file name can safely write to the same file.
 @functools.lru_cache(maxsize=None)
 def _cached_log_stream(filename):
-    return PathManager.open(filename, "a")
+    return _PATH_MANAGER.open(filename, "a")
 
 
 """

@@ -16,7 +16,6 @@ import warnings
 from typing import Mapping, Sequence
 
 import torch
-from fvcore.common.file_io import PathManager
 
 from meddlr.config.config import CfgNode
 from meddlr.utils import env
@@ -25,6 +24,8 @@ from meddlr.utils.env import get_available_gpus, seed_all_rng
 from meddlr.utils.logger import setup_logger
 
 __all__ = ["default_argument_parser", "default_setup"]
+
+_PATH_MANAGER = env.get_path_manager()
 
 
 def default_argument_parser() -> argparse.ArgumentParser:
@@ -90,14 +91,14 @@ def default_setup(cfg, args, save_cfg: bool = True):
 
     # Update config parameters before saving.
     cfg.defrost()
-    cfg.OUTPUT_DIR = PathManager.get_local_path(cfg.OUTPUT_DIR)
+    cfg.OUTPUT_DIR = _PATH_MANAGER.get_local_path(cfg.OUTPUT_DIR)
     if is_repro_mode:
         init_reproducible_mode(cfg, eval_only)
     cfg.freeze()
 
     output_dir = cfg.OUTPUT_DIR
     if output_dir:
-        PathManager.mkdirs(output_dir)
+        _PATH_MANAGER.mkdirs(output_dir)
 
     setup_logger(output_dir, name="fvcore")
     logger = setup_logger(output_dir)
@@ -115,7 +116,7 @@ def default_setup(cfg, args, save_cfg: bool = True):
     if hasattr(args, "config_file") and args.config_file != "":
         logger.info(
             "Contents of args.config_file={}:\n{}".format(
-                args.config_file, PathManager.open(args.config_file, "r").read()
+                args.config_file, _PATH_MANAGER.open(args.config_file, "r").read()
             )
         )
 
@@ -139,7 +140,7 @@ def default_setup(cfg, args, save_cfg: bool = True):
         # Note: some of our scripts may expect the existence of
         # config.yaml in output directory
         path = os.path.join(output_dir, "config.yaml")
-        with PathManager.open(path, "w") as f:
+        with _PATH_MANAGER.open(path, "w") as f:
             f.write(cfg.dump())
         logger.info("Full config saved to {}".format(os.path.abspath(path)))
 

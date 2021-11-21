@@ -2,7 +2,10 @@ import os
 from typing import List, Mapping
 
 import torch
-from fvcore.common.file_io import PathManager
+
+from meddlr.utils import env
+
+_PATH_MANAGER = env.get_path_manager()
 
 
 def move_to_device(obj, device, non_blocking=False, base_types=None):
@@ -74,7 +77,7 @@ def find_experiment_dirs(dirpath, completed=True) -> List[str]:
             exp_dirs.extend(_find_exp_dirs(dp))
         return exp_dirs
 
-    dirpath = PathManager.get_local_path(dirpath)
+    dirpath = _PATH_MANAGER.get_local_path(dirpath)
     exp_dirs = _find_exp_dirs(dirpath)
     if completed:
         exp_dirs = [x for x in exp_dirs if os.path.isfile(os.path.join(x, "model_final.pth"))]

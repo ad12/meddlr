@@ -40,7 +40,6 @@ import numpy as np
 import sigpy as sp
 import silx.io.dictdump as silx_dd
 import torch
-from fvcore.common.file_io import PathManager
 from sigpy.mri import app
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
@@ -48,6 +47,7 @@ from utils import data_partition as dp
 
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
+from meddlr.utils import env
 from meddlr.utils import transforms as T
 
 try:
@@ -90,6 +90,9 @@ CHALLENGES = {
 # Defines supported annotation methods
 # dev: Train files are split into train/val, val is used as test set.
 ANN_METHODS = ["dev", "toy-dev", "mini"]
+
+# Path Manager
+_PATH_MANAGER = env.get_path_manager()
 
 
 def seed_everything(device=None):
@@ -311,7 +314,7 @@ def format_train_file(
 
     skip_recon = False
     recon_data = None
-    if not overwrite and not recompute and PathManager.isfile(out_file):
+    if not overwrite and not recompute and _PATH_MANAGER.isfile(out_file):
         with h5py.File(out_file, "r") as f:
             skip_recon = (
                 group_name in f.keys()
@@ -375,7 +378,7 @@ def filter_files(files: Sequence[str], save_dir: str, calib_method: str):
         out_file = os.path.join(save_dir, file_name)
 
         skip_recon = False
-        if PathManager.isfile(out_file):
+        if _PATH_MANAGER.isfile(out_file):
             with h5py.File(out_file, "r") as f:
                 skip_recon = (
                     calib_method in f.keys()
@@ -441,7 +444,7 @@ def format_data(args, raw_root, formatted_root):
 
         input_dir = os.path.join(input_root, CHALLENGES[args.challenge][split])
         output_dir = os.path.join(output_root, split)
-        PathManager.mkdirs(output_dir)
+        _PATH_MANAGER.mkdirs(output_dir)
 
         logger.info(
             f"({idx}/{len(all_setups)}) Processing {split} split, "
@@ -632,8 +635,8 @@ def format_annotations(args, raw_root, formatted_root, base_ann_dir):
         logger.info("============================")
 
         ann_file = os.path.join(base_ann_dir, f"{version}/{split}.json")
-        ann_dir = os.path.dirname(PathManager.get_local_path(ann_file))
-        PathManager.mkdirs(ann_dir)
+        ann_dir = os.path.dirname(_PATH_MANAGER.get_local_path(ann_file))
+        _PATH_MANAGER.mkdirs(ann_dir)
         image_data = []
         for formatted in files:
             with h5py.File(formatted, "r") as f:
@@ -750,10 +753,10 @@ def main():
 
     if not args.raw:
         args.raw = os.path.join(OUTPUT_DIR, "raw", args.challenge)
-    raw_root = PathManager.get_local_path(args.raw)
+    raw_root = _PATH_MANAGER.get_local_path(args.raw)
     if not args.formatted:
         args.formatted = os.path.join(OUTPUT_DIR, args.challenge)
-    formatted_root = PathManager.get_local_path(args.formatted)
+    formatted_root = _PATH_MANAGER.get_local_path(args.formatted)
 
     setup_logger(formatted_root, name=_FILE_NAME)
     logger.info("Args:\n{}".format(args))
@@ -763,7 +766,7 @@ def main():
         with open(os.path.join(formatted_root, "failed_cases.txt"), "w") as f:
             f.writelines("{}\n".format(line) for line in failed_cases)
     elif args.subcommand == "annotate":
-        ann_dir = PathManager.get_local_path(os.path.join(ANN_DIR, args.challenge))
+        ann_dir = _PATH_MANAGER.get_local_path(os.path.join(ANN_DIR, args.challenge))
         format_annotations(args, raw_root, formatted_root, ann_dir)
     else:
         raise ValueError(f"Subcommand {args.subcommand} not valid")

@@ -2,7 +2,7 @@ import os
 import socket
 import unittest
 
-from meddlr.utils.cluster import Cluster
+from meddlr.utils.cluster import Cluster, download_repository
 
 from ..util import temp_env
 
@@ -73,3 +73,9 @@ class TestCluster(unittest.TestCase):
         with self.assertRaises(KeyError):
             # Once deleted the cluster should not be found.
             cluster2 = cluster.from_config(name)
+
+
+def test_download_github(tmpdir):
+    download_dir = tmpdir.mkdir("download")
+    download_repository(version="main", path=download_dir)
+    assert os.path.isdir(download_dir.join("annotations").strpath)

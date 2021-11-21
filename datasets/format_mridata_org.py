@@ -33,13 +33,13 @@ import mridata
 import numpy as np
 import sigpy as sp
 import torch
-from fvcore.common.file_io import PathManager
 from sigpy.mri import app
 from tqdm import tqdm
 from utils import fftc
 
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
+from meddlr.utils import env
 from meddlr.utils.logger import setup_logger
 
 _FILE_DIR = os.path.dirname(__file__)
@@ -49,6 +49,8 @@ BIN_BART = "bart"
 OUTPUT_DIR = "data://mridata_knee_2019"
 _LOGGER_NAME = "{}.{}".format(_FILE_NAME, __name__)
 logger = logging.getLogger(_LOGGER_NAME)
+
+_PATH_MANAGER = env.get_path_manager()
 
 
 def download_mridata_org_dataset(file_name, dir_output, overwrite: bool = False):
@@ -321,7 +323,7 @@ if __name__ == "__main__":
     if args.random_seed >= 0:
         np.random.seed(args.random_seed)
 
-    root_dir = PathManager.get_local_path(args.output)
+    root_dir = _PATH_MANAGER.get_local_path(args.output)
     setup_logger(root_dir, name=_FILE_NAME)
 
     logger.info("Args:\n{}".format(args))
@@ -367,6 +369,6 @@ if __name__ == "__main__":
 
         # Save annotation files.
         ann_file = os.path.join(root_dir, "annotations", "{}.json".format(split))
-        ann_dir = os.path.dirname(PathManager.get_local_path(ann_file))
+        ann_dir = os.path.dirname(_PATH_MANAGER.get_local_path(ann_file))
         os.makedirs(ann_dir, exist_ok=True)
         write_ann_file(ann_file, dir_h5_data, split)

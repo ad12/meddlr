@@ -13,14 +13,13 @@ from collections import Counter
 
 import torch
 from fvcore.common.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
-from fvcore.common.file_io import PathManager
 from fvcore.common.timer import Timer
 
+from meddlr.engine.train_loop import HookBase
 from meddlr.evaluation.testing import flatten_results_dict
 from meddlr.solver import GradAccumOptimizer
+from meddlr.utils import env
 from meddlr.utils.events import EventWriter
-
-from .train_loop import HookBase
 
 try:
     from guppy import hpy
@@ -39,6 +38,7 @@ __all__ = [
     "FlushOptimizer",
 ]
 
+_PATH_MANAGER = env.get_path_manager()
 
 """
 Implement some common hooks.
@@ -308,7 +308,7 @@ class AutogradProfiler(HookBase):
                 self._profiler.export_chrome_trace(tmp_file)
                 with open(tmp_file) as f:
                     content = f.read()
-            with PathManager.open(out_file, "w") as f:
+            with _PATH_MANAGER.open(out_file, "w") as f:
                 f.write(content)
 
 
