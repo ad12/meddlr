@@ -188,7 +188,7 @@ def channels_first(x: torch.Tensor):
 
 @deprecated(reason="Renamed to channels_first", vremove="v0.1.0")
 def channel_first(x: torch.Tensor):
-    """Deprecated alias for channels_first"""
+    """Deprecated alias for :func:`channels_first`."""
     return channels_first(x)
 
 

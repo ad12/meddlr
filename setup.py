@@ -102,6 +102,7 @@ setup(
     ],
     extras_require={
         "dev": [
+            "coverage",
             "flake8",
             "isort",
             "black==21.10b0",
@@ -109,6 +110,7 @@ setup(
             "flake8-comprehensions",
             "pre-commit>=2.9.3",
             "medpy",
+            "pooch",
         ],
         "benchmarking": ["medpy"],
     },
