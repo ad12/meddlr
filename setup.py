@@ -99,6 +99,7 @@ setup(
         "tqdm",
         "omegaconf",
         "torchmetrics>=0.5.1",
+        "iopath",
     ],
     extras_require={
         "dev": [

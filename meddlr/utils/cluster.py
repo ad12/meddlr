@@ -9,13 +9,14 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Sequence, Union
 
 import yaml
-from fvcore.common.file_io import PathHandler, PathManager
+from iopath.common.file_io import PathHandler
 
-from .env import settings_dir
+from meddlr.utils import env
 
 # Path to the repository directory.
 # TODO: make this cleaner
 _REPO_DIR = os.path.join(os.path.dirname(__file__), "../..")
+_PATH_MANAGER = env.get_path_manager()
 
 __all__ = ["Cluster", "set_cluster"]
 
@@ -107,7 +108,7 @@ class Cluster:
     def data_dir(self):
         path = self._data_dir
         path = os.environ.get("MEDDLR_DATASETS_DIR", path if path else "./datasets")
-        return PathManager.get_local_path(path)
+        return _PATH_MANAGER.get_local_path(path)
 
     @property
     def datasets_dir(self):
@@ -118,13 +119,13 @@ class Cluster:
     def results_dir(self):
         path = self._results_dir
         path = os.environ.get("MEDDLR_RESULTS_DIR", path if path else "./results")
-        return PathManager.get_local_path(path)
+        return _PATH_MANAGER.get_local_path(path)
 
     @property
     def cache_dir(self):
         path = self._cache_dir
         path = os.environ.get("MEDDLR_CACHE_DIR", path if path else "~/cache/meddlr")
-        return PathManager.get_local_path(path)
+        return _PATH_MANAGER.get_local_path(path)
 
     def set(self, **kwargs):
         """Set cluster configuration properties.
@@ -244,7 +245,7 @@ class Cluster:
 
     @staticmethod
     def config_file():
-        return os.path.join(settings_dir(), "clusters.yaml")
+        return os.path.join(env.settings_dir(), "clusters.yaml")
 
     @staticmethod
     def working_cluster() -> "Cluster":
@@ -304,7 +305,7 @@ class GeneralPathHandler(PathHandler, ABC):
         return os.path.join(self._root_dir(), name)
 
     def _open(self, path, mode="r", **kwargs):
-        return PathManager.open(self._get_local_path(path), mode, **kwargs)
+        return _PATH_MANAGER.open(self._get_local_path(path), mode, **kwargs)
 
     def _mkdirs(self, path: str, **kwargs):
         os.makedirs(self._get_local_path(path), exist_ok=True)
@@ -337,6 +338,6 @@ class AnnotationsHandler(GeneralPathHandler):
         return os.path.abspath(os.path.join(_REPO_DIR, "annotations"))
 
 
-PathManager.register_handler(DataHandler())
-PathManager.register_handler(ResultsHandler())
-PathManager.register_handler(AnnotationsHandler())
+_PATH_MANAGER.register_handler(DataHandler())
+_PATH_MANAGER.register_handler(ResultsHandler())
+_PATH_MANAGER.register_handler(AnnotationsHandler())

@@ -12,10 +12,9 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 import torch
-from fvcore.common.file_io import PathManager
 from fvcore.common.history_buffer import HistoryBuffer
 
-from meddlr.utils.env import supports_wandb
+from meddlr.utils.env import get_path_manager, supports_wandb
 
 try:
     import wandb
@@ -23,6 +22,7 @@ except ImportError:
     pass
 
 _CURRENT_STORAGE_STACK = []
+_PATH_MANAGER = get_path_manager()
 
 
 def get_event_storage():
@@ -105,7 +105,7 @@ class JSONWriter(EventWriter):
             window_size (int): the window size of median smoothing for the
                 scalars whose `smoothing_hint` are True.
         """
-        self._file_handle = PathManager.open(json_file, "a")
+        self._file_handle = _PATH_MANAGER.open(json_file, "a")
         self._window_size = window_size
 
     def write(self):

@@ -12,6 +12,7 @@ from typing import List
 
 import numpy as np
 import torch
+from iopath.common.file_io import PathManager, PathManagerFactory
 
 __all__ = []
 
@@ -271,3 +272,7 @@ def is_main_process():
 
 def settings_dir():
     return os.environ.get("MEDDLR_SETTINGS", _SETTINGS_DIR)
+
+
+def get_path_manager(key="meddlr") -> PathManager:
+    return PathManagerFactory.get(key)
