@@ -2,8 +2,7 @@ import os
 import socket
 import unittest
 
-from meddlr.utils import env
-from meddlr.utils.cluster import Cluster, GithubHandler, download_github_repository
+from meddlr.utils.cluster import Cluster
 
 from ..util import temp_env
 
@@ -74,19 +73,3 @@ class TestCluster(unittest.TestCase):
         with self.assertRaises(KeyError):
             # Once deleted the cluster should not be found.
             cluster2 = cluster.from_config(name)
-
-
-def test_download_github(tmpdir):
-    download_dir = tmpdir.mkdir("download")
-    download_github_repository(env.get_github_url(), branch_or_tag="main", cache_path=download_dir)
-    assert os.path.isdir(download_dir.join("annotations").strpath)
-
-
-def test_github_handler(tmpdir):
-    download_dir = tmpdir.mkdir("download")
-    handler = GithubHandler(
-        env.get_github_url(), default_branch_or_tag="main", default_cache_path=download_dir / "main"
-    )
-    path = handler._get_local_path("github://annotations")
-    assert str(path) == os.path.join(download_dir.strpath, "main", "annotations")
-    assert os.path.isdir(path)
