@@ -3,15 +3,14 @@ import os
 from meddlr.utils import env
 from meddlr.utils.path import GithubHandler, download_github_repository
 
+# def test_meddlr_path_manager():
+#     pm = env.get_path_manager()
 
-def test_meddlr_path_manager():
-    pm = env.get_path_manager()
+#     # Annotations
+#     assert os.path.isdir(pm.get_local_path("ann://"))
 
-    # Annotations
-    assert os.path.isdir(pm.get_local_path("ann://"))
-
-    # Github
-    assert os.path.isdir(pm.get_local_path("github://"))
+#     # Github
+#     assert os.path.isdir(pm.get_local_path("github://"))
 
 
 def test_download_github(tmpdir):
