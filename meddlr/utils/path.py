@@ -96,7 +96,7 @@ class GithubHandler(GeneralPathHandler):
         return None
 
     def _get_default_branch_or_tag(self):
-        return mr.__version__
+        return "v{mr.__version__}"
 
     def _get_default_cache_path(self):
         return os.path.join(
