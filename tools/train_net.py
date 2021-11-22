@@ -18,7 +18,7 @@ customizations.
 from meddlr.config import get_cfg
 from meddlr.engine import DefaultTrainer, default_argument_parser, default_setup
 from meddlr.engine.defaults import init_wandb_run
-from meddlr.utils.env import supports_wandb
+from meddlr.utils import env
 
 
 def setup(args):
@@ -26,7 +26,7 @@ def setup(args):
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
-    cfg.merge_from_file(args.config_file)
+    cfg.merge_from_file(env.get_path_manager().get_local_path(args.config_file))
     opts = args.opts
     if opts and opts[0] == "--":
         opts = opts[1:]
@@ -42,7 +42,7 @@ def setup(args):
     # Currently resuming with the same experiment id overwrites previous data.
     # So for now, even if you are resuming your experiment, it will be logged
     # as a separate run in W&B.
-    if supports_wandb():
+    if env.supports_wandb():
         init_wandb_run(cfg, resume=False, job_type="training", sync_tensorboard=True)
 
     return cfg
