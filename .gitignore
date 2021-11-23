@@ -50,3 +50,7 @@ coverage.xml
 
 # settings dir
 **/.settings
+
+# pypi build files
+build/
+dist/

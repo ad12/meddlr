@@ -141,6 +141,7 @@ class SSIM(Metric):
     def __init__(
         self,
         method: str = "wang",
+        im_type: str = "magnitude",
         channel_names: Sequence[str] = None,
         reduction="none",
         compute_on_step: bool = False,
@@ -158,12 +159,14 @@ class SSIM(Metric):
             dist_sync_fn=dist_sync_fn,
         )
         self.method = method
+        self.im_type = im_type
 
     def func(self, preds, targets) -> torch.Tensor:
         return mF.ssim(
             preds,
             targets,
             method=self.method,
+            im_type=self.im_type,
         )
 
 
