@@ -118,6 +118,7 @@ setup(
             "m2r2",
         ],
         "benchmarking": ["medpy"],
+        "docs": ["sphinx", "sphinxcontrib.bibtex", "m2r2"],
     },
     classifiers=[
         # Trove classifiers
