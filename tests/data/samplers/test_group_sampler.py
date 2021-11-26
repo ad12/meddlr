@@ -27,6 +27,12 @@ class MockGroupSampler(DistributedGroupSampler):
 
 
 class TestGroupSampler(unittest.TestCase):
+    def test_group_sampler_errors(self):
+        """Test init values that would cause errors."""
+        dataset = _MockDataset()
+        with self.assertRaises(ValueError):
+            GroupSampler(dataset, batch_by="letter", shuffle=False)
+
     def test_basic_batch_by(self):
         dataset = _MockDataset()
 

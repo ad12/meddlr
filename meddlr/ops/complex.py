@@ -225,7 +225,11 @@ def channels_first(x: torch.Tensor):
         return x.permute((0, x.ndim - 2) + tuple(range(1, x.ndim - 2)) + (x.ndim - 1,))
 
 
-@deprecated(reason="Renamed to channels_first", vremove="v0.1.0")
+@deprecated(
+    reason="Renamed to channels_first",
+    vremove="v0.1.0",
+    replacement="meddlr.ops.complex.channels_first",
+)
 def channel_first(x: torch.Tensor):
     """Deprecated alias for :func:`channels_first`."""
     return channels_first(x)
