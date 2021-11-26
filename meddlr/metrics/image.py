@@ -14,6 +14,7 @@ from skimage.metrics import structural_similarity
 import meddlr.metrics.functional as mF
 from meddlr.metrics.metric import Metric
 from meddlr.ops import complex as cplx
+from meddlr.utils.deprecated import deprecated
 
 # Mapping from str to complex function name.
 _IM_TYPES_TO_FUNCS = {
@@ -26,10 +27,31 @@ _IM_TYPES_TO_FUNCS = {
     "imag": cplx.imag,
 }
 
-__all__ = ["PSNR", "MSE", "nRMSE", "RMSE", "SSIM"]
+__all__ = ["PSNR", "MSE", "NRMSE", "RMSE", "SSIM"]
 
 
 class PSNR(Metric):
+    """Peak signal-to-noise ratio with complex-valued support.
+
+    :math:`PSNR = 20 * log_{10}(\\frac{max(|x_{gt}|)}{||x_{pred} - x_{gt}||_2})`
+
+    This implementation supports complex tensors.
+    ``im_type`` controls how the complex tensor should be processed:
+
+        - ``'magnitude'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to magnitude images.
+        - ``'phase'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to phase images.
+        - ``'real'``: Real components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+        - ``'imag'``: Imaginary components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+
+    Attributes:
+        im_type (str): The type of the complex image to compute the metric on.
+            This only applies to complex tensors.
+        channel_names (Sequence[str]): The names of the channels in the input.
+    """
+
+    is_differentiable = True
+    higher_is_better = True
+
     def __init__(
         self,
         im_type: str = None,
@@ -57,6 +79,27 @@ class PSNR(Metric):
 
 
 class MSE(Metric):
+    """Mean squared error with complex-valued support.
+
+    :math:`MSE = ||x_{pred} - x_{gt}||_2^2`.
+
+    This implementation supports complex tensors.
+    ``im_type`` controls how the complex tensor should be processed:
+
+        - ``'magnitude'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to magnitude images.
+        - ``'phase'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to phase images.
+        - ``'real'``: Real components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+        - ``'imag'``: Imaginary components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+
+    Attributes:
+        im_type (str): The type of the complex image to compute the metric on.
+            This only applies to complex tensors.
+        channel_names (Sequence[str]): The names of the channels in the input.
+    """
+
+    is_differentiable = True
+    higher_is_better = False
+
     def __init__(
         self,
         im_type: str = None,
@@ -83,7 +126,28 @@ class MSE(Metric):
         return mF.mse(preds, targets, im_type=self.im_type)
 
 
-class nRMSE(Metric):
+class NRMSE(Metric):
+    """Normalized root-mean-squared error with complex-valued support.
+
+    :math:`NRMSE = \\frac{||x_{pred} - x_{gt}||_2}{||x_{gt}||_2}`.
+
+    This implementation supports complex tensors.
+    ``im_type`` controls how the complex tensor should be processed:
+
+        - ``'magnitude'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to magnitude images.
+        - ``'phase'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to phase images.
+        - ``'real'``: Real components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+        - ``'imag'``: Imaginary components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+
+    Attributes:
+        im_type (str): The type of the complex image to compute the metric on.
+            This only applies to complex tensors.
+        channel_names (Sequence[str]): The names of the channels in the input.
+    """
+
+    is_differentiable = True
+    higher_is_better = False
+
     def __init__(
         self,
         im_type: str = None,
@@ -110,7 +174,31 @@ class nRMSE(Metric):
         return mF.nrmse(preds, targets, im_type=self.im_type)
 
 
+nRMSE = NRMSE
+
+
 class RMSE(Metric):
+    """Root-mean-squared error with complex-valued support.
+
+    :math:`RMSE = ||x_{pred} - x_{gt}||_2`.
+
+    This implementation supports complex tensors.
+    ``im_type`` controls how the complex tensor should be processed:
+
+        - ``'magnitude'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to magnitude images.
+        - ``'phase'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to phase images.
+        - ``'real'``: Real components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+        - ``'imag'``: Imaginary components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+
+    Attributes:
+        im_type (str): The type of the complex image to compute the metric on.
+            This only applies to complex tensors.
+        channel_names (Sequence[str]): The names of the channels in the input.
+    """
+
+    is_differentiable = True
+    higher_is_better = False
+
     def __init__(
         self,
         im_type: str = None,
@@ -138,9 +226,31 @@ class RMSE(Metric):
 
 
 class SSIM(Metric):
+    """Structural similarity index measure with complex-valued support.
+
+    This implementation of pSNR supports complex tensors.
+    ``im_type`` controls how the complex tensor should be processed:
+
+        - ``'magnitude'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to magnitude images.
+        - ``'phase'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to phase images.
+        - ``'real'``: Real components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+        - ``'imag'``: Imaginary components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+
+    Attributes:
+        method (str): The method to use for computing the SSIM.
+            Defaults to ``'wang'``.
+        im_type (str): The type of the complex image to compute the metric on.
+            This only applies to complex tensors.
+        channel_names (Sequence[str]): The names of the channels in the input.
+    """
+
+    is_differentiable = True
+    higher_is_better = True
+
     def __init__(
         self,
         method: str = "wang",
+        im_type: str = "magnitude",
         channel_names: Sequence[str] = None,
         reduction="none",
         compute_on_step: bool = False,
@@ -158,15 +268,18 @@ class SSIM(Metric):
             dist_sync_fn=dist_sync_fn,
         )
         self.method = method
+        self.im_type = im_type
 
     def func(self, preds, targets) -> torch.Tensor:
         return mF.ssim(
             preds,
             targets,
             method=self.method,
+            im_type=self.im_type,
         )
 
 
+@deprecated(vremove="0.1.0", replacement="metrics.functional.mse")
 def compute_mse(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=False):
     if cplx.is_complex(ref):
         ref = torch.view_as_real(ref)
@@ -197,6 +310,7 @@ def compute_l2(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=Fal
     return torch.sqrt(compute_mse(ref, x, is_batch=is_batch, magnitude=magnitude))
 
 
+@deprecated(vremove="0.1.0", replacement="metrics.functional.psnr")
 def compute_psnr(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=False):
     """Compute peak to signal to noise ratio of magnitude image.
 
@@ -219,6 +333,7 @@ def compute_psnr(ref: torch.Tensor, x: torch.Tensor, is_batch=False, magnitude=F
     return 20 * torch.log10(cplx.abs(ref).max() / l2)
 
 
+@deprecated(vremove="0.1.0", replacement="metrics.functional.nrmse")
 def compute_nrmse(ref, x, is_batch=False, magnitude=False):
     """Compute normalized root mean square error.
     The norm of reference is used to normalize the metric.
@@ -240,6 +355,7 @@ def compute_nrmse(ref, x, is_batch=False, magnitude=False):
     return rmse / norm
 
 
+@deprecated(vremove="0.1.0", replacement="metrics.functional.ssim")
 def compute_ssim(
     ref: torch.Tensor,
     x: torch.Tensor,

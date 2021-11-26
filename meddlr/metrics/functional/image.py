@@ -18,6 +18,7 @@ __all__ = ["mse", "rmse", "psnr", "nrmse", "l2_norm", "ssim"]
 
 # Mapping from str to complex function name.
 _IM_TYPES_TO_FUNCS = {
+    "mag": cplx.abs,
     "magnitude": cplx.abs,
     "abs": cplx.abs,
     "phase": cplx.angle,
@@ -121,7 +122,6 @@ def nrmse(pred: torch.Tensor, target: torch.Tensor, im_type: str = None) -> torc
 
     Returns:
         torch.Tensor: The normalized root mean squared error.
-            If ``is_batch``, this is a 1D vector.
     """
     is_complex = cplx.is_complex(pred) or cplx.is_complex_as_real(pred)
     abs_func = cplx.abs if is_complex else torch.abs
@@ -148,7 +148,6 @@ def l2_norm(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
 
     Returns:
         torch.Tensor: The normalized root mean squared error.
-            If ``is_batch``, this is a 1D vector.
     """
     err = pred - target
     is_complex = cplx.is_complex(err) or cplx.is_complex_as_real(err)
@@ -167,7 +166,22 @@ def ssim(
     k1=0.01,
     k2=0.03,
     pad_mode: str = "reflect",
+    im_type: str = "magnitude",
 ) -> torch.Tensor:
+    """Computes structural similarity index (SSIM).
+
+    Args:
+        pred (torch.Tensor): The prediction. Either a complex or real tensor.
+        target (torch.Tensor): The target. Either a complex or real tensor.
+        im_type (str, optional): The image type to compute metric on.
+            This only applies for complex inputs, otherwise ignored.
+            Either ``'magnitude'`` (default) to compute metric on magnitude images
+            or ``'phase'`` to compute metric on phase/angle images. If ``None``,
+            computed on complex images.
+
+    Returns:
+        torch.Tensor: The SSIM for each (batch, channel) pair.
+    """
     if method is not None:
         if method.lower() == "wang":
             kernel_size = 11
@@ -178,11 +192,11 @@ def ssim(
         else:
             raise ValueError(f"Unknown method {method}")
 
-    # Currently only support computing on magnitude types.
-    if cplx.is_complex(pred) or cplx.is_complex_as_real(pred):
-        pred = cplx.abs(pred)
-    if cplx.is_complex(target) or cplx.is_complex_as_real(target):
-        target = cplx.abs(target)
+    if im_type is not None:
+        if cplx.is_complex(pred) or cplx.is_complex_as_real(pred):
+            pred = _IM_TYPES_TO_FUNCS[im_type](pred)
+        if cplx.is_complex(target) or cplx.is_complex_as_real(target):
+            target = _IM_TYPES_TO_FUNCS[im_type](target)
 
     ssim_idx = _ssim_compute(
         pred,

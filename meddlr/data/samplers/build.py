@@ -11,9 +11,20 @@ __all__ = ["build_train_sampler", "build_val_sampler"]
 
 
 def build_train_sampler(cfg, dataset, distributed=False):
-    """
-    Build the whole model architecture, defined by ``cfg.MODEL.META_ARCHITECTURE``.
-    Note that it does not load any weights from ``cfg``.
+    """Builds the training sampler from the config.
+
+    Args:
+        cfg (CfgNode): The config. The ``cfg.DATALOADER.SAMPLER_TRAIN``field
+            will be used to determine the sampler type.
+        dataset (torch.data.Dataset): The training dataset. This dataset
+            must follow the Meddlr dataset convention. See :cls:`SliceDataset`
+            for more information.
+        distributed (bool, optional): Whether to use a distributed sampler.
+            Note custom samplers (e.g. AlternatingSampler/GroupSampler)
+            do not support this argument.
+
+    Returns:
+        torch.utils.data.sampler.Sampler: The sampler.
     """
     sampler = cfg.DATALOADER.SAMPLER_TRAIN
     is_batch_sampler = False

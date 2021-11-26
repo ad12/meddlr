@@ -112,8 +112,13 @@ setup(
             "pre-commit>=2.9.3",
             "medpy",
             "pooch",
+            "sphinx",
+            "sphinxcontrib-bibtex",
+            "sphinx-rtd-theme",
+            "m2r2",
         ],
         "benchmarking": ["medpy"],
+        "docs": ["sphinx", "sphinxcontrib.bibtex", "m2r2"],
     },
     classifiers=[
         # Trove classifiers

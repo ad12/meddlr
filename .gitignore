@@ -50,3 +50,11 @@ coverage.xml
 
 # settings dir
 **/.settings
+
+# build files
+build/
+**/dist
+*.spec
+
+# Generated docs
+docs/source/apidocs/generated
