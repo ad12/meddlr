@@ -51,6 +51,10 @@ coverage.xml
 # settings dir
 **/.settings
 
-# pypi build files
+# build files
 build/
-dist/
+**/dist
+*.spec
+
+# Generated docs
+docs/source/apidocs/generated

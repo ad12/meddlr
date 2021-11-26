@@ -7,6 +7,28 @@ import torch
 from meddlr.utils.deprecated import deprecated
 from meddlr.utils.env import supports_cplx_tensor
 
+__all__ = [
+    "is_complex",
+    "is_complex_as_real",
+    "conj",
+    "mul",
+    "abs",
+    "angle",
+    "real",
+    "imag",
+    "from_polar",
+    "channels_first",
+    "channels_last",
+    "get_mask",
+    "matmul",
+    "power_method",
+    "svd",
+    "to_numpy",
+    "to_tensor",
+    "rss",
+    "center_crop",
+]
+
 
 def is_complex(x):
     """Returns if ``x`` is a complex-tensor.
@@ -179,6 +201,23 @@ def from_polar(magnitude, phase, return_cplx: bool = False):
 
 
 def channels_first(x: torch.Tensor):
+    """Permute complex-valued ``x`` to channels-first convention.
+
+    For complex values, there are two potential conventions:
+
+    1. ``x`` is complex-valued: ``(B,...,C)`` -> ``(B, C, ...)``.
+    2. The real and imaginary components are stored in the last dimension.
+       ``(B,...,C,2)`` -> ``(B, C, ..., 2)``.
+
+    Args:
+        x (torch.Tensor): A complex-valued tensor of shape ``(B,...,C)``
+            or a real-valued tensor of shape ``(B,...,C,2)``.
+
+    Returns:
+        torch.Tensor: A channels-first tensor. If ``x`` is complex,
+            this will also be complex. If ``x`` is the real-view of
+            a complex tensor, this will also be the real view.
+    """
     assert is_complex_as_real(x) or is_complex(x)
     if is_complex(x):
         return x.permute((0, x.ndim - 1) + tuple(range(1, x.ndim - 1)))
@@ -193,7 +232,8 @@ def channel_first(x: torch.Tensor):
 
 
 def channels_last(x: torch.Tensor):
-    """
+    """Permute complex-valued ``x`` to channels-last convention.
+
     Args:
         x (torch.Tensor): A tensor of shape [B,C,H,W,...] or [B,C,H,W,...,2].
 
@@ -209,10 +249,17 @@ def channels_last(x: torch.Tensor):
 
 
 def get_mask(x, eps=1e-11):
-    """
-    Returns a binary mask of zeros and ones:
+    """Returns a binary mask for where ``x`` is nonzero with ``eps`` tolerance.
+
       - 0, if both real and imaginary components are zero.
       - 1, if either real and imaginary components are non-zero.
+
+    Args:
+        x (torch.Tensor): A complex-valued tensor.
+        eps (float): Tolerance for zer0-value.
+
+    Returns:
+        torch.Tensor: A binary mask of shape ``x.shape``.
     """
     unsqueeze = True
     if is_complex(x):
@@ -348,6 +395,9 @@ def rss(x: torch.Tensor, dim: int = 0) -> torch.Tensor:
         torch.Tensor: The RSS value.
     """
     return torch.sqrt((abs(x) ** 2).sum(dim))
+
+
+root_sum_of_squares = rss
 
 
 def center_crop(x: torch.Tensor, shape, channels_last: bool = False):

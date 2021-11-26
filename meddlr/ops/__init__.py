@@ -1,4 +1,4 @@
-from meddlr.ops import categorical, fft, utils
+from meddlr.ops import categorical, complex, fft, utils  # noqa: F401
 from meddlr.ops.categorical import (  # noqa: F401
     categorical_to_one_hot,
     logits_to_prob,
@@ -28,6 +28,9 @@ from meddlr.ops.utils import (  # noqa: F401
     zero_pad,
 )
 
+# Do not add complex utilities to module level import.
+# Complex utilites do not support real numbers
+# and can cause clashes in the namespace.
 __all__ = []
 __all__.extend(fft.__all__)
 __all__.extend(utils.__all__)

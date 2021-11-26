@@ -9,6 +9,15 @@ __all__ = ["DSC", "CV", "VOE", "ASSD"]
 
 
 class DSC(Metric):
+    """Dice score coefficient.
+
+    Attributes:
+        channel_names (Sequence[str]): Category names corresponding to the channels.
+    """
+
+    is_differentiable = True
+    higher_is_better = True
+
     def __init__(
         self,
         channel_names: Sequence[str] = None,
@@ -32,7 +41,19 @@ class DSC(Metric):
         return mF.dice_score(y_pred=preds, y_true=targets)
 
 
+Dice = DSC
+
+
 class CV(Metric):
+    """Coefficient of variation.
+
+    Attributes:
+        channel_names (Sequence[str]): Category names corresponding to the channels.
+    """
+
+    is_differentiable = True
+    higher_is_better = False
+
     def __init__(
         self,
         channel_names: Sequence[str] = None,
@@ -57,6 +78,15 @@ class CV(Metric):
 
 
 class VOE(Metric):
+    """Volumetric overlap error.
+
+    Attributes:
+        channel_names (Sequence[str]): Category names corresponding to the channels.
+    """
+
+    is_differentiable = True
+    higher_is_better = False
+
     def __init__(
         self,
         channel_names: Sequence[str] = None,
@@ -81,6 +111,20 @@ class VOE(Metric):
 
 
 class ASSD(Metric):
+    """Average symmetric surface distance.
+
+    Attributes:
+        connectivity (int): The neighbourhood/connectivity considered when determining
+            the surface of the binary objects.
+        channel_names (Sequence[str]): Category names corresponding to the channels.
+
+    Note:
+        This metric is not differentiable.
+    """
+
+    is_differentiable = False
+    higher_is_better = False
+
     def __init__(
         self,
         connectivity: int = 1,
@@ -91,6 +135,12 @@ class ASSD(Metric):
         process_group: bool = None,
         dist_sync_fn: bool = None,
     ):
+        """
+        Args:
+            connectivity (int): The neighbourhood/connectivity considered when determining
+                the surface of the binary objects. If in doubt, leave it as it is.
+            channel_names (Sequence[str]): Category names corresponding to the channels.
+        """
         super().__init__(
             channel_names=channel_names,
             units="",

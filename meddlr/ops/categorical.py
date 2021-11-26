@@ -10,54 +10,71 @@ __all__ = [
 ]
 
 
-def one_hot_to_categorical(pred, channel_dim: int = 1, background=False):
+def one_hot_to_categorical(x, channel_dim: int = 1, background=False):
     """Converts one-hot encoded predictions to categorical predictions.
 
     Args:
-        pred: One-hot encoded predictions. Shape BxCx...
-        background: If ``True``, assumes first channel is the background.
+        x (torch.Tensor | np.ndarray): One-hot encoded predictions.
+        channel_dim (int, optional): Channel dimension.
+            Defaults to ``1`` (i.e. ``(B,C,...)``).
+        background (bool, optional): If ``True``, assumes index 0 in the
+            channel dimension is the background.
 
     Returns:
         torch.Tensor | np.ndarray: Categorical array or tensor. If ``background=False``,
-            the output will be 1-indexed such that ``0`` corresponds to the background.
+        the output will be 1-indexed such that ``0`` corresponds to the background.
     """
-    is_ndarray = isinstance(pred, np.ndarray)
+    is_ndarray = isinstance(x, np.ndarray)
     if is_ndarray:
-        pred = torch.as_tensor(pred)
+        x = torch.as_tensor(x)
 
     if background is not None and background is not False:
-        out = torch.argmax(pred, channel_dim)
+        out = torch.argmax(x, channel_dim)
     else:
-        out = torch.argmax(pred.type(torch.long), dim=channel_dim) + 1
-        out = torch.where(pred.sum(channel_dim) == 0, torch.tensor([0], device=pred.device), out)
+        out = torch.argmax(x.type(torch.long), dim=channel_dim) + 1
+        out = torch.where(x.sum(channel_dim) == 0, torch.tensor([0], device=x.device), out)
 
     if is_ndarray:
         out = out.numpy()
     return out
 
 
-def categorical_to_one_hot(
-    tensor, channel_dim: int = 1, background=0, num_categories=None, dtype=None
-):
-    is_ndarray = isinstance(tensor, np.ndarray)
+def categorical_to_one_hot(x, channel_dim: int = 1, background=0, num_categories=None, dtype=None):
+    """Converts categorical predictions to one-hot encoded predictions.
+
+    Args:
+        x (torch.Tensor | np.ndarray): Categorical array or tensor.
+        channel_dim (int, optional): Channel dimension for output tensor.
+        background (int | NoneType, optional): The numerical label of the
+            background category. If ``None``, assumes that the background is
+            a class that should be one-hot encoded.
+        num_categories (int, optional): Number of categories (excluding background).
+            Defaults to the ``max(x) + 1``.
+        dtype (type, optional): Data type of the output.
+            Defaults to boolean (``torch.bool`` or ``np.bool``).
+
+    Returns:
+        torch.Tensor | np.ndarray: One-hot encoded predictions.
+    """
+    is_ndarray = isinstance(x, np.ndarray)
     if is_ndarray:
-        tensor = torch.from_numpy(tensor)
+        x = torch.from_numpy(x)
 
     if num_categories is None:
-        num_categories = torch.max(tensor).cpu().item()
+        num_categories = torch.max(x).cpu().item()
     num_categories += 1
 
-    shape = tensor.shape
+    shape = x.shape
     out_shape = (num_categories,) + shape
 
     if dtype is None:
         dtype = torch.bool
     default_value = True if dtype == torch.bool else 1
-    if tensor.dtype != torch.long:
-        tensor = tensor.type(torch.long)
+    if x.dtype != torch.long:
+        x = x.type(torch.long)
 
-    out = torch.zeros(out_shape, dtype=dtype, device=tensor.device)
-    out.scatter_(0, tensor.reshape((1,) + tensor.shape), default_value)
+    out = torch.zeros(out_shape, dtype=dtype, device=x.device)
+    out.scatter_(0, x.reshape((1,) + x.shape), default_value)
     if background is not None:
         out = torch.cat([out[0:background], out[background + 1 :]], dim=0)
     if channel_dim != 0:
@@ -73,6 +90,16 @@ def categorical_to_one_hot(
 
 
 def logits_to_prob(logits, activation, channel_dim: int = 1):
+    """Converts logits to probabilities.
+
+    Args:
+        logits (torch.Tensor | np.ndarray): The logits.
+        activation (str): Activation to use. One of ``'sigmoid'``, ``'softmax'``.
+        channel_dim (int, optional): The channel dimension.
+
+    Returns:
+        torch.Tensor | np.ndarray: The probabilities.
+    """
     is_ndarray = isinstance(logits, np.ndarray)
     if is_ndarray:
         logits = torch.from_numpy(logits)
@@ -112,9 +139,11 @@ def pred_to_categorical(pred_or_logits, activation, channel_dim: int = 1, thresh
         out = one_hot_to_categorical(torch.sigmoid(pred) > threshold, channel_dim=channel_dim)
     elif activation == "softmax":
         out = torch.argmax(pred, dim=channel_dim)
-    else:
+    elif activation in (None, ""):
         # if not activation specified, assume it is one-hot encoded.
         out = one_hot_to_categorical(pred, channel_dim=channel_dim)
+    else:
+        raise ValueError(f"activation '{activation}' not supported'")
 
     if is_ndarray:
         out = out.numpy()
