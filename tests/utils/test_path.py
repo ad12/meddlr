@@ -31,7 +31,7 @@ def test_github_handler(tmpdir):
 
 def test_gdrive_handler(tmpdir):
     download_dir = tmpdir.mkdir("download")
-    gdrive_id = "14VQf4esuZVy_Xf6IUciBas81j0JpaqCb"
+    gdrive_id = "1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx"
 
     handler = GoogleDriveHandler()
 
