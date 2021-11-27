@@ -100,6 +100,7 @@ setup(
         "omegaconf",
         "torchmetrics>=0.5.1",
         "iopath",
+        "packaging",
     ],
     extras_require={
         "dev": [

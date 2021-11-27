@@ -1,5 +1,9 @@
 import itertools
-from typing import Any, Dict, List, Sequence
+import os
+import pathlib
+from typing import Any, Dict, List, Sequence, Union
+
+from meddlr.utils import env
 
 from .config import CfgNode
 
@@ -41,6 +45,47 @@ def stringify(cfg: Dict[str, Any]):
     cfg = {k: f"'{v}'" if isinstance(v, str) else v for k, v in cfg.items()}
     cfg = {k: _stringify_value(v) for k, v in cfg.items()}
     return " ".join(f'{k} "{v}"' for k, v in cfg.items())
+
+
+def check_dependencies(
+    cfg_file_or_lines, return_failed_deps: bool = False
+) -> Union[bool, List[str]]:
+    """Check that module dependencies are met for the config file.
+
+    Dependencies are specified as comments in the config file starting
+    with ``"# DEPENDENCY:"``.
+
+    Args:
+        cfg_file (str): The path to the config file.
+        return_failed_deps (bool, optional): Whether to return the list of
+            dependencies that are not met. Defaults to ``False``.
+
+    Returns:
+        bool | List[str]: If ``return_failed_deps=True``, returns the list of
+        dependencies that are not met. Else returns boolean of whether all
+        dependencies are met.
+    """
+    keyword = "# DEPENDENCY:"
+
+    if isinstance(cfg_file_or_lines, (str, os.PathLike, pathlib.Path)):
+        with open(cfg_file_or_lines, "r") as f:
+            lines = f.readlines()
+    else:
+        lines = cfg_file_or_lines
+    lines = [line.strip() for line in lines if keyword in line]
+    dependencies = [
+        dep.strip() for line in lines for dep in line.split(keyword)[-1].strip().split(";")
+    ]
+
+    missing_deps = []
+    for dep in dependencies:
+        if not env.is_package_installed(dep):
+            missing_deps.append(dep)
+
+    if return_failed_deps:
+        return missing_deps
+    else:
+        return len(missing_deps) == 0
 
 
 def _stringify_value(value, depth=0) -> str:
