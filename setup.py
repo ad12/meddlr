@@ -100,9 +100,11 @@ setup(
         "omegaconf",
         "torchmetrics>=0.5.1",
         "iopath",
+        "packaging",
     ],
     extras_require={
         "dev": [
+            # Formatting
             "coverage",
             "flake8",
             "isort",
@@ -110,15 +112,19 @@ setup(
             "flake8-bugbear",
             "flake8-comprehensions",
             "pre-commit>=2.9.3",
+            # Testing
             "medpy",
             "pooch",
+            "gdown",
+            # Documentation
             "sphinx",
             "sphinxcontrib-bibtex",
             "sphinx-rtd-theme",
             "m2r2",
         ],
         "benchmarking": ["medpy"],
-        "docs": ["sphinx", "sphinxcontrib.bibtex", "m2r2"],
+        "deployment": ["gdown"],
+        "docs": ["sphinx", "sphinxcontrib.bibtex", "sphinx-rtd-theme", "m2r2"],
     },
     classifiers=[
         # Trove classifiers

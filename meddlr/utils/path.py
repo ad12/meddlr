@@ -1,14 +1,22 @@
 import logging
 import os
 import shutil
+import weakref
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-from iopath.common.file_io import PathHandler
+from iopath.common.file_io import PathHandler, PathManager
 
 import meddlr as mr
 from meddlr.utils import env
 from meddlr.utils.cluster import Cluster
+
+try:
+    import gdown
+
+    _GDOWN_AVAILABLE = True
+except ImportError:
+    _GDOWN_AVAILABLE = False
 
 _REPO_DIR = os.path.join(os.path.dirname(__file__), "../..")
 _LOGGER = logging.getLogger(__name__)
@@ -199,6 +207,118 @@ class AnnotationsHandler(GeneralPathHandler):
             raise RuntimeError("Could not download annotations.")
 
 
+class GoogleDriveHandler(GeneralPathHandler):
+    """Handler to download, cache, and match Google drive files to local folder structure.
+
+    Publicly available files on google drive can be downloaded using this handler.
+    By default, files are cached to "~/.cache/gdrive/<file id>".
+
+    Examples:
+        >>> handler = GoogleDriveHandler()
+        >>> handler.get_local_path("gdrive://https://drive.google.com/file/d/14VQf4esuZVy_Xf6IUciBas81j0JpaqCb/view?usp=sharing")  # recommended  # noqa: E501
+        >>> # OR
+        >>> handler.get_local_path("gdrive://14VQf4esuZVy_Xf6IUciBas81j0JpaqCb")
+
+    Note:
+        This handler requires ``gdown`` to be installed. Install it with ``pip install gdown``.
+    """
+
+    PREFIX = "gdrive://"
+
+    def _root_dir(self):
+        return None
+
+    def _get_local_path(
+        self,
+        path: str,
+        force: bool = False,
+        cache_file: Optional[str] = None,
+        **kwargs: Any,
+    ) -> str:
+        """Get local path to google drive file.
+
+        To force a download, set ``force=True``.
+
+        Args:
+            path (str): The relative file path in the GitHub repository.
+                Must start with ``'gdrive://'``.
+            force (bool, optional): If ``True``, force a download of the Github
+                repository. Defaults to ``False``.
+            cache_file (str, optional): The path to cache file to.
+
+        Returns:
+            str: The local path to the file/directory.
+        """
+        if not _GDOWN_AVAILABLE:
+            raise ModuleNotFoundError("`gdown` not installed. Install it via `pip install gdown`")
+        path = str(path)
+        path = path[len(self.PREFIX) :]
+        self._check_kwargs(kwargs)
+
+        gdrive_id = None
+        if "drive.google.com" in path:
+            gdrive_id = path.split("/d/")[1].split("/")[0]
+        else:
+            gdrive_id = path
+        if cache_file is None:
+            cache_file = os.path.join(os.path.expanduser("~/.cache/gdrive"), gdrive_id)
+        else:
+            cache_file = str(cache_file)
+        os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+
+        if force or not os.path.exists(cache_file):
+            logger = logging.getLogger(__name__)
+            logger.info("Downloading gdrive file from {}...".format(path))
+            gdown.download(id=gdrive_id, output=cache_file)
+            logger.info("File cached to {}".format(cache_file))
+
+        return cache_file
+
+
+class DownloadHandler(GeneralPathHandler):
+    """Handler to download files from a URL.
+
+    Currently this is limited to downloading from Google Drive.
+
+    Examples:
+        >>> handler = DownloadHandler()
+        >>> handler.get_local_path("
+    """
+
+    PREFIX = "download://"
+
+    def __init__(self, path_manager: PathManager, async_executor=None) -> None:
+        # Avoid memory leak.
+        self.path_manager = weakref.proxy(path_manager)
+        super().__init__(async_executor=async_executor)
+
+    def _root_dir(self):
+        return None
+
+    def _get_local_path(
+        self,
+        path: str,
+        **kwargs: Any,
+    ) -> str:
+        """Get local path to google drive file.
+
+        To force a download, set ``force=True``.
+
+        Args:
+            path (str): The relative file path in the GitHub repository.
+                Must start with ``'download://'``.
+
+        Returns:
+            str: The local path to the file/directory.
+        """
+        path = path[len(self.PREFIX) :]
+
+        if "drive.google.com" in path:
+            return self.path_manager.get_local_path(f"gdrive://{path}", **kwargs)
+        else:
+            raise ValueError(f"Download not supported for url {path}")
+
+
 def download_github_repository(url, cache_path, branch_or_tag="main", force=False) -> str:
     """Downloads the repository from Github.
 
@@ -244,3 +364,5 @@ _path_manager.register_handler(ResultsHandler())
 _path_manager.register_handler(CacheHandler())
 _path_manager.register_handler(GithubHandler(env.get_github_url(), default_branch_or_tag=None))
 _path_manager.register_handler(AnnotationsHandler())
+_path_manager.register_handler(GoogleDriveHandler())
+_path_manager.register_handler(DownloadHandler(_path_manager))

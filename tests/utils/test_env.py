@@ -80,5 +80,17 @@ class TestEnvVariables(unittest.TestCase):
         self._reset_var(env_var, orig_val)
 
 
+def test_is_package_installed():
+    assert env.is_package_installed("numpy")
+    assert env.is_package_installed("numpy>=0.0.1")
+    assert env.is_package_installed("numpy>=0.0.1,<=1000.0.0")
+    assert not env.is_package_installed("numpy<=0.0.1")
+    assert not env.is_package_installed("numpy>=1000.0.0")
+
+    numpy_version = env.get_package_version("numpy")
+    assert not env.is_package_installed("numpy==0.0.1")
+    assert env.is_package_installed(f"numpy=={numpy_version}")
+
+
 if __name__ == "__main__":
     unittest.main()
