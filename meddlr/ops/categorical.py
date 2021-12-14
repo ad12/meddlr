@@ -61,7 +61,7 @@ def categorical_to_one_hot(x, channel_dim: int = 1, background=0, num_categories
         x = torch.from_numpy(x)
 
     if num_categories is None:
-        num_categories = torch.max(x).cpu().item()
+        num_categories = torch.max(x).type(torch.long).cpu().item()
     num_categories += 1
 
     shape = x.shape
