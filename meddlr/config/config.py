@@ -68,6 +68,7 @@ class CfgNode(_CfgNode):
             new_config = upgrade_config(old_self)
             self.clear()
             self.update(new_config)
+        return self
 
     def format_fields(self, unroll: bool = False):
         """
