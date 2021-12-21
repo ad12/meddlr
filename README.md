@@ -9,34 +9,51 @@
 
 Meddlr is a config-driven ML framework built to simplify medical image reconstruction and analysis problems.
 
-
-
-## Installation
-To avoid cuda-related issues, downloading `torch`, `torchvision`, and `cupy` (optional)
-must be done prior to downloading other requirements.
-
+## ⚡ QuickStart
 ```bash
-# Create and activate the environment.
-conda create -n meddlr_env python=3.7
-conda activate meddlr_env
+pip install meddlr
+```
+> _Installing locally_: For local development, fork and clone the repo and run `pip install -e ".[dev]"`
 
-# Install cuda-dependant libraries. Change cuda version as needed.
-# Below we show examples for cuda-10.2
-conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
-pip install cupy-cuda102
+> _Installing from main: For most up-to-date code without a local install, run `pip install "meddlr @ git+https://github.com/ad12/meddlr@main"`
 
-# Go to https://github.com/ad12/meddlr and fork the repository.
+Configure your paths and get going!
+```python
+import meddlr as mr
+import os
 
-# Install as package in virtual environment (recommended):
-git clone https://github.com/<your-github-username>/meddlr.git
-cd meddlr && python -m pip install -e '.[dev]'
-
-# For all contributors, install development packages.
-make dev
+# (Optional) Configure and save machine/cluster preferences.
+# This only has to be done once and will persist across sessions.
+cluster = mr.Cluster()
+cluster.set(results_dir="/path/to/save/results", data_dir="/path/to/datasets")
+cluster.save()
+# OR set these as environment variables.
+os.environ["MEDDLR_RESULTS_DIR"] = "/path/to/save/results"
+os.environ["MEDDLR_DATASETS_DIR"] = "/path/to/datasets"
 ```
 
-## Contributing
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+Detailed instructions are available in [Getting Started](GETTING_STARTED.md).
+
+## 🐘 Model Zoo
+Easily serve and download pretrained models from the model zoo. A (evolving) list of pre-trained models can be found [here](MODEL_ZOO.md), in [Google Drive](https://drive.google.com/drive/folders/1OJFM4GlFhLTrH6LzVwLdJS9IHytV9ZAx?usp=sharing), and in [project folders](projects).
+
+To use them, pass the google drive urls for the config and weights (model) files to `mr.get_model_from_zoo`:
+
+```python
+import meddlr as mr
+
+# Make sure to add "download://" before the url!
+model = mr.get_model_from_zoo(
+  cfg_or_file="download://https://drive.google.com/file/d/1HQg_qGS8rZzL9Vt3tewX2J8pcK3VVDWF/view?usp=sharing",
+  weights_path="download://https://drive.google.com/file/d/1B4jw1yQtPSPY0P74g3ORcQpQ3Ue3XdJs/view?usp=sharing",
+)
+```
+
+## 📓 Projects
+Check out some [projects](projects) built with meddlr!
+
+## ✏️ Contributing
+Want to  add new features, fix a bug, or add your project? We'd love to include them! See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ## Acknowledgements
 Meddlr's design for rapid experimentation and benchmarking is inspired by [detectron2](https://github.com/facebookresearch/detectron2).

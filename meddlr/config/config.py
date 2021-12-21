@@ -125,6 +125,20 @@ class CfgNode(_CfgNode):
 
         setattr(cfg, keys[-1], value)
 
+    def update_recursive(self, mapping: Mapping[str, Any]):
+        """
+        Update this CfgNode and all of its children recursively.
+
+        Args:
+            mapping (dict): a dict to update this CfgNode and all of its children.
+
+        Returns:
+            CfgNode: self
+        """
+        for k, v in mapping.items():
+            self.set_recursive(k, v)
+        return self
+
     def dump(self, *args, **kwargs):
         """
         Returns:

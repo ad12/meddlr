@@ -3,8 +3,10 @@
 
 Arjun D Desai\*, Beliz Gunel\*, Batu M Ozturkler, Harris Beg, Shreyas Vasanawala, Brian A Hargreaves, Christopher Ré, John M Pauly, and Akshay S Chaudhari.
 
+[arXiv](https://arxiv.org/abs/2111.02549) | [BibTeX](#citation)
+
 <div align="center">
-    <img src="https://drive.google.com/uc?export=view&id=11ESUcZzfy4x4YGiBNqhNAXhqn4y9RWU-" alt="Vortex Schematic" width="700px" />
+    <img src="https://drive.google.com/uc?export=view&id=1q0jAm6Kg5ZhRg3h0w0ZbtIgcRF3_-Vgb" alt="Vortex Schematic" width="700px" />
 </div>
 
 This project implements VORTEX in Meddlr. This is the official project hub for VORTEX.
@@ -30,4 +32,15 @@ python /path/to/meddlr/tools/eval_net.py --config-file </path/to/config.yaml> --
 
 # Add test-time motion perturbations of strength alpha=0.1,0.2,...,0.5
 python /path/to/meddlr/tools/eval_net.py --config-file </path/to/config.yaml> --metric psnr_scan --motion sweep --motion-sweep-vals 0.1 0.2 0.3 0.4 0.5
+```
+
+## Citation
+If you use VORTEX in your work, please use the following BibTeX entry,
+```
+@article{desai2021vortex,
+  title={VORTEX: Physics-Driven Data Augmentations for Consistency Training for Robust Accelerated MRI Reconstruction},
+  author={Desai, Arjun D and Gunel, Beliz and Ozturkler, Batu M and Beg, Harris and Vasanawala, Shreyas and Hargreaves, Brian A and R{\'e}, Christopher and Pauly, John M and Chaudhari, Akshay S},
+  journal={arXiv preprint arXiv:2111.02549},
+  year={2021}
+}
 ```

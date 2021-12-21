@@ -1,5 +1,6 @@
 # flake8: noqa: F401
 
+from meddlr.engine.model_zoo import get_model_from_zoo
 from meddlr.metrics import Metric
 from meddlr.utils.cluster import Cluster
 
