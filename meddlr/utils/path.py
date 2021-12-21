@@ -282,7 +282,7 @@ class DownloadHandler(GeneralPathHandler):
 
     Examples:
         >>> handler = DownloadHandler()
-        >>> handler.get_local_path("
+        >>> handler.get_local_path("download://https://drive.google.com/file/d/1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx/view?usp=sharing")  # noqa: E501
     """
 
     PREFIX = "download://"
@@ -317,6 +317,28 @@ class DownloadHandler(GeneralPathHandler):
             return self.path_manager.get_local_path(f"gdrive://{path}", **kwargs)
         else:
             raise ValueError(f"Download not supported for url {path}")
+
+
+class ForceDownloadHandler(DownloadHandler):
+    """Like :cls:`DownloadHandler`, but always downloads (even if it is cached).
+
+    If the file is cached, it will be replaced by the downloaded version.
+
+    Examples:
+        >>> handler = ForceDownloadHandler()
+        >>> handler.get_local_path("force-download://https://drive.google.com/file/d/1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx/view?usp=sharing")  # noqa: E501
+    """
+
+    PREFIX = "force-download://"
+
+    def _get_local_path(
+        self,
+        path: str,
+        **kwargs: Any,
+    ) -> str:
+        path = f"{DownloadHandler.PREFIX}{path[len(self.PREFIX) :]}"
+        kwargs.pop("force", None)
+        return super()._get_local_path(path, force=True, **kwargs)
 
 
 def download_github_repository(url, cache_path, branch_or_tag="main", force=False) -> str:
@@ -366,3 +388,4 @@ _path_manager.register_handler(GithubHandler(env.get_github_url(), default_branc
 _path_manager.register_handler(AnnotationsHandler())
 _path_manager.register_handler(GoogleDriveHandler())
 _path_manager.register_handler(DownloadHandler(_path_manager))
+_path_manager.register_handler(ForceDownloadHandler(_path_manager))
