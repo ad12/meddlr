@@ -34,6 +34,9 @@ python /path/to/meddlr/tools/eval_net.py --config-file </path/to/config.yaml> --
 python /path/to/meddlr/tools/eval_net.py --config-file </path/to/config.yaml> --metric psnr_scan --motion sweep --motion-sweep-vals 0.1 0.2 0.3 0.4 0.5
 ```
 
+### Model Zoo
+Models and experiment configs are available in the [model zoo](MODEL_ZOO.md).
+
 ## Citation
 If you use VORTEX in your work, please use the following BibTeX entry,
 ```
