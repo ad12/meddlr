@@ -23,7 +23,7 @@ class TestCluster(unittest.TestCase):
         assert cluster.data_dir == "./datasets"
         assert cluster.datasets_dir == cluster.data_dir
         assert cluster.results_dir == "./results"
-        assert cluster.cache_dir == "~/cache/meddlr"
+        assert cluster.cache_dir == os.path.expanduser("~/.cache/meddlr")
 
     def test_set(self):
         """Test setting configuration properties."""
