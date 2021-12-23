@@ -1,7 +1,12 @@
 import os
 
 from meddlr.utils import env
-from meddlr.utils.path import GithubHandler, GoogleDriveHandler, download_github_repository
+from meddlr.utils.path import (
+    ForceDownloadHandler,
+    GithubHandler,
+    GoogleDriveHandler,
+    download_github_repository,
+)
 
 # def test_meddlr_path_manager():
 #     pm = env.get_path_manager()
@@ -39,9 +44,43 @@ def test_gdrive_handler(tmpdir):
     path = handler._get_local_path(
         f"gdrive://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
         cache_file=cache_file,
+        force=True,
     )
     assert os.path.exists(path)
+    mtime = os.path.getmtime(path)
+
+    path = handler._get_local_path(
+        f"gdrive://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
+        cache_file=cache_file,
+    )
+    mtime2 = os.path.getmtime(path)
+    assert mtime2 == mtime
 
     cache_file = download_dir / "sample-download2.zip"
     path = handler._get_local_path(f"gdrive://{gdrive_id}", cache_file=cache_file)
     assert os.path.exists(path)
+
+
+def test_force_download(tmpdir):
+    download_dir = tmpdir.mkdir("download")
+    gdrive_id = "1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx"
+    cache_file = download_dir / "sample-download.zip"
+
+    path_manager = env.get_path_manager("meddlr_test")
+    path_manager.register_handler(GoogleDriveHandler())
+    handler = ForceDownloadHandler(path_manager)
+
+    path = handler._get_local_path(
+        f"force-download://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
+        cache_file=cache_file,
+    )
+    assert os.path.exists(path)
+    mtime = os.path.getmtime(path)
+
+    path = handler._get_local_path(
+        f"force-download://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
+        cache_file=cache_file,
+    )
+    mtime2 = os.path.getmtime(path)
+
+    assert mtime2 != mtime
