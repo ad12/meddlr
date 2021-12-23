@@ -119,7 +119,9 @@ class Cluster:
     @property
     def cache_dir(self):
         path = self._cache_dir
-        path = os.environ.get("MEDDLR_CACHE_DIR", path if path else "~/cache/meddlr")
+        if not path:
+            path = os.path.expanduser("~/.cache/meddlr")
+        path = os.environ.get("MEDDLR_CACHE_DIR", path)
         return _PATH_MANAGER.get_local_path(path)
 
     def set(self, **kwargs):
