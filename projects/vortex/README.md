@@ -23,6 +23,12 @@ To train VORTEX, you need to
 python /path/to/meddlr/tools/train_net.py --config-file </path/to/config.yaml>
 ```
 
+If you are using a config file in the [model zoo](MODEL_ZOO.md) and want to train on a GPU, you will need to override the `MODEL.DEVICE` argument:
+
+```bash
+python /path/to/meddlr/tools/train_net.py --config-file download://<cfg-url> MODEL.DEVICE cuda
+```
+
 ### Evaluation
 You can evaluate VORTEX with different combinations of physics-driven test-time perturbations (e.g. noise, motion).
 

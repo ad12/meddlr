@@ -9,7 +9,7 @@ Fully supervised augmentation approaches (i.e. *MRAugment*, *Aug*) used the MRAu
 
 VORTEX approaches do not use difficulty curricula by default. Experiments marked with `Curricula` in the name use expoential curricula for scheduling the difficulty of physics-based acquisition augmentations (i.e. noise, motion).
 
-All models are trained with the complex-l1 loss with the Adam optimizer.
+All models are trained with the complex-l1 loss with the Adam optimizer. Checkpoints were selected using the highest scan cPSNR (complex PSNR).
 
 
 ## mridata - 3D FSE Knee Dataset
