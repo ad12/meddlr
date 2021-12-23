@@ -34,6 +34,17 @@ logger = logging.getLogger(__name__)
 
 
 def dice_score(y_pred, y_true):
+    """Computes dice score coefficient.
+
+    Args:
+        y_pred (torch.Tensor): Predicted categorical segmentation.
+            Expected shape: ``(B, C, H, ...)``.
+        y_true (torch.Tensor): Ground truth categorical segmentation.
+            Expected shape: ``(B, C, H, ...)``.
+
+    Returns:
+        torch.Tensor: Dice score. Shape: ``(B, C)``.
+    """
     is_tensor = isinstance(y_pred, torch.Tensor)
 
     y_pred = mFutil.to_bool(y_pred)
@@ -49,6 +60,17 @@ def dice_score(y_pred, y_true):
 
 
 def volumetric_overlap_error(y_pred, y_true):
+    """Computes volumetric overlap error.
+
+    Args:
+        y_pred (torch.Tensor): Predicted categorical segmentation.
+            Expected shape: ``(B, C, H, ...)``.
+        y_true (torch.Tensor): Ground truth categorical segmentation.
+            Expected shape: ``(B, C, H, ...)``.
+
+    Returns:
+        torch.Tensor: Dice score. Shape: ``(B, C)``.
+    """
     is_tensor = isinstance(y_pred, torch.Tensor)
 
     y_pred = mFutil.to_bool(y_pred)
@@ -64,6 +86,17 @@ def volumetric_overlap_error(y_pred, y_true):
 
 
 def coefficient_variation(y_pred, y_true):
+    """Computes coefficient of variation.
+
+    Args:
+        y_pred (torch.Tensor): Predicted categorical segmentation.
+            Expected shape: ``(B, C, H, ...)``.
+        y_true (torch.Tensor): Ground truth categorical segmentation.
+            Expected shape: ``(B, C, H, ...)``.
+
+    Returns:
+        torch.Tensor: Dice score. Shape: ``(B, C)``.
+    """
     is_tensor = isinstance(y_pred, torch.Tensor)
 
     y_pred = mFutil.to_bool(y_pred)
@@ -86,6 +119,17 @@ def coefficient_variation(y_pred, y_true):
 
 
 def average_symmetric_surface_distance(y_pred, y_true, spacing=None, connectivity=1, crop=True):
+    """Computes average symmetric surface distance.
+
+    Args:
+        y_pred (torch.Tensor): Predicted categorical segmentation.
+            Expected shape: ``(B, C, H, ...)``.
+        y_true (torch.Tensor): Ground truth categorical segmentation.
+            Expected shape: ``(B, C, H, ...)``.
+
+    Returns:
+        torch.Tensor: Dice score. Shape: ``(B, C)``.
+    """
     if _assd is None:
         raise ModuleNotFoundError(
             "assd requires the medpy package. Please install using `pip install medpy`."

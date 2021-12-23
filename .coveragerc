@@ -13,3 +13,7 @@ include =
     meddlr/*
 omit =
     meddlr/modeling/*
+    meddlr/data/transforms/noise.py
+    meddlr/data/transforms/motion.py
+    meddlr/data/transforms/noiseandmotion.py
+    meddlr/utils/*

@@ -4,7 +4,7 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from meddlr.metrics.collection import MetricCollection
-from meddlr.metrics.image import MSE, PSNR, RMSE, SSIM, nRMSE
+from meddlr.metrics.image import MSE, NRMSE, PSNR, RMSE, SSIM
 from meddlr.metrics.sem_seg import ASSD, CV, DSC, VOE
 
 logger = logging.getLogger(__name__)
@@ -24,11 +24,11 @@ _BUILTIN_METRICS = {
     "psnr_phase": (PSNR, {"im_type": "phase"}),
     "psnr_imag": (PSNR, {"im_type": "imag"}),
     # NRMSE
-    "nrmse": (nRMSE, {"im_type": None}),
-    "nrmse_mag": (nRMSE, {"im_type": "magnitude"}),
-    "nrmse_real": (nRMSE, {"im_type": "real"}),
-    "nrmse_phase": (nRMSE, {"im_type": "phase"}),
-    "nrmse_imag": (nRMSE, {"im_type": "imag"}),
+    "nrmse": (NRMSE, {"im_type": None}),
+    "nrmse_mag": (NRMSE, {"im_type": "magnitude"}),
+    "nrmse_real": (NRMSE, {"im_type": "real"}),
+    "nrmse_phase": (NRMSE, {"im_type": "phase"}),
+    "nrmse_imag": (NRMSE, {"im_type": "imag"}),
     # MSE
     "mse": (MSE, {"im_type": None}),
     "mse_mag": (MSE, {"im_type": "magnitude"}),

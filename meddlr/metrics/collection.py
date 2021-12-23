@@ -11,6 +11,8 @@ __all__ = ["MetricCollection"]
 
 
 class MetricCollection(_MetricCollection):
+    """The class that manages multiple metrics."""
+
     def __init__(
         self,
         metrics: Union[Metric, Sequence[Metric], Dict[str, Metric]],

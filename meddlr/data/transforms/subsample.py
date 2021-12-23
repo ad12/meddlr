@@ -15,7 +15,7 @@ shape.
 """
 
 
-def build_mask_func(cfg):
+def build_mask_func(cfg, **kwargs):
     name = cfg.UNDERSAMPLE.NAME
     accelerations = cfg.UNDERSAMPLE.ACCELERATIONS
     calibration_size = cfg.UNDERSAMPLE.CALIBRATION_SIZE
@@ -25,8 +25,8 @@ def build_mask_func(cfg):
     parameters = inspect.signature(klass).parameters
 
     # Optional args
+    kwargs = kwargs.copy()
     mapping = {"max_attempts": cfg.UNDERSAMPLE.MAX_ATTEMPTS}
-    kwargs = {}
     for param, value in mapping.items():
         if param in parameters:
             kwargs[param] = value

@@ -22,4 +22,9 @@ dev:
 	pip install --upgrade black==21.10b0 coverage isort flake8 flake8-bugbear flake8-comprehensions pre-commit pooch
 	pre-commit install
 
+build-docs:
+	rm -rf docs/build
+	rm -rf docs/source/apidocs/generated
+	sphinx-build -b html docs/source/ docs/build/html/
+
 all: autoformat test build-docs

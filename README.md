@@ -1,6 +1,7 @@
 # meddlr
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ad12/meddlr/CI)
 ![GitHub](https://img.shields.io/github/license/ad12/meddlr)
+[![Documentation Status](https://readthedocs.org/projects/meddlr/badge/?version=latest)](https://meddlr.readthedocs.io/en/latest/?badge=latest)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 <!-- [![codecov](https://codecov.io/gh/ad12/meddlr/branch/main/graph/badge.svg?token=U6H83UCGFU)](https://codecov.io/gh/ad12/meddlr) -->
 
