@@ -55,6 +55,9 @@ def default_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--reproducible", "--repro", action="store_true", help="activate reproducible mode"
     )
+    parser.add_argument(
+        "--auto-version", action="store_true", help="auto-configure experiment version"
+    )
 
     parser.add_argument(
         "opts",
@@ -88,6 +91,28 @@ def default_setup(cfg, args, save_cfg: bool = True):
         env.is_repro() if env.is_repro() else (hasattr(args, "reproducible") and args.reproducible)
     )
     eval_only = hasattr(args, "eval_only") and args.eval_only
+    auto_version = hasattr(args, "auto_version") and args.auto_version
+
+    cfg.defrost()
+    cfg.format_fields()
+    cfg.freeze()
+
+    if auto_version and not eval_only:
+        # TODO: Handle race conditions for generating output directories.
+        # NOTE: This is not compatible with DDP.
+        out_path = _PATH_MANAGER.get_local_path(cfg.OUTPUT_DIR)
+        exp_name = cfg.DESCRIPTION.EXP_NAME
+        has_exp_name = bool(exp_name)
+        if args.debug:
+            out_path = os.path.join(out_path, "debug")
+            if "debug" not in exp_name:
+                exp_name = f"{exp_name}/debug"
+        exp_version = _get_next_experiment_version(out_path)
+        cfg.defrost()
+        cfg.OUTPUT_DIR = os.path.join(out_path, f"version_{exp_version:03d}")
+        if has_exp_name:
+            cfg.DESCRIPTION.EXP_NAME = f"{exp_name}/v{exp_version}"
+        cfg.freeze()
 
     # Update config parameters before saving.
     cfg.defrost()
@@ -327,3 +352,21 @@ def _set_all_seeds(cfg, seed_val):
             cfg.__setattr__(key, seed_val)
         if isinstance(value, Mapping):
             _set_all_seeds(value, seed_val)
+
+
+def _get_next_experiment_version(path):
+    """Get next version number for the experiment in the path.
+
+    Args:
+        path (str): Path to the experiment directory.
+
+    Returns:
+        int: Next version number for the experiment.
+    """
+    path = _PATH_MANAGER.get_local_path(path)
+    if not os.path.isdir(path):
+        max_version = 0
+    else:
+        versions = [int(x.split("_")[1]) for x in os.listdir(path) if x.startswith("version")]
+        max_version = max(versions) if versions else 0
+    return max_version + 1
