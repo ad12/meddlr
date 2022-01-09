@@ -52,7 +52,13 @@ class SenseModel(nn.Module):
             image = cplx.mul(image.unsqueeze(-2), cplx.conj(self.maps))  # [B,...,#coils,#maps,2]
             return image.sum(-3)
         else:
-            image = cplx.mul(image.unsqueeze(-1), cplx.conj(self.maps))  # [B,...,#coils,#maps,1]
+            # This is a hacky solution managing multi-channel inputs.
+            # Note multi-channel inputs are only supported in complex tensors.
+            # TODO (arjundd, issue #18): Fix with tensor ordering.
+            if image.ndim != self.maps.ndim:
+                image = image.unsqueeze(-1)
+
+            image = cplx.mul(image, cplx.conj(self.maps))  # [B,...,#coils,#maps,1]
             return image.sum(-2)
 
     def _forward_op(self, image):
@@ -67,7 +73,13 @@ class SenseModel(nn.Module):
             kspace = self.weights * oF.fft2c(kspace.sum(-2), channels_last=True)  # [B,...,#coils,2]
         else:
             kspace = cplx.mul(image.unsqueeze(-2), self.maps)
-            kspace = self.weights * oF.fft2c(kspace.sum(-1), channels_last=True)
+            # This is a hacky solution managing multi-channel inputs.
+            # Note this change means that multiple maps with multi-channel inputs
+            # is not supported for forward operations. This will change in future updates.
+            # TODO (arjundd, issue #18): Fix with tensor ordering.
+            if image.shape[-1] == self.maps.shape[-1]:
+                kspace = kspace.sum(-1)
+            kspace = self.weights * oF.fft2c(kspace, channels_last=True)
         return kspace
 
     def forward(self, input: torch.Tensor, adjoint: bool = False):
