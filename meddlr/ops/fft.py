@@ -196,7 +196,23 @@ def ifftshift(x, dim=None):
 def _fft_template(
     data: torch.Tensor, kind, dim=None, norm="ortho", is_real: bool = None, centered: bool = True
 ) -> torch.Tensor:
-    """Template for fft operations."""
+    """Template for fft operations.
+
+    Args:
+        data (torch.Tensor): A tensor.
+        kind (str): Either ``'fft'`` or ``'ifft'``.
+        dim (int(s), optional): The dimension(s) along which to apply the operation.
+            Defaults to all dimensions.
+        norm (str, optional): The normalization method. Defaults to ``'ortho'``.
+        is_real (bool, optional): If ``True``, ``input`` is treated like a real-valued
+            tensor. If not specified, this is ``True`` only if ``data`` is not complex
+            and data is not inferred to be a real view of a complex tensor
+            (i.e. ``data.shape[-1] != 2``).
+        centered (bool, optional): If ``True``, apply centered FFT. Defaults to ``True``.
+
+    Returns:
+        torch.Tensor: The FFT (or IFFT) of the input.
+    """
     if isinstance(dim, int):
         dim = (dim,)
     if norm is True:

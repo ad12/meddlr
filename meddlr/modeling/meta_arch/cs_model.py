@@ -19,8 +19,8 @@ from torch import nn
 
 import meddlr.ops.complex as cplx
 from meddlr.config.config import configurable
+from meddlr.forward.mri import SenseModel
 from meddlr.utils.general import move_to_device
-from meddlr.utils.transforms import SenseModel
 
 from .build import META_ARCH_REGISTRY
 

@@ -66,7 +66,7 @@ def is_complex_as_real(x):
         has a size of ``2`` because it is the real-imaginary channel or
         for some other reason.
     """
-    return x.size(-1) == 2
+    return not is_complex(x) and x.size(-1) == 2
 
 
 def conj(x):

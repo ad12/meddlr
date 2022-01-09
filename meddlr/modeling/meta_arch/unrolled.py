@@ -7,9 +7,9 @@ from torch import nn
 
 import meddlr.ops.complex as cplx
 from meddlr.config.config import configurable
+from meddlr.forward.mri import SenseModel
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
-from meddlr.utils.transforms import SenseModel
 
 from ..layers.layers2D import ResNet
 from .build import META_ARCH_REGISTRY, build_model
@@ -134,7 +134,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         A = inputs.get("signal_model", None)
         maps = inputs["maps"]
         num_maps_dim = -2 if cplx.is_complex_as_real(maps) else -1
-        if self.num_emaps != maps.size()[num_maps_dim]:
+        if self.num_emaps != maps.size()[num_maps_dim] and maps.size()[num_maps_dim] != 1:
             raise ValueError("Incorrect number of ESPIRiT maps! Re-prep data...")
 
         # Move step sizes to the right device.
