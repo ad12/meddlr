@@ -9,6 +9,7 @@ This page discusses the core API and built-in extensions for DOSMA.
    :titlesonly:
 
    apidocs/metrics
+   apidocs/modeling
    apidocs/ops
 
 To inspect the source code and corresponding documentation, use the following:
