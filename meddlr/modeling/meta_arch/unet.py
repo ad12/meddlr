@@ -11,9 +11,9 @@ from torch.nn import functional as F
 
 import meddlr.ops.complex as cplx
 from meddlr.config.config import configurable
+from meddlr.forward.mri import SenseModel
 from meddlr.utils import transforms as T
 from meddlr.utils.events import get_event_storage
-from meddlr.utils.transforms import SenseModel
 
 from .build import META_ARCH_REGISTRY
 
@@ -337,7 +337,7 @@ class UnetModel(nn.Module):
             output = zf_image.reshape(zf_image.shape[:-2] + (-1,)).unsqueeze(-2)
         else:
             output = zf_image
-        output = zf_image.permute(0, 4, 1, 2, 3).squeeze(-1)
+        output = output.permute(0, 4, 1, 2, 3).squeeze(-1)
 
         # Run U-Net.
         output = self.base_forward(output)
