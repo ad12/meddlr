@@ -11,7 +11,7 @@ import pandas as pd
 import torch
 
 
-def print_csv_format(results):
+def print_csv_format(results):  # pragma: no cover
     """Print metrics for easy copypaste.
 
     Args:
@@ -32,7 +32,7 @@ def print_csv_format(results):
     )
 
 
-def verify_results(cfg, results):
+def verify_results(cfg, results):  # pragma: no cover
     """
     Args:
         results (OrderedDict[dict]): task_name -> {metric -> score}
@@ -86,6 +86,7 @@ def flatten_results_dict(results, delimiter="/"):
 
 
 # Supported validation metrics and the operation to perform on them.
+# TODO (arjundd): Do not hardcode these. Match to metrics in meddlr instead.
 SUPPORTED_VAL_METRICS = {
     "l1": "min",
     "l2": "min",
@@ -96,6 +97,7 @@ SUPPORTED_VAL_METRICS = {
     "l1_scan": "min",
     "l2_scan": "min",
     "psnr_scan": "max",
+    "ssim (Wang)_scan": "max",
     "iteration": "max",  # find the last checkpoint
     "loss": "min",
 }
@@ -130,7 +132,7 @@ def find_weights(cfg, criterion="", iter_limit=None, file_name_fmt="model_{:07d}
         ckpt_period * eval_period <= 0  # same sign (i.e. same time scale)
         or abs(eval_period) % abs(ckpt_period) != 0  # checkpoint period is multiple of eval period
     ):
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             "Cannot find weights if checkpoint/eval periods "
             "at different time scales or eval period is not"
             "a multiple of checkpoint period."

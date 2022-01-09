@@ -8,6 +8,8 @@ exclude_lines =
     raise NotImplemented
     raise NotImplementedError
     if __name__ == .__main__.:
+    def __repr__
+    def __str__
 ignore_errors = True
 include =
     meddlr/*
@@ -16,4 +18,8 @@ omit =
     meddlr/data/transforms/noise.py
     meddlr/data/transforms/motion.py
     meddlr/data/transforms/noiseandmotion.py
+    meddlr/data/transforms/transform.py
     meddlr/utils/*
+    meddlr/config/compat.py
+    meddlr/engine/defaults.py
+    meddlr/engine/hooks.py
