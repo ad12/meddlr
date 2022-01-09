@@ -77,4 +77,7 @@ class TestSenseModel(unittest.TestCase):
             expected.append(A(out_image[..., c : c + 1], adjoint=False))
         expected = torch.stack(expected, dim=-1)
         out_kspace = A(out_image, adjoint=False)
-        assert torch.allclose(out_kspace, expected)
+        # both clauses required for CI to pass on python 3.7 - torch.allclose does not work
+        assert torch.allclose(out_kspace, expected) or torch.all(
+            torch.abs(out_kspace - expected) < 1e-7
+        )
