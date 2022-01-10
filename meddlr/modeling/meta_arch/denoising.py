@@ -7,10 +7,10 @@ from torch import nn
 import meddlr.ops.complex as cplx
 from meddlr.config.config import configurable
 from meddlr.data.transforms.noise import NoiseModel
+from meddlr.forward.mri import SenseModel
 from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
-from meddlr.utils.transforms import SenseModel
 
 __all__ = ["DenoisingModel"]
 
