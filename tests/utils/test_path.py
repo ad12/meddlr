@@ -38,7 +38,7 @@ def test_gdrive_handler(tmpdir):
     download_dir = tmpdir.mkdir("download")
     gdrive_id = "1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx"
 
-    handler = GoogleDriveHandler()
+    handler = GoogleDriveHandler(cache_dir=tmpdir)
 
     cache_file = download_dir / "sample-download.zip"
     path = handler._get_local_path(
@@ -59,6 +59,20 @@ def test_gdrive_handler(tmpdir):
     cache_file = download_dir / "sample-download2.zip"
     path = handler._get_local_path(f"gdrive://{gdrive_id}", cache_file=cache_file)
     assert os.path.exists(path)
+
+    # Folder
+    folder_url = "gdrive://https://drive.google.com/drive/folders/1UosSskt3H61wcIGUNehhsYoHNBmk-bGi?usp=sharing"  # noqa: E501
+    path = handler._get_local_path(folder_url)
+    assert os.path.isdir(path)
+    mtime = os.path.getmtime(path)
+
+    path = handler._get_local_path(folder_url)
+    mtime2 = os.path.getmtime(path)
+    assert mtime2 == mtime
+
+    cache_file = download_dir / "sample-dir"
+    path = handler._get_local_path(folder_url, cache_file=cache_file)
+    assert os.path.isdir(cache_file)
 
 
 def test_force_download(tmpdir):
