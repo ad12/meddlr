@@ -98,7 +98,7 @@ setup(
         "silx",
         "tqdm",
         "omegaconf",
-        "torchmetrics>=0.5.1",
+        "torchmetrics>=0.5.1,<0.7.0",
         "iopath",
         "packaging",
     ],
