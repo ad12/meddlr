@@ -70,7 +70,7 @@ class TestSenseModel(unittest.TestCase):
             expected.append(A(kspace[..., c], adjoint=True))
         expected = torch.cat(expected, dim=-1)
         out_image = A(kspace, adjoint=True)
-        assert torch.allclose(out_image, expected)
+        assert torch.allclose(out_image, expected, atol=1e-5)
 
         expected = []
         for c in range(num_channels):
