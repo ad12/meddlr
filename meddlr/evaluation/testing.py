@@ -100,6 +100,8 @@ SUPPORTED_VAL_METRICS = {
     "ssim (Wang)_scan": "max",
     "iteration": "max",  # find the last checkpoint
     "loss": "min",
+    "mae": "min",
+    "mae_scan": "min",
 }
 
 

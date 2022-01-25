@@ -13,7 +13,7 @@ from torchmetrics.functional.image.ssim import _gaussian
 
 from meddlr.ops import complex as cplx
 
-__all__ = ["mse", "rmse", "psnr", "nrmse", "l2_norm", "ssim"]
+__all__ = ["mae", "mse", "rmse", "psnr", "nrmse", "l2_norm", "ssim"]
 
 
 # Mapping from str to complex function name.
@@ -37,6 +37,24 @@ def _check_consistent_type(*args):
         raise ValueError("Type mismatch - all inputs must be complex or real")
 
 
+def mae(pred: torch.Tensor, target: torch.Tensor, im_type: str = None) -> torch.Tensor:
+    """Computes mean absolute error.
+
+    Args:
+        pred (torch.Tensor): The prediction. Either a complex or real tensor.
+        target (torch.Tensor): The target. Either a complex or real tensor.
+        im_type (str, optional): The image type to compute metric on.
+            This only applies for complex inputs, otherwise ignored.
+            Either ``'magnitude'`` (default) to compute metric on magnitude images
+            or ``'phase'`` to compute metric on phase/angle images. If ``None``,
+            computed on complex images.
+
+    Returns:
+        torch.Tensor: The mean square error.
+    """
+    return _mean_error(pred, target, im_type=im_type, order=1)
+
+
 def mse(pred: torch.Tensor, target: torch.Tensor, im_type: str = None) -> torch.Tensor:
     """Computes mean square error.
 
@@ -52,16 +70,37 @@ def mse(pred: torch.Tensor, target: torch.Tensor, im_type: str = None) -> torch.
     Returns:
         torch.Tensor: The mean square error.
     """
+    return _mean_error(pred, target, im_type=im_type, order=2)
+
+
+def _mean_error(
+    pred: torch.Tensor, target: torch.Tensor, im_type: str = None, order: int = 2
+) -> torch.Tensor:
+    """Computes mean error of order ``order``.
+
+    Args:
+        pred (torch.Tensor): The prediction. Either a complex or real tensor.
+        target (torch.Tensor): The target. Either a complex or real tensor.
+        im_type (str, optional): The image type to compute metric on.
+        order (int, optional): The order of the error to compute.
+            For example, ``order=1`` is mean absolute error,
+            ``order=2`` is mean squared error, etc.
+
+    Returns:
+        torch.Tensor: The mean square error.
+    """
     if im_type is not None:
         pred = _IM_TYPES_TO_FUNCS[im_type](pred)
         target = _IM_TYPES_TO_FUNCS[im_type](target)
 
     if cplx.is_complex(pred) or cplx.is_complex_as_real(pred):
-        squared_err = cplx.abs(pred - target) ** 2
+        err = cplx.abs(pred - target)
     else:
-        squared_err = torch.abs(pred - target) ** 2
+        err = torch.abs(pred - target)
+    if order != 1:
+        err = err ** order
     shape = (pred.shape[0], pred.shape[1], -1)
-    return torch.mean(squared_err.view(shape), dim=-1)
+    return torch.mean(err.view(shape), dim=-1)
 
 
 def rmse(pred: torch.Tensor, target: torch.Tensor, im_type: str = None) -> torch.Tensor:

@@ -1,19 +1,27 @@
 import numpy as np
+import pytest
 import torch
 import torch.nn.functional as F
+from packaging.version import Version
 from skimage import data
 from skimage.metrics import structural_similarity
-from torchmetrics.functional.regression import ssim as tm_ssim
 
 from meddlr.metrics.functional.image import (
     _pad,
     _pad_3d_tensor_with_2d_padding,
+    mae,
     mse,
     nrmse,
     psnr,
     ssim,
 )
 from meddlr.metrics.image import compute_mse, compute_nrmse, compute_psnr, compute_ssim
+from meddlr.utils import env
+
+if Version(env.get_package_version("torchmetrics")) < Version("0.7.0"):
+    from torchmetrics.functional.regression import ssim as tm_ssim
+else:
+    from torchmetrics.functional.image import structural_similarity_index_measure as tm_ssim
 
 
 def test_mse_legacy():
@@ -260,3 +268,17 @@ def test_pad_3d_tensor_with_2d_padding_reflect():
 
     assert out.shape == expected_out.shape
     assert torch.all(out == expected_out)
+
+
+@pytest.mark.parametrize("ndim", [2, 3])
+@pytest.mark.parametrize("nchannels", [1, 3, 10])
+@pytest.mark.parametrize("dtype", [torch.float32, torch.complex64])
+def test_mae_accuracy(ndim, nchannels, dtype):
+    """Test MAE accuracy."""
+    bsz = 10
+    shape = (bsz, nchannels) + (20,) * ndim
+    x = torch.randn(*shape, dtype=dtype)
+    y = torch.randn(*shape, dtype=dtype)
+    out = mae(x, y)
+    assert out.shape == (bsz, nchannels)
+    assert torch.allclose(out, torch.abs(x - y).reshape(bsz, nchannels, -1).mean(-1))
