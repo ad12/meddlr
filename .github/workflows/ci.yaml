@@ -66,6 +66,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install torch torchvision
           if [ $TORCHMETRICS == "latest" ] | [ -z $TORCHMETRICS ]; then
+            echo "Installing latest torchmetrics"
             pip install torchmetrics
           else
             pip install torchmetrics==$TORCHMETRICS
