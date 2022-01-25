@@ -42,11 +42,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.7", "3.8"]
-        include:
-          - python-version: 3.8
-            torchmetrics-version: 0.6.0
-          - python-version: 3.8
-            torchmetrics-version: latest
+        torchmetrics-version: ["0.6.0", "latest"]
     env:
       TORCHMETRICS: ${{ matrix.torchmetrics-version }}
     
