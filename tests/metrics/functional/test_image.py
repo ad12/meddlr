@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 import torch
 import torch.nn.functional as F
+from packaging.version import Version
 from skimage import data
 from skimage.metrics import structural_similarity
-from torchmetrics.functional.regression import ssim as tm_ssim
 
 from meddlr.metrics.functional.image import (
     _pad,
@@ -16,6 +16,12 @@ from meddlr.metrics.functional.image import (
     ssim,
 )
 from meddlr.metrics.image import compute_mse, compute_nrmse, compute_psnr, compute_ssim
+from meddlr.utils import env
+
+if Version(env.get_package_version("torchmetrics")) < Version("0.7.0"):
+    from torchmetrics.functional.regression import ssim as tm_ssim
+else:
+    from torchmetrics.functional.image import structural_similarity_index_measure as tm_ssim
 
 
 def test_mse_legacy():
