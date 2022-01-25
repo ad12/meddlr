@@ -1,5 +1,5 @@
 from meddlr.metrics.functional import image, sem_seg
-from meddlr.metrics.functional.image import l2_norm, mse, nrmse, psnr, rmse, ssim  # noqa: F401
+from meddlr.metrics.functional.image import l2_norm, mae, mse, nrmse, psnr, rmse, ssim  # noqa: F401
 from meddlr.metrics.functional.sem_seg import (  # noqa: F401
     assd,
     average_symmetric_surface_distance,

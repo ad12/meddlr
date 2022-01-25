@@ -4,7 +4,7 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from meddlr.metrics.collection import MetricCollection
-from meddlr.metrics.image import MSE, NRMSE, PSNR, RMSE, SSIM
+from meddlr.metrics.image import MAE, MSE, NRMSE, PSNR, RMSE, SSIM
 from meddlr.metrics.sem_seg import ASSD, CV, DSC, VOE
 
 logger = logging.getLogger(__name__)
@@ -43,6 +43,12 @@ _BUILTIN_METRICS = {
     "rmse_imag": (RMSE, {"im_type": "imag"}),
     # SSIM
     "ssim (Wang)": (SSIM, {"method": "wang"}),
+    # MAE
+    "mae": (MAE, {"im_type": None}),
+    "mae_mag": (MAE, {"im_type": "magnitude"}),
+    "mae_real": (MAE, {"im_type": "real"}),
+    "mae_phase": (MAE, {"im_type": "phase"}),
+    "mae_imag": (MAE, {"im_type": "imag"}),
 
     # =========== Semantic Segmentation =========== #
     "DSC": (DSC, {}),

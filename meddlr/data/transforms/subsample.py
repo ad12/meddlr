@@ -242,7 +242,7 @@ class RandomMaskFunc1D(MaskFunc):
 
         self.center_fractions = center_fractions
         self.calib_size = calib_size
-        self.accelerations = accelerations
+        super().__init__(accelerations)
 
     def __call__(self, shape, seed=None, acceleration=None):
         """
@@ -259,12 +259,13 @@ class RandomMaskFunc1D(MaskFunc):
 
         if seed is not None:
             np_state = np.random.get_state()
+        rng = np.random.RandomState(seed) if seed is not None else self.rng
 
         num_rows = shape[1]
         num_cols = shape[2]
         if self.center_fractions:
             if isinstance(self.center_fractions, Sequence):
-                choice = np.random.randint(0, len(self.center_fractions))
+                choice = rng.randint(0, len(self.center_fractions))
                 center_fraction = self.center_fractions[choice]
             else:
                 center_fraction = self.center_fractions
@@ -276,7 +277,7 @@ class RandomMaskFunc1D(MaskFunc):
         # Create the mask
         num_low_freqs = int(round(num_cols * center_fraction))
         prob = (num_cols / acceleration - num_low_freqs) / (num_cols - num_low_freqs)
-        mask = np.random.uniform(size=num_cols) < prob
+        mask = rng.uniform(size=num_cols) < prob
         pad = (num_cols - num_low_freqs + 1) // 2
         mask[pad : pad + num_low_freqs] = True
 
