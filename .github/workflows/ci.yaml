@@ -41,22 +41,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.7", "3.8", "3.9"]
-        pytorch-version: ["latest"]
-      include:
-        - python-version: 3.8
-          pytorch-version: latest
-          torchmetrics-version: 0.6.0
-        - python-version: 3.8
-          pytorch-version: latest
-          torchmetrics-version: "latest"
-        - python-version: 3.7
-          pytorch-version: 1.7.0
+        python-version: ["3.7", "3.8"]
+        torchmetrics-version: ["0.6.0", "latest"]
     env:
-      PYTORCH: ${{ matrix.pytorch-version }}
       TORCHMETRICS: ${{ matrix.torchmetrics-version }}
     
-    name: py${{ matrix.python-version  }}, pytorch-${{ matrix.torchmetrics-version }}, torchmetrics-${{ matrix.torchmetrics-version }}, ${{ matrix.os }}
+    name: py${{ matrix.python-version  }}, torchmetrics-${{ matrix.torchmetrics-version }}, ${{ matrix.os }}
 
     timeout-minutes: 50
     steps:
@@ -70,13 +60,9 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          if [[ $PYTORCH == "latest" || -z $PYTORCH ]]; then
-            pip install torch torchvision
-          else
-            pip install torch==$PYTORCH torchvision
-          fi
-          pip install torchvision
+          pip install torch torchvision
           if [[ $TORCHMETRICS == "latest" || -z $TORCHMETRICS ]]; then
+            echo "Installing latest torchmetrics"
             pip install torchmetrics
           else
             pip install torchmetrics==$TORCHMETRICS
