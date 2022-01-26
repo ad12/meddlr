@@ -7,7 +7,6 @@ from typing import Mapping, Sequence
 
 import torch
 
-from meddlr.utils.env import get_world_size
 from meddlr.utils.logger import log_every_n_seconds
 
 
@@ -29,7 +28,7 @@ class DatasetEvaluator:
         Preparation for a new round of evaluation.
         Should be called before starting a round of evaluation.
         """
-        pass
+        pass  # pragma: no cover
 
     def process(self, input, output):
         """
@@ -39,7 +38,7 @@ class DatasetEvaluator:
             input: the input that's used to call the model.
             output: the return value of `model(input)`
         """
-        pass
+        pass  # pragma: no cover
 
     def evaluate(self):
         """
@@ -55,7 +54,7 @@ class DatasetEvaluator:
                 * key: the name of the task (e.g., bbox)
                 * value: a dict of {metric name: score}, e.g.: {"AP50": 80}
         """
-        pass
+        pass  # pragma: no cover
 
 
 class DatasetEvaluators(DatasetEvaluator):
@@ -67,7 +66,7 @@ class DatasetEvaluators(DatasetEvaluator):
         else:
             evaluators = [x for x in evaluators if x is not None]
         self._evaluators = evaluators
-        self._as_list = as_list
+        self.as_list = as_list
 
     def items(self):
         if isinstance(self._evaluators, Mapping):
@@ -89,10 +88,10 @@ class DatasetEvaluators(DatasetEvaluator):
             evaluator.process(input, output)
 
     def evaluate(self):
-        results = [] if self._as_list else OrderedDict()
+        results = [] if self.as_list else OrderedDict()
         for evaluator in self.values():
             result = evaluator.evaluate()
-            if self._as_list:
+            if self.as_list:
                 if result is not None:
                     results.append(result)
                 continue
@@ -118,6 +117,9 @@ class DatasetEvaluators(DatasetEvaluator):
     def __len__(self):
         return len(self._evaluators)
 
+    def __contains__(self, obj):
+        return obj in self.values()
+
 
 def inference_on_dataset(model, data_loader, evaluator):
     """
@@ -141,7 +143,6 @@ def inference_on_dataset(model, data_loader, evaluator):
     Returns:
         The return value of `evaluator.evaluate()`
     """
-    num_devices = get_world_size()
     logger = logging.getLogger(__name__)
 
     total = len(data_loader)  # inference data loader must have a fixed length
@@ -186,17 +187,17 @@ def inference_on_dataset(model, data_loader, evaluator):
     # NOTE this format is parsed by grep
     logger.info(
         "Total inference time: "
-        "{} ({:.6f} s / batch on {} devices)".format(
-            total_time_str, total_time / (total - num_warmup), num_devices
+        "{} ({:.6f} s / batch)".format(
+            total_time_str,
+            total_time / (total - num_warmup),
         )
     )
     total_compute_time_str = str(datetime.timedelta(seconds=int(total_compute_time)))
     logger.info(
         "Total inference pure compute time: "
-        "{} ({:.6f} s / batch on {} devices)".format(
+        "{} ({:.6f} s / batch)".format(
             total_compute_time_str,
             total_compute_time / (total - num_warmup),
-            num_devices,
         )
     )
 
