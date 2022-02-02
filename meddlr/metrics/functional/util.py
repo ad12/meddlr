@@ -36,12 +36,25 @@ def to_bool(x):
 def flatten_other_dims(
     xs: Union[arr_type, Sequence[arr_type]], dim: Union[int, Sequence[int]] = None
 ):
+    """Flattens all dimensions other than the specified dimension(s).
+
+    Args:
+        xs (torch.Tensors | ndarrays): A single or sequence of tensor(s)/array(s) to process.
+        dim (int | tuple[int]): The dimensions to not flatten. All other dimensions will be
+            flattened for each array in ``xs``.
+
+    Returns:
+        torch.Tensor | ndarray | Sequence[torch.Tensor | ndarray]: Flattened array(s).
+    """
     single_input = isinstance(xs, (np.ndarray, torch.Tensor))
     is_tensor = isinstance(xs, torch.Tensor) if single_input else isinstance(xs[0], torch.Tensor)
 
     if single_input:
         xs = [xs]
-    dim = (dim,) if isinstance(dim, int) else tuple(dim)
+    xs_type = type(xs)
+    dim = (dim,) if isinstance(dim, int) else dim
+    if dim is not None:
+        dim = tuple(dim)
 
     if dim:
         shape = tuple(xs[0].shape[d] for d in dim) + (-1,)
@@ -54,8 +67,10 @@ def flatten_other_dims(
     else:
         xs = (x.flatten() for x in xs)
 
+    xs = xs_type(xs)
     if single_input:
-        xs = list(xs)[0]
+        xs = xs[0]
+
     return xs
 
 
