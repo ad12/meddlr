@@ -49,3 +49,33 @@ class TestSenseModel(unittest.TestCase):
         out = A_new(kspace, adjoint=True)
         assert torch.allclose(out, expected)
         assert torch.allclose(A_new(out, adjoint=False), A(expected, adjoint=False))
+
+    def test_multichannel(self):
+        """Test multi-channel inputs."""
+        ky = 20
+        kz = 20
+        nc = 8
+        num_channels = 3
+        nm = 1
+        bsz = 5
+
+        kspace = torch.randn(bsz, ky, kz, nc, num_channels, dtype=torch.complex64)
+        maps = torch.rand(bsz, ky, kz, nc, nm, dtype=torch.complex64)
+        maps = maps / cplx.rss(maps, dim=-2).unsqueeze(-2)
+
+        A = SenseModel(maps)
+
+        expected = []
+        for c in range(num_channels):
+            expected.append(A(kspace[..., c], adjoint=True))
+        expected = torch.cat(expected, dim=-1)
+        out_image = A(kspace, adjoint=True)
+        assert torch.allclose(out_image, expected, atol=1e-5)
+
+        expected = []
+        for c in range(num_channels):
+            expected.append(A(out_image[..., c : c + 1], adjoint=False))
+        expected = torch.stack(expected, dim=-1)
+        out_kspace = A(out_image, adjoint=False)
+        # both clauses required for CI to pass on python 3.7 - torch.allclose does not work
+        assert torch.allclose(out_kspace, expected, atol=1e-5)

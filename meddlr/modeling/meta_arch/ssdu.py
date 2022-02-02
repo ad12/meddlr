@@ -4,13 +4,13 @@ from torch import nn
 
 import meddlr.ops as oF
 from meddlr.config.config import configurable
+from meddlr.forward.mri import SenseModel
 from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from meddlr.ops import complex as cplx
 from meddlr.transforms.base.mask import KspaceMaskTransform
 from meddlr.transforms.gen.mask import RandomKspaceMask
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
-from meddlr.utils.transforms import SenseModel
 
 
 @META_ARCH_REGISTRY.register()
