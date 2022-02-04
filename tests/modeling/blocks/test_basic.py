@@ -8,10 +8,12 @@ from meddlr.modeling.blocks.conv_blocks import (
     SimpleConvBlock3d,
     SimpleConvBlockNd,
 )
+from meddlr.modeling.layers import ConvWS2d
 
 
 class TestSimpleConvBlock(unittest.TestCase):
     def test_structure(self):
+        # 2D
         block = SimpleConvBlockNd(16, 32, 3, 2, dropout=0.5)
         assert all(
             [
@@ -23,6 +25,7 @@ class TestSimpleConvBlock(unittest.TestCase):
         assert block[0].out_channels == 32
         assert block[0].kernel_size == (3, 3)
 
+        # 3D
         block = SimpleConvBlockNd(16, 32, 3, 3, dropout=0.5)
         assert all(
             [
@@ -33,6 +36,18 @@ class TestSimpleConvBlock(unittest.TestCase):
         assert block[0].in_channels == 16
         assert block[0].out_channels == 32
         assert block[0].kernel_size == (3, 3, 3)
+
+    def test_order(self):
+        # order
+        block = SimpleConvBlockNd(
+            16, 32, 3, 2, order=("convws", ("groupnorm", {"num_groups": 6}), "relu")
+        )
+        assert all(
+            [isinstance(x, cls) for x, cls in zip(block, [ConvWS2d, nn.GroupNorm, nn.ReLU])]
+        ), f"Got {block}"
+        assert block[0].in_channels == 16
+        assert block[0].out_channels == 32
+        assert block[0].kernel_size == (3, 3)
 
     def test_nd_subclass_signature(self):
         """

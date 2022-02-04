@@ -96,7 +96,6 @@ def parse_markdown(lines: Sequence[str], node: MarkdownNode = None, level: int =
         if level >= num_heading:
             return node, lines
         else:
-            # import pdb; pdb.set_trace()
             child = MarkdownNode(line.split(" ", maxsplit=1)[1].strip(), [])
             child, lines = parse_markdown(lines[1:], child, level=num_heading)
             node.add_children(child)
@@ -104,3 +103,20 @@ def parse_markdown(lines: Sequence[str], node: MarkdownNode = None, level: int =
     if not node.content and len(node.children) == 1:
         node = node.children[0]
     return node, []
+
+
+class cplx_tensor_support:
+    def __init__(self, value) -> None:
+        self.prev_val = None
+        self.value = value
+
+    def __enter__(self):
+        self.prev_val = os.environ.get("MEDDLR_ENABLE_CPLX_TENSORS", -1)
+        os.environ.update({"MEDDLR_ENABLE_CPLX_TENSORS": str(self.value)})
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.prev_val == -1:
+            os.environ.pop("MEDDLR_ENABLE_CPLX_TENSORS")
+        else:
+            os.environ["MEDDLR_ENABLE_CPLX_TENSORS"] = self.prev_val

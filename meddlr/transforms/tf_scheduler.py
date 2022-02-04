@@ -156,12 +156,16 @@ class TFScheduler:
         # TODO (arjundd): names=None does not work.
         if isinstance(names, str):
             names = [names]
-        names = [x for x in self._get_tfm_keys() if any(x.startswith(n) for n in names)]
-        unknown_params = set(names) - set(self._get_tfm_keys())
+
+        tfm_keys = self._get_tfm_keys()
+        unmatched_names = [n for n in names if not any(x.startswith(n) for x in tfm_keys)]
+        names = [x for x in tfm_keys if any(x.startswith(n) for n in names)]
+        unknown_params = (set(names) - set(tfm_keys)) | set(unmatched_names)
         if len(unknown_params) > 0:
             raise ValueError(
                 f"Unknown parameters for transform {self.tfm.__class__.__name__}: {unknown_params}"
             )
+
         params = self._parameter_names()
         params = [n for n in names if n not in params]
         self._params.extend(params)
@@ -195,7 +199,7 @@ class TFScheduler:
                 params[pn] = pval if idx == len(pname) - 1 else {}
             params = params[pn]
 
-    def _repr_args(self) -> List[str]:
+    def _repr_args(self) -> List[str]:  # pragma: no cover
         return ["tfm", "_params"]
 
     def __repr__(self) -> str:
@@ -428,7 +432,7 @@ class WarmupMultiStepTF(TFScheduler):
         ub = lb + alpha * (ub - lb)
         return ub if is_number else (lb, ub)
 
-    def _repr_args(self) -> List[str]:
+    def _repr_args(self) -> List[str]:  # pragma: no cover
         base = super()._repr_args()
         base.extend(["warmup_milestones", "warmup_method", "gamma"])
         return base

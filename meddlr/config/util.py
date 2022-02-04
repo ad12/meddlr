@@ -23,13 +23,19 @@ def configure_params(
         List[Dict] | List[CfgNode]: Different configurations. If ``base_cfg`` provided,
             the different configurations are merged into the config.
     """
+
+    def _dict_to_list(d):
+        return [x for key_value in d.items() for x in key_value]
+
     configs = itertools.product(*list(params.values()))
     configs = [{k: v for k, v in zip(params.keys(), cfg)} for cfg in configs]
     if fixed is not None:
         for c in configs:
             c.update(fixed)
     if base_cfg:
-        configs = [base_cfg.clone().defrost().update(c).freeze() for c in configs]
+        configs = [
+            base_cfg.clone().defrost().merge_from_list(_dict_to_list(c)).freeze() for c in configs
+        ]
     return configs
 
 
@@ -82,10 +88,7 @@ def check_dependencies(
         if not env.is_package_installed(dep):
             missing_deps.append(dep)
 
-    if return_failed_deps:
-        return missing_deps
-    else:
-        return len(missing_deps) == 0
+    return missing_deps if return_failed_deps else len(missing_deps) == 0
 
 
 def _stringify_value(value, depth=0) -> str:

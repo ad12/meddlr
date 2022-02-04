@@ -1,7 +1,9 @@
+import multiprocessing as mp
 import unittest
 from collections import defaultdict
 
 import numpy as np
+import pytest
 
 from meddlr.transforms.tf_scheduler import TFScheduler, WarmupMultiStepTF, WarmupTF
 
@@ -19,7 +21,20 @@ def _run_simulation(scheduler: TFScheduler, iters):
     return params
 
 
+def _assert_fails_build_scheduler_mp():
+    # Fail when initializing on worker thread.
+    with pytest.raises(RuntimeError):
+        WarmupTF(tfm=MockSchedulable(a=1.0, b=(0.0, 0.5)), params="a", warmup_iters=100)
+
+
 class TestWarmupTF(unittest.TestCase):
+    def test_init(self):
+        with mp.Pool(1) as p:
+            p.apply(_assert_fails_build_scheduler_mp)
+
+        with pytest.raises(ValueError):
+            WarmupTF(tfm=MockSchedulable(a=0.5), warmup_iters=100, params="foo")
+
     def test_warmup_basic(self):
         a = 0.5
         b = (0.0, 0.5)
@@ -114,6 +129,24 @@ class TestWarmupTF(unittest.TestCase):
         assert len(params.keys()) == 2
         assert np.allclose(params["a"], a_expected)
         assert np.allclose(params["b"], b_expected)
+
+    def test_unregister_params(self):
+        a = 0.5
+        b = (0.0, 0.5)
+        schedulable = MockSchedulable(a=a, b=b)
+
+        warmup_iters = 5
+        method = "linear"
+        total_iters = warmup_iters + 2
+        a_expected = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.5]
+
+        scheduler = WarmupTF(
+            tfm=schedulable, warmup_iters=warmup_iters, params=["a", "b"], warmup_method=method
+        )
+        scheduler._unregister_parameters(["b"])
+        params = _run_simulation(scheduler, total_iters)
+        assert len(params.keys()) == 1
+        assert np.allclose(params["a"], a_expected)
 
 
 class TestWarmupMultiStepTF(unittest.TestCase):

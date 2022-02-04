@@ -1,7 +1,9 @@
+import os
 import unittest
 from typing import Mapping
 
 import numpy as np
+import pytest
 import torch
 
 from meddlr.config.config import get_cfg
@@ -16,6 +18,7 @@ class MockReconEvaluator(ReconEvaluator):
         metrics=None,
         flush_period: int = None,
         eval_in_process: bool = False,
+        output_dir: str = None,
     ):
         if metrics is None:
             metrics = ["nrmse", "psnr", "ssim (Wang)", "nrmse_scan", "psnr_scan"]
@@ -23,14 +26,14 @@ class MockReconEvaluator(ReconEvaluator):
         super().__init__(
             dataset_name,
             cfg,
-            output_dir=None,
+            output_dir=output_dir,
             group_by_scan=group_by_scan,
             metrics=metrics,
             flush_period=flush_period,
             skip_rescale=True,
             eval_in_process=eval_in_process,
         )
-        self._output_dir = None
+        self._output_dir = output_dir
         self._cpu_device = torch.device("cpu")
         self._normalizer = None
 
@@ -79,6 +82,10 @@ class TestReconEvaluator(unittest.TestCase):
         assert a.keys() == b.keys()
         for k in a.keys():
             assert cmp_func(a[k], b[k])
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmpdir):
+        self.tmpdir = tmpdir
 
     def test_flush(self):
         scan_slices = (2, 2, 2)
@@ -157,6 +164,37 @@ class TestReconEvaluator(unittest.TestCase):
             evaluator.process(inputs, outputs)
         results = evaluator.evaluate()
         self._cmp_results(results, expected_results)
+
+    def test_output_dir(self):
+        scan_slices = (3, 8, 2, 5, 10, 5, 17, 7)
+        batch_size = 6
+        data = _build_mock_data(scan_slices=scan_slices, batch_size=batch_size)
+
+        # Expected results (evaluate after process).
+        evaluator = MockReconEvaluator(output_dir=self.tmpdir)
+        for inputs, outputs in data:
+            evaluator.process(inputs, outputs)
+        _ = evaluator.evaluate()
+
+        assert os.path.exists(self.tmpdir / "results.txt")
+        assert os.path.exists(self.tmpdir / "slice_metrics.csv")
+        assert os.path.exists(self.tmpdir / "scan_metrics.csv")
+
+    def test_group_results_by_scan(self):
+        scan_slices = (3, 8, 2, 5, 10, 5, 17, 7)
+        metrics = ["nrmse", "psnr", "ssim (Wang)", "nrmse_scan", "psnr_scan"]
+        batch_size = 6
+        data = _build_mock_data(scan_slices=scan_slices, batch_size=batch_size)
+
+        # Expected results (evaluate after process).
+        evaluator = MockReconEvaluator(output_dir=self.tmpdir, metrics=metrics, group_by_scan=True)
+        for inputs, outputs in data:
+            evaluator.process(inputs, outputs)
+        results = evaluator.evaluate()
+
+        assert all(chr(ord("A") + i) in results for i in range(len(scan_slices)))
+        for v in results.values():
+            assert all(f"val_{name}" in v for name in metrics)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ from meddlr.modeling.blocks.fuse_blocks import (  # noqa: F401
     ConcatBlock2d,
     ConcatBlock3d,
     ConcatBlockNd,
+    ResBlock2d,
     ResBlock3d,
     ResBlockNd,
 )

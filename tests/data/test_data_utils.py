@@ -1,6 +1,8 @@
+import h5py
+import numpy as np
 import torch
 
-from meddlr.data.data_utils import structure_patches
+from meddlr.data.data_utils import HDF5Manager, structure_patches
 
 
 def test_structuring_patches():
@@ -43,3 +45,37 @@ def test_structuring_patches():
     assert out.shape == expected.shape
     assert out.shape == (2, 6, 5, 7, 8)
     assert torch.all(out == expected)
+
+
+def test_hdf5_manager(tmpdir):
+    N = 5
+
+    files = [tmpdir / f"file_{i:03d}.h5" for i in range(N)]
+    data = [np.random.randn(10, 10) for _ in range(N)]
+    for idx, fpath in enumerate(files):
+        with h5py.File(fpath, "w") as f:
+            f.create_dataset("data", data=data[idx])
+
+    # Auto file open/close.
+    data_manager = HDF5Manager(files)
+    assert len(data_manager.files) == N
+    assert all(isinstance(f, h5py.File) for f in data_manager.files.values())
+    all_files = data_manager.files.copy()
+    del data_manager
+    assert all(not f.id for f in all_files.values()), "All files should be closed"
+
+    data_manager = HDF5Manager(files)
+    for fpath in files:
+        file = data_manager.get(fpath)
+        assert file is data_manager.files[fpath]
+
+    idx = np.random.choice(N)
+    fpath = files[idx]
+    out = data_manager.get(fpath, "data")
+    assert np.all(out == data[idx])
+
+    idx = np.random.choice(N)
+    sl = (slice(None), slice(5))
+    fpath = files[idx]
+    out = data_manager.get(fpath, "data", sl)
+    assert np.all(out == data[idx][sl])

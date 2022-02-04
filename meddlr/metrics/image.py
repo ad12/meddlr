@@ -485,7 +485,7 @@ def compute_vifp_mscale(
     sigma_nsq: float = 2.0,
     eps: float = 1e-10,
     im_type: str = None,
-):
+):  # pragma: no-cover
     """Compute visual information fidelity (VIF) metric.
 
     This code is adapted from
