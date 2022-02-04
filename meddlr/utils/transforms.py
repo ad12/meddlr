@@ -228,7 +228,7 @@ def center_crop(data, shape):
         shape (list of ints): The output shape. If shape[dim] = -1, then no crop
             will be applied in that dimension.
     """
-    return oF.center_crop(data, shape)
+    return oF.center_crop(data, shape, include_batch=True)
 
 
 @deprecated(vremove="0.1.0", replacement="ops.complex.complex_center_crop_2d")

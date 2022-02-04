@@ -1,6 +1,8 @@
 import itertools
+import os
 import unittest
 
+import pytest
 import torch
 
 from meddlr.config import get_cfg
@@ -46,6 +48,10 @@ def _simulate_data(shape, num_scans=10, batch_size: int = None):
 
 
 class TestSemSegEvaluator(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def setup(self, tmpdir):
+        self.tmpdir = tmpdir
+
     def test_basic(self):
         cfg = get_cfg()
         cfg.defrost()
@@ -107,6 +113,29 @@ class TestSemSegEvaluator(unittest.TestCase):
         evaluator.evaluate()
         assert len(evaluator.scan_metrics.ids()) == 2
         assert len(evaluator.slice_metrics.ids()) == 2 * Z
+
+    def test_output_dir(self):
+        cfg = get_cfg()
+        cfg.defrost()
+        cfg.MODEL.SEG.CLASSES = ("class_1", "class_2", "class_3", "class_4")
+        cfg.MODEL.SEG.ACTIVATION = "sigmoid"
+        cfg.MODEL.SEG.INCLUDE_BACKGROUND = False
+
+        evaluator = SemSegEvaluator(
+            "test", cfg, distributed=False, aggregate_scans=True, output_dir=self.tmpdir
+        )
+        evaluator.reset()
+
+        shape = (20, 4, 75, 75)  # N x # classes x Y x X
+
+        for inputs, outputs in zip(*_simulate_data(shape, num_scans=10)):
+            evaluator.process(inputs, outputs)
+
+        _ = evaluator.evaluate()
+
+        assert os.path.exists(self.tmpdir / "results.txt")
+        assert os.path.exists(self.tmpdir / "slice_metrics.csv")
+        assert os.path.exists(self.tmpdir / "scan_metrics.csv")
 
 
 if __name__ == "__main__":

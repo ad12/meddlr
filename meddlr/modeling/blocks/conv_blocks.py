@@ -1,3 +1,4 @@
+import inspect
 from typing import Any, Dict, Tuple, Union
 
 import torch.nn as nn
@@ -14,8 +15,8 @@ __all__ = [
 class SimpleConvBlockNd(nn.Sequential):
     """A convolutional block supporting normalization, conv, activation, and dropout.
 
-    The block implements same padding and convolution stride of 1. The first conv layer will
-    change the number of channels from `in_channels` to `out_channels`.
+    The first conv layer will change the number of channels from
+    ``in_channels`` to ``out_channels``.
 
     The order of layers can be specified by certain keywords:
         * "conv": Convolution layer
@@ -85,7 +86,11 @@ class SimpleConvBlockNd(nn.Sequential):
                 )
                 running_num_channels = out_channels
             elif kind == "norm":
-                layer = layer_cls(running_num_channels, **lyr_kwargs)
+                sig = inspect.signature(layer_cls)
+                for kwarg_name in ("num_channels", "num_features"):
+                    if kwarg_name not in lyr_kwargs and kwarg_name in sig.parameters:
+                        lyr_kwargs[kwarg_name] = running_num_channels
+                layer = layer_cls(**lyr_kwargs)
             elif kind == "dropout":
                 layer = layer_cls(dropout, **lyr_kwargs)
             elif kind == "act":

@@ -9,7 +9,7 @@ from meddlr.modeling.blocks.conv_blocks import SimpleConvBlockNd
 
 __all__ = [
     "ResBlockNd",
-    "ResBlockNd",
+    "ResBlock2d",
     "ResBlock3d",
     "ConcatBlockNd",
     "ConcatBlock2d",
@@ -108,10 +108,15 @@ class _SimpleFuseBlockNd(nn.Module, ABC):
 
 
 class ResBlockNd(_SimpleFuseBlockNd):
-    """
+    """Residual block.
+
+    This block adds a residual connection to the the :cls:`SimpleConvBlockNd` block.
+    The order of the layers follows the same order used by :cls:`SimpleConvBlockNd`
+    and can be manually configured using the ``order`` argument.
+
     Args:
         in_channels (int): Number of channels in the input.
-        kernel_size (`int(s)`): Convolution kernel size.
+        kernel_size (int(s)): Convolution kernel size.
         n_blocks (int): Number of conv blocks.
         dimension (int): Integer specifying the dimension of convolution.
         connect_before (str, optional): Layer to add residual connection before in conv block.
@@ -141,22 +146,7 @@ class ResBlockNd(_SimpleFuseBlockNd):
 
 
 class ResBlock2d(ResBlockNd):
-    """2D implementation of :class:`SimpleResBlock`.
-
-    Args:
-        in_channels (int): Number of channels in the input.
-        kernel_size (`int(s)`): Convolution kernel size.
-        n_blocks (int): Number of conv blocks.
-        connect_before (str, optional): Layer to add residual connection before in conv block.
-            For example, if `n_blocks=1`, conv block `order=("conv", "batchnorm", "relu")`,
-            and `connect_before="relu"`, residual block will look like below. If `None`,
-            residual connection will be made after full conv block.
-                x -> Conv -> BatchNorm -> + -> ReLU
-                |                         ^
-                |                         |
-                --------------------------
-        kwargs: `SimpleConvBlockNd` arguments. `in_channels` and `out_channels` required.
-    """
+    """2D implementation of :cls:`ResBlockNd`."""
 
     def __init__(
         self,
@@ -170,22 +160,7 @@ class ResBlock2d(ResBlockNd):
 
 
 class ResBlock3d(ResBlockNd):
-    """3D implementation of :class:`SimpleResBlock`.
-
-    Args:
-        in_channels (int): Number of channels in the input.
-        kernel_size (`int(s)`): Convolution kernel size.
-        n_blocks (int): Number of conv blocks
-        connect_before (str, optional): Layer to add residual connection before in conv block.
-            For example, if `n_blocks=1`, conv block `order=("conv", "batchnorm", "relu")`,
-            and `connect_before="relu"`, residual block will look like below. If `None`,
-            residual connection will be made after full conv block.
-                x -> Conv -> BatchNorm -> + -> ReLU
-                |                         ^
-                |                         |
-                --------------------------
-        kwargs: `SimpleConvBlockNd` arguments. `in_channels` and `out_channels` required.
-    """
+    """3D implementation of :class:`ResBlockNd`."""
 
     def __init__(
         self,
@@ -200,6 +175,7 @@ class ResBlock3d(ResBlockNd):
 
 class ConcatBlockNd(_SimpleFuseBlockNd):
     """
+
     Args:
         in_channels (int): Number of channels in the input.
         kernel_size (`int(s)`): Convolution kernel size.
@@ -232,6 +208,8 @@ class ConcatBlockNd(_SimpleFuseBlockNd):
 
 
 class ConcatBlock2d(ConcatBlockNd):
+    """2D implementation of :class:`ConcatBlockNd`."""
+
     def __init__(
         self,
         in_channels: int,
@@ -244,6 +222,8 @@ class ConcatBlock2d(ConcatBlockNd):
 
 
 class ConcatBlock3d(ConcatBlockNd):
+    """3D implementation of :class:`ConcatBlockNd`."""
+
     def __init__(
         self,
         in_channels: int,
