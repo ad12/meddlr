@@ -225,6 +225,12 @@ class GoogleDriveHandler(GeneralPathHandler):
 
     PREFIX = "gdrive://"
 
+    def __init__(self, cache_dir=None, **kwargs) -> None:
+        if cache_dir is None:
+            cache_dir = os.path.expanduser("~/.cache/gdrive")
+        self.cache_dir = cache_dir
+        super().__init__(**kwargs)
+
     def _root_dir(self):
         return None
 
@@ -233,6 +239,7 @@ class GoogleDriveHandler(GeneralPathHandler):
         path: str,
         force: bool = False,
         cache_file: Optional[str] = None,
+        is_folder=None,
         **kwargs: Any,
     ) -> str:
         """Get local path to google drive file.
@@ -255,24 +262,57 @@ class GoogleDriveHandler(GeneralPathHandler):
         path = path[len(self.PREFIX) :]
         self._check_kwargs(kwargs)
 
-        gdrive_id = None
+        if is_folder is None:
+            is_folder = "drive.google.com" in path and "folders" in path
+
+        if is_folder:
+            path = self._handle_folder(path, cache_file, force)
+        else:
+            path = self._handle_file(path, cache_file, force)
+        return path
+
+    def _handle_file(self, path: str, cache: str, force: bool) -> str:
         if "drive.google.com" in path:
             gdrive_id = path.split("/d/")[1].split("/")[0]
         else:
             gdrive_id = path
-        if cache_file is None:
-            cache_file = os.path.join(os.path.expanduser("~/.cache/gdrive"), gdrive_id)
-        else:
-            cache_file = str(cache_file)
-        os.makedirs(os.path.dirname(cache_file), exist_ok=True)
 
-        if force or not os.path.exists(cache_file):
+        if cache is None:
+            cache = os.path.join(self.cache_dir, gdrive_id)
+        else:
+            cache = str(cache)
+        os.makedirs(os.path.dirname(cache), exist_ok=True)
+
+        if force or not os.path.exists(cache):
             logger = logging.getLogger(__name__)
             logger.info("Downloading gdrive file from {}...".format(path))
-            gdown.download(id=gdrive_id, output=cache_file)
-            logger.info("File cached to {}".format(cache_file))
+            gdown.download(id=gdrive_id, output=cache)
+            logger.info("File cached to {}".format(cache))
 
-        return cache_file
+        return cache
+
+    def _handle_folder(self, path: str, cache: str, force: bool) -> str:
+        from gdown.download_folder import client, parse_google_drive_file
+
+        logger = logging.getLogger(__name__)
+
+        if cache is None:
+            folder_page = client.get(path)
+            if folder_page.status_code != 200:
+                raise ValueError("Unable to download gdrive url: {}".format(path))
+            gdrive_file, _ = parse_google_drive_file(path, folder_page.content)
+            cache = os.path.join(self.cache_dir, gdrive_file.name)
+        else:
+            cache = str(cache)
+
+        if force or not os.path.exists(cache):
+            logger.info("Downloading gdrive folder from {}...".format(path))
+            gdown.download_folder(url=path, output=cache)
+            logger.info("Folder cached to {}".format(cache))
+        else:
+            logger.info("Folder {} already exists. Skipping download.".format(cache))
+
+        return cache
 
 
 class DownloadHandler(GeneralPathHandler):

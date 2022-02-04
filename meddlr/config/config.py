@@ -69,6 +69,19 @@ class CfgNode(_CfgNode):
             self.clear()
             self.update(new_config)
 
+        return self
+
+    def merge_from_list(self, cfg_list: list):
+        """Update (keys, values) in a list (e.g., from command line).
+
+        For example, ``cfg_list = ['FOO.BAR', 0.5]`` to set ``self.FOO.BAR = 0.5``.
+
+        Args:
+            cfg_list (list): list of configs to merge from.
+        """
+        super().merge_from_list(cfg_list)
+        return self
+
     def format_fields(self, unroll: bool = False):
         """
         Format string fields in the config by filling them in
@@ -104,10 +117,10 @@ class CfgNode(_CfgNode):
         try:
             for k in key.split("."):
                 d = d[k]
-        except KeyError as e:
+        except KeyError:
             if default != np._NoValue:
                 return default
-            raise e
+            raise KeyError("Config does not have key '{}'".format(key))
         return d
 
     def set_recursive(self, name: str, value: Any):
@@ -124,7 +137,7 @@ class CfgNode(_CfgNode):
 
         setattr(cfg, keys[-1], value)
 
-    def dump(self, *args, **kwargs):
+    def dump(self, *args, **kwargs):  # pragma: no cover
         """
         Returns:
             str: a yaml string representation of the config
@@ -202,7 +215,7 @@ def set_global_cfg(cfg: CfgNode) -> None:
     global_cfg.update(cfg)
 
 
-def configurable(init_func=None, *, from_config=None):
+def configurable(init_func=None, *, from_config=None):  # pragma: no cover
     """
     Decorate a function or a class's __init__ method so that it can be called
     with a :class:`CfgNode` object using a :func:`from_config` function that translates

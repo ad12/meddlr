@@ -65,9 +65,6 @@ class Metric(_Metric):
         self.add_state("ids", default=[], dist_reduce_fx=lambda x: itertools.chain(*x))
         self.add_state("values", default=[], dist_reduce_fx="cat")
 
-        # This is only to be set and used when filtering kwargs.
-        self._func_signature = None
-
     def func(self, preds, targets, *args, **kwargs) -> torch.Tensor:
         """Computes metrics for each element in the batch.
 
@@ -139,10 +136,10 @@ class Metric(_Metric):
             filtered_kwargs.update(aliases)
         else:
             filtered_kwargs = kwargs
-        if self._func_signature is None:
-            self._func_signature = inspect.signature(self.func)
-        filtered_kwargs = _filter_kwargs(self._func_signature, **filtered_kwargs)
-        return super()._filter_kwargs(**filtered_kwargs)
+
+        # Use filtering from torch 0.6.0 where kwargs are preserved and passed along.
+        filtered_kwargs = _filter_kwargs(self._update_signature, **filtered_kwargs)
+        return filtered_kwargs
 
     def register_update_aliases(self, **kwargs):
         """Register aliases for keyword arguments when calling update."""

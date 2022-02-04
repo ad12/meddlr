@@ -26,3 +26,20 @@ def get_cfg_path(cfg_filename):
     if not os.path.exists(cfg_filename):
         raise FileNotFoundError(f"Config file {cfg_filename} not found.")
     return cfg_filename
+
+
+class cplx_tensor_support:
+    def __init__(self, value) -> None:
+        self.prev_val = None
+        self.value = value
+
+    def __enter__(self):
+        self.prev_val = os.environ.get("MEDDLR_ENABLE_CPLX_TENSORS", -1)
+        os.environ.update({"MEDDLR_ENABLE_CPLX_TENSORS": str(self.value)})
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.prev_val == -1:
+            os.environ.pop("MEDDLR_ENABLE_CPLX_TENSORS")
+        else:
+            os.environ["MEDDLR_ENABLE_CPLX_TENSORS"] = self.prev_val

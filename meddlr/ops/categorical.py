@@ -108,6 +108,8 @@ def logits_to_prob(logits, activation, channel_dim: int = 1):
         out = torch.sigmoid(logits)
     elif activation == "softmax":
         out = F.softmax(logits, dim=channel_dim)
+    else:
+        raise ValueError(f"activation '{activation}' not supported'")
 
     if is_ndarray:
         out = out.numpy()

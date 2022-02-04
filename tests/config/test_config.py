@@ -1,5 +1,7 @@
 import unittest
 
+import pytest
+
 from meddlr.config.config import get_cfg
 
 
@@ -31,3 +33,12 @@ class TestConfig(unittest.TestCase):
             cfg.DESCRIPTION.PROJECT_NAME,
         )
         assert cfg.DESCRIPTION.BRIEF == expected
+
+    def test_get_recursive(self):
+        cfg = get_cfg()
+        cfg.DESCRIPTION.BRIEF = "foobar"
+
+        assert cfg.get_recursive("DESCRIPTION.BRIEF") == "foobar"
+        assert cfg.get_recursive("DESCRIPTION.FOO", None) is None
+        with pytest.raises(KeyError):
+            cfg.get_recursive("DESCRIPTION.FOO")
