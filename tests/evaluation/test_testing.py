@@ -1,4 +1,5 @@
 import os
+import uuid
 from copy import deepcopy
 from pathlib import Path
 
@@ -52,7 +53,7 @@ def test_find_weights_basic(tmpdir, func_kwargs, expected_file):
     pm = env.get_path_manager()
     exp_dir = pm.get_local_path(
         "gdrive://https://drive.google.com/drive/folders/1aKXuSmLgfZVHor6Tq47HXLXLUNIS5E6e?usp=sharing",  # noqa: E501
-        cache_file=tmpdir / "sample-dir",
+        cache_file=tmpdir / str(uuid.uuid4()) / "sample-dir",
     )
     exp_dir = Path(exp_dir)
     cfg = get_cfg().merge_from_file(exp_dir / "config.yaml")
