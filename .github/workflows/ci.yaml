@@ -74,7 +74,8 @@ jobs:
         run: |
           pip install pytest
           pip install pytest-cov
-          make test-cov
+          uuid=$(uuidgen)
+          MEDDLR_CACHE_DIR=~/.cache/meddlr/$uuid make test-cov
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1
