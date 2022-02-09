@@ -5,6 +5,8 @@ from typing import Tuple, Union
 
 from torch import nn
 
+from meddlr.modeling.layers.conv import ConvWS2d
+
 
 def _get_same_padding(kernel_size: Union[int, Tuple[int, int]]):
     if isinstance(kernel_size, int):
@@ -59,21 +61,25 @@ class ConvBlock(nn.Module):
         padding = tuple(k // 2 for k in kernel_size)
 
         # Define choices for each layer in ConvBlock
-        conv_after_norm = "norm" in order and order.index("conv") > order.index("norm")
+        conv_idx = order.index([x for x in order if "conv" in x][0])
+        conv_after_norm = "norm" in order and conv_idx > order.index("norm")
         norm_channels = in_chans if conv_after_norm else out_chans
         normalizations = nn.ModuleDict(
             [
                 ["none", nn.Identity()],
                 ["instance", nn.InstanceNorm2d(norm_channels, affine=norm_affine)],
                 ["batch", nn.BatchNorm2d(norm_channels, affine=norm_affine)],
+                ["group", nn.GroupNorm(norm_channels // 8, norm_channels, affine=norm_affine)],
             ]
         )
         activations = nn.ModuleDict([["relu", nn.ReLU()], ["leaky_relu", nn.LeakyReLU()]])
         dropout = nn.Dropout2d(p=drop_prob)
         convolution = nn.Conv2d(in_chans, out_chans, kernel_size=kernel_size, padding=padding)
+        convolution_ws = ConvWS2d(in_chans, out_chans, kernel_size=kernel_size, padding=padding)
 
         layer_dict = {
             "conv": convolution,
+            "conv+ws": convolution_ws,
             "drop": dropout,
             "act": activations[act_type],
             "norm": normalizations[norm_type] if norm_type in normalizations else nn.Identity(),
