@@ -54,8 +54,10 @@ def test_find_weights_basic(func_kwargs, expected_file):
         "gdrive://https://drive.google.com/drive/folders/1aKXuSmLgfZVHor6Tq47HXLXLUNIS5E6e?usp=sharing",  # noqa: E501
     )
     exp_dir = Path(exp_dir)
+    assert os.path.isdir(exp_dir)
 
-    cfg = get_cfg().merge_from_file(exp_dir / "config.yaml")
+    cfg = get_cfg()
+    cfg.merge_from_file(exp_dir / "config.yaml")
     cfg.OUTPUT_DIR = str(exp_dir)
 
     weights, _, _ = find_weights(cfg, **func_kwargs)
