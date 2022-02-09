@@ -18,6 +18,7 @@ import pandas as pd
 import torch
 from tabulate import tabulate
 
+import meddlr.ops.complex as cplx
 from meddlr.checkpoint import Checkpointer
 from meddlr.config import get_cfg
 from meddlr.data.build import build_recon_val_loader
@@ -41,7 +42,10 @@ class ZFReconEvaluator(ReconEvaluator):
 
     def process(self, inputs, outputs):
         zf_out = {k: outputs[k] for k in ("target",)}
-        zf_out["pred"] = torch.view_as_complex(outputs["zf_image"])
+        zf_image = outputs["zf_image"]
+        if cplx.is_complex_as_real(zf_image):
+            zf_image = torch.view_as_complex(zf_image)
+        zf_out["pred"] = zf_image
         return super().process(inputs, zf_out)
 
 
