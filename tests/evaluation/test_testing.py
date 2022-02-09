@@ -1,5 +1,4 @@
 import os
-import uuid
 from copy import deepcopy
 from pathlib import Path
 
@@ -48,15 +47,17 @@ def test_check_consistency():
         ({"criterion": "psnr_scan", "iter_limit": 800}, "model_0000399.pth"),
     ],
 )
-def test_find_weights_basic(tmpdir, func_kwargs, expected_file):
+def test_find_weights_basic(func_kwargs, expected_file):
     """Test that we can find the best weights from a basic experiment."""
     pm = env.get_path_manager()
     exp_dir = pm.get_local_path(
         "gdrive://https://drive.google.com/drive/folders/1aKXuSmLgfZVHor6Tq47HXLXLUNIS5E6e?usp=sharing",  # noqa: E501
-        cache_file=tmpdir / str(uuid.uuid4()) / "sample-dir",
     )
     exp_dir = Path(exp_dir)
-    cfg = get_cfg().merge_from_file(exp_dir / "config.yaml")
+    assert os.path.isdir(exp_dir)
+
+    cfg = get_cfg()
+    cfg.merge_from_file(exp_dir / "config.yaml")
     cfg.OUTPUT_DIR = str(exp_dir)
 
     weights, _, _ = find_weights(cfg, **func_kwargs)
