@@ -40,15 +40,7 @@ def test_check_consistency():
         check_consistency(state_dict, model)
 
 
-@pytest.mark.parametrize(
-    "func_kwargs,expected_file",
-    [
-        ({"criterion": "psnr_scan"}, "model_0001399.pth"),
-        ({"criterion": "ssim (Wang)_scan"}, "model_0000799.pth"),
-        ({"criterion": "psnr_scan", "iter_limit": 800}, "model_0000399.pth"),
-    ],
-)
-def test_find_weights_basic(tmpdir, func_kwargs, expected_file):
+def test_find_weights_basic(tmpdir):
     """Test that we can find the best weights from a basic experiment."""
     pm = env.get_path_manager()
     exp_dir = pm.get_local_path(
@@ -56,8 +48,15 @@ def test_find_weights_basic(tmpdir, func_kwargs, expected_file):
         cache_file=tmpdir / str(uuid.uuid4()) / "sample-dir",
     )
     exp_dir = Path(exp_dir)
-    cfg = get_cfg().merge_from_file(exp_dir / "config.yaml")
-    cfg.OUTPUT_DIR = str(exp_dir)
 
-    weights, _, _ = find_weights(cfg, **func_kwargs)
-    assert os.path.basename(weights) == expected_file
+    # This is required to use the same cache directory to avoid pinging gdrive too often.
+    for func_kwargs, expected_file in [
+        ({"criterion": "psnr_scan"}, "model_0001399.pth"),
+        ({"criterion": "ssim (Wang)_scan"}, "model_0000799.pth"),
+        ({"criterion": "psnr_scan", "iter_limit": 800}, "model_0000399.pth"),
+    ]:
+        cfg = get_cfg().merge_from_file(exp_dir / "config.yaml")
+        cfg.OUTPUT_DIR = str(exp_dir)
+
+        weights, _, _ = find_weights(cfg, **func_kwargs)
+        assert os.path.basename(weights) == expected_file
