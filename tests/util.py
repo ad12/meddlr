@@ -1,10 +1,17 @@
 """Utilities for testing."""
 import os
+import pathlib
 import re
+import tempfile
+import uuid
 from functools import wraps
 from typing import Sequence, Union
 
 TEST_MODEL_ZOOS = os.environ.get("MEDDLR_TEST_MODEL_ZOOS", "") == "True"
+
+# Set cache directory to be non-conflicting with other tests.
+_TEMP_CACHE_DIR = tempfile.TemporaryDirectory(f"meddlr-test-cache-{uuid.uuid4()}")
+TEMP_CACHE_DIR = pathlib.Path(_TEMP_CACHE_DIR.name)
 
 
 def temp_env(func):

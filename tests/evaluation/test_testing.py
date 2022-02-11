@@ -9,6 +9,8 @@ from meddlr.config import get_cfg
 from meddlr.evaluation.testing import check_consistency, find_weights, flatten_results_dict
 from meddlr.utils import env
 
+from .. import util
+
 
 def test_flatten_results_dict():
     x = {"a": 1, "b": {"b1": 5, "b2": {"b2-1": 2}}, "c": {"c1": 8, "c2": 10}}
@@ -51,7 +53,8 @@ def test_find_weights_basic(func_kwargs, expected_file):
     """Test that we can find the best weights from a basic experiment."""
     pm = env.get_path_manager()
     exp_dir = pm.get_local_path(
-        "gdrive://https://drive.google.com/drive/folders/1aKXuSmLgfZVHor6Tq47HXLXLUNIS5E6e?usp=sharing",  # noqa: E501
+        "gdrive://https://drive.google.com/drive/folders/1XS6OfRSWYx_hX6AxefNuqbmSmCH0WtNp?usp=sharing",  # noqa: E501
+        cache_file=util.TEMP_CACHE_DIR / "basic-cpu",
     )
     exp_dir = Path(exp_dir)
     assert os.path.isdir(exp_dir)
