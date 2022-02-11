@@ -16,7 +16,7 @@ test:
 
 test-cov:
 	set -e
-	MEDDLR_TEST_MODEL_ZOOS=True pytest tests/ --cov=./ --cov-report=xml
+	pytest tests/ --cov=./ --cov-report=xml
 
 dev:
 	pip install --upgrade black==21.10b0 coverage isort flake8 flake8-bugbear flake8-comprehensions pre-commit pooch
