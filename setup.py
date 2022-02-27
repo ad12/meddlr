@@ -132,49 +132,8 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("configs", "tests", "*.tests", "*.tests.*", "tests.*")),
     python_requires=REQUIRES_PYTHON,
-    install_requires=[
-        "pyxb",  # need to install before ismrmrd
-        "h5py",
-        "matplotlib",
-        "numpy",
-        "tensorboard",
-        "fvcore",
-        "mridata",
-        "scikit-image>=0.18.2",
-        "sigpy>=0.1.17",
-        "ismrmrd",
-        "pandas",
-        "silx",
-        "tqdm",
-        "omegaconf",
-        "torchmetrics>=0.5.1",
-        "iopath",
-        "packaging",
-    ],
-    extras_require={
-        "dev": [
-            # Formatting
-            "coverage",
-            "flake8",
-            "isort",
-            "black==21.10b0",
-            "flake8-bugbear",
-            "flake8-comprehensions",
-            "pre-commit>=2.9.3",
-            # Testing
-            "medpy",
-            "pooch",
-            "gdown",
-            # Documentation
-            "sphinx",
-            "sphinxcontrib-bibtex",
-            "sphinx-rtd-theme",
-            "m2r2",
-        ],
-        "benchmarking": ["medpy"],
-        "deployment": ["gdown", "requests", "iocursor"],
-        "docs": ["sphinx", "sphinxcontrib.bibtex", "sphinx-rtd-theme", "m2r2"],
-    },
+    install_requires=REQUIRED,
+    extras_require=EXTRAS,
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
