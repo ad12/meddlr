@@ -1,4 +1,5 @@
 """Utilities for testing."""
+import inspect
 import os
 import pathlib
 import re
@@ -27,7 +28,17 @@ def temp_env(func):
         os.environ.update(old_env)
         return out
 
-    return wrapper
+    @wraps(func)
+    def wrapper_func(*args, **kwargs):
+        old_env = dict(os.environ)
+
+        out = func(*args, **kwargs)
+
+        os.environ.clear()
+        os.environ.update(old_env)
+        return out
+
+    return wrapper if "self" in inspect.signature(func).parameters else wrapper_func
 
 
 def get_cfg_path(cfg_filename):

@@ -54,7 +54,7 @@ def test_find_weights_basic(func_kwargs, expected_file):
     pm = env.get_path_manager()
     exp_dir = pm.get_local_path(
         "gdrive://https://drive.google.com/drive/folders/1XS6OfRSWYx_hX6AxefNuqbmSmCH0WtNp?usp=sharing",  # noqa: E501
-        cache_file=util.TEMP_CACHE_DIR / "basic-cpu",
+        cache=util.TEMP_CACHE_DIR / "basic-cpu",
     )
     exp_dir = Path(exp_dir)
     assert os.path.isdir(exp_dir)

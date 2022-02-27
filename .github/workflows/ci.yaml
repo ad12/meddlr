@@ -74,7 +74,7 @@ jobs:
         run: |
           pip install pytest
           pip install pytest-cov
-          make test-cov
+          MEDDLR_TEST_MODEL_ZOOS=True make test-cov
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1

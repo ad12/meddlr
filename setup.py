@@ -123,7 +123,7 @@ setup(
             "m2r2",
         ],
         "benchmarking": ["medpy"],
-        "deployment": ["gdown"],
+        "deployment": ["gdown", "requests", "iocursor"],
         "docs": ["sphinx", "sphinxcontrib.bibtex", "sphinx-rtd-theme", "m2r2"],
     },
     classifiers=[

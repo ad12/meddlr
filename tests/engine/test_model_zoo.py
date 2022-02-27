@@ -88,7 +88,8 @@ def test_load_weights_find_device():
 
 
 @pytest.mark.skipif(not util.TEST_MODEL_ZOOS, reason="Model zoo testing not activated")
-@pytest.mark.parametrize("project", ["noise2recon", "vortex"])
+@util.temp_env
+@pytest.mark.parametrize("project", ["vortex"])
 def test_model_zoo_configs_for_projects(project):
     """
     Test that all models in the zoo can be built with the appropriate config
@@ -100,21 +101,25 @@ def test_model_zoo_configs_for_projects(project):
     """
     model_zoo_file = REPO_DIR / "projects" / project / "MODEL_ZOO.md"
     models = _parse_model_zoo(model_zoo_file)
+
+    # Temporarily set cache dir to tmpdir
+    os.environ["MEDDLR_CACHE_DIR"] = str(
+        util.TEMP_CACHE_DIR / "test_model_zoo_configs_for_projects" / project
+    )
+
     for name, model_info in models.items():
         # Skip models that have failed dependencies (for now).
         # TODO: Auto-configure github actions to run this test with different
         # combinations of dependencies.
         path_manager = env.get_path_manager()
-        cfg_file = path_manager.get_local_path(f"download://{model_info['cfg_url']}", force=True)
+        cfg_file = path_manager.get_local_path(model_info["cfg_url"], force=True)
         failed_deps = config_util.check_dependencies(cfg_file, return_failed_deps=True)
         if len(failed_deps) > 0:
             continue
 
         try:
             model = get_model_from_zoo(
-                f"download://{model_info['cfg_url']}",
-                f"download://{model_info['weights_url']}",
-                force_download=True,
+                model_info["cfg_url"], model_info["weights_url"], force_download=True
             )
             assert isinstance(model, nn.Module)
         except Exception as e:
