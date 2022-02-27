@@ -2,20 +2,12 @@
 """
 import functools
 import inspect
-import io
 import logging
 import re
-from typing import IO, Any, Mapping, Union
+from typing import Any, Mapping
 
 import numpy as np
 from fvcore.common.config import CfgNode as _CfgNode
-
-try:
-    import iocursor
-
-    _IOCURSOR_AVAILABLE = True
-except ImportError:
-    _IOCURSOR_AVAILABLE = False
 
 
 class CfgNode(_CfgNode):
@@ -31,19 +23,6 @@ class CfgNode(_CfgNode):
       automatically.
     """
 
-    @classmethod
-    def _open_cfg(cls, filename: str) -> Union[IO[str], IO[bytes]]:
-        """
-        Defines how a config file is opened. May be overridden to support
-        different file schemas.
-        """
-        byte_types = (io.BytesIO, iocursor.Cursor) if _IOCURSOR_AVAILABLE else (io.BytesIO,)
-        if isinstance(filename, byte_types):
-            return filename
-        if isinstance(filename, bytes):
-            return iocursor.Cursor(filename) if _IOCURSOR_AVAILABLE else io.BytesIO(filename)
-        return super()._open_cfg(filename)
-
     # Note that the default value of allow_unsafe is changed to True
     def merge_from_file(self, cfg_filename: str, allow_unsafe: bool = True) -> None:
         """
@@ -52,7 +31,7 @@ class CfgNode(_CfgNode):
         Note:
             If a bytes stream is passed in, the stream will automatically be closed.
         """
-        loaded_cfg = type(self).load_yaml_with_base(cfg_filename, allow_unsafe=allow_unsafe)
+        loaded_cfg = _CfgNode.load_yaml_with_base(cfg_filename, allow_unsafe=allow_unsafe)
         loaded_cfg = type(self)(loaded_cfg)
 
         # defaults.py needs to import CfgNode

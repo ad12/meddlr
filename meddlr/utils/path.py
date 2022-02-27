@@ -441,7 +441,7 @@ class URLHandler(GeneralPathHandler):
             )
             base = path.split("://", 1)[1]
             out_file = os.path.join(cache, base)
-        elif str(cache).endswith(os.pathsep):
+        elif str(cache).endswith(os.pathsep) or os.path.isdir(path):
             out_file = os.path.join(cache, os.path.basename(path))
         else:
             out_file = cache
