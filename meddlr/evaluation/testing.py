@@ -201,9 +201,7 @@ def find_weights(cfg, criterion="", iter_limit=None, file_name_fmt="model_{:07d}
         if len(matched_files) == 0:
             if best_iter == last_iter:
                 file_name = "model_final.pth"
-            matched_files = [
-                re.match(file_name, x) for x in potential_ckpt_files if re.match(file_name, x)
-            ]
+            matched_files = [file_name for x in potential_ckpt_files if re.match(file_name, x)]
         if len(matched_files) == 0:
             raise ValueError(
                 f"Could not find potential checkpoint files for iter={best_iter}, "
