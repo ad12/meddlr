@@ -66,7 +66,7 @@ def is_complex_as_real(x):
         has a size of ``2`` because it is the real-imaginary channel or
         for some other reason.
     """
-    return x.size(-1) == 2
+    return not is_complex(x) and x.size(-1) == 2
 
 
 def conj(x):
@@ -187,17 +187,25 @@ def imag(x):
         return x[..., 1]
 
 
-def from_polar(magnitude, phase, return_cplx: bool = False):
+def from_polar(magnitude, phase, return_cplx: bool = None):
     """
     Computes real and imaginary values from polar representation.
     """
-    if return_cplx:
-        if not supports_cplx_tensor():
-            raise RuntimeError(f"torch {torch.__version__} does not support complex tensors")
-        return torch.polar(magnitude, phase)
-    real = magnitude * torch.cos(phase)
-    imag = magnitude * torch.sin(phase)
-    return torch.stack((real, imag), dim=-1)
+    if return_cplx and not supports_cplx_tensor():
+        raise RuntimeError(f"torch {torch.__version__} does not support complex tensors")
+
+    if supports_cplx_tensor():
+        out = torch.polar(magnitude, phase)
+        if return_cplx is False:
+            out = torch.view_as_real(out)
+        return out
+    else:
+        real = magnitude * torch.cos(phase)
+        imag = magnitude * torch.sin(phase)
+        return torch.stack((real, imag), dim=-1)
+
+
+polar = from_polar
 
 
 def channels_first(x: torch.Tensor):

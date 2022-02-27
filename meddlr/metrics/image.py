@@ -27,7 +27,7 @@ _IM_TYPES_TO_FUNCS = {
     "imag": cplx.imag,
 }
 
-__all__ = ["PSNR", "MSE", "NRMSE", "RMSE", "SSIM"]
+__all__ = ["PSNR", "MAE", "MSE", "NRMSE", "RMSE", "SSIM"]
 
 
 class PSNR(Metric):
@@ -76,6 +76,54 @@ class PSNR(Metric):
 
     def func(self, preds, targets) -> torch.Tensor:
         return mF.psnr(preds, targets, im_type=self.im_type)
+
+
+class MAE(Metric):
+    """Mean absolute error with complex-valued support.
+
+    :math:`MAE = \\frac{1}{N} \sum_{i=1}^{N} |x_{pred} - x_{gt}|`.
+
+    This implementation supports complex tensors.
+    ``im_type`` controls how the complex tensor should be processed:
+
+        - ``'magnitude'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to magnitude images.
+        - ``'phase'``: :math:`x_{pred}` and :math:`x_{gt}` are converted to phase images.
+        - ``'real'``: Real components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+        - ``'imag'``: Imaginary components of :math:`x_{pred}` and :math:`x_{gt}` are used.
+
+    Attributes:
+        im_type (str): The type of the complex image to compute the metric on.
+            This only applies to complex tensors.
+        channel_names (Sequence[str]): The names of the channels in the input.
+    """
+
+    is_differentiable = True
+    higher_is_better = False
+
+    def __init__(
+        self,
+        im_type: str = None,
+        channel_names: Sequence[str] = None,
+        reduction="none",
+        compute_on_step: bool = False,
+        dist_sync_on_step: bool = False,
+        process_group: bool = None,
+        dist_sync_fn: bool = None,
+    ):
+        super().__init__(
+            channel_names=channel_names,
+            units="",
+            reduction=reduction,
+            compute_on_step=compute_on_step,
+            dist_sync_on_step=dist_sync_on_step,
+            process_group=process_group,
+            dist_sync_fn=dist_sync_fn,
+        )
+
+        self.im_type = im_type
+
+    def func(self, preds, targets) -> torch.Tensor:
+        return mF.mae(preds, targets, im_type=self.im_type)
 
 
 class MSE(Metric):
@@ -437,7 +485,7 @@ def compute_vifp_mscale(
     sigma_nsq: float = 2.0,
     eps: float = 1e-10,
     im_type: str = None,
-):
+):  # pragma: no-cover
     """Compute visual information fidelity (VIF) metric.
 
     This code is adapted from

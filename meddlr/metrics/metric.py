@@ -136,7 +136,10 @@ class Metric(_Metric):
             filtered_kwargs.update(aliases)
         else:
             filtered_kwargs = kwargs
-        return super()._filter_kwargs(**filtered_kwargs)
+
+        # Use filtering from torch 0.6.0 where kwargs are preserved and passed along.
+        filtered_kwargs = _filter_kwargs(self._update_signature, **filtered_kwargs)
+        return filtered_kwargs
 
     def register_update_aliases(self, **kwargs):
         """Register aliases for keyword arguments when calling update."""
@@ -163,3 +166,20 @@ class Metric(_Metric):
         """Name to use for pretty printing and display purposes."""
         name = self.name()
         return "{} ({})".format(name, self.units) if self.units else name
+
+
+def _filter_kwargs(sig, **kwargs: Any) -> Dict[str, Any]:
+    # filter all parameters based on update signature except those of
+    # type VAR_POSITIONAL (*args) and VAR_KEYWORD (**kwargs)
+    _params = (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+    _sign_params = sig.parameters
+    filtered_kwargs = {
+        k: v
+        for k, v in kwargs.items()
+        if (k in _sign_params.keys() and _sign_params[k].kind not in _params)
+    }
+
+    # if no kwargs filtered, return al kwargs as default
+    if not filtered_kwargs:
+        filtered_kwargs = kwargs
+    return filtered_kwargs

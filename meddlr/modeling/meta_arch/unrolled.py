@@ -7,9 +7,9 @@ from torch import nn
 
 import meddlr.ops.complex as cplx
 from meddlr.config.config import configurable
+from meddlr.forward.mri import SenseModel
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
-from meddlr.utils.transforms import SenseModel
 
 from ..layers.layers2D import ResNet
 from .build import META_ARCH_REGISTRY, build_model
@@ -36,31 +36,44 @@ class GeneralizedUnrolledCNN(nn.Module):
     @configurable
     def __init__(
         self,
-        blocks: nn.ModuleList,
+        blocks: Union[nn.Module, Sequence[nn.Module]],
         step_sizes: Union[float, Sequence[float]] = -2.0,
         fix_step_size: bool = False,
         num_emaps: int = 1,
         vis_period: int = -1,
+        num_grad_steps: int = None,
     ):
         super().__init__()
 
-        if isinstance(blocks, Sequence) and not isinstance(blocks, nn.ModuleList):
-            blocks = nn.ModuleList(blocks)
-        if not isinstance(blocks, nn.ModuleList):
-            raise TypeError("`blocks` must be a sequence of nn.Modules or a nn.ModuleList")
         self.resnets = blocks
-        num_grad_steps = len(blocks)
+        if num_grad_steps is None:
+            if isinstance(blocks, Sequence) and not isinstance(blocks, nn.ModuleList):
+                blocks = nn.ModuleList(blocks)
+            if not isinstance(blocks, nn.ModuleList):
+                raise TypeError("`blocks` must be a sequence of nn.Modules or a nn.ModuleList")
+            num_grad_steps = len(blocks)
+            num_repeat_steps = 0
+        else:
+            if not isinstance(num_grad_steps, int) or num_grad_steps <= 0:
+                raise ValueError("`num_grad_steps` must be positive integer")
+            num_repeat_steps = num_grad_steps
 
         if isinstance(step_sizes, Number):
             step_sizes = [
                 torch.tensor([step_sizes], dtype=torch.float32) for _ in range(num_grad_steps)
             ]
         else:
+            if len(step_sizes) != num_grad_steps:
+                raise ValueError(
+                    "`step_sizes` must be a single value or a list of the "
+                    "same length as `blocks` or `num_grad_steps`"
+                )
             step_sizes = [torch.tensor(s) for s in step_sizes]
         if not fix_step_size:
             step_sizes = nn.ParameterList([nn.Parameter(s) for s in step_sizes])
         self.step_sizes: Sequence[Union[torch.Tensor, nn.Parameter]] = step_sizes
 
+        self.num_repeat_steps = num_repeat_steps
         self.num_emaps = num_emaps
         self.vis_period = vis_period
 
@@ -123,10 +136,15 @@ class GeneralizedUnrolledCNN(nn.Module):
                 * "zf_image": The zero-filled image.
                     Added when model is in eval mode.
         """
+        if self.num_repeat_steps > 0:
+            conv_blocks = [self.resnets] * self.num_repeat_steps
+        else:
+            conv_blocks = self.resnets
+
         if vis_training and not self.training:
             raise ValueError("vis_training is only applicable in training mode.")
         # Need to fetch device at runtime for proper data transfer.
-        device = next(self.resnets[0].parameters()).device
+        device = next(conv_blocks[0].parameters()).device
         inputs = move_to_device(inputs, device)
         kspace = inputs["kspace"]
         target = inputs.get("target", None)
@@ -134,7 +152,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         A = inputs.get("signal_model", None)
         maps = inputs["maps"]
         num_maps_dim = -2 if cplx.is_complex_as_real(maps) else -1
-        if self.num_emaps != maps.size()[num_maps_dim]:
+        if self.num_emaps != maps.size()[num_maps_dim] and maps.size()[num_maps_dim] != 1:
             raise ValueError("Incorrect number of ESPIRiT maps! Re-prep data...")
 
         # Move step sizes to the right device.
@@ -156,7 +174,7 @@ class GeneralizedUnrolledCNN(nn.Module):
 
         # Begin unrolled proximal gradient descent
         image = zf_image
-        for resnet, step_size in zip(self.resnets, step_sizes):
+        for resnet, step_size in zip(conv_blocks, step_sizes):
             # dc update
             grad_x = A(A(image), adjoint=True) - zf_image
             image = image + step_size * grad_x
@@ -225,7 +243,7 @@ class GeneralizedUnrolledCNN(nn.Module):
 
         # Declare ResNets and RNNs for each unrolled iteration
         if share_weights:
-            blocks = nn.ModuleList([builder()] * num_grad_steps)
+            blocks = builder()
         else:
             blocks = nn.ModuleList([builder() for _ in range(num_grad_steps)])
 
@@ -234,6 +252,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             "fix_step_size": cfg.MODEL.UNROLLED.FIX_STEP_SIZE,
             "num_emaps": num_emaps,
             "vis_period": cfg.VIS_PERIOD,
+            "num_grad_steps": num_grad_steps if share_weights else None,
         }
 
 
