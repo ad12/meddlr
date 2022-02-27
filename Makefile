@@ -19,8 +19,11 @@ test-cov:
 	pytest tests/ --cov=./ --cov-report=xml
 
 dev:
-	pip install --upgrade black==21.10b0 coverage isort flake8 flake8-bugbear flake8-comprehensions pre-commit pooch
+	pip install --upgrade -e '.[alldev]'
 	pre-commit install
+
+dev-lint:
+	pip install --upgrade black==21.10b0 coverage isort flake8 flake8-bugbear flake8-comprehensions pre-commit pooch
 
 build-docs:
 	rm -rf docs/build

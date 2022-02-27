@@ -11,11 +11,16 @@ Meddlr is a config-driven ML framework built to simplify medical image reconstru
 
 ## ⚡ QuickStart
 ```bash
+# Install Meddlr with basic dependencies
 pip install meddlr
-```
-> _Installing locally_: For local development, fork and clone the repo and run `pip install -e ".[dev]"`
 
-> _Installing from main: For most up-to-date code without a local install, run `pip install "meddlr @ git+https://github.com/ad12/meddlr@main"`
+# Install Meddlr with all dependencies (e.g. pretrained models, benchmarking)
+pip install 'meddlr[all]'
+```
+
+> _Installing locally_: For local development, fork and clone the repo and run `pip install -e ".[alldev]"`
+
+> _Installing from main_: For most up-to-date code without a local install, run `pip install "meddlr @ git+https://github.com/ad12/meddlr@main"`
 
 Configure your paths and get going!
 ```python
@@ -35,17 +40,16 @@ os.environ["MEDDLR_DATASETS_DIR"] = "/path/to/datasets"
 Detailed instructions are available in [Getting Started](GETTING_STARTED.md).
 
 ## 🐘 Model Zoo
-Easily serve and download pretrained models from the model zoo. A (evolving) list of pre-trained models can be found [here](MODEL_ZOO.md), in [Google Drive](https://drive.google.com/drive/folders/1OJFM4GlFhLTrH6LzVwLdJS9IHytV9ZAx?usp=sharing), and in [project folders](projects).
+Easily serve and download pretrained models from the model zoo. A (evolving) list of pre-trained models can be found [here](MODEL_ZOO.md), on [HuggingFace 🤗](https://huggingface.co/arjundd), and in [project folders](projects).
 
-To use them, pass the google drive urls for the config and weights (model) files to `mr.get_model_from_zoo`:
+To use them, pass the URLs for the config and weights (model) files to `mr.get_model_from_zoo`:
 
 ```python
 import meddlr as mr
 
-# Make sure to add "download://" before the url!
 model = mr.get_model_from_zoo(
-  cfg_or_file="download://https://drive.google.com/file/d/1HQg_qGS8rZzL9Vt3tewX2J8pcK3VVDWF/view?usp=sharing",
-  weights_path="download://https://drive.google.com/file/d/1B4jw1yQtPSPY0P74g3ORcQpQ3Ue3XdJs/view?usp=sharing",
+  cfg_or_file="https://huggingface.co/arjundd/vortex-release/resolve/main/mridata_knee_3dfse/Supervised/config.yaml",
+  weights_path="https://huggingface.co/arjundd/vortex-release/resolve/main/mridata_knee_3dfse/Supervised/model.ckpt",
 )
 ```
 
