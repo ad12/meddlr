@@ -37,6 +37,24 @@ __all__ = ["CSModel"]
 
 @META_ARCH_REGISTRY.register()
 class CSModel(nn.Module):
+    """Compressed sensing reconstruction with l1 wavelet regularization.
+
+    This class is a PyTorch wrapper around the SigPy's L1WaveletRecon class.
+    On each forward pass, each example is reconstructed using :math:`\ell_1`
+    wavelet-regularized compressed sensing.
+
+    If the model should run on a GPU, `cupy` must be installed.
+
+    Note:
+        Gradients are not supported.
+
+    Attributes:
+        device (torch.Device | str): Device to use for execution.
+        l1_reg (float): :math:`\ell_1` regularization parameter.
+        max_iter (int): Maximum number of iterations.
+        num_emaps (int): Number of sensitivity maps.
+    """
+
     @configurable
     def __init__(self, reg: float, max_iter: int, device="cpu", num_emaps: int = 1):
         """
@@ -63,7 +81,7 @@ class CSModel(nn.Module):
         # Data dimensions
         self.num_emaps = num_emaps
         if self.num_emaps != 1:
-            raise ValueError("CS currentlyonly supports one sensitivity map.")
+            raise ValueError("CSModel currently only supports one sensitivity map.")
 
     def forward(self, inputs, return_pp=False, vis_training=False):
         """
