@@ -1,7 +1,7 @@
 # Noise2Recon Model Zoo
 Models and experimental configs for Noise2Recon and related baselines. Benchmarking was performed on the mridata 3D FSE Knee dataset.
 
-Each experiment has links to 1) the Google Drive folder where details of the experiment are stored (`gdrive`), 2) the config file to reproduce the experiment (`cfg`), 3) the model file for loading pretrained weights (`model`).
+Each experiment has links to 1) the HuggingFace folder where details of the experiment are stored (🤗), 2) the config file to reproduce the experiment (`cfg`), 3) the model file for loading pretrained weights (`model`).
 
 Models are trained with different extents of supervised data, indicated by the number of supervised scans, or *k* (`# Supervised (k)`). Noise2Recon can also leverage unsupervised examples (`# Unsupervised`). `FT` models are fine-tuned from a pretrained denoiser as described in the paper. All models are trained with the Adam optimizer (η=1e-3) using the complex-l1 loss. Checkpoints were selected using the best validation loss.
 
