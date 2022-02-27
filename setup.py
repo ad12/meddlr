@@ -115,7 +115,7 @@ EXTRAS = {
 }
 
 base_extras = [EXTRAS[k] for k in EXTRAS.keys() if k not in ["dev", "docs"]]
-EXTRAS["all"] = list(set(sum(base_extras), []))
+EXTRAS["all"] = list(set(sum(base_extras, [])))
 EXTRAS["alldev"] = list(set(sum(EXTRAS.values(), [])))
 
 with open("README.md", "r", encoding="utf-8") as fh:
