@@ -68,7 +68,7 @@ jobs:
             pip install torchmetrics==$TORCHMETRICS
           fi
           make dev
-          pip install -e '.[dev]'
+          pip install -e '.[alldev]'
 
       - name: Test with pytest
         run: |

@@ -69,6 +69,55 @@ EMAIL = "arjundd@stanford.edu"
 URL = "https://github.com/ad12/meddlr"
 REQUIRES_PYTHON = ">=3.6"
 
+REQUIRED = [
+    "pyxb",  # need to install before ismrmrd
+    "h5py",
+    "matplotlib",
+    "numpy",
+    "tensorboard",
+    "fvcore",
+    "mridata",
+    "scikit-image>=0.18.2",
+    "sigpy>=0.1.17",
+    "ismrmrd",
+    "pandas",
+    "silx",
+    "tqdm",
+    "omegaconf",
+    "torchmetrics>=0.5.1",
+    "iopath",
+    "packaging",
+]
+
+EXTRAS = {
+    "dev": [
+        # Formatting
+        "coverage",
+        "flake8",
+        "isort",
+        "black==21.10b0",
+        "flake8-bugbear",
+        "flake8-comprehensions",
+        "pre-commit>=2.9.3",
+        # Testing
+        "medpy",
+        "pooch",
+        "gdown",
+        # Documentation
+        "sphinx",
+        "sphinxcontrib-bibtex",
+        "sphinx-rtd-theme",
+        "m2r2",
+    ],
+    "benchmarking": ["medpy"],
+    "deployment": ["gdown", "requests", "iocursor"],
+    "docs": ["sphinx", "sphinxcontrib.bibtex", "sphinx-rtd-theme", "m2r2"],
+}
+
+base_extras = [EXTRAS[k] for k in EXTRAS.keys() if k not in ["dev", "docs"]]
+EXTRAS["all"] = list(set(sum(base_extras), []))
+EXTRAS["alldev"] = list(set(sum(EXTRAS.values(), [])))
+
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
