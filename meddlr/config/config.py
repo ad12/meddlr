@@ -27,9 +27,6 @@ class CfgNode(_CfgNode):
     def merge_from_file(self, cfg_filename: str, allow_unsafe: bool = True) -> None:
         """
         Adapted from https://github.com/facebookresearch/detectron2
-
-        Note:
-            If a bytes stream is passed in, the stream will automatically be closed.
         """
         loaded_cfg = _CfgNode.load_yaml_with_base(cfg_filename, allow_unsafe=allow_unsafe)
         loaded_cfg = type(self)(loaded_cfg)
