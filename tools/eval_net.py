@@ -224,7 +224,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
     # Find range of noise values to search
     if include_noise:
-        noise_vals = [0] + noise_sweep_vals if noise_arg == "sweep" else [0]
+        noise_vals = noise_sweep_vals if noise_arg == "sweep" else [0]
         # noise_vals += list(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV)
         noise_vals = sorted(set(noise_vals))
     else:
