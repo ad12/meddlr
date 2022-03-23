@@ -30,27 +30,33 @@ class HDF5Manager:
     Attributes:
         files (Dict[str, h5py.File]): Dictionary of open HDF5 files.
         cache (bool): If `True`, keep files files open.
-        num_retries (int): Maximum number of attempts to read from a file.
+        max_attempts (int): Maximum number of attempts to read from a file.
             This is useful when the connection to a remote file system
             like a network file storage (NFS) can be volatile.
         wait_time (float): Time to wait between attempts to read from a file.
     """
 
     def __init__(
-        self, files: Sequence[str] = None, cache=True, num_retries=5, wait_time: float = 1.0
+        self, files: Sequence[str] = None, cache=True, max_attempts=5, wait_time: float = 1.0
     ):
+        """
+        Args:
+            files (Sequence[str], optional): Filepaths to h5 files the manage.
+            cache (bool, optional): If `True`, keep files files open once accessed.
+            max_attempts (int, optional): Maximum number of attempts to read from a file.
+            wait_time (float, optional): Time to wait between attempts to read from a file.
+        """
         self.files: Dict[str, h5py.File] = {}
         self.cache = cache
-        self.num_retries = num_retries
+        self.max_attempts = max(1, max_attempts)
         self.wait_time = wait_time
         if files and cache:
             for fp in files:
                 self.open(fp)
 
-        self._open_filepath = None
-
     def open(self, filepath, mode="r", **kwargs):
-        """Open and cache file in read mode.
+        """Open and cache file.
+
         Args:
             filepath (str): Path to HDF5 file
         """
@@ -59,32 +65,31 @@ class HDF5Manager:
         self.files[filepath] = h5py.File(filepath, mode, **kwargs)
 
     def close(self, filepath, drop=True):
-        """Open and cache file in read mode.
+        """Close the open file.
+
         Args:
             filepath (str): Path to HDF5 file
             drop (bool, optional): If `True`, drop filepath from list of files.
-                If `False`, `self.files` will keep a closed copy of the file.
+                If `False`, `self.files` will keep a reference to the closed file.
         """
         self.files[filepath].close()
         if drop:
             self.files.pop(filepath)
 
     @profiler.time_profile()
-    def get(self, filepath: str = None, key: str = None, patch: Union[str, Sequence[slice]] = None):
+    def get(self, filepath: str, key: str = None, patch: Union[str, Sequence[slice]] = None):
         """Get dataset from h5 file.
 
         Args:
             filepath (str): Filepath to fetch data from.
             key (str, optional): HDF5 key. If `None`, returns open file.
-            patch ()
+            patch (str or Sequence[slice], optional): Slice to apply to dataset.
+                If `None`, returns dataset without slicing.
         """
-        if filepath is None:
-            filepath = self._open_filepath
-
         if patch is not None and key is None:
             raise ValueError("`key` must be specified to use `patch`.")
 
-        for _ in range(self.num_retries):
+        for idx in range(self.max_attempts):
             try:
                 if filepath in self.files:
                     file = self.files[filepath]
@@ -98,7 +103,7 @@ class HDF5Manager:
                 # Handle input/output errors by waiting and retrying.
                 # This issue is common for NFS mounted file systems.
                 # https://github.com/theislab/scanpy/issues/1351#issuecomment-668009684
-                if re.search("[Errno 5]", str(e)) is not None:
+                if (idx < self.max_attempts - 1) and (re.search("[Errno 5]", str(e)) is not None):
                     is_cached = filepath in self.files
                     if is_cached:
                         self.close(filepath)
@@ -162,14 +167,12 @@ class HDF5Manager:
         is_cached = filepath in self.files
         if not is_cached:
             self.open(filepath, mode, **kwargs)
-        self._open_filepath = filepath
 
         try:
             yield self
         finally:
             if not is_cached:
-                self.close(self._open_filepath)
-                self._open_filepath = None
+                self.close(filepath)
 
     def _load_data(self, file, key=None, sl=None):
         """Load data from HDF5 file.

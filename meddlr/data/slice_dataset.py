@@ -72,7 +72,7 @@ class SliceData(Dataset):
             self.mapping.update(keys)
         self._include_metadata = include_metadata
 
-        self._hdf5_manager = HDF5Manager(cache=False, num_retries=5, wait_time=1)
+        self._hdf5_manager = HDF5Manager(cache=False, max_attempts=5, wait_time=1)
 
     def groups(self, group_by):
         _groups = defaultdict(list)

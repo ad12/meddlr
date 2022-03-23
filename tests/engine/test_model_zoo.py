@@ -29,7 +29,11 @@ class TestModelZooExceptionsAndWarnings(unittest.TestCase):
             get_model_from_zoo(cfg_gdrive, force_download=True)
 
 
+@util.temp_env
 def test_get_model_from_zoo():
+    # Temporarily set cache dir to tmpdir
+    os.environ["MEDDLR_CACHE_DIR"] = str(util.TEMP_CACHE_DIR / "test_get_model_from_zoo")
+
     cfg_gdrive = "download://https://drive.google.com/file/d/1fRn5t4qGVVR6PyaRWPO6tAmug6-oTBjc/view?usp=sharing"  # noqa: E501
     weights_gdrive = "download://https://drive.google.com/file/d/1BGARoUWLKg_DLfQN4AA2HnzktJzHaAy7/view?usp=sharing"  # noqa: E501
     path_mgr = env.get_path_manager()
