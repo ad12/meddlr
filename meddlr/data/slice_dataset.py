@@ -6,6 +6,7 @@ import h5py
 import numpy as np
 from torch.utils.data import Dataset
 
+from meddlr.data.data_utils import HDF5Manager
 from meddlr.data.transforms.transform import DataTransform
 
 __all__ = ["SliceData"]
@@ -71,6 +72,8 @@ class SliceData(Dataset):
             self.mapping.update(keys)
         self._include_metadata = include_metadata
 
+        self._hdf5_manager = HDF5Manager(cache=False, num_retries=5, wait_time=1)
+
     def groups(self, group_by):
         _groups = defaultdict(list)
         for idx, example in enumerate(self.examples):
@@ -117,13 +120,15 @@ class SliceData(Dataset):
     def _load_data(self, example, idx):
         file_path = example["file_name"]
         slice_id = example["slice_id"]
-        with h5py.File(file_path, "r") as data:
-            kspace = data[self.mapping["kspace"]][slice_id]
-            target = data[self.mapping["target"]][slice_id]
+
+        h5manager = self._hdf5_manager
+        with h5manager.temp_open(file_path, "r"):
+            kspace = h5manager.get(file_path, self.mapping["kspace"], slice_id)
+            target = h5manager.get(file_path, self.mapping["target"], slice_id)
             maps = (
                 np.zeros_like(target)
                 if self.mapping["target"] == "reconstruction_rss"
-                else data[self.mapping["maps"]][slice_id]
+                else h5manager.get(file_path, self.mapping["maps"], slice_id)
             )
 
         return {"kspace": kspace, "maps": maps, "target": target}

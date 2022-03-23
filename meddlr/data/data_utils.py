@@ -1,5 +1,7 @@
 import contextlib
-from typing import Dict, Sequence, Tuple, Union
+import re
+import time
+from typing import Dict, Iterable, Sequence, Tuple, Union
 
 import h5py
 import numpy as np
@@ -11,23 +13,50 @@ __all__ = ["HDF5Manager", "structure_patches", "collect_mask"]
 
 
 class HDF5Manager:
-    """Manager for opening and caching HDF5 files."""
+    """Manager for large number of HDF5 files.
 
-    def __init__(self, files: Sequence[str] = None, cache=True):
+    HDF5 files are useful for storing large datasets but have a few limitations
+    even in the read-only setting:
+
+        1. File opening and closing can be slow
+        2. Reading can be volatile for large datasets on NFS filesystems
+
+    Some functionality includes:
+
+        1. **Caching**: This class can be used to keep files open (defaults to read-only mode).
+           This eliminates the need to constantly open and close files.
+        2. **Retrying**: Data fetching will be retried in the event of volatile NFS connections.
+
+    Attributes:
+        files (Dict[str, h5py.File]): Dictionary of open HDF5 files.
+        cache (bool): If `True`, keep files files open.
+        num_retries (int): Maximum number of attempts to read from a file.
+            This is useful when the connection to a remote file system
+            like a network file storage (NFS) can be volatile.
+        wait_time (float): Time to wait between attempts to read from a file.
+    """
+
+    def __init__(
+        self, files: Sequence[str] = None, cache=True, num_retries=5, wait_time: float = 1.0
+    ):
         self.files: Dict[str, h5py.File] = {}
         self.cache = cache
+        self.num_retries = num_retries
+        self.wait_time = wait_time
         if files and cache:
             for fp in files:
                 self.open(fp)
 
-    def open(self, filepath):
+        self._open_filepath = None
+
+    def open(self, filepath, mode="r", **kwargs):
         """Open and cache file in read mode.
         Args:
             filepath (str): Path to HDF5 file
         """
         if filepath in self.files:
             return
-        self.files[filepath] = h5py.File(filepath, "r")
+        self.files[filepath] = h5py.File(filepath, mode, **kwargs)
 
     def close(self, filepath, drop=True):
         """Open and cache file in read mode.
@@ -41,31 +70,65 @@ class HDF5Manager:
             self.files.pop(filepath)
 
     @profiler.time_profile()
-    def get(self, filepath: str, key: str = None, patch: Union[str, Sequence[slice]] = None):
-        """Get data from h5 file.
+    def get(self, filepath: str = None, key: str = None, patch: Union[str, Sequence[slice]] = None):
+        """Get dataset from h5 file.
+
         Args:
             filepath (str): Filepath to fetch data from.
             key (str, optional): HDF5 key. If `None`, returns open file.
             patch ()
         """
+        if filepath is None:
+            filepath = self._open_filepath
 
         if patch is not None and key is None:
             raise ValueError("`key` must be specified to use `patch`.")
 
-        if filepath in self.files:
-            file = self.files[filepath]
-            return self._load_data(file, key=key, patch=patch)
-        else:
-            assert key
-            with h5py.File(filepath, "r") as file:
-                data = self._load_data(file, key=key, patch=patch)
-            return data
+        for _ in range(self.num_retries):
+            try:
+                if filepath in self.files:
+                    file = self.files[filepath]
+                    return self._load_data(file, key=key, sl=patch)
+                else:
+                    assert key
+                    with h5py.File(filepath, "r") as file:
+                        data = self._load_data(file, key=key, sl=patch)
+                    return data
+            except OSError as e:
+                # Handle input/output errors by waiting and retrying.
+                # This issue is common for NFS mounted file systems.
+                # https://github.com/theislab/scanpy/issues/1351#issuecomment-668009684
+                if re.search("[Errno 5]", str(e)) is not None:
+                    is_cached = filepath in self.files
+                    if is_cached:
+                        self.close(filepath)
+                        time.sleep(self.wait_time)
+                        self.open(filepath)
+                    else:
+                        time.sleep(self.wait_time)
+                else:
+                    raise e
 
     @profiler.time_profile()
     @contextlib.contextmanager
-    def yield_file(self, filepath):
+    def File(self, filepath, mode="r", **kwargs):
+        """Yields HDF5 file.
+
+        Similar to ``with h5py.File(...)`` but with supported caching.
+        If caching is enabled, the file will be opened (if it is not already
+        open) and kept open when the context is exited.
+
+        Example:
+
+        .. code-block:: python
+
+            h5manager = HDF5Manager()
+            fpath = "file.h5"
+            with h5manager.File(fpath, "r") as h5file:
+                arr = h5file["my_array"][()]
+        """
         is_cached = filepath in self.files
-        file = self.files[filepath] if is_cached else h5py.File(filepath, "r")
+        file = self.files[filepath] if is_cached else h5py.File(filepath, mode, **kwargs)
         if self.cache and not is_cached:
             self.files[filepath] = file
 
@@ -75,20 +138,64 @@ class HDF5Manager:
             if not is_cached and not self.cache:
                 file.close()
 
-    def _load_data(self, file, key=None, patch=None):
+    yield_file = File
+
+    @profiler.time_profile()
+    @contextlib.contextmanager
+    def temp_open(self, filepath, mode="r", **kwargs) -> "HDF5Manager":
+        """Temporarily opens file in this manager.
+
+        If the file is already opened, this open file will be used.
+
+        Yields:
+            HDF5Manager: This HDF5Manager (i.e. ``self``).
+
+        Example:
+
+        .. code-block:: python
+
+            h5manager = HDF5Manager()
+            fpath = "file.h5"
+            with h5manager.temp_open(fpath, "r"):
+                arr = h5manager.get(fpath, "my_array", ())
+        """
+        is_cached = filepath in self.files
+        if not is_cached:
+            self.open(filepath, mode, **kwargs)
+        self._open_filepath = filepath
+
+        try:
+            yield self
+        finally:
+            if not is_cached:
+                self.close(self._open_filepath)
+                self._open_filepath = None
+
+    def _load_data(self, file, key=None, sl=None):
+        """Load data from HDF5 file.
+
+        If ``key`` and ``sl`` are not passed, the file is returned.
+
+        If ``key`` is passed, the dataset is returned without loading
+        the underlying data into memory. Equivalent to ``file[key]``.
+
+        If ``sl`` is passed, the dataset is returned after slicing.
+        Equivalent to ``file[key][sl]``.
+
+        """
         if not key:
             return file
 
         val = file[key]
-        if patch is None:
+        if sl is None:
             return val
 
-        if isinstance(patch, str):
-            assert patch in ["all", "load"]
-            patch = ()
-        elif not isinstance(patch, tuple):
-            patch = tuple(patch)
-        return val[patch]
+        if isinstance(sl, str):
+            assert sl in ["all", "load"]
+            sl = ()
+        elif isinstance(sl, Iterable):
+            sl = tuple(sl)
+        return val[sl]
 
     def __del__(self):
         # Copy keys to allow modifying self.files dict.
