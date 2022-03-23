@@ -1,4 +1,5 @@
 import os
+import tarfile
 from copy import deepcopy
 from pathlib import Path
 
@@ -51,13 +52,19 @@ def test_check_consistency():
 )
 def test_find_weights_basic(func_kwargs, expected_file):
     """Test that we can find the best weights from a basic experiment."""
+    exp_name = "basic-cpu"
+    cache_file = util.TEMP_CACHE_DIR / f"{exp_name}.tar.gz"
+    exp_dir = util.TEMP_CACHE_DIR / exp_name
+
     pm = env.get_path_manager()
-    exp_dir = pm.get_local_path(
-        "gdrive://https://drive.google.com/drive/folders/1XS6OfRSWYx_hX6AxefNuqbmSmCH0WtNp?usp=sharing",  # noqa: E501
-        cache=util.TEMP_CACHE_DIR / "basic-cpu",
+    tar_path = pm.get_local_path(
+        f"https://huggingface.co/datasets/arjundd/meddlr-data/resolve/main/test-data/test-exps/{exp_name}.tar.gz",  # noqa: E501
+        cache=cache_file,
     )
+    if not os.path.isdir(exp_dir):
+        with tarfile.open(tar_path, "r:gz") as tfile:
+            tfile.extractall(util.TEMP_CACHE_DIR)
     exp_dir = Path(exp_dir)
-    assert os.path.isdir(exp_dir)
 
     cfg = get_cfg()
     cfg.merge_from_file(exp_dir / "config.yaml")
