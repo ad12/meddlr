@@ -1,4 +1,5 @@
 import os
+import time
 
 import yaml
 
@@ -94,6 +95,7 @@ def test_force_download(tmpdir):
     )
     assert os.path.exists(path)
     mtime = os.path.getmtime(path)
+    time.sleep(0.1)
 
     path = handler._get_local_path(
         f"force-download://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
