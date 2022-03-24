@@ -26,9 +26,9 @@ class TestModelZooExceptionsAndWarnings(unittest.TestCase):
 
     def test_get_model_from_zoo_dependency_warning(self):
         """Test that dependencies for configs get parsed."""
-        cfg_gdrive = "download://https://drive.google.com/file/d/1b_HU9p2iFUcQu7_8KadDEfhVer6v68Uj/view?usp=sharing"  # noqa: E501
+        cfg_url = "https://huggingface.co/datasets/arjundd/meddlr-data/raw/main/test-data/test-model/config-with-deps.yaml"  # noqa: E501
         with self.assertWarnsRegex(UserWarning, expected_regex=".*dependencies.*"):
-            get_model_from_zoo(cfg_gdrive, force_download=True)
+            get_model_from_zoo(cfg_url, force_download=True)
 
 
 @util.temp_env
