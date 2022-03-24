@@ -17,6 +17,8 @@ from meddlr.utils import env
 from .. import util
 
 REPO_DIR = pathlib.Path(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+_SAMPLE_MODEL_CFG = "https://huggingface.co/datasets/arjundd/meddlr-data/raw/main/test-data/test-model/config.yaml"  # noqa: E501
+_SAMPLE_MODEL_WEIGHTS = "https://huggingface.co/datasets/arjundd/meddlr-data/resolve/main/test-data/test-model/model-cpu.pt"  # noqa: E501
 
 
 class TestModelZooExceptionsAndWarnings(unittest.TestCase):
@@ -34,24 +36,22 @@ def test_get_model_from_zoo():
     # Temporarily set cache dir to tmpdir
     os.environ["MEDDLR_CACHE_DIR"] = str(util.TEMP_CACHE_DIR / "test_get_model_from_zoo")
 
-    cfg_gdrive = "download://https://drive.google.com/file/d/1fRn5t4qGVVR6PyaRWPO6tAmug6-oTBjc/view?usp=sharing"  # noqa: E501
-    weights_gdrive = "download://https://drive.google.com/file/d/1BGARoUWLKg_DLfQN4AA2HnzktJzHaAy7/view?usp=sharing"  # noqa: E501
     path_mgr = env.get_path_manager()
 
-    model = get_model_from_zoo(cfg_gdrive, weights_gdrive, force_download=True)
+    model = get_model_from_zoo(_SAMPLE_MODEL_CFG, _SAMPLE_MODEL_WEIGHTS, force_download=True)
     assert isinstance(model, nn.Module)
-    weights_path = path_mgr.get_local_path(weights_gdrive)
+    weights_path = path_mgr.get_local_path(_SAMPLE_MODEL_WEIGHTS)
     weights = torch.load(weights_path)
     for name, param in model.named_parameters():
         assert name in weights
         assert torch.allclose(param, weights[name])
 
-    model2 = get_model_from_zoo(cfg_gdrive, force_download=True)
+    model2 = get_model_from_zoo(_SAMPLE_MODEL_CFG, force_download=True)
     assert isinstance(model2, nn.Module)
     assert type(model2) == type(model)
 
-    cfg = get_cfg().merge_from_file(path_mgr.get_local_path(cfg_gdrive))
-    model2 = get_model_from_zoo(cfg, weights_gdrive)
+    cfg = get_cfg().merge_from_file(path_mgr.get_local_path(_SAMPLE_MODEL_CFG))
+    model2 = get_model_from_zoo(cfg, _SAMPLE_MODEL_WEIGHTS)
     state_dict = model.state_dict()
     for name, param in model.named_parameters():
         assert name in state_dict
@@ -59,16 +59,14 @@ def test_get_model_from_zoo():
 
 
 def test_load_weights_shape_mismatch():
-    cfg_gdrive = "download://https://drive.google.com/file/d/1fRn5t4qGVVR6PyaRWPO6tAmug6-oTBjc/view?usp=sharing"  # noqa: E501
-    weights_gdrive = "download://https://drive.google.com/file/d/1BGARoUWLKg_DLfQN4AA2HnzktJzHaAy7/view?usp=sharing"  # noqa: E501
     path_mgr = env.get_path_manager()
 
-    cfg = get_cfg().merge_from_file(path_mgr.get_local_path(cfg_gdrive))
+    cfg = get_cfg().merge_from_file(path_mgr.get_local_path(_SAMPLE_MODEL_CFG))
     model = build_model(cfg)
     model.resnets[0] = None
-    model = load_weights(model, weights_gdrive, ignore_shape_mismatch=True)
+    model = load_weights(model, _SAMPLE_MODEL_WEIGHTS, ignore_shape_mismatch=True)
 
-    weights_path = path_mgr.get_local_path(weights_gdrive)
+    weights_path = path_mgr.get_local_path(_SAMPLE_MODEL_WEIGHTS)
     weights = torch.load(weights_path)
     for name, param in model.named_parameters():
         assert name in weights
@@ -76,15 +74,13 @@ def test_load_weights_shape_mismatch():
 
 
 def test_load_weights_find_device():
-    cfg_gdrive = "download://https://drive.google.com/file/d/1fRn5t4qGVVR6PyaRWPO6tAmug6-oTBjc/view?usp=sharing"  # noqa: E501
-    weights_gdrive = "download://https://drive.google.com/file/d/1BGARoUWLKg_DLfQN4AA2HnzktJzHaAy7/view?usp=sharing"  # noqa: E501
     path_mgr = env.get_path_manager()
 
-    cfg = get_cfg().merge_from_file(path_mgr.get_local_path(cfg_gdrive))
+    cfg = get_cfg().merge_from_file(path_mgr.get_local_path(_SAMPLE_MODEL_CFG))
     model = build_model(cfg)
-    model = load_weights(model, weights_gdrive, find_device=False)
+    model = load_weights(model, _SAMPLE_MODEL_WEIGHTS, find_device=False)
 
-    weights_path = path_mgr.get_local_path(weights_gdrive)
+    weights_path = path_mgr.get_local_path(_SAMPLE_MODEL_WEIGHTS)
     weights = torch.load(weights_path)
     for name, param in model.named_parameters():
         assert name in weights
