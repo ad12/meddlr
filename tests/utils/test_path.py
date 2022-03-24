@@ -40,29 +40,19 @@ def test_github_handler(tmpdir):
 
 def test_gdrive_handler(tmpdir):
     download_dir = tmpdir.mkdir("download")
-    gdrive_id = "1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx"
 
     handler = GoogleDriveHandler(cache_dir=tmpdir)
 
-    cache = download_dir / "sample-download.zip"
-    path = handler._get_local_path(
-        f"gdrive://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
-        cache=cache,
-        force=True,
-    )
+    # File
+    url = "gdrive://https://drive.google.com/file/d/1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx/view?usp=sharing"  # noqa: E501
+    cache = download_dir / "hello-world.txt"
+    path = handler._get_local_path(url, cache=cache)
     assert os.path.exists(path)
     mtime = os.path.getmtime(path)
 
-    path = handler._get_local_path(
-        f"gdrive://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
-        cache=cache,
-    )
+    path = handler._get_local_path(url, cache=cache)
     mtime2 = os.path.getmtime(path)
     assert mtime2 == mtime
-
-    cache = download_dir / "sample-download2.zip"
-    path = handler._get_local_path(f"gdrive://{gdrive_id}", cache=cache)
-    assert os.path.exists(path)
 
     # Folder
     folder_url = "gdrive://https://drive.google.com/drive/folders/1UosSskt3H61wcIGUNehhsYoHNBmk-bGi?usp=sharing"  # noqa: E501
