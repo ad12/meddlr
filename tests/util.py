@@ -22,20 +22,22 @@ def temp_env(func):
     def wrapper(self, *args, **kwargs):
         old_env = dict(os.environ)
 
-        out = func(self, *args, **kwargs)
-
-        os.environ.clear()
-        os.environ.update(old_env)
+        try:
+            out = func(self, *args, **kwargs)
+        finally:
+            os.environ.clear()
+            os.environ.update(old_env)
         return out
 
     @wraps(func)
     def wrapper_func(*args, **kwargs):
         old_env = dict(os.environ)
 
-        out = func(*args, **kwargs)
-
-        os.environ.clear()
-        os.environ.update(old_env)
+        try:
+            out = func(*args, **kwargs)
+        finally:
+            os.environ.clear()
+            os.environ.update(old_env)
         return out
 
     return wrapper if "self" in inspect.signature(func).parameters else wrapper_func
