@@ -52,7 +52,7 @@ def test_random1d_randomness(acc, cf, shape, seed):
 
     shape = (1, *shape)
     a = RandomMaskFunc1D(acc, center_fractions=(cf,))
-    seeds = np.random.randint(0, 2 ** 32, size=100)
+    seeds = np.random.randint(0, 2**32, size=100)
 
     a_mask = a(shape, seed=seed, acceleration=acc)
     for s in seeds:

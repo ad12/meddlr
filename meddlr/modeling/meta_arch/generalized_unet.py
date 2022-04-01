@@ -154,7 +154,7 @@ class GeneralizedUNet(nn.Module):
         out_channels = cfg.get("OUT_CHANNELS", None)
         dimensions = kwargs.get("dimensions", 2)
         num_pool_layers = cfg.NUM_POOL_LAYERS
-        num_channels = tuple(cfg.CHANNELS * (2 ** i) for i in range(num_pool_layers + 1))
+        num_channels = tuple(cfg.CHANNELS * (2**i) for i in range(num_pool_layers + 1))
 
         init_args = {
             "dimensions": dimensions,
