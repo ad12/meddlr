@@ -113,12 +113,12 @@ def rms_cv(y_pred: arr_type, y_true: arr_type, dim=None):
         stds = torch.std(cat_tensor, dim=0)
         means = torch.mean(cat_tensor, dim=0)
         cv = stds / means
-        return torch.sqrt(torch.mean(cv ** 2, dim=dim))
+        return torch.sqrt(torch.mean(cv**2, dim=dim))
     else:
         stds = np.std([y_pred, y_true], axis=0)
         means = np.mean([y_pred, y_true], axis=0)
         cv = stds / means
-        return np.sqrt(np.mean(cv ** 2, axis=dim))
+        return np.sqrt(np.mean(cv**2, axis=dim))
 
 
 def rmse_cv(y_pred: np.ndarray, y_true: np.ndarray, dim=None):

@@ -49,9 +49,9 @@ class LossComputer(ABC):
             tgt_mag = torch.abs(target).view(N, -1)
         else:
             tgt_mag = cplx.abs(target).view(N, -1)
-        l2 = torch.sqrt(torch.mean(abs_error ** 2, dim=1))
+        l2 = torch.sqrt(torch.mean(abs_error**2, dim=1))
         psnr = 20 * torch.log10(tgt_mag.max(dim=1)[0] / (l2 + EPS))
-        nrmse = l2 / torch.sqrt(torch.mean(tgt_mag ** 2, dim=1))
+        nrmse = l2 / torch.sqrt(torch.mean(tgt_mag**2, dim=1))
 
         metrics_dict = {
             "l1": l1,
@@ -73,7 +73,7 @@ class LossComputer(ABC):
                 metrics_dict["loss"] = torch.mean(abs_error / (cplx.abs(target) + EPS))
             elif loss_name == "k_l1_l2_sum_normalized":
                 kl1_norm = torch.sum(abs_error) / torch.sum(cplx.abs(target))
-                kl2_norm = torch.sqrt(torch.sum(abs_error ** 2)) / torch.sqrt(
+                kl2_norm = torch.sqrt(torch.sum(abs_error**2)) / torch.sqrt(
                     torch.sum(cplx.abs(target) ** 2)
                 )  # noqa: E501
                 metrics_dict["loss"] = 0.5 * kl1_norm + 0.5 * kl2_norm
