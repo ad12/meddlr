@@ -29,8 +29,8 @@ class SeparableConv3d(nn.Module):
         if spatial_chans is None:
             # Force number of spatial features, such that the total number of
             # parameters is the same as a nn.Conv3D(in_chans, out_chans)
-            spatial_chans = (kernel_size ** 3) * in_chans * out_chans
-            spatial_chans /= (kernel_size ** 2) * in_chans + kernel_size * out_chans
+            spatial_chans = (kernel_size**3) * in_chans * out_chans
+            spatial_chans /= (kernel_size**2) * in_chans + kernel_size * out_chans
             spatial_chans = int(spatial_chans)
 
         # Define each layer in SeparableConv3d block

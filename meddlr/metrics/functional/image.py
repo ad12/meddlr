@@ -98,7 +98,7 @@ def _mean_error(
     else:
         err = torch.abs(pred - target)
     if order != 1:
-        err = err ** order
+        err = err**order
     shape = (pred.shape[0], pred.shape[1], -1)
     return torch.mean(err.view(shape), dim=-1)
 

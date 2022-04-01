@@ -199,7 +199,7 @@ def root_sum_of_squares(x, dim=0):
     a complex-valued tensor.
     """
     assert x.size(-1) == 2
-    return torch.sqrt((x ** 2).sum(dim=-1).sum(dim))
+    return torch.sqrt((x**2).sum(dim=-1).sum(dim))
 
 
 @deprecated(vremove="0.1.0", replacement="ops.time_average")

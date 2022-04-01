@@ -87,7 +87,7 @@ def ismrmrd_to_np(filename):
 
     try:
         rec_std = dataset.read_array("rec_std", 0)
-        rec_weight = 1.0 / (rec_std ** 2)
+        rec_weight = 1.0 / (rec_std**2)
         rec_weight = np.sqrt(rec_weight / np.sum(rec_weight))
         logger.debug("  Using rec std...")
     except Exception:

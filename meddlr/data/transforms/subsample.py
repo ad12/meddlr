@@ -370,7 +370,7 @@ def poisson(
     x /= x.max()
     y = np.maximum(abs(y - img_shape[-2] / 2) - calib[-2] / 2, 0)
     y /= y.max()
-    r = np.sqrt(x ** 2 + y ** 2)
+    r = np.sqrt(x**2 + y**2)
 
     slope_max = 40
     slope_min = 0
