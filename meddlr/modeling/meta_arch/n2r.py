@@ -166,7 +166,7 @@ class N2RModel(nn.Module):
             with torch.no_grad():
                 pred_base = self.model(inputs_consistency)
                 # Target only used for visualization purposes not for loss.
-                target = inputs_unsupervised.get("target", None)
+                target = inputs_consistency.get("target", None)
                 pred_base = pred_base["pred"]
             pred_aug = self.model(inputs_consistency_aug, return_pp=True)
             if "target" in pred_aug:
