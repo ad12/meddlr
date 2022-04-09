@@ -247,8 +247,14 @@ class GeneralizedUnrolledCNN(nn.Module):
         else:
             blocks = nn.ModuleList([builder() for _ in range(num_grad_steps)])
 
+        # Step sizes
+        step_sizes = cfg.MODEL.UNROLLED.STEP_SIZES
+        if len(step_sizes) == 1:
+            step_sizes = step_sizes[0]
+
         return {
             "blocks": blocks,
+            "step_sizes": step_sizes,
             "fix_step_size": cfg.MODEL.UNROLLED.FIX_STEP_SIZE,
             "num_emaps": num_emaps,
             "vis_period": cfg.VIS_PERIOD,
