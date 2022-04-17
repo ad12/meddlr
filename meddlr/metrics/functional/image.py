@@ -9,9 +9,15 @@ from typing import Optional, Sequence, Union
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torchmetrics.functional.image.ssim import _gaussian
+from packaging.version import Version
 
 from meddlr.ops import complex as cplx
+from meddlr.utils import env
+
+if Version(env.get_package_version("torchmetrics")) >= Version("0.8.0"):
+    from torchmetrics.functional.image.helper import _gaussian
+else:
+    from torchmetrics.functional.image.ssim import _gaussian
 
 __all__ = ["mae", "mse", "rmse", "psnr", "nrmse", "l2_norm", "ssim"]
 
