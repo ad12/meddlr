@@ -68,14 +68,18 @@ for more information.
 Meddlr has built-in support for [Weights & Biases](https://wandb.ai/site), a popular experiment tracking library.
 It's useful for sharing training runs, creating reports, and making other data-driven decisions.
 
-To get started:
+W&B setup:
 1. Create an account at [wandb.ai](https://wandb.ai/site)
 2. Install `wandb` in your virtual environment: `pip install wandb`
 3. Get your user API key ([instructions](https://docs.wandb.com/library/api))
 4. Add `export WANDB_API_KEY=<API KEY HERE> ` to .bashrc (linux) or .bash_profile (OsX)
 
-Get your user API key (instructions)
-Add export WANDB_API_KEY=<API KEY HERE> to .bashrc (linux) or .bash_profile (OsX)
+To use W&B in your training script, override these entries in the config:
+- `DESCRIPTION.EXP_NAME`: a name for the experiment
+- `DESCRIPTION.PROJECT_NAME`: the name of the project
+- `DESCRIPTION.ENTITY_NAME`: the name of the entity to log to in W&B
+- `DESCRIPTION.BRIEF`: a short description of the experiment
+- `DESCRIPTION.TAGS`: a list of tags for the experiment
 
 ### Usage
 To train a basic configuration from the repository folder in the command line, run
@@ -89,12 +93,12 @@ python tools/train_net.py --config-file github://configs/tests/basic.yaml --debu
 # This tries to make the run as reproducible as possible
 # (e.g. setting seeds, deterministism, etc.).
 python tools/train_net.py --config-file github://configs/tests/basic.yaml --reproducible
-# or SSRECON_REPRO=True python tools/train_net.py --config-file configs/tests/basic.yaml
+# or MEDDLR_REPRO=True python tools/train_net.py --config-file configs/tests/basic.yaml
 
 # (ALPHA) Enable profiling RAM.
 # This tracks the RAM usage using the guppy library.
 # Install guppy with `pip install guppy3`
-SSRECON_MPROFILE=True python tools/train_net.py --config-file github://configs/tests/basic.yaml
+MEDDLR_MPROFILE=True python tools/train_net.py --config-file github://configs/tests/basic.yaml
 ```
 
 To evaluate the results, use `tools/eval_net.py`.
