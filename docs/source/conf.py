@@ -29,7 +29,7 @@ def get_version():
 # -- Project information -----------------------------------------------------
 
 project = "meddlr"
-copyright = "2019-2021, The Meddlr Team"
+copyright = "2019-2022, The Meddlr Team"
 author = "The Meddlr Team"
 
 # The full version, including alpha/beta/rc tags
@@ -56,6 +56,11 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx.ext.githubpages",
     "m2r2",
+    "nbsphinx",
+    "sphinx_panels",
+    "IPython.sphinxext.ipython_directive",
+    "IPython.sphinxext.ipython_console_highlighting",
+    "jupyter_sphinx",
 ]
 autosummary_generate = True
 autosummary_imported_members = True
@@ -83,7 +88,7 @@ pygments_style = "sphinx"
 # html_theme = 'alabaster'
 # html_theme = 'bootstrap'
 # html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
@@ -105,7 +110,7 @@ intersphinx_mapping = {"numpy": ("https://numpy.org/doc/stable/", None)}
 html_theme_options = {"navigation_depth": 2}
 
 # Source Files
-source_suffix = [".rst", ".md"]
+source_suffix = [".rst"]
 
 # Documentation to include
 todo_include_todos = True
