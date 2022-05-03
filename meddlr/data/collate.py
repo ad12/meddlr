@@ -6,7 +6,7 @@ __all__ = ["default_collate", "collate_by_supervision"]
 
 
 def default_collate(batch: List[Dict]):
-    """Default collate function for ss_recon.
+    """Default collate function for meddlr.
 
     This collate function handles metadata appropriately by returning
     metadata as a list of dictionaries instead of a dictionary of tensors.

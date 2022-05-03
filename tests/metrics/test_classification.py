@@ -2,7 +2,7 @@
 
 # import numpy as np
 # import torch
-# from ss_recon.metrics.classification import dice_score
+# from meddlr.metrics.classification import dice_score
 
 
 # class TestDictScore(unittest.TestCase):

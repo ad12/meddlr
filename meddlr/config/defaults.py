@@ -94,11 +94,11 @@ _C.MODEL.CONSISTENCY.AUG.MOTION.SCHEDULER.WARMUP_METHOD = ""
 _C.MODEL.CONSISTENCY.AUG.MOTION.SCHEDULER.WARMUP_ITERS = 0
 
 # Image normalization options.
-# See ss_recon/data/transforms/transform.py for more details.
+# See meddlr/data/transforms/transform.py for more details.
 _C.MODEL.NORMALIZER = CN()
 _C.MODEL.NORMALIZER.NAME = "TopMagnitudeNormalizer"
 # Keywords to normalize
-# See ss_recon/data/transforms/transform.py for more details
+# See meddlr/data/transforms/transform.py for more details
 _C.MODEL.NORMALIZER.KEYWORDS = ()
 
 _C.MODEL.SEG = CN()
@@ -279,7 +279,7 @@ _C.SOLVER = CN()
 
 _C.SOLVER.OPTIMIZER = "Adam"
 
-# See ss_recon/solver/build.py for LR scheduler options
+# See meddlr/solver/build.py for LR scheduler options
 _C.SOLVER.LR_SCHEDULER_NAME = "WarmupMultiStepLR"
 
 _C.SOLVER.MAX_ITER = 20

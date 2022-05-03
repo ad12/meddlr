@@ -183,7 +183,7 @@ def convert_to_h5(
     is_input_numpy: bool = False,
     overwrite: bool = False,
 ):
-    """Convert ismrmrd files to h5 format suitable for ss_recon library.
+    """Convert ismrmrd files to h5 format suitable for meddlr library.
 
     Currently, sensitivity maps are computed over full volume. Images are
     reconstructed per slice

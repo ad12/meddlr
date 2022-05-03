@@ -35,7 +35,7 @@ def get_recon_dataset_dicts(
     "lose" data, only add to the existing set.
 
     Args:
-        dataset_names (str(s)): Datasets to load. See ss_recon/data/datasets/builtin.py
+        dataset_names (str(s)): Datasets to load. See meddlr/data/datasets/builtin.py
             for built-in datasets.
         num_scans_total (int): Number of total scans to return. If ``-1``, ignored.
         num_scans_subsample (int): Number of scans to mark as only undersampled

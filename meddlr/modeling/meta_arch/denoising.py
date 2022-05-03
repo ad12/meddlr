@@ -93,7 +93,7 @@ class DenoisingModel(nn.Module):
         """
         TODO: condense into list of dataset dicts.
         Args:
-            inputs: Standard ss_recon module input dictionary
+            inputs: Standard meddlr module input dictionary
                 * "kspace": Kspace. If fully sampled, and want to simulate
                     undersampled kspace, provide "mask" argument.
                 * "maps": Sensitivity maps
@@ -108,7 +108,7 @@ class DenoisingModel(nn.Module):
                 on this pass. Can only be `True` if model is in training mode.
 
         Returns:
-            Dict: A standard ss_recon output dict
+            Dict: A standard meddlr output dict
                 * "pred": The reconstructed image
                 * "target" (optional): The target image.
                     Added if provided in the input.

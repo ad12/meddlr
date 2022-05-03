@@ -2,7 +2,7 @@
 Recon Training Script.
 
 This scripts reads a given config file and runs the training or evaluation.
-It is an entry point that is made to train standard models in ss_recon.
+It is an entry point that is made to train standard models in meddlr.
 
 In order to let one script support training of many models,
 this script contains logic that are specific to these built-in models and
