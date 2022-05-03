@@ -72,7 +72,7 @@ def default_setup(cfg, args, save_cfg: bool = True):
     """
     Perform some basic common setups at the beginning of a job, including:
 
-    1. Set up the ss_recon logger
+    1. Set up the meddlr logger
     2. Log basic information about environment, cmdline arguments, and config
     3. Backup the config to the output directory
     4. Enables debug mode if ``args.debug==True``
