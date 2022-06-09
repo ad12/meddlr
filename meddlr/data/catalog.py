@@ -136,7 +136,11 @@ class DatasetCatalog(object):
             {
                 "name": name,
                 "aliases": base_to_aliases.get(name, None),
-                **MetadataCatalog.get(name, {}).__dict__,  # use protected variable to avoid a copy
+                **(
+                    MetadataCatalog.get(name).__dict__
+                    if name in MetadataCatalog._NAME_TO_META
+                    else {}
+                ),
             }
             for name in self._REGISTERED
         ]
