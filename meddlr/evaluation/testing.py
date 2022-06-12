@@ -3,15 +3,17 @@ import logging
 import os
 import pprint
 import re
-import sys
-from typing import Dict, Mapping
+from numbers import Number
+from typing import Any, Dict, List, Mapping, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import torch
 
+from meddlr.config import CfgNode
 
-def print_csv_format(results):  # pragma: no cover
+
+def print_csv_format(results: Dict[str, Dict[str, Number]]):  # pragma: no cover
     """Print metrics for easy copypaste.
 
     Args:
@@ -32,21 +34,27 @@ def print_csv_format(results):  # pragma: no cover
     )
 
 
-def verify_results(cfg, results):  # pragma: no cover
-    """
+def verify_results(cfg: CfgNode, results: Dict[str, Any]) -> bool:  # pragma: no cover
+    """Verify that the results are consistent with what is expected in the config.
+
+    Adapted from detectron2:
+    https://github.com/facebookresearch/detectron2/blob/main/detectron2/evaluation/testing.py
+
     Args:
-        results (OrderedDict[dict]): task_name -> {metric -> score}
+        results: A mapping from metrics -> scores.
 
     Returns:
-        bool: whether the verification succeeds or not
+        bool: Whether the verification succeeds or not
     """
     expected_results = cfg.TEST.EXPECTED_RESULTS
     if not len(expected_results):
         return True
 
+    results = flatten_results_dict(results)
+
     ok = True
-    for task, metric, expected, tolerance in expected_results:
-        actual = results[task][metric]
+    for metric, expected, tolerance in expected_results:
+        actual = results[metric]
         if not np.isfinite(actual):
             ok = False
         diff = abs(actual - expected)
@@ -58,14 +66,12 @@ def verify_results(cfg, results):  # pragma: no cover
         logger.error("Result verification failed!")
         logger.error("Expected Results: " + str(expected_results))
         logger.error("Actual Results: " + pprint.pformat(results))
-
-        sys.exit(1)
     else:
         logger.info("Results verification passed.")
     return ok
 
 
-def flatten_results_dict(results, delimiter="/"):
+def flatten_results_dict(results: Dict[str, Any], delimiter: str = "/") -> Dict[str, Number]:
     """
     Expand a hierarchical dict of scalars into a flat dict of scalars.
     If results[k1][k2][k3] = v, the returned dict will have the entry
@@ -87,7 +93,7 @@ def flatten_results_dict(results, delimiter="/"):
 
 # Supported validation metrics and the operation to perform on them.
 # TODO (arjundd): Do not hardcode these. Match to metrics in meddlr instead.
-SUPPORTED_VAL_METRICS = {
+_METRICS_TO_OPERATION = {
     "l1": "min",
     "l2": "min",
     "psnr": "max",
@@ -99,14 +105,14 @@ SUPPORTED_VAL_METRICS = {
 
 
 def find_weights(
-    cfg,
+    cfg: CfgNode,
     criterion: str,
     operation: str = "auto",
-    iter_limit=None,
-    file_name_fmt="model_{:07d}.pth",
-    top_k=1,
-):
-    """Find the best weights based on a validation criterion/metric.
+    iter_limit: int = None,
+    file_name_fmt: str = "model_{:07d}.pth",
+    top_k: int = 1,
+) -> Tuple[Union[str, List[str]], str, Union[float, List[float]]]:
+    """Find the best weights based on a metric criterion.
 
     Args:
         cfg: The config.
@@ -117,11 +123,14 @@ def find_weights(
             this iteration. If this value is negative, it is
             interpreted as the epoch limit.
         file_name_fmt (int, optional): The naming format for checkpoint files.
-        top_k (int, optional): The number of top weights to keep.
+        top_k (int, optional): The number of top checkpoints to return.
 
     Returns:
         Tuple: ``k`` filepath(s), selection criterion, and ``k`` criterion value(s).
             If ``k=1``, filepath is a string and value is a float.
+
+    Examples:
+        >>> checkpoint_file, criterion, value = find_weights(cfg, "val_loss", "min")
     """
     logger = logging.getLogger(__name__)
 
@@ -146,7 +155,7 @@ def find_weights(
 
     if operation == "auto":
         operation = [
-            op for name, op in SUPPORTED_VAL_METRICS.items() if name.lower() in criterion.lower()
+            op for name, op in _METRICS_TO_OPERATION.items() if name.lower() in criterion.lower()
         ]
         if len(operation) == 0:
             raise ValueError(f"Could not find operation for criterion '{criterion}'.")
@@ -230,7 +239,7 @@ def find_weights(
         return all_filepaths, criterion, all_values
 
 
-def check_consistency(state_dict, model):
+def check_consistency(state_dict: Dict[str, Any], model: torch.nn.Module):
     """Verifies that the proper weights were loaded into the model.
 
     Related to issue that loading weights from checkpoints of a cuda model
