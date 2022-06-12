@@ -173,7 +173,10 @@ def find_weights(
     # The criterion from all other datasets are averaged and used as the
     # target criterion.
     metrics_file = os.path.join(cfg.OUTPUT_DIR, "metrics")
-    metrics = _metrics_from_x(metrics_file, criterion)
+    try:
+        metrics = _metrics_from_x(metrics_file, criterion)
+    except IndexError:
+        raise ValueError(f"No metrics found matching criterion '{criterion}'.")
 
     # Filter out all metrics calculated above iter limit.
     if iter_limit:
