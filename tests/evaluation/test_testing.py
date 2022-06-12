@@ -48,6 +48,9 @@ def test_check_consistency():
         ({"criterion": "psnr_scan"}, "model_0001399.pth"),
         ({"criterion": "ssim (Wang)_scan"}, "model_0000799.pth"),
         ({"criterion": "psnr_scan", "iter_limit": 800}, "model_0000399.pth"),
+        ({"criterion": "ssim_psnr"}, None),
+        ({"criterion": "foobar"}, None),
+        ({"criterion": "foobar", "operation": "max"}, None),
     ],
 )
 def test_find_weights_basic(func_kwargs, expected_file):
@@ -70,5 +73,9 @@ def test_find_weights_basic(func_kwargs, expected_file):
     cfg.merge_from_file(exp_dir / "config.yaml")
     cfg.OUTPUT_DIR = str(exp_dir)
 
-    weights, _, _ = find_weights(cfg, **func_kwargs)
-    assert os.path.basename(weights) == expected_file
+    if expected_file is None:
+        with pytest.raises(ValueError):
+            find_weights(cfg, **func_kwargs)
+    else:
+        weights, _, _ = find_weights(cfg, **func_kwargs)
+        assert os.path.basename(weights) == expected_file
