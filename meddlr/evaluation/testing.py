@@ -92,26 +92,27 @@ SUPPORTED_VAL_METRICS = {
     "l2": "min",
     "psnr": "max",
     "ssim": "max",
-    "ssim_old": "max",
-    "ssim (Wang)": "max",
-    "l1_scan": "min",
-    "l2_scan": "min",
-    "psnr_scan": "max",
-    "ssim (Wang)_scan": "max",
     "iteration": "max",  # find the last checkpoint
     "loss": "min",
     "mae": "min",
-    "mae_scan": "min",
 }
 
 
-def find_weights(cfg, criterion="", iter_limit=None, file_name_fmt="model_{:07d}.pth", top_k=1):
+def find_weights(
+    cfg,
+    criterion: str,
+    operation: str = "auto",
+    iter_limit=None,
+    file_name_fmt="model_{:07d}.pth",
+    top_k=1,
+):
     """Find the best weights based on a validation criterion/metric.
 
     Args:
         cfg: The config.
-        criterion (str, optional): The criterion that we use to select weights.
-            Defaults to ``cfg.MODEL.RECON_LOSS.NAME``.
+        criterion (str): The criterion that we use to select weights.
+        operation (str, optional): The operation for the best value of the criterion.
+            One of `'auto'`, `'min'`, `'max'`.
         iter_limit (int, optional): If specified, all weights will be before
             this iteration. If this value is negative, it is
             interpreted as the epoch limit.
@@ -123,6 +124,9 @@ def find_weights(cfg, criterion="", iter_limit=None, file_name_fmt="model_{:07d}
             If ``k=1``, filepath is a string and value is a float.
     """
     logger = logging.getLogger(__name__)
+
+    if operation not in ["min", "max", "auto"]:
+        raise ValueError(f"Invalid operation: {operation}. Expected one of 'min', 'max', 'auto'.")
 
     # Negative iter_limit is interpreted as epoch limit.
     if iter_limit is not None and iter_limit < 0:
@@ -140,15 +144,16 @@ def find_weights(cfg, criterion="", iter_limit=None, file_name_fmt="model_{:07d}
             "a multiple of checkpoint period."
         )
 
-    if not criterion:
-        criterion = cfg.MODEL.RECON_LOSS.NAME.lower()
-        operation = "min"  # loss is always minimized
-    else:
-        operation = SUPPORTED_VAL_METRICS[criterion]
-
+    if operation == "auto":
+        operation = [
+            op for name, op in SUPPORTED_VAL_METRICS.items() if name.lower() in criterion.lower()
+        ]
+        if len(operation) == 0:
+            raise ValueError(f"Could not find operation for criterion '{criterion}'.")
+        if len(operation) > 1:
+            raise ValueError(f"Found multiple operations for criterion '{criterion}': {operation}")
+        operation = operation[0]
     assert operation in ["min", "max"]
-    if criterion != "iteration":
-        criterion = "val_{}".format(criterion)
 
     logger.info("Finding best weights in {} using {}...".format(cfg.OUTPUT_DIR, criterion))
 
