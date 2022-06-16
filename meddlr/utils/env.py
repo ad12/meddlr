@@ -136,17 +136,22 @@ def get_available_gpus(num_gpus: int = None):
 
     Returns:
         List[int]: List of gpu ids that are free. Length
-            will equal `num_gpus`, if specified.
+            will equal `num_gpus`, if specified and gpus are available.
+            If no gpus are found, returns an empty list.
     """
     # Built-in tensorflow gpu id.
     assert isinstance(num_gpus, (type(None), int))
     if num_gpus == 0:
-        return [-1]
+        return []
 
     num_requested_gpus = num_gpus
-    num_gpus = (
-        len(subprocess.check_output("nvidia-smi --list-gpus", shell=True).decode().split("\n")) - 1
-    )
+    try:
+        num_gpus = (
+            len(subprocess.check_output("nvidia-smi --list-gpus", shell=True).decode().split("\n"))
+            - 1
+        )
+    except subprocess.CalledProcessError:
+        return []
 
     out_str = subprocess.check_output("nvidia-smi | grep MiB", shell=True).decode()
     mem_str = [x for x in out_str.split() if "MiB" in x]

@@ -1,10 +1,12 @@
 import os
+import tempfile
+import types
 import unittest
 
 import torch
 
 from meddlr.config.config import get_cfg
-from meddlr.engine.defaults import init_reproducible_mode
+from meddlr.engine.defaults import default_setup, init_reproducible_mode
 from meddlr.utils import env
 
 
@@ -80,6 +82,23 @@ class TestDefaultSetup(unittest.TestCase):
         init_reproducible_mode(cfg, eval_only=False)
         assert not torch.backends.cudnn.benchmark
         self._reset_env_vars()
+
+    def test_setup_cpu(self):
+        tmpdir = tempfile.mkdtemp()
+        cfg = get_cfg()
+        cfg.OUTPUT_DIR = tmpdir
+        args = types.SimpleNamespace(
+            reproducible=False,
+            eval_only=False,
+            auto_version=False,
+            debug=False,
+            devices=None,
+            num_gpus=0,
+        )
+        default_setup(cfg, args)
+
+        assert os.path.exists(os.path.join(tmpdir, "config.yaml"))
+        assert os.environ["CUDA_VISIBLE_DEVICES"] == "-1"
 
 
 if __name__ == "__main__":
