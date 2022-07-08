@@ -243,6 +243,71 @@ def build_recon_train_loader(cfg, dataset_type=None):
     )
     return train_loader
 
+def motion_corrupted_build_recon_val_loader(
+    cfg, 
+    dataset_name,
+    as_test: bool = False,
+    angle: float = 0,
+    translation_amount : float = 0,
+    n_shot_amount: int  = 0,
+    interleaved: bool = False,
+    blocked: bool = False,
+    dataset_type=None,
+):
+    if (
+        cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL > 0
+        and cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP
+    ):
+        raise ValueError(
+            "`DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL` and "
+            "`DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP` are mutually exclusive."
+        )
+    num_scans_total = (
+        cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP
+        if cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP
+        else cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL
+    )
+
+    dataset_dicts = get_recon_dataset_dicts(
+        dataset_names=[dataset_name],
+        filter_by=cfg.DATALOADER.FILTER.BY,
+        num_scans_total=num_scans_total,
+        seed=cfg.DATALOADER.SUBSAMPLE_TRAIN.SEED,
+    )
+    if dataset_type is None:
+        dataset_type = _get_default_dataset_type(dataset_name)
+
+    mask_func = build_mask_func(cfg.AUG_TRAIN)
+    data_transform = T.DataTransform(
+        cfg, mask_func, is_test=as_test, add_noise=add_noise, add_motion=add_motion
+    )
+
+    val_data = _build_dataset(
+        cfg, dataset_dicts, data_transform, is_eval=True, dataset_type=dataset_type
+    )
+
+    # Build sampler.
+    sampler, is_batch_sampler = build_val_sampler(cfg, val_data)
+    if is_batch_sampler:
+        dl_kwargs = {"batch_sampler": sampler}
+    else:
+        dl_kwargs = {
+            "sampler": sampler,
+            "batch_size": cfg.SOLVER.TEST_BATCH_SIZE,
+            "shuffle": False,
+            "drop_last": False,
+        }
+
+    val_loader = DataLoader(
+        dataset=val_data,
+        num_workers=cfg.DATALOADER.NUM_WORKERS,
+        pin_memory=True,
+        collate_fn=default_collate,
+        prefetch_factor=cfg.DATALOADER.PREFETCH_FACTOR,
+        **dl_kwargs,
+    )
+    return val_loader
+
 
 def build_recon_val_loader(
     cfg,

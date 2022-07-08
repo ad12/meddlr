@@ -462,11 +462,11 @@ if __name__ == "__main__":
 ## Arguments for 2D Motion Corruption of the Dataset ##
 
     parser.add_argument(
-        "--rotation",
+        "--angle",
         default=0,
         type=float,
         help=(
-            "How much rotation should be used for motion corruption " 
+            "How much rotation angle should be used for motion corruption " 
             "of the dataset"
         )
     )
