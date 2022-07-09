@@ -11,6 +11,7 @@ from meddlr.ops import complex as cplx
 from meddlr.utils import transforms as T
 
 from .motion import MotionModel
+from .motion import 2DMotionModel
 from .noise import NoiseModel
 
 NORMALIZER_REGISTRY = Registry("NORMALIZER")
@@ -383,8 +384,7 @@ class MotionDataTransform:
         angle: float = 0,
         translation: float = 0,
         nshots: int = 0,
-        blocked: bool = True,
-        interleaved: bool = False
+        trajectory: str = "blocked"
     ):
         """
         Args:
@@ -411,8 +411,7 @@ class MotionDataTransform:
         self.angle = angle
         self.translation = translation 
         self.nshots = nshots 
-        self.blocked = blocked
-        self.interleaved = interleaved
+        self.trajectory = trajectory
 
         seed = cfg.SEED if cfg.SEED > -1 else None
         self.rng = np.random.RandomState(seed)
@@ -420,10 +419,14 @@ class MotionDataTransform:
         if is_test:
             # When we test we dont want to initialize with certain parameters (e.g. scheduler).
             self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
-            self.motion_simulator = MotionModel(cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE, seed=seed)
+            self.motion_simulator = 2DMotionModel(self.nshots, self.angle, 
+                                                  self.translation, 
+                                                  self.trajectory) 
         else:
             self.noiser = NoiseModel.from_cfg(cfg, seed=seed)
-            self.motion_simulator = MotionModel.from_cfg(cfg, seed=seed)
+            self.motion_simulator = 2DMotionModel(self.nshots, self.angle, 
+                                                  self.translation, 
+                                                  self.trajectory) 
 
         self.p_noise = cfg.AUG_TRAIN.NOISE_P
         self.p_motion = cfg.AUG_TRAIN.MOTION_P
@@ -552,14 +555,17 @@ class MotionDataTransform:
         add_motion = self.add_motion and (
             self._is_test or (not is_fixed and self.rng.uniform() < self.p_motion)
         )
+        if add_motion:
+            # Motion seed should not be different for each slice for now.
+            # TODO: Change this for 2D acquisitions.
+            # masked_kspace = self.motion_simulator(masked_kspace, seed=seed)
+            masked_kspace = self.motion_simulator(image)
+
         if add_noise:
             # Seed should be different for each slice of a scan.
             noise_seed = seed + slice_id if seed is not None else None
             masked_kspace = self.noiser(masked_kspace, mask=mask, seed=noise_seed)
-        if add_motion:
-            # Motion seed should not be different for each slice for now.
-            # TODO: Change this for 2D acquisitions.
-            masked_kspace = self.motion_simulator(masked_kspace, seed=seed)
+
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)
         maps = maps.squeeze(0)
