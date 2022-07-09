@@ -187,8 +187,14 @@ def update_metrics(metrics_new: pd.DataFrame, metrics_old: pd.DataFrame, on: Seq
 @torch.no_grad()
 def eval(cfg, args, model, weights_basename, criterion, best_value):
     zero_filled = args.zero_filled
+    angle = args.angle
+    translation = args.translation
+    nshots = args.nshots
+    trajectory = args.trajectory.lower()
+
     noise_arg = args.noise.lower()
     motion_arg = args.motion.lower()
+
     include_noise = noise_arg != "false"
     include_motion = motion_arg != "false"
     noise_sweep_vals = args.sweep_vals
@@ -302,6 +308,10 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             as_test=True,
             add_noise=noise_level > 0,
             add_motion=motion_level > 0,
+            angle=angle,
+            translation=translation,
+            nshots=nshots,
+            trajectory=trajectory,
         )
 
         # Build evaluators. Only save reconstructions for last scan.
@@ -489,7 +499,7 @@ if __name__ == "__main__":
         )
     )
     parser.add_argument(
-        "--interleaved_or_blocked",
+        "--trajectory",
         default="blocked",
         choice=("interleaved", "blocked"),
         help=(
