@@ -19,7 +19,7 @@ class MotionModel2D:
     This module is responsible for simulating different motion artifacts.
     """
 
-    def __init__(self, nshots, angle, translate, trajectory):
+    def __init__(self, nshots, angle, translate, trajectory, seed=None):
         """
         Args:
             nshots (int) : The number of shots in the image. 
@@ -38,6 +38,7 @@ class MotionModel2D:
         self.angle = angle 
         self.translate = translate 
         self.trajectory = trajectory
+        self.seed = seed
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -62,7 +63,13 @@ class MotionModel2D:
         Returns:
             The motion corrupted kspace. 
         """
-        tfm_gen = RandomAffine(p = 1.0, translate=translate, angle=angle) 
+        if self.seed == None:
+            random_motion = RandomAffine
+        else:
+            random_motion = RandomAffine.seed(self.seed)
+            
+
+        tfm_gen = random_motion(p = 1.0, translate=translate, angle=angle) 
         kspace = torch.zeros_like(image)
         offset = int(math.ceil(kspace.shape[-1] / nshots)) 
 
