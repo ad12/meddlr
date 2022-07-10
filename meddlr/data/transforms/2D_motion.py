@@ -10,7 +10,7 @@ from meddlr.forward.mri import SenseModel
 from meddlr.utils.events import get_event_storage
 
 
-class 2DMotionModel:
+class MotionModel2D:
     """A model that corrupts kspace inputs with motion.
 
     Motion is a common artifact experienced during the MR imaging forward problem.
