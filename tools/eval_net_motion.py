@@ -198,7 +198,6 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     include_noise = noise_arg != "false"
     include_motion = motion_arg != "false"
     noise_sweep_vals = args.sweep_vals
-    motion_sweep_vals = args.sweep_vals_motion
     skip_rescale = args.skip_rescale
     overwrite = args.overwrite
     save_scans = args.save_scans or "save_scans" in args.ops
@@ -233,12 +232,6 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     else:
         noise_vals = [0]
 
-    if include_motion:
-        motion_vals = [0] + motion_sweep_vals if motion_arg == "sweep" else [0]
-        motion_vals = sorted(set(motion_vals))
-    else:
-        motion_vals = [0]
-
     values = itertools.product(
         cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals, motion_vals
     )
@@ -254,14 +247,13 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             )
         default_metrics.extend(args.extra_metrics)
 
-    for exp_idx, (dataset_name, acc, noise_level, motion_level) in enumerate(values):
+    for exp_idx, (dataset_name, acc, noise_level) in enumerate(values):
         # Check if the current configuration already has metrics computed
         # If so, dont recompute
         params = {
             "Acceleration": acc,
             "dataset": dataset_name,
             "Noise Level": noise_level,
-            "Motion Level": motion_level,
             "weights": weights_basename,
             "rescaled": not skip_rescale,
         }
@@ -297,7 +289,6 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         s_cfg = cfg.clone()
         s_cfg.defrost()
         s_cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (acc,)
-        s_cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE = motion_level
         s_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (noise_level,)
         s_cfg.freeze()
 
@@ -307,7 +298,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             dataset_name,
             as_test=True,
             add_noise=noise_level > 0,
-            add_motion=motion_level > 0,
+            add_motion=include_motion != "false",
             angle=angle,
             translation=translation,
             nshots=nshots,
@@ -510,8 +501,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--motion",
         default="false",
-        choices=("false", "standard", "sweep"),
-        help="Type of motion evaluation",
+        choices=("false", "true"), 
+        help="Motion corruption included or not",
     )
     parser.add_argument(
         "--sweep-vals",
@@ -521,13 +512,7 @@ if __name__ == "__main__":
         help="args to sweep for noise",
     )
     parser.add_argument("--extra-metrics", nargs="*", help="Extra metrics for testing")
-    parser.add_argument(
-        "--sweep-vals-motion",
-        default=[0, 0.2, 0.4],
-        nargs="*",
-        type=float,
-        help="args to sweep for motion",
-    )
+
     parser.add_argument(
         "--iter-limit",
         default=None,
