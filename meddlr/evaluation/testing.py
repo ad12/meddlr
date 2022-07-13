@@ -256,6 +256,7 @@ def check_consistency(state_dict: Dict[str, Any], model: torch.nn.Module):
     """
     _state_dict = model.state_dict()
     for k in state_dict:
+        assert k in _state_dict, f"{k} not in model state_dict: {_state_dict.keys()}"
         assert torch.equal(state_dict[k], _state_dict[k]), f"Mismatch values: {k}"
 
 
