@@ -1,6 +1,7 @@
 """Basic Transforms.
 """
 from functools import partial
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -9,6 +10,7 @@ from fvcore.common.registry import Registry
 from meddlr.data.transforms.motion_corruption_2D import add_motion_corruption
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
+from meddlr.transforms.gen.spatial import RandomAffine
 from meddlr.utils import transforms as T
 
 from .motion import MotionModel
@@ -382,8 +384,8 @@ class MotionDataTransform:
         is_test: bool = False,
         add_noise: bool = False,
         add_motion: bool = False,
-        angle: float = None,
-        translation: float = None,
+        angle: Optional[Tuple[float, float]] = (-5., 5.),
+        translation: Optional[Tuple[float, float]] = (0.1, 0.1),
         trajectory: str = "blocked",
     ):
         """
@@ -494,13 +496,15 @@ class MotionDataTransform:
         if add_motion:
             # Motion seed should not be different for each slice for now.
             # TODO: Change this for 2D acquisitions.
+
+            tfm_gen = RandomAffine(p=1.0, translate=self.translation, angle=self.angle)
+            tfm_gen.seed(seed)
+
             kspace = add_motion_corruption(
                 image=image,
                 nshots=self.nshots,
-                angle=self.angle,
-                translate=self.translation,
+                translation=tfm_gen,
                 trajectory=self.trajectory,
-                seed=seed,
             )
 
         # Apply mask in k-space
