@@ -6,12 +6,12 @@ import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
+from meddlr.data.transforms.motion_corruption_2D import add_motion_corruption
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
 from meddlr.utils import transforms as T
 
 from .motion import MotionModel
-from .motion import MotionModel2D
 from .noise import NoiseModel
 
 NORMALIZER_REGISTRY = Registry("NORMALIZER")
@@ -371,20 +371,20 @@ class MotionDataTransform:
     """
     Data Transformer for training unrolled reconstruction models.
 
-    This is for emulating 2D roto-translational motion corrupted MR scans. 
+    This is for emulating 2D roto-translational motion corrupted MR scans.
     """
 
     def __init__(
         self,
         cfg,
         mask_func,
+        nshots: int,
         is_test: bool = False,
         add_noise: bool = False,
         add_motion: bool = False,
-        angle: float = 0,
-        translation: float = 0,
-        nshots: int = 0,
-        trajectory: str = "blocked"
+        angle: float = None,
+        translation: float = None,
+        trajectory: str = "blocked",
     ):
         """
         Args:
@@ -395,8 +395,6 @@ class MotionDataTransform:
                 generator seed from the filename. This ensures that the same
                 mask is used for all the slices of a given volume every time.
         """
-        from meddlr.transforms.builtin.mri import MRIReconAugmentor
-
         self._cfg = cfg
         self.mask_func = mask_func
         self._is_test = is_test
@@ -407,10 +405,14 @@ class MotionDataTransform:
         self.add_noise = add_noise
         self.add_motion = add_motion
 
-        # These will be used for the motion corruption. 
+        # These will be used for the motion corruption.
         self.angle = angle
-        self.translation = translation 
-        self.nshots = nshots 
+        self.translation = translation
+
+        if nshots is None:
+            raise ValueError("The paramter nshots must be set to some integer value.")
+
+        self.nshots = nshots
         self.trajectory = trajectory
 
         seed = cfg.SEED if cfg.SEED > -1 else None
@@ -419,14 +421,8 @@ class MotionDataTransform:
         if is_test:
             # When we test we dont want to initialize with certain parameters (e.g. scheduler).
             self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
-            self.motion_simulator = MotionModel2D(self.nshots, self.angle, 
-                                                  self.translation, 
-                                                  self.trajectory) 
         else:
-            self.noiser = NoiseModel.from_cfg(cfg, seed=seed)
-            self.motion_simulator = MotionModel2D(self.nshots, self.angle, 
-                                                  self.translation, 
-                                                  self.trajectory) 
+            pass
 
         self.p_noise = cfg.AUG_TRAIN.NOISE_P
         self.p_motion = cfg.AUG_TRAIN.MOTION_P
@@ -435,49 +431,7 @@ class MotionDataTransform:
         # Build augmentation pipeline.
         self.augmentor = None
         if not is_test and cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS:
-            self.augmentor = MRIReconAugmentor.from_cfg(cfg, aug_kind="aug_train", seed=seed)
-
-    def _call_augmentor(
-        self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None
-    ):
-        assert not self._is_test, "Augmentor is not supported with testing yet"
-
-        # Convert everything from numpy arrays to tensors
-        kspace = cplx.to_tensor(kspace).unsqueeze(0)
-        maps = cplx.to_tensor(maps).unsqueeze(0)
-        target_init = cplx.to_tensor(target).unsqueeze(0)
-        target = (
-            torch.complex(target_init, torch.zeros_like(target_init)).unsqueeze(-1)
-            if not torch.is_complex(target_init)
-            else target_init
-        )  # handle rss vs. sensitivity-integrated
-        norm = torch.sqrt(torch.mean(cplx.abs(target) ** 2))
-
-        seed = sum(tuple(map(ord, fname))) if self._is_test or is_fixed else None  # noqa
-        mask_gen = partial(
-            self._subsampler.__call__, mode="2D", seed=seed, acceleration=acceleration
-        )
-
-        out, _, _ = self.augmentor(
-            kspace,
-            maps=maps,
-            target=target,
-            normalizer=self._normalizer,
-            mask_gen=mask_gen,
-            skip_tfm=is_fixed,  # Skip augmentations for unsupervised scans.
-        )
-        masked_kspace = out["kspace"]
-        maps = out["maps"]
-        target = out["target"]
-        mean = out["mean"]
-        std = out["std"]
-
-        # Get rid of batch dimension...
-        masked_kspace = masked_kspace.squeeze(0)
-        maps = maps.squeeze(0)
-        target = target.squeeze(0)
-
-        return masked_kspace, maps, target, mean, std, norm
+            pass
 
     def __call__(self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None):
         """
@@ -524,8 +478,32 @@ class MotionDataTransform:
 
         # TODO: Add other transforms here.
 
+        seed = sum(tuple(map(ord, fname))) if self._is_test else None  # noqa
+
+        # Zero-filled Sense Recon.
+        if torch.is_complex(target_init):
+            A = SenseModel(maps)
+            image = A(kspace, adjoint=True)
+        # Zero-filled RSS Recon.
+        else:
+            image = T.ifft2(kspace)
+            image_rss = torch.sqrt(torch.sum(cplx.abs(image) ** 2, axis=-1))
+            image = torch.complex(image_rss, torch.zeros_like(image_rss)).unsqueeze(-1)
+
+        add_motion = self.add_motion and self._is_test
+        if add_motion:
+            # Motion seed should not be different for each slice for now.
+            # TODO: Change this for 2D acquisitions.
+            kspace = add_motion_corruption(
+                image=image,
+                nshots=self.nshots,
+                angle=self.angle,
+                translate=self.translation,
+                trajectory=self.trajectory,
+                seed=seed,
+            )
+
         # Apply mask in k-space
-        seed = sum(tuple(map(ord, fname))) if self._is_test or is_fixed else None  # noqa
         masked_kspace, mask = self._subsampler(
             kspace, mode="2D", seed=seed, acceleration=acceleration
         )
@@ -549,17 +527,7 @@ class MotionDataTransform:
         mean = normalized["mean"]
         std = normalized["std"]
 
-        add_noise = self.add_noise and (
-            self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise)
-        )
-        add_motion = self.add_motion and (
-            self._is_test or (not is_fixed and self.rng.uniform() < self.p_motion)
-        )
-        if add_motion:
-            # Motion seed should not be different for each slice for now.
-            # TODO: Change this for 2D acquisitions.
-            # masked_kspace = self.motion_simulator(masked_kspace, seed=seed)
-            masked_kspace = self.motion_simulator(image)
+        add_noise = self.add_noise and self._is_test
 
         if add_noise:
             # Seed should be different for each slice of a scan.
@@ -572,4 +540,3 @@ class MotionDataTransform:
         target = target.squeeze(0)
 
         return masked_kspace, maps, target, mean, std, norm
-

@@ -243,16 +243,18 @@ def build_recon_train_loader(cfg, dataset_type=None):
     )
     return train_loader
 
+
 def build_recon_val_loader(
     cfg,
     dataset_name,
     as_test: bool = False,
     add_noise: bool = False,
     add_motion: bool = False,
+    # data_transform: function = T.MotionDataTransform,
     angle: float = 0,
     translation: float = 0,
     nshots: int = 0,
-    trajectory: str = "blocked", 
+    trajectory: str = "blocked",
     dataset_type=None,
 ):
     if (
@@ -280,9 +282,15 @@ def build_recon_val_loader(
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.MotionDataTransform(
-        cfg, mask_func, is_test=as_test, add_noise=add_noise, 
-        add_motion=add_motion, angle=angle, translation=translation, 
-        nshots=nshots, trajectory=trajectory
+        cfg,
+        mask_func,
+        is_test=as_test,
+        add_noise=add_noise,
+        add_motion=add_motion,
+        angle=angle,
+        translation=translation,
+        nshots=nshots,
+        trajectory=trajectory,
     )
 
     val_data = _build_dataset(

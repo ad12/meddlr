@@ -187,6 +187,12 @@ def update_metrics(metrics_new: pd.DataFrame, metrics_old: pd.DataFrame, on: Seq
 @torch.no_grad()
 def eval(cfg, args, model, weights_basename, criterion, best_value):
     zero_filled = args.zero_filled
+
+    angle = args.angle
+    translation = args.translation
+    nshots = args.nshots
+    trajectory = args.trajectory.lower()
+
     noise_arg = args.noise.lower()
     motion_arg = args.motion.lower()
     include_noise = noise_arg != "false"
@@ -301,7 +307,11 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             dataset_name,
             as_test=True,
             add_noise=noise_level > 0,
-            add_motion=motion_level > 0,
+            add_motion=include_motion != "false",
+            angle=angle,
+            translation=translation,
+            nshots=nshots,
+            trajectory=trajectory,
         )
 
         # Build evaluators. Only save reconstructions for last scan.
@@ -458,6 +468,39 @@ if __name__ == "__main__":
         choices=("false", "standard", "sweep"),
         help="Type of noise evaluation",
     )
+
+    # Arguments for 2D Motion Corruption of the Dataset
+
+    parser.add_argument(
+        "--angle",
+        default=0,
+        type=float,
+        help=("How much rotation angle should be used for motion corruption " "of the dataset"),
+    )
+
+    parser.add_argument(
+        "--translation",
+        default=0,
+        type=float,
+        help=("How much translation should be used for motion " "corruption of the dataset"),
+    )
+    parser.add_argument(
+        "--nshots",
+        default=0,
+        type=int,
+        help=("How many shots should be used for motion corruption " "of the dataset."),
+    )
+    parser.add_argument(
+        "--trajectory",
+        default="blocked",
+        choice=("interleaved", "blocked"),
+        help=(
+            "Chooses between interleaved or blocked shots for motion " "corruption of the dataset"
+        ),
+    )
+
+    # End of Arguments for 2D Motion Corruption of the Dataset
+
     parser.add_argument(
         "--motion",
         default="false",

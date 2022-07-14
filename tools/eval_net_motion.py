@@ -233,7 +233,9 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         noise_vals = [0]
 
     values = itertools.product(
-        cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals, motion_vals
+        cfg.DATASETS.TEST,
+        cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS,
+        noise_vals,
     )
     values = list(values)
     all_results = []
@@ -460,48 +462,38 @@ if __name__ == "__main__":
         help="Type of noise evaluation",
     )
 
-## Arguments for 2D Motion Corruption of the Dataset ##
+    # Arguments for 2D Motion Corruption of the Dataset
 
     parser.add_argument(
         "--angle",
         default=0,
         type=float,
-        help=(
-            "How much rotation angle should be used for motion corruption " 
-            "of the dataset"
-        )
+        help=("How much rotation angle should be used for motion corruption " "of the dataset"),
     )
     parser.add_argument(
         "--translation",
         default=0,
         type=float,
-        help=(
-            "How much translation should be used for motion "
-            "corruption of the dataset"
-        )
+        help=("How much translation should be used for motion " "corruption of the dataset"),
     )
     parser.add_argument(
         "--nshots",
         default=0,
         type=int,
-        help=(
-            "How many shots should be used for motion corruption "
-            "of the dataset."
-        )
+        help=("How many shots should be used for motion corruption " "of the dataset."),
     )
     parser.add_argument(
         "--trajectory",
         default="blocked",
         choice=("interleaved", "blocked"),
         help=(
-            "Chooses between interleaved or blocked shots for motion "
-            "corruption of the dataset"
-        )
+            "Chooses between interleaved or blocked shots for motion " "corruption of the dataset"
+        ),
     )
     parser.add_argument(
         "--motion",
         default="false",
-        choices=("false", "true"), 
+        choices=("false", "true"),
         help="Motion corruption included or not",
     )
     parser.add_argument(
