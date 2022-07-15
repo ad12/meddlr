@@ -406,7 +406,7 @@ class ReconEvaluator(ScanEvaluator):
         # TODO (arjundd): Handle metric-less evaluation appropriately
         try:
             return metrics.to_dict()
-        except ValueError:
+        except ValueError:  # pragma: no cover
             return {}
 
     def _append_memory(self, key):
