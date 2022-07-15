@@ -29,7 +29,7 @@ def get_version():
 # -- Project information -----------------------------------------------------
 
 project = "meddlr"
-copyright = "2019-2021, The Meddlr Team"
+copyright = "2019-2022, The Meddlr Team"
 author = "The Meddlr Team"
 
 # The full version, including alpha/beta/rc tags
