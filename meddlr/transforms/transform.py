@@ -1,9 +1,3 @@
-"""Transforms specific to medical image data.
-Many transform operations are typically written with the assumption of 2D data.
-However, medical images typically have >2 dimensions.
-Some transforms implemented in this file are meant to overload transforms in the
-`fvcore.transforms` module.
-"""
 import inspect
 from typing import Any, Callable, Iterable, List, Mapping, Optional, Tuple, TypeVar
 
@@ -18,14 +12,18 @@ __all__ = ["Transform", "TransformList"]
 class Transform(DeviceMixin):
     """
     Base class for implementations of __deterministic__ transfomations for
-    _medical_ image and other data structures. Like the `fvcore.transforms`
-    module, there should be a higher-level policy that generates (likely with
-    random variations) these transform ops.
+    _medical_ image and other data structures.
 
-    By default, all transforms only handle image and segmentation data types.
-    Coordinates, bounding boxes, and polygons are not supported by default.
-    However, these methods can be overloaded if generalized methods are
-    written for these data types.
+    Like the `fvcore.transforms` module, there should be a higher-level policy
+    that generates (likely with random variations) these transform ops.
+
+    By default, all transforms should handle image data types.
+    Other data types like segmentations, coordinates, bounding boxes, and polygons
+    may not be supported by default. However, these methods can be overloaded if
+    generalized methods are written for these data types.
+
+    Additional domain specific data types may also be supported
+    (e.g. ``kspace``, ``maps``).
 
     Medical images are seldom in the uint8 format and are not always
     normalized between [0, 1] in the floating point format. Transforms should
@@ -38,8 +36,7 @@ class Transform(DeviceMixin):
     """
 
     def _set_attributes(self, params: Optional[Mapping[str, Any]] = None) -> None:
-        """
-        Set attributes from the input list of parameters.
+        """Set attributes from the input list of parameters.
 
         Args:
             params (list): list of parameters.
@@ -286,10 +283,10 @@ class TransformList:
         """
         return TransformList([x.inverse() for x in self.transforms[::-1]])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "{}(\n\t{}\n)".format(
             type(self).__name__, "\n\t".join(t.__repr__() for t in self.transforms)
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
