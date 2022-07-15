@@ -99,11 +99,15 @@ class HDF5Manager:
                     with h5py.File(filepath, "r") as file:
                         data = self._load_data(file, key=key, sl=patch)
                     return data
-            except OSError as e:
+            except (OSError, KeyError) as e:
                 # Handle input/output errors by waiting and retrying.
                 # This issue is common for NFS mounted file systems.
                 # https://github.com/theislab/scanpy/issues/1351#issuecomment-668009684
-                if (idx < self.max_attempts - 1) and (re.search("[Errno 5]", str(e)) is not None):
+                matches_error = any(
+                    (re.search(pattern, str(e)) is not None)
+                    for pattern in ["\[Errno 5\]", "errno = 5"]
+                )
+                if (idx < self.max_attempts - 1) and matches_error:
                     is_cached = filepath in self.files
                     if is_cached:
                         self.close(filepath)

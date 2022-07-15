@@ -49,6 +49,7 @@ class SSDUModel(nn.Module):
                 self.model.vis_period = vis_period
             else:
                 vis_period = self.model.vis_period
+            self.model.vis_period = -1
         self.vis_period = vis_period
 
     def augment(self, inputs):
@@ -111,6 +112,9 @@ class SSDUModel(nn.Module):
             inputs = inputs.get("supervised", inputs)
             return self.model(inputs)
 
+        storage = get_event_storage()
+        vis_training = self.training and self.vis_period > 0 and storage.iter % self.vis_period == 0
+
         # Put supervised and unsupervised scans in a single tensor.
         sup = inputs.get("supervised", {})
         unsup = inputs.get("unsupervised", {})
@@ -126,7 +130,7 @@ class SSDUModel(nn.Module):
 
         kspace = inputs["kspace"]
         inputs_aug, orig_mask, train_mask, loss_mask = self.augment(inputs)
-        outputs = self.model(inputs_aug)
+        outputs = self.model(inputs_aug, vis_training=vis_training and len(sup) > 0)
 
         # Get the signal model reconstructed images.
         # TODO: Make it possible to use these are the target instead of multi-coil images.
@@ -140,6 +144,7 @@ class SSDUModel(nn.Module):
         # A hacky way to prepare the predictions and target for the loss.
         # This may result in inaccurate training metrics outside of the loss.
         # TODO (arjundd): Fix this.
+        # Shape: B x H x W x #coils
         outputs["pred"] = oF.ifft2c(loss_pred_kspace, channels_last=True)
         outputs["target"] = oF.ifft2c(loss_kspace, channels_last=True)
 

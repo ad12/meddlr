@@ -199,7 +199,7 @@ def get_cfg() -> CfgNode:
 def set_cfg(cfg: CfgNode) -> None:
     """Set the base config object to use.
 
-    This is useful when customizing ss_recon for different projects.
+    This is useful when customizing meddlr for different projects.
 
     Args:
         cfg (CfgNode): Set the base config.

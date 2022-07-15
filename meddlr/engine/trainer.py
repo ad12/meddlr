@@ -210,7 +210,7 @@ class DefaultTrainer(SimpleTrainer):
         optimizer = self.build_optimizer(cfg, model)
 
         # For training, wrap with DP. But don't need this for inference.
-        num_gpus = len(os.environ["CUDA_VISIBLE_DEVICES"].split(","))
+        num_gpus = len(os.environ.get("CUDA_VISIBLE_DEVICES", "").split(","))
         if num_gpus > 1:
             logger.info("Using data parallel...")
             model = DataParallel(model)

@@ -40,7 +40,11 @@ class TestSimpleConvBlock(unittest.TestCase):
     def test_order(self):
         # order
         block = SimpleConvBlockNd(
-            16, 32, 3, 2, order=("convws", ("groupnorm", {"num_groups": 6}), "relu")
+            in_channels=16,
+            out_channels=32,
+            kernel_size=3,
+            dimension=2,
+            order=("convws", ("groupnorm", {"num_groups": 8}), "relu"),
         )
         assert all(
             [isinstance(x, cls) for x, cls in zip(block, [ConvWS2d, nn.GroupNorm, nn.ReLU])]

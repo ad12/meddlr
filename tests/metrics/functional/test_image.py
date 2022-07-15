@@ -83,7 +83,7 @@ def test_nrmse_legacy():
 
 def test_ssim_torchmetrics_reproducibility():
     """
-    Test reproducibility between SSIM implementations in ss_recon and torchmetrics.
+    Test reproducibility between SSIM implementations in meddlr and torchmetrics.
 
     Torchmetrics only supports 2D SSIM, which is what we test here.
     """
@@ -124,7 +124,7 @@ def test_ssim_torchmetrics_reproducibility():
 
 
 def test_ssim_scikit_image_reproducibility():
-    """Test reproducibility between SSIM implementations in ss_recon and scikit-image.
+    """Test reproducibility between SSIM implementations in meddlr and scikit-image.
 
     Scikit-image supports 3D multichannel SSIM.
     We test 2D, 2D multichannel, 3D, and 3D multichannel.
