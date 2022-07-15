@@ -94,7 +94,7 @@ def default_setup(cfg, args, save_cfg: bool = True):
     auto_version = hasattr(args, "auto_version") and args.auto_version
 
     cfg.defrost()
-    cfg.format_fields()
+    cfg.format_fields(unroll=True)
     cfg.freeze()
 
     if auto_version and not eval_only:

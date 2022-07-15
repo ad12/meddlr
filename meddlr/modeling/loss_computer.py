@@ -4,9 +4,9 @@ import torch
 from fvcore.common.registry import Registry
 
 import meddlr.metrics.functional as mF
+import meddlr.ops as oF
 from meddlr.data.transforms.transform import build_normalizer
 from meddlr.ops import complex as cplx
-from meddlr.utils import transforms as T
 
 LOSS_COMPUTER_REGISTRY = Registry("LOSS_COMPUTER")  # noqa F401 isort:skip
 LOSS_COMPUTER_REGISTRY.__doc__ = """
@@ -93,7 +93,8 @@ class LossComputer(ABC):
             metrics_dict["ssim_mag_phase_loss"] = 1.0 - avg_ssim
 
         if loss_name in KSPACE_LOSSES:
-            target, output = T.fft2(target), T.fft2(output)
+            target = oF.fft2c(target, channels_last=True)
+            output = oF.fft2c(output, channels_last=True)
             abs_error = cplx.abs(target - output)
             if loss_name == "k_l1":
                 metrics_dict["loss"] = torch.mean(abs_error)
