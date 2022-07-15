@@ -7,16 +7,22 @@ from meddlr.data.data_utils import HDF5Manager, structure_patches
 
 
 class _MockHDF5Manager(HDF5Manager):
-    def __init__(self, *args, test_max_attempts=0, **kwargs):
+    def __init__(self, *args, test_max_attempts=0, err_type=OSError, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.test_max_attempts = test_max_attempts
         self.attempt_count = 0
+        self.err_type = err_type
 
     def _load_data(self, file, key=None, sl=None):
         if self.attempt_count < self.test_max_attempts:
             self.attempt_count += 1
-            raise OSError("[Errno 5] Can't read data")
+            if self.err_type == OSError:
+                raise OSError("[Errno 5] Can't read data")
+            elif self.err_type == KeyError:
+                raise KeyError("errno = 5 Can't read data")
+            else:
+                raise self.err_type("foo")
 
         return super()._load_data(file, key, sl)
 
@@ -103,7 +109,10 @@ def test_hdf5_manager_cache(tmpdir):
 @pytest.mark.parametrize("test_max_attempts", [1, 2, 3])
 @pytest.mark.parametrize("max_attempts", [1, 2])
 @pytest.mark.parametrize("cache_files", [False, True])
-def test_hdf5_manager_retry(tmpdir, test_max_attempts, max_attempts, cache_files):
+@pytest.mark.parametrize("err_type", [OSError, KeyError])
+def test_hdf5_manager_retry(
+    tmpdir, test_max_attempts: int, max_attempts: int, cache_files: bool, err_type: type
+):
     N = 1
 
     files = [tmpdir / f"file_{i:03d}.h5" for i in range(N)]
@@ -113,10 +122,14 @@ def test_hdf5_manager_retry(tmpdir, test_max_attempts, max_attempts, cache_files
             f.create_dataset("data", data=data[idx])
 
     data_manager = _MockHDF5Manager(
-        files, test_max_attempts=test_max_attempts, max_attempts=max_attempts, cache=cache_files
+        files,
+        test_max_attempts=test_max_attempts,
+        max_attempts=max_attempts,
+        cache=cache_files,
+        err_type=err_type,
     )
     if max_attempts <= test_max_attempts:
-        with pytest.raises(OSError):
+        with pytest.raises(err_type):
             data_manager.get(files[0], key="data", patch=())
     else:
         arr = data_manager.get(files[0], key="data", patch=())
