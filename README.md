@@ -3,40 +3,61 @@
 ![GitHub](https://img.shields.io/github/license/ad12/meddlr)
 [![Documentation Status](https://readthedocs.org/projects/meddlr/badge/?version=latest)](https://meddlr.readthedocs.io/en/latest/?badge=latest)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
-<!-- [![codecov](https://codecov.io/gh/ad12/meddlr/branch/main/graph/badge.svg?token=U6H83UCGFU)](https://codecov.io/gh/ad12/meddlr) -->
+[![codecov](https://codecov.io/gh/ad12/meddlr/branch/main/graph/badge.svg?token=U6H83UCGFU)](https://codecov.io/gh/ad12/meddlr)
 
 [Getting Started](GETTING_STARTED.md)
 
 Meddlr is a config-driven ML framework built to simplify medical image reconstruction and analysis problems.
 
-
-
-## Installation
-To avoid cuda-related issues, downloading `torch`, `torchvision`, and `cupy` (optional)
-must be done prior to downloading other requirements.
-
+## ⚡ QuickStart
 ```bash
-# Create and activate the environment.
-conda create -n meddlr_env python=3.7
-conda activate meddlr_env
+# Install Meddlr with basic dependencies
+pip install meddlr
 
-# Install cuda-dependant libraries. Change cuda version as needed.
-# Below we show examples for cuda-10.2
-conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
-pip install cupy-cuda102
-
-# Go to https://github.com/ad12/meddlr and fork the repository.
-
-# Install as package in virtual environment (recommended):
-git clone https://github.com/<your-github-username>/meddlr.git
-cd meddlr && python -m pip install -e '.[dev]'
-
-# For all contributors, install development packages.
-make dev
+# Install Meddlr with all dependencies (e.g. pretrained models, benchmarking)
+pip install 'meddlr[all]'
 ```
 
-## Contributing
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+> _Installing locally_: For local development, fork and clone the repo and run `pip install -e ".[alldev]"`
+
+> _Installing from main_: For most up-to-date code without a local install, run `pip install "meddlr @ git+https://github.com/ad12/meddlr@main"`
+
+Configure your paths and get going!
+```python
+import meddlr as mr
+import os
+
+# (Optional) Configure and save machine/cluster preferences.
+# This only has to be done once and will persist across sessions.
+cluster = mr.Cluster()
+cluster.set(results_dir="/path/to/save/results", data_dir="/path/to/datasets")
+cluster.save()
+# OR set these as environment variables.
+os.environ["MEDDLR_RESULTS_DIR"] = "/path/to/save/results"
+os.environ["MEDDLR_DATASETS_DIR"] = "/path/to/datasets"
+```
+
+Detailed instructions are available in [Getting Started](GETTING_STARTED.md).
+
+## 🐘 Model Zoo
+Easily serve and download pretrained models from the model zoo. A (evolving) list of pre-trained models can be found [here](MODEL_ZOO.md), on [HuggingFace 🤗](https://huggingface.co/arjundd), and in [project folders](projects).
+
+To use them, pass the URLs for the config and weights (model) files to `mr.get_model_from_zoo`:
+
+```python
+import meddlr as mr
+
+model = mr.get_model_from_zoo(
+  cfg_or_file="https://huggingface.co/arjundd/vortex-release/resolve/main/mridata_knee_3dfse/Supervised/config.yaml",
+  weights_path="https://huggingface.co/arjundd/vortex-release/resolve/main/mridata_knee_3dfse/Supervised/model.ckpt",
+)
+```
+
+## 📓 Projects
+Check out some [projects](projects) built with meddlr!
+
+## ✏️ Contributing
+Want to  add new features, fix a bug, or add your project? We'd love to include them! See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ## Acknowledgements
 Meddlr's design for rapid experimentation and benchmarking is inspired by [detectron2](https://github.com/facebookresearch/detectron2).

@@ -1,4 +1,5 @@
 import os
+import tarfile
 from copy import deepcopy
 from pathlib import Path
 
@@ -8,6 +9,8 @@ from torch import nn
 from meddlr.config import get_cfg
 from meddlr.evaluation.testing import check_consistency, find_weights, flatten_results_dict
 from meddlr.utils import env
+
+from .. import util
 
 
 def test_flatten_results_dict():
@@ -45,20 +48,34 @@ def test_check_consistency():
         ({"criterion": "psnr_scan"}, "model_0001399.pth"),
         ({"criterion": "ssim (Wang)_scan"}, "model_0000799.pth"),
         ({"criterion": "psnr_scan", "iter_limit": 800}, "model_0000399.pth"),
+        ({"criterion": "ssim_psnr"}, None),
+        ({"criterion": "foobar"}, None),
+        ({"criterion": "foobar", "operation": "max"}, None),
     ],
 )
 def test_find_weights_basic(func_kwargs, expected_file):
     """Test that we can find the best weights from a basic experiment."""
+    exp_name = "basic-cpu"
+    cache_file = util.TEMP_CACHE_DIR / f"{exp_name}.tar.gz"
+    exp_dir = util.TEMP_CACHE_DIR / exp_name
+
     pm = env.get_path_manager()
-    exp_dir = pm.get_local_path(
-        "gdrive://https://drive.google.com/drive/folders/1aKXuSmLgfZVHor6Tq47HXLXLUNIS5E6e?usp=sharing",  # noqa: E501
+    tar_path = pm.get_local_path(
+        f"https://huggingface.co/datasets/arjundd/meddlr-data/resolve/main/test-data/test-exps/{exp_name}.tar.gz",  # noqa: E501
+        cache=cache_file,
     )
+    if not os.path.isdir(exp_dir):
+        with tarfile.open(tar_path, "r:gz") as tfile:
+            tfile.extractall(util.TEMP_CACHE_DIR)
     exp_dir = Path(exp_dir)
-    assert os.path.isdir(exp_dir)
 
     cfg = get_cfg()
     cfg.merge_from_file(exp_dir / "config.yaml")
     cfg.OUTPUT_DIR = str(exp_dir)
 
-    weights, _, _ = find_weights(cfg, **func_kwargs)
-    assert os.path.basename(weights) == expected_file
+    if expected_file is None:
+        with pytest.raises(ValueError):
+            find_weights(cfg, **func_kwargs)
+    else:
+        weights, _, _ = find_weights(cfg, **func_kwargs)
+        assert os.path.basename(weights) == expected_file

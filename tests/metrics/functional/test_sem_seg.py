@@ -15,7 +15,7 @@ def _generate_3d_mock_masks(num_classes=4):
         r = (num_classes + 1) * 6
         grids = torch.meshgrid(*[torch.arange(s) for s in shape])
         x, y, z = tuple(g.float() - s // 2 for g, s in zip(grids, shape))
-        mask = torch.sqrt(x ** 2 + y ** 2 + z ** 2) <= r
+        mask = torch.sqrt(x**2 + y**2 + z**2) <= r
         y_true.append(mask)
     y_true = torch.stack(y_true, dim=0).unsqueeze(0).float()
 

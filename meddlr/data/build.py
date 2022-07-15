@@ -35,7 +35,7 @@ def get_recon_dataset_dicts(
     "lose" data, only add to the existing set.
 
     Args:
-        dataset_names (str(s)): Datasets to load. See ss_recon/data/datasets/builtin.py
+        dataset_names (str(s)): Datasets to load. See meddlr/data/datasets/builtin.py
             for built-in datasets.
         num_scans_total (int): Number of total scans to return. If ``-1``, ignored.
         num_scans_subsample (int): Number of scans to mark as only undersampled
@@ -214,7 +214,10 @@ def build_recon_train_loader(cfg, dataset_type=None):
     )
 
     train_data = _build_dataset(cfg, dataset_dicts, data_transform, dataset_type)
-    is_semi_supervised = len(train_data.get_unsupervised_idxs()) > 0
+    # TODO: make this cleaner
+    is_semi_supervised = (len(train_data.get_unsupervised_idxs()) > 0) | (
+        cfg.MODEL.META_ARCHITECTURE == "N2RModel"
+    )
     collate_fn = collate_by_supervision if is_semi_supervised else default_collate
 
     # Build sampler.

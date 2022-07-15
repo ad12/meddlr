@@ -145,7 +145,7 @@ def abs(x):
     if is_complex(x):
         return x.abs()
     else:
-        return (x ** 2).sum(dim=-1).sqrt()
+        return (x**2).sum(dim=-1).sqrt()
 
 
 def angle(x, eps=1e-11):

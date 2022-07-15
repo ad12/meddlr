@@ -8,25 +8,40 @@ import torch
 from meddlr.transforms.mixins import DeviceMixin, TransformCacheMixin
 from meddlr.transforms.param_kind import ParamKind
 from meddlr.transforms.tf_scheduler import SchedulableMixin
+from meddlr.transforms.transform import Transform
 
 __all__ = ["TransformGen"]
 
 
 class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
-    """
-    TransformGen takes an array of type float as input.
-    It creates a :class:`Transform` based on the given image, sometimes with
+    """The base class for transform generators.
+
+    A transform generator creates a :class:`Transform` based on the given image, sometimes with
     randomness. The transform can then be used to transform images
     or other data (boxes, points, annotations, etc.) associated with it.
+
     The assumption made in this class is that the image itself is sufficient to
     instantiate a transform. When this assumption is not true, you need to
     create the transforms by your own.
-    A list of `TransformGen` can be applied with :func:`apply_transform_gens`.
+
+    A list of :cls:`TransformGen` can be applied with :func:`apply_transform_gens`.
     """
 
     def __init__(
-        self, params: Dict[str, Any] = None, p: float = 0.0, param_kinds: Dict[str, Any] = None
+        self,
+        params: Dict[str, Any] = None,
+        p: float = 0.0,
+        param_kinds: Dict[str, ParamKind] = None,
     ) -> None:
+        """
+        Args:
+            params: A dictionary of parameter names to values that are used for initialization.
+                These parameters are typically schedulable, which means a scheduler
+                can be used to control the parameter.
+            p: The probability of applying this transform.
+            param_kinds: A dictionary of parameter names to kinds.
+        """
+        # Avoid circular import.
         from meddlr.transforms.tf_scheduler import TFScheduler
 
         self._params = {}
@@ -43,7 +58,7 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
         self._generator = None
         self._device = "cpu"
 
-    def _set_attributes(self, params=None, **kwargs):
+    def _set_attributes(self, params: Dict[str, Any] = None, **kwargs):
         if params is None:
             params = {}
         params.update(kwargs)
@@ -52,7 +67,8 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
                 {k: v for k, v in params.items() if k != "self" and not k.startswith("_")}
             )
 
-    def get_transform(self, input):
+    def get_transform(self, input) -> Transform:
+        """Returns a transform based on the given input."""
         raise NotImplementedError
 
     def reset(self):
@@ -137,11 +153,22 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
                 return type(val)(out)
         return val
 
-    def seed(self, value: int):
+    def seed(self, value: int) -> "TransformGen":
+        """Sets the seed for the random number generator.
+
+        Args:
+            value (int): The seed value.
+
+        Returns:
+            TransformGen: self.
+
+        Note:
+            This operation is done in-place.
+        """
         self._generator = torch.Generator(device=self._device).manual_seed(value)
         return self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Produce something like:
         "MyTransformGen(field1={self.field1}, field2={self.field2})"

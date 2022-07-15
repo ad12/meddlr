@@ -15,16 +15,23 @@ from meddlr.transforms.transform import Transform
 
 @TRANSFORM_REGISTRY.register()
 class AffineTransform(GeometricMixin, Transform):
+    """A deterministic transform that applies affine transformations."""
+
     def __init__(
         self,
         angle: float = None,
         translate: Sequence[int] = None,
-        scale=None,
+        scale: float = None,
         shear: Sequence[int] = None,
         pad_like: str = None,
         upsample_factor: float = 1,
         upsample_order: int = 1,
     ) -> None:
+        """
+        Args:
+            angle: Rotation angle in degrees.
+            translate: Translation vector.
+        """
         super().__init__()
         logger = logging.getLogger(f"{__name__}.{type(self).__name__}")
 

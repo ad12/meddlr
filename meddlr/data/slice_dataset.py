@@ -1,11 +1,12 @@
 import os
 from collections import defaultdict
-from typing import Dict, List
+from typing import Callable, Dict, List, Optional
 
 import h5py
 import numpy as np
 from torch.utils.data import Dataset
 
+from meddlr.data.data_utils import HDF5Manager
 from meddlr.data.transforms.transform import DataTransform
 
 __all__ = ["SliceData"]
@@ -39,18 +40,26 @@ class SliceData(Dataset):
     _DEFAULT_MAPPING = {"kspace": "kspace", "maps": "maps", "target": "target"}
     _REQUIRED_METADATA = ("file_name", "is_unsupervised", "fixed_acc")
 
-    def __init__(self, dataset_dicts: List[Dict], transform, keys=None, include_metadata=False):
+    def __init__(
+        self,
+        dataset_dicts: List[Dict],
+        transform: Callable,
+        keys: Optional[Dict[str, str]] = None,
+        include_metadata: bool = False,
+        max_attempts: int = 100,
+    ):
         """
         Args:
-            dataset_dicts (List[Dict]): List of dictionaries. Each dictionary
+            dataset_dicts: List of dictionaries. Each dictionary
                 contains information about a single scan in Meddlr format.
-            transform (callable): A callable object that pre-processes the
+            transform: A callable object that pre-processes the
                 raw data into appropriate form. The transform function should
                 take 'kspace', 'target', 'attributes', 'filename', and 'slice'
                 as inputs. 'target' may be null for test data.
-            include_metadata (bool, optional): If `True`, includes scan metadata:
-                - "scan_id"
-                - "slice_id"
+            keys: A dictionary mapping dataset keys to HDF5 file keys.
+                Dataset keys include 'kspace`, 'target`, and 'maps`.
+            include_metadata: Whether to include scan metadata.
+            max_attempts: Maximum number of attempts to load an example in the :class:`HDF5Manager`.
         """
         self.transform = transform
 
@@ -70,6 +79,8 @@ class SliceData(Dataset):
         if keys:
             self.mapping.update(keys)
         self._include_metadata = include_metadata
+
+        self._hdf5_manager = HDF5Manager(cache=False, max_attempts=max_attempts)
 
     def groups(self, group_by):
         _groups = defaultdict(list)
@@ -117,13 +128,15 @@ class SliceData(Dataset):
     def _load_data(self, example, idx):
         file_path = example["file_name"]
         slice_id = example["slice_id"]
-        with h5py.File(file_path, "r") as data:
-            kspace = data[self.mapping["kspace"]][slice_id]
-            target = data[self.mapping["target"]][slice_id]
+
+        h5manager = self._hdf5_manager
+        with h5manager.temp_open(file_path, "r"):
+            kspace = h5manager.get(file_path, self.mapping["kspace"], slice_id)
+            target = h5manager.get(file_path, self.mapping["target"], slice_id)
             maps = (
                 np.zeros_like(target)
                 if self.mapping["target"] == "reconstruction_rss"
-                else data[self.mapping["maps"]][slice_id]
+                else h5manager.get(file_path, self.mapping["maps"], slice_id)
             )
 
         return {"kspace": kspace, "maps": maps, "target": target}

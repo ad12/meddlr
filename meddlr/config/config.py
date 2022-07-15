@@ -68,6 +68,7 @@ class CfgNode(_CfgNode):
             new_config = upgrade_config(old_self)
             self.clear()
             self.update(new_config)
+        return self
 
         return self
 
@@ -137,6 +138,20 @@ class CfgNode(_CfgNode):
 
         setattr(cfg, keys[-1], value)
 
+    def update_recursive(self, mapping: Mapping[str, Any]):
+        """
+        Update this CfgNode and all of its children recursively.
+
+        Args:
+            mapping (dict): a dict to update this CfgNode and all of its children.
+
+        Returns:
+            CfgNode: self
+        """
+        for k, v in mapping.items():
+            self.set_recursive(k, v)
+        return self
+
     def dump(self, *args, **kwargs):  # pragma: no cover
         """
         Returns:
@@ -184,7 +199,7 @@ def get_cfg() -> CfgNode:
 def set_cfg(cfg: CfgNode) -> None:
     """Set the base config object to use.
 
-    This is useful when customizing ss_recon for different projects.
+    This is useful when customizing meddlr for different projects.
 
     Args:
         cfg (CfgNode): Set the base config.

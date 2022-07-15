@@ -1,7 +1,10 @@
 from numbers import Number
-from typing import Dict, Sequence, Union
+from typing import Callable, Dict, Iterable, List, Sequence, Union
+
+import torch
 
 import meddlr.ops.complex as cplx
+from meddlr.config.config import CfgNode
 from meddlr.data.transforms.transform import Normalizer
 from meddlr.evaluation.testing import flatten_results_dict
 from meddlr.forward import SenseModel
@@ -21,21 +24,48 @@ from meddlr.utils import env
 
 class MRIReconAugmentor(DeviceMixin):
     """
-    The class that manages the organization, generation, and application
+    An augmentation pipeline that manages the organization, generation, and application
     of deterministic and random transforms for MRI reconstruction.
+
+    This class supports both augmentations modeled after the physics of the MRI acquisition process
+    (e.g. noise, patient motion) and standard geometric image augmentations (e.g. rotation,
+    translation, etc.).
+
+    Physics-driven augmentations are treated as *invariant* transformations.
+    Image-based augmentations are treated as *equivariant* transformations.
+
+    Deterministic transformations are those which are applied in the same manner to all data.
+    These should be of the type :cls:`Transform`.
+    Random transformations are those which are applied randomly to each example or
+    batch of examples. These should be of the type :cls:`TransformGen`.
+
+    Note:
+        Certain transformations require complex-valued data.
+        Unexpected behavior may arise when using real-valued data.
+
+    Reference:
+        A Desai, B Gunel, B Ozturkler, et al.
+        VORTEX: Physics-Driven Data Augmentations Using Consistency Training
+        for Robust Accelerated MRI Reconstruction.
+        https://arxiv.org/abs/2111.02549.
     """
 
     def __init__(
         self,
-        tfms_or_gens: Sequence[Union[Transform, TransformGen]],
+        tfms_or_gens: Union[TransformList, Sequence[Union[Transform, TransformGen]]],
         aug_sensitivity_maps: bool = True,
         seed: int = None,
-        device=None,
+        device: torch.device = None,
     ) -> None:
         """
         Args:
-            aug_sensitivity_maps (bool, optional): If ``True``, apply equivariant,
-                image-based transforms to the sensivitiy map.
+            aug_sensitivity_maps: Whether to apply equivariant, image-based
+                transforms to sensitivity maps. Note, invariant, physics-based
+                augmentations are not applied to the maps.
+            seed: A random seed for the random number generator.
+            device: The device to use for the transforms.
+                If ``None``, the device will be determined automatically
+                based on the data passed in.
         """
         if isinstance(tfms_or_gens, TransformList):
             tfms_or_gens = tfms_or_gens.transforms
@@ -49,14 +79,35 @@ class MRIReconAugmentor(DeviceMixin):
 
     def __call__(
         self,
-        kspace,
-        maps=None,
-        target=None,
+        kspace: torch.Tensor,
+        maps: torch.Tensor = None,
+        target: torch.Tensor = None,
         normalizer: Normalizer = None,
-        mask=None,
-        mask_gen=None,
-        skip_tfm=False,
+        mask: Union[bool, torch.Tensor] = None,
+        mask_gen: Callable = None,
+        skip_tfm: bool = False,
     ):
+        """Apply augmentations to the set of recon data.
+
+        Args:
+            kspace: A complex-valued tensor of shape ``[batch, height, width, #coils]``.
+            maps: A complex-valued tensor of shape ``[batch, height, width, #coils, #maps]``.
+                To use single-coil data (i.e. ``#coils == 1``), maps should be a Tensor of all ones.
+            target: A complex-valued tensor of shape ``[batch, height, width, #maps]``.
+            normalizer: A normalizer to normalize the kspace data after equivariant augmentations.
+            mask: Whether to use a mask for the SENSE coil combined image.
+                If ``True``, a mask will be determined from the non-zero entries of the kspace data.
+                If a tensor, it should be a binary tensor broadcastable to the shape of the kspace
+                data.
+            mask_gen: A callable that returns undersampled kspace and the undersampling mask.
+                This undersampling will occur after image-based, equivariant transformations.
+            skip_tfm: Whether to skip applying the transformations.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], List[Transform], List[Transform]]: A tuple of
+                a dictionary of transformed data, a list of deterministic equivariant
+                transformations, and a list of deterministic invariant transformations.
+        """
         if skip_tfm:
             tfms_equivariant, tfms_invariant = [], []
         else:
@@ -80,7 +131,7 @@ class MRIReconAugmentor(DeviceMixin):
 
         use_img = normalizer is not None or len(tfms_equivariant) > 0
 
-        # Apply equivariant transforms to the SENSE reconstructed image.
+        # SENSE coil combination of the image.
         # Note, RSS reconstruction is not currently supported.
         if use_img:
             if mask is True:
@@ -88,6 +139,7 @@ class MRIReconAugmentor(DeviceMixin):
             A = SenseModel(maps, weights=mask)
             img = A(kspace, adjoint=True)
 
+        # Apply equivariant transforms to the image.
         if len(tfms_equivariant) > 0:
             img, target, maps = self._permute_data(img, target, maps, spatial_last=True)
             img, target, maps, tfms_equivariant = self._apply_te(
@@ -95,6 +147,7 @@ class MRIReconAugmentor(DeviceMixin):
             )
             img, target, maps = self._permute_data(img, target, maps, spatial_last=False)
 
+        # Get multi-coil kspace from SENSE combined image.
         if len(tfms_equivariant) > 0:
             A = SenseModel(maps)
             kspace = A(img)
@@ -115,6 +168,7 @@ class MRIReconAugmentor(DeviceMixin):
             mean, std = None, None
 
         # Apply invariant transforms.
+        # Invariant transforms only impact the input (i.e. kspace).
         if len(tfms_invariant) > 0:
             kspace = self._permute_data(kspace, spatial_last=True)
             kspace, tfms_invariant = self._apply_ti(tfms_invariant, kspace)
@@ -127,7 +181,12 @@ class MRIReconAugmentor(DeviceMixin):
 
         return out, tfms_equivariant, tfms_invariant
 
-    def schedulers(self):
+    def schedulers(self) -> List[TFScheduler]:
+        """Returns list of schedulers that are used for all transforms.
+
+        Returns:
+            List[TFScheduler]: List of schedulers.
+        """
         schedulers = [
             tfm.schedulers() for tfm in self.tfms_or_gens if isinstance(tfm, SchedulableMixin)
         ]
@@ -178,10 +237,25 @@ class MRIReconAugmentor(DeviceMixin):
                 out.append(x.permute(dims))
         return out[0] if len(out) == 1 else tuple(out)
 
-    def _apply_te(self, tfms_equivariant, image, target, maps):
+    def _apply_te(
+        self,
+        tfms_equivariant: Iterable[Union[Transform, TransformGen]],
+        image: torch.Tensor,
+        target: torch.Tensor,
+        maps: torch.Tensor,
+    ):
         """Apply equivariant transforms.
 
         These transforms affect both the input and the target.
+
+        Args:
+            tfms_equivariant: Equivariant transforms to apply.
+            image: The kspace to apply these transformations to.
+            target:
+
+        Returns:
+            Tuple[torch.Tensor, TransformList]: The transformed kspace and the list
+                of deterministic transformations that were applied.
         """
         tfms = []
         for g in tfms_equivariant:
@@ -196,10 +270,20 @@ class MRIReconAugmentor(DeviceMixin):
             tfms.append(tfm)
         return image, target, maps, TransformList(tfms, ignore_no_op=True)
 
-    def _apply_ti(self, tfms_invariant, kspace):
+    def _apply_ti(
+        self, tfms_invariant: Iterable[Union[Transform, TransformGen]], kspace: torch.Tensor
+    ):
         """Apply invariant transforms.
 
         These transforms affect only the input, not the target.
+
+        Args:
+            tfms_invariant: Invariant transforms to apply.
+            kspace: The kspace to apply these transformations to.
+
+        Returns:
+            Tuple[torch.Tensor, TransformList]: The transformed kspace and the list
+                of deterministic transformations that were applied.
         """
         tfms = []
         for g in tfms_invariant:
@@ -211,18 +295,47 @@ class MRIReconAugmentor(DeviceMixin):
         return kspace, TransformList(tfms, ignore_no_op=True)
 
     def reset(self):
+        """Reset all transformation generators."""
         for g in self.tfms_or_gens:
             if isinstance(g, TransformGen):
                 g.reset()
 
-    def to(self, device):
+    def to(self, device: torch.device) -> "MRIReconAugmentor":
+        """Moves transformations to a torch device.
+
+        Args:
+            device: The device to move to.
+
+        Returns:
+            MRIReconAugmentor: self
+
+        Note:
+            This method is called in-place. The returned object is self.
+        """
         tfms = [tfm for tfm in self.tfms_or_gens if isinstance(tfm, DeviceMixin)]
         for t in tfms:
             t.to(device)
         return self
 
     @classmethod
-    def from_cfg(cls, cfg, aug_kind, seed=None, device=None, **kwargs):
+    def from_cfg(
+        cls, cfg: CfgNode, aug_kind: str, seed: int = None, device: torch.device = None, **kwargs
+    ):
+        """Build :cls:`MRIReconAugmentor` from a config.
+
+        TODO (arjundd): Decorate __init__ with @configurable.
+
+        Args:
+            cfg: A Config node. See ``meddlr/config/defaults.py`` for a complete list of options.
+            aug_kind: The scenario in which these augmentations are being used. One of:
+                - ``'aug_train'``: Data augmentation as is done in supervised learning.
+                - ``'consistency'``: Data augmentations for consistency training (i.e. VORTEX).
+            seed: A random seed to initialize this class.
+            device: The device to use for the augmentor.
+
+        Returns:
+            MRIReconAugmentor: An augmentor.
+        """
         mri_tfm_cfg = None
         assert aug_kind in ("aug_train", "consistency")
         if aug_kind == "aug_train":

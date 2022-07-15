@@ -127,11 +127,8 @@ class N2RModel(nn.Module):
             inputs = inputs.get("supervised", inputs)
             return self.model(inputs)
 
-        vis_training = False
-        if self.training and self.vis_period > 0:
-            storage = get_event_storage()
-            if storage.iter % self.vis_period == 0:
-                vis_training = True
+        storage = get_event_storage()
+        vis_training = self.training and self.vis_period > 0 and storage.iter % self.vis_period == 0
 
         inputs_supervised = inputs.get("supervised", None)
         inputs_unsupervised = inputs.get("unsupervised", None)
@@ -166,7 +163,7 @@ class N2RModel(nn.Module):
             with torch.no_grad():
                 pred_base = self.model(inputs_consistency)
                 # Target only used for visualization purposes not for loss.
-                target = inputs_unsupervised.get("target", None)
+                target = inputs_consistency.get("target", None)
                 pred_base = pred_base["pred"]
             pred_aug = self.model(inputs_consistency_aug, return_pp=True)
             if "target" in pred_aug:

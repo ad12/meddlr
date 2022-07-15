@@ -12,7 +12,7 @@ __all__ = ["gaussian", "get_gaussian_kernel", "GaussianBlur"]
 def gaussian(window_size, sigma, normalize=True):
     def gauss_fcn(x):
         center = window_size // 2 if window_size % 2 == 1 else window_size // 2 - 0.5
-        return -((x - center) ** 2) / float(2 * sigma ** 2)
+        return -((x - center) ** 2) / float(2 * sigma**2)
 
     gauss = torch.stack([torch.exp(torch.tensor(gauss_fcn(x))) for x in range(window_size)])
     if normalize:

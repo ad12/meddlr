@@ -9,9 +9,9 @@ from meddlr.utils import env
 
 class TestFFTReproducibility(unittest.TestCase):
     """
-    Test reproducibility between ss_recon.ops and ss_recon.utils.transforms.
+    Test reproducibility between meddlr.ops and meddlr.utils.transforms.
 
-    TODO: Delete when ``ss_recon/utils/transforms.py`` is to be removed.
+    TODO: Delete when ``meddlr/utils/transforms.py`` is to be removed.
     """
 
     @unittest.skipIf(env.pt_version() >= [1, 8], "torch.fft not supported in torch>=1.8")

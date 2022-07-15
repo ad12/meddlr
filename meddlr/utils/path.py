@@ -1,3 +1,4 @@
+import io
 import logging
 import os
 import shutil
@@ -17,6 +18,20 @@ try:
     _GDOWN_AVAILABLE = True
 except ImportError:
     _GDOWN_AVAILABLE = False
+
+try:
+    import iocursor
+
+    _IOCURSOR_AVAILABLE = True
+except ImportError:
+    _IOCURSOR_AVAILABLE = False
+
+try:
+    import requests
+
+    _REQUESTS_AVAILABLE = True
+except ImportError:
+    _REQUESTS_AVAILABLE = False
 
 _REPO_DIR = os.path.join(os.path.dirname(__file__), "../..")
 _LOGGER = logging.getLogger(__name__)
@@ -238,7 +253,7 @@ class GoogleDriveHandler(GeneralPathHandler):
         self,
         path: str,
         force: bool = False,
-        cache_file: Optional[str] = None,
+        cache: Optional[str] = None,
         is_folder=None,
         **kwargs: Any,
     ) -> str:
@@ -251,13 +266,14 @@ class GoogleDriveHandler(GeneralPathHandler):
                 Must start with ``'gdrive://'``.
             force (bool, optional): If ``True``, force a download of the Github
                 repository. Defaults to ``False``.
-            cache_file (str, optional): The path to cache file to.
+            cache (str, optional): The path to cache file to.
 
         Returns:
             str: The local path to the file/directory.
         """
         if not _GDOWN_AVAILABLE:
             raise ModuleNotFoundError("`gdown` not installed. Install it via `pip install gdown`")
+
         path = str(path)
         path = path[len(self.PREFIX) :]
         self._check_kwargs(kwargs)
@@ -266,9 +282,9 @@ class GoogleDriveHandler(GeneralPathHandler):
             is_folder = "drive.google.com" in path and "folders" in path
 
         if is_folder:
-            path = self._handle_folder(path, cache_file, force)
+            path = self._handle_folder(path, cache, force)
         else:
-            path = self._handle_file(path, cache_file, force)
+            path = self._handle_file(path, cache, force)
         return path
 
     def _handle_file(self, path: str, cache: str, force: bool) -> str:
@@ -315,6 +331,138 @@ class GoogleDriveHandler(GeneralPathHandler):
         return cache
 
 
+class URLHandler(GeneralPathHandler):
+    """Handler to download, cache, and match HuggingFace files to local folder structure.
+
+    Publicly available files on HuggingFace can be downloaded using this handler.
+    By default, files are not cached.
+
+    Examples:
+
+    .. code-block:: python
+
+        handler = URLHandler()
+        >>> handler.get_local_path("wget://https://huggingface.co/arjundd/vortex-release/blob/main/mridata_knee_3dfse/Supervised/config.yaml")  # noqa: E501
+    """
+
+    # DO NOT REORDER.
+    PREFIX = ("https://", "http://")
+    LEGACY_PREFIX = ("download://",)
+
+    # Certain URLs have to be redirected to a different handler.
+    _DOMAIN_TO_PREFIX_MATCH = {"drive.google.com": "gdrive://"}
+
+    def __init__(self, path_manager: PathManager, cache_dir=None, **kwargs) -> None:
+        self.path_manager = weakref.proxy(path_manager)
+        self.cache_dir = cache_dir
+        super().__init__(**kwargs)
+
+    def _get_supported_prefixes(self):
+        return self.PREFIX + self.LEGACY_PREFIX
+
+    def _root_dir(self):
+        return None
+
+    def _check_other_prefixes(self, path: str) -> str:
+        path = str(path)
+        for domain, prefix in self._DOMAIN_TO_PREFIX_MATCH.items():
+            if domain in path:
+                path = self._parse_legacy_prefix(path)
+                return f"{prefix}{path}"
+        return False
+
+    def _parse_legacy_prefix(self, path: str) -> str:
+        """Parses legacy prefixes out of the url path."""
+        for prefix in self.LEGACY_PREFIX:
+            if path.startswith(prefix):
+                return path[len(prefix) :]
+        return path
+
+    def _open(self, path, mode="r", **kwargs):
+        if mode not in ("r", "rb"):
+            raise ValueError("Only file reading is supported.")
+
+        other_domain_path = self._check_other_prefixes(path)
+        if other_domain_path:
+            return self.path_manager.open(other_domain_path, mode=mode, **kwargs)
+
+        if not _REQUESTS_AVAILABLE:
+            raise ModuleNotFoundError(
+                "`requests` not installed. Install it via `pip install requests`"
+            )
+
+        # Buffering is not a supported argument for requests.
+        kwargs.pop("buffering", None)
+
+        path = self._parse_legacy_prefix(path)
+        r = requests.get(path, **kwargs)
+        r.raise_for_status()
+
+        if _IOCURSOR_AVAILABLE:
+            return iocursor.Cursor(r.content)
+        else:
+            return io.BytesIO(r.content)
+
+    def _get_local_path(
+        self,
+        path: str,
+        force: bool = False,
+        cache: Optional[str] = None,
+        **kwargs: Any,
+    ) -> str:
+        """Get local path to google drive file.
+
+        To force a download, set ``force=True``.
+
+        Args:
+            path (str): The relative file path in the GitHub repository.
+                Must start with ``'gdrive://'``.
+            force (bool, optional): If ``True``, force a download of the Github
+                repository. Defaults to ``False``.
+            cache (str, optional): The path to cache file to.
+
+        Returns:
+            str: The local path to the file/directory.
+        """
+        other_domain_path = self._check_other_prefixes(path)
+        if other_domain_path:
+            return self.path_manager.get_local_path(
+                other_domain_path, force=force, cache=cache, **kwargs
+            )
+
+        if not _REQUESTS_AVAILABLE:
+            raise ModuleNotFoundError(
+                "`requests` not installed. Install it via `pip install requests`"
+            )
+
+        path = self._parse_legacy_prefix(str(path))
+        self._check_kwargs(kwargs)
+
+        if cache is None:
+            cache = os.path.join(
+                env.get_path_manager().get_local_path(Cluster.working_cluster().cache_dir), "url"
+            )
+            base = path.split("://", 1)[1]
+            out_file = os.path.join(cache, base)
+        elif str(cache).endswith(os.pathsep) or os.path.isdir(path):
+            out_file = os.path.join(cache, os.path.basename(path))
+        else:
+            out_file = cache
+
+        # TODO: Make caching smarter based on time of file creation and update.
+        if force or not os.path.isfile(out_file):
+            logger = logging.getLogger(__name__)
+            logger.info("Downloading file from {}...".format(path))
+            r = requests.get(path)
+            r.raise_for_status()
+            os.makedirs(os.path.dirname(out_file), exist_ok=True)
+            with open(out_file, "wb") as f:
+                f.write(r.content)
+            logger.info("File cached to {}".format(out_file))
+
+        return out_file
+
+
 class DownloadHandler(GeneralPathHandler):
     """Handler to download files from a URL.
 
@@ -355,6 +503,8 @@ class DownloadHandler(GeneralPathHandler):
 
         if "drive.google.com" in path:
             return self.path_manager.get_local_path(f"gdrive://{path}", **kwargs)
+        elif "huggingface.co" in path:
+            return self.path_manager.get_local_path(path, **kwargs)
         else:
             raise ValueError(f"Download not supported for url {path}")
 
@@ -378,7 +528,7 @@ class ForceDownloadHandler(DownloadHandler):
     ) -> str:
         path = f"{DownloadHandler.PREFIX}{path[len(self.PREFIX) :]}"
         kwargs.pop("force", None)
-        return super()._get_local_path(path, force=True, **kwargs)
+        return self.path_manager.get_local_path(path, force=True, **kwargs)
 
 
 def download_github_repository(url, cache_path, branch_or_tag="main", force=False) -> str:
@@ -427,5 +577,5 @@ _path_manager.register_handler(CacheHandler())
 _path_manager.register_handler(GithubHandler(env.get_github_url(), default_branch_or_tag=None))
 _path_manager.register_handler(AnnotationsHandler())
 _path_manager.register_handler(GoogleDriveHandler())
-_path_manager.register_handler(DownloadHandler(_path_manager))
 _path_manager.register_handler(ForceDownloadHandler(_path_manager))
+_path_manager.register_handler(URLHandler(_path_manager))

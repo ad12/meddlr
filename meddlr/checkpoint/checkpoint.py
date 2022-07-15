@@ -13,7 +13,7 @@ class Checkpointer(_Checkpointer):
 
     To use the full functionality of this class, all saved models should follow
     the convention that wrapped models begin with the prefix ``'model.'``.
-    See :cls:`ss_recon.modeling.meta_arch.GeneralizedUnrolledCNN`.
+    See :cls:`meddlr.modeling.meta_arch.GeneralizedUnrolledCNN`.
     """
 
     def __init__(self, model, save_dir="", *, save_to_disk=None, **checkpointables):

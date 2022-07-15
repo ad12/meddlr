@@ -1,10 +1,14 @@
 import os
+import time
+
+import yaml
 
 from meddlr.utils import env
 from meddlr.utils.path import (
     ForceDownloadHandler,
     GithubHandler,
     GoogleDriveHandler,
+    URLHandler,
     download_github_repository,
 )
 
@@ -36,29 +40,19 @@ def test_github_handler(tmpdir):
 
 def test_gdrive_handler(tmpdir):
     download_dir = tmpdir.mkdir("download")
-    gdrive_id = "1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx"
 
     handler = GoogleDriveHandler(cache_dir=tmpdir)
 
-    cache_file = download_dir / "sample-download.zip"
-    path = handler._get_local_path(
-        f"gdrive://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
-        cache_file=cache_file,
-        force=True,
-    )
+    # File
+    url = "gdrive://https://drive.google.com/file/d/1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx/view?usp=sharing"  # noqa: E501
+    cache = download_dir / "hello-world.txt"
+    path = handler._get_local_path(url, cache=cache)
     assert os.path.exists(path)
     mtime = os.path.getmtime(path)
 
-    path = handler._get_local_path(
-        f"gdrive://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
-        cache_file=cache_file,
-    )
+    path = handler._get_local_path(url, cache=cache)
     mtime2 = os.path.getmtime(path)
     assert mtime2 == mtime
-
-    cache_file = download_dir / "sample-download2.zip"
-    path = handler._get_local_path(f"gdrive://{gdrive_id}", cache_file=cache_file)
-    assert os.path.exists(path)
 
     # Folder
     folder_url = "gdrive://https://drive.google.com/drive/folders/1UosSskt3H61wcIGUNehhsYoHNBmk-bGi?usp=sharing"  # noqa: E501
@@ -70,31 +64,61 @@ def test_gdrive_handler(tmpdir):
     mtime2 = os.path.getmtime(path)
     assert mtime2 == mtime
 
-    cache_file = download_dir / "sample-dir"
-    path = handler._get_local_path(folder_url, cache_file=cache_file)
-    assert os.path.isdir(cache_file)
+    cache = download_dir / "sample-dir"
+    path = handler._get_local_path(folder_url, cache=cache)
+    assert os.path.isdir(cache)
 
 
 def test_force_download(tmpdir):
     download_dir = tmpdir.mkdir("download")
-    gdrive_id = "1fWgHNUljPrJj-97YPbbrqugSPnS2zXnx"
-    cache_file = download_dir / "sample-download.zip"
+    url = "force-download://https://huggingface.co/datasets/arjundd/meddlr-data/resolve/main/test-data/test-exps/basic-cpu.tar.gz"  # noqa: E501
+    cache = download_dir / "sample-download.zip"
 
     path_manager = env.get_path_manager("meddlr_test")
-    path_manager.register_handler(GoogleDriveHandler())
+    path_manager.register_handler(URLHandler(path_manager))
     handler = ForceDownloadHandler(path_manager)
 
-    path = handler._get_local_path(
-        f"force-download://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
-        cache_file=cache_file,
-    )
+    path = handler._get_local_path(url, cache=cache)
     assert os.path.exists(path)
     mtime = os.path.getmtime(path)
+    time.sleep(0.1)
 
-    path = handler._get_local_path(
-        f"force-download://https://drive.google.com/file/d/{gdrive_id}/view?usp=sharing",
-        cache_file=cache_file,
-    )
+    path = handler._get_local_path(url, cache=cache)
     mtime2 = os.path.getmtime(path)
 
     assert mtime2 != mtime
+
+
+def test_url_local_path(tmpdir):
+    download_dir = tmpdir.mkdir("download")
+    url = "https://huggingface.co/arjundd/vortex-release/raw/main/fastmri_brain_mini/Aug_Motion/config.yaml"  # noqa: E501
+
+    path_manager = env.get_path_manager("meddlr_test")
+    handler = URLHandler(path_manager, cache_dir=tmpdir)
+
+    cache = download_dir / "config.yaml"
+    path = handler._get_local_path(url, cache=cache, force=True)
+    assert os.path.exists(path)
+    mtime = os.path.getmtime(path)
+
+    path = handler._get_local_path(url, cache=cache)
+    mtime2 = os.path.getmtime(path)
+    assert mtime2 == mtime
+
+
+def test_url_open(tmpdir):
+    download_dir = tmpdir.mkdir("download")
+    url = "https://huggingface.co/arjundd/vortex-release/raw/main/fastmri_brain_mini/Aug_Motion/config.yaml"  # noqa: E501
+
+    path_manager = env.get_path_manager("meddlr_test")
+    handler = URLHandler(path_manager, cache_dir=tmpdir)
+
+    cache = download_dir / "config.yaml"
+    path = handler._get_local_path(url, cache=cache, force=True)
+    with open(path) as f:
+        expected = yaml.safe_load(f)
+
+    with handler._open(url) as f:
+        out = yaml.safe_load(f)
+
+    assert out == expected
