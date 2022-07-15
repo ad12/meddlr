@@ -64,27 +64,31 @@ class ConvBlock(nn.Module):
         conv_idx = order.index([x for x in order if "conv" in x][0])
         conv_after_norm = "norm" in order and conv_idx > order.index("norm")
         norm_channels = in_chans if conv_after_norm else out_chans
-        normalizations = nn.ModuleDict(
-            [
-                ["none", nn.Identity()],
-                ["instance", nn.InstanceNorm2d(norm_channels, affine=norm_affine)],
-                ["batch", nn.BatchNorm2d(norm_channels, affine=norm_affine)],
-                ["group", nn.GroupNorm(norm_channels // 8, norm_channels, affine=norm_affine)],
-            ]
+        normalizations = dict(
+            none=lambda: nn.Identity(),
+            instance=lambda: nn.InstanceNorm2d(norm_channels, affine=norm_affine),
+            batch=lambda: nn.BatchNorm2d(norm_channels, affine=norm_affine),
+            group=lambda: nn.GroupNorm(norm_channels // 8, norm_channels, affine=norm_affine),
         )
-        activations = nn.ModuleDict([["relu", nn.ReLU()], ["leaky_relu", nn.LeakyReLU()]])
-        dropout = nn.Dropout2d(p=drop_prob)
-        convolution = nn.Conv2d(in_chans, out_chans, kernel_size=kernel_size, padding=padding)
-        convolution_ws = ConvWS2d(in_chans, out_chans, kernel_size=kernel_size, padding=padding)
+        activations = {"relu": lambda: nn.ReLU(), "leaky_relu": lambda: nn.LeakyReLU()}
+
+        if norm_type not in normalizations:
+            raise ValueError(
+                f"Unknown norm_type '{norm_type}'. Must be one of {normalizations.keys()}"
+            )
 
         layer_dict = {
-            "conv": convolution,
-            "conv+ws": convolution_ws,
-            "drop": dropout,
+            "conv": lambda: nn.Conv2d(
+                in_chans, out_chans, kernel_size=kernel_size, padding=padding
+            ),
+            "conv+ws": lambda: ConvWS2d(
+                in_chans, out_chans, kernel_size=kernel_size, padding=padding
+            ),
+            "drop": lambda: nn.Dropout2d(p=drop_prob),
             "act": activations[act_type],
-            "norm": normalizations[norm_type] if norm_type in normalizations else nn.Identity(),
+            "norm": normalizations[norm_type],
         }
-        layers = [layer_dict[lyr] for lyr in order]
+        layers = [layer_dict[lyr]() for lyr in order]
 
         # Define forward pass
         self.layers = nn.Sequential(*layers)
