@@ -98,6 +98,24 @@ class Transform(DeviceMixin):
         )
         setattr(cls, "apply_" + data_type, func)
 
+    def __call__(self, *args, data_type: str, **kwargs):
+        """Alias for calling the apply method on the appropriate data type.
+
+        Args:
+            data_type (str): the name of the data type (e.g., image, kspace, maps, etc.).
+
+        Returns:
+            The output of the corresponding apply method.
+
+        Examples:
+            .. code-block:: python
+
+                # These two are equivalent
+                out1 = self.apply_image(img)
+                out2 = self(img, data_type="image")
+        """
+        return getattr(self, f"apply_{data_type}")(*args, **kwargs)
+
     def apply_image(self, img: torch.Tensor):
         """
         Apply the transform on an image.

@@ -26,6 +26,12 @@ class VortexModel(nn.Module):
         3. **Spatial augmentations**: Consistency with spatial augmentations
            are also supported. These augmentation are also used to transform
            the target image.
+
+    Reference:
+        A Desai, B Gunel, B Ozturkler, et al.
+        VORTEX: Physics-Driven Data Augmentations Using Consistency Training
+        for Robust Accelerated MRI Reconstruction.
+        https://arxiv.org/abs/2111.02549.
     """
 
     _version = 1
