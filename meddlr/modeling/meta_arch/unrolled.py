@@ -1,11 +1,12 @@
 from numbers import Number
-from typing import Sequence, Union
+from typing import Any, Dict, Sequence, Union
 
 import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
 import meddlr.ops.complex as cplx
+from meddlr.config import CfgNode
 from meddlr.config.config import configurable
 from meddlr.forward.mri import SenseModel
 from meddlr.utils.events import get_event_storage
@@ -19,15 +20,12 @@ __all__ = ["GeneralizedUnrolledCNN"]
 
 @META_ARCH_REGISTRY.register()
 class GeneralizedUnrolledCNN(nn.Module):
-    """PyTorch implementation of Unrolled Compressed Sensing.
+    """Unrolled compressed sensing model.
 
-    This file contains an implementation of the Unrolled Compressed Sensing
-    framework by CM Sandino, JY Cheng, et al. See paper below for more details.
-
-    It is also based heavily on the codebase below:
+    This implementation is adapted from:
     https://github.com/MRSRL/dl-cs
 
-    Implementation is based on:
+    Reference:
         CM Sandino, JY Cheng, et al. "Compressed Sensing: From Research to
         Clinical Practice with Deep Neural Networks" IEEE Signal Processing
         Magazine, 2020.
@@ -43,6 +41,19 @@ class GeneralizedUnrolledCNN(nn.Module):
         vis_period: int = -1,
         num_grad_steps: int = None,
     ):
+        """
+        Args:
+            blocks: A sequence of blocks
+            step_sizes: Step size for data consistency prior to each block.
+                If a single float is given, the same step size is used for all blocks.
+            fix_step_size: Whether to fix the step size to a given value --
+                i.e. set to ``True`` to make the step size non-trainable.
+            num_emaps: Number of sensitivity maps used to estimate the image.
+            vis_period: Number of steps between logging visualizations.
+            num_grad_steps: Number of unrolled steps in the network.
+                This is deprecated - the number of steps will be determined
+                from the length of ``blocks``.
+        """
         super().__init__()
 
         self.resnets = blocks
@@ -77,12 +88,23 @@ class GeneralizedUnrolledCNN(nn.Module):
         self.num_emaps = num_emaps
         self.vis_period = vis_period
 
-    def visualize_training(self, kspace, zfs, targets, preds):
-        """A function used to visualize reconstructions.
+    def visualize_training(
+        self, kspace: torch.Tensor, zfs: torch.Tensor, targets: torch.Tensor, preds: torch.Tensor
+    ):
+        """Visualize kspace data and reconstructions.
+
+        Dimension ``(,2)`` indicates optional dimension for real-valued view of complex tensors.
+        For example, a real-valued tensor of shape BxHxWx2 will be interpreted as
+        a complex-valued tensor of shape BxHxW.
 
         Args:
-            targets: NxHxWx2 tensors of target images.
-            preds: NxHxWx2 tensors of predictions.
+            kspace: The complex-valued kspace. Shape: [batch, height, width, #coils, (,2)].
+            zfs: The complex-valued zero-filled images.
+                Shape: [batch, height, width, (,2)].
+            targets: The complex-valued target (reference) images.
+                Shape: [batch, height, width, (,2)].
+            preds: The complex-valued predicted images.
+                Shape: [batch, height, width, (,2)].
         """
         storage = get_event_storage()
 
@@ -108,16 +130,24 @@ class GeneralizedUnrolledCNN(nn.Module):
                 data = tv_utils.make_grid(data, nrow=1, padding=1, normalize=True, scale_each=True)
                 storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
 
-    def forward(self, inputs, return_pp=False, vis_training=False):
-        """
-        TODO: condense into list of dataset dicts.
+    def forward(self, inputs: Dict[str, Any], return_pp: bool = False, vis_training: bool = False):
+        """Reconstructs the image from the kspace.
+
+        Dimension ``(,2)`` indicates optional dimension for real-valued view of complex tensors.
+        For example, a real-valued tensor of shape BxHxWx2 will be interpreted as
+        a complex-valued tensor of shape BxHxW.
+
+        ``#maps`` refers to the number of sensitivity maps used to estimate the image
+        (i.e. ``self.num_emaps``).
+
         Args:
             inputs: Standard meddlr module input dictionary
-                * "kspace": Kspace. If fully sampled, and want to simulate
-                    undersampled kspace, provide "mask" argument.
-                * "maps": Sensitivity maps
-                * "target" (optional): Target image (typically fully sampled).
-                * "mask" (optional): Undersampling mask to apply.
+                * "kspace": The kspace (typically undersampled).
+                  Shape: [batch, height, width, #coils, (,2)].
+                * "maps": The sensitivity maps used for SENSE coil combination.
+                  Shape: [batch, height, width, #coils, #maps, (,2)].
+                * "target" (optional): Target (reference) image.
+                  Shape: [batch, height, width, #maps, (,2)].
                 * "signal_model" (optional): The signal model. If provided,
                     "maps" will not be used to estimate the signal model.
                     Use with caution.
@@ -217,11 +247,15 @@ class GeneralizedUnrolledCNN(nn.Module):
         return output_dict
 
     @classmethod
-    def from_config(cls, cfg):
-        """
-        Note:
-            Currently, only resblocks can be constructed from the config.
-            Step sizes are currently fixed at initialization to -2.0.
+    def from_config(cls, cfg: CfgNode, **kwargs) -> "GeneralizedUnrolledCNN":
+        """Build :cls:`GeneralizedUnrolledCNN` from a config.
+
+        Args:
+            cfg: The config.
+            kwargs: Keyword arguments to override config-specified parameters.
+
+        Returns:
+            Dict[str, Any]: The parameters to pass to the constructor.
         """
         # Extract network parameters
         num_grad_steps = cfg.MODEL.UNROLLED.NUM_UNROLLED_STEPS
@@ -252,7 +286,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         if len(step_sizes) == 1:
             step_sizes = step_sizes[0]
 
-        return {
+        out = {
             "blocks": blocks,
             "step_sizes": step_sizes,
             "fix_step_size": cfg.MODEL.UNROLLED.FIX_STEP_SIZE,
@@ -260,9 +294,11 @@ class GeneralizedUnrolledCNN(nn.Module):
             "vis_period": cfg.VIS_PERIOD,
             "num_grad_steps": num_grad_steps if share_weights else None,
         }
+        out.update(kwargs)
+        return out
 
 
-def _build_resblock(cfg):
+def _build_resblock(cfg: CfgNode) -> ResNet:
     """Build the resblock for unrolled network.
 
     Args:
