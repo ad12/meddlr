@@ -1,3 +1,6 @@
+import pathlib
+from typing import List
+
 import h5py
 import numpy as np
 import pytest
@@ -28,6 +31,16 @@ class _MockHDF5Manager(HDF5Manager):
 
     def reset(self):
         self.attempt_count = 0
+
+
+def _generate_dummy_hdf5_files(dirpath, num: int = 1) -> List[pathlib.Path]:
+    dirpath = pathlib.Path(dirpath)
+    files = [dirpath / f"file_{i:03d}.h5" for i in range(num)]
+    data = [np.random.randn(10, 10) for _ in range(num)]
+    for idx, fpath in enumerate(files):
+        with h5py.File(fpath, "w") as f:
+            f.create_dataset("data", data=data[idx])
+    return files
 
 
 def test_structuring_patches():
@@ -113,13 +126,7 @@ def test_hdf5_manager_cache(tmpdir):
 def test_hdf5_manager_retry(
     tmpdir, test_max_attempts: int, max_attempts: int, cache_files: bool, err_type: type
 ):
-    N = 1
-
-    files = [tmpdir / f"file_{i:03d}.h5" for i in range(N)]
-    data = [np.random.randn(10, 10) for _ in range(N)]
-    for idx, fpath in enumerate(files):
-        with h5py.File(fpath, "w") as f:
-            f.create_dataset("data", data=data[idx])
+    files = _generate_dummy_hdf5_files(tmpdir, num=1)
 
     data_manager = _MockHDF5Manager(
         files,
@@ -135,3 +142,16 @@ def test_hdf5_manager_retry(
         arr = data_manager.get(files[0], key="data", patch=())
         assert data_manager.max_attempts > 0
         assert arr.shape == (10, 10)
+
+
+def test_hdf5_manager_temp_open(tmpdir):
+    files = _generate_dummy_hdf5_files(tmpdir, num=1)
+    fpath = files[0]
+    data_manager = _MockHDF5Manager(files)
+
+    with h5py.File(fpath, "r") as f:
+        expected = f["data"][()]
+    with data_manager.temp_open(fpath, "r") as f:
+        data = data_manager.get(fpath, "data", ())
+
+    np.testing.assert_allclose(data, expected)
