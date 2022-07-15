@@ -391,6 +391,9 @@ class URLHandler(GeneralPathHandler):
                 "`requests` not installed. Install it via `pip install requests`"
             )
 
+        # Buffering is not a supported argument for requests.
+        kwargs.pop("buffering", None)
+
         path = self._parse_legacy_prefix(path)
         r = requests.get(path, **kwargs)
         r.raise_for_status()

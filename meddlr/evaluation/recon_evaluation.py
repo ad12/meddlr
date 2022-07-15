@@ -401,7 +401,13 @@ class ReconEvaluator(ScanEvaluator):
             ex_id = [ex_id]
         output, target = cplx.channel_first(output), cplx.channel_first(target)
         metrics(preds=output, targets=target, ids=ex_id)
-        return metrics.to_dict()
+        # TODO (arjundd): Add support for multiple metrics
+        # Hacky way to return an empty dict when metrics are not supported.
+        # TODO (arjundd): Handle metric-less evaluation appropriately
+        try:
+            return metrics.to_dict()
+        except ValueError:  # pragma: no cover
+            return {}
 
     def _append_memory(self, key):
         if not torch.cuda.is_available():

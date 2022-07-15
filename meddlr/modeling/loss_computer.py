@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import torch
 from fvcore.common.registry import Registry
 
+import meddlr.metrics.functional as mF
 from meddlr.data.transforms.transform import build_normalizer
 from meddlr.ops import complex as cplx
 from meddlr.utils import transforms as T
@@ -16,7 +17,17 @@ and expected to return a LossComputer object.
 """
 
 EPS = 1e-11
-IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse", "mag_l1", "perp_loss"]
+IMAGE_LOSSES = [
+    "l1",
+    "l2",
+    "psnr",
+    "nrmse",
+    "mag_l1",
+    "perp_loss",
+    "ssim_loss",
+    "ssim_phase_loss",
+    "ssim_mag_phase_loss",
+]
 KSPACE_LOSSES = ["k_l1", "k_l1_normalized", "k_l1_l2_sum_normalized"]
 
 
@@ -59,10 +70,27 @@ class LossComputer(ABC):
             "psnr": psnr.mean(),
             "nrmse": nrmse.mean(),
             "mag_l1": mag_l1,
+            "ssim_wang": mF.ssim(
+                cplx.channels_first(output).contiguous(),
+                cplx.channels_first(target).contiguous(),
+                method="wang",
+            ).mean(),
+            "ssim_wang_phase": mF.ssim(
+                cplx.channels_first(output).contiguous(),
+                cplx.channels_first(target).contiguous(),
+                method="wang",
+                im_type="phase",
+            ).mean(),
         }
-
         if loss_name == "perp_loss":
             metrics_dict.update(perp_loss(output, target))
+        if loss_name == "ssim_loss":
+            metrics_dict["ssim_loss"] = 1.0 - metrics_dict["ssim_wang"]
+        if loss_name == "ssim_phase_loss":
+            metrics_dict["ssim_phase_loss"] = 1.0 - metrics_dict["ssim_wang_phase"]
+        if loss_name == "ssim_mag_phase_loss":
+            avg_ssim = (metrics_dict["ssim_wang"] + metrics_dict["ssim_wang_phase"]) / 2
+            metrics_dict["ssim_mag_phase_loss"] = 1.0 - avg_ssim
 
         if loss_name in KSPACE_LOSSES:
             target, output = T.fft2(target), T.fft2(output)
