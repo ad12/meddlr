@@ -12,6 +12,41 @@ Because these metrics are based on the torchmetrics interface, they are compatib
 metrics are used.
 
 
+Base
+^^^^
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   meddlr.metrics.Metric
+   meddlr.metrics.MetricCollection
+
+
+Image Metrics
+^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   meddlr.metrics.MSE
+   meddlr.metrics.NRMSE
+   meddlr.metrics.PSNR
+   meddlr.metrics.RMSE
+   meddlr.metrics.SSIM
+
+Segmentation Metrics
+^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   meddlr.metrics.ASSD
+   meddlr.metrics.CV
+   meddlr.metrics.DSC
+   meddlr.metrics.VOE
+
 Functional
 ^^^^^^^^^^
 All metrics in Meddlr are also available as functions in the :mod:`meddlr.metrics.functional` module.
