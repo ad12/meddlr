@@ -11,14 +11,30 @@ from meddlr.modeling.meta_arch import META_ARCH_REGISTRY
 
 @META_ARCH_REGISTRY.register()
 class GeneralizedUNet(nn.Module):
+    """A general implementation of the U-Net architecture.
+
+    The output block does not
+
+    Attributes:
+        down_blocks (nn.ModuleDict): A dictionary of down-sampling blocks.
+        pool_blocks (nn.ModuleDict): A dictionary of pooling blocks.
+        up_blocks (nn.ModuleDict): A dictionary of up-sampling blocks.
+        output_block (nn.Module): The output block.
+
+    Reference:
+        Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: Convolutional networks
+        for biomedical image segmentation. In International Conference on Medical image
+        computing and computer-assisted intervention, pages 234–241. Springer, 2015.
+    """
+
     _VERSION = 1
 
     @configurable
     def __init__(
         self,
-        dimensions,
-        in_channels,
-        out_channels,
+        dimensions: int,
+        in_channels: int,
+        out_channels: int,
         channels: Sequence[int],
         strides: Sequence[int] = 1,
         kernel_size: Union[Sequence[int], int] = 3,
@@ -26,6 +42,22 @@ class GeneralizedUNet(nn.Module):
         dropout: float = 0.0,
         block_order: Tuple[str, ...] = ("conv", "relu", "conv", "relu", "batchnorm", "dropout"),
     ):
+        """
+        Args:
+            dimensions (int): The number of spatial dimensions.
+            in_channels (int): The number of input channels.
+            out_channels (int): The number of output channels.
+            channels (Sequence[int]): The number of channels in each conv block.
+                The length of this sequence determines the depth of the model.
+            strides (Sequence[int], optional): The stride of each convolutions in each block.
+            kernel_size (Union[Sequence[int], int], optional): The kernel size of each convolution.
+                If a sequence is provided, the length must be equal to the depth of the model.
+            up_kernel_size (Union[Sequence[int], int], optional): The kernel size of
+                each up-sampling convolution. Defaults to `kernel_size`.
+            dropout (float, optional): The dropout probability.
+            block_order (Tuple[str, ...], optional): The order of layers in each
+                convolutional block.
+        """
         super().__init__()
 
         channels = list(channels)
@@ -105,15 +137,22 @@ class GeneralizedUNet(nn.Module):
         )
 
     @property
-    def bottleneck(self):
-        """Easy access property for bottleneck layer."""
+    def bottleneck(self) -> nn.Module:
+        """The bottleneck block.
+
+        This block is the last downsampling block.
+        """
         return self.down_blocks[list(self.down_blocks.keys())[-1]]
 
     @property
     def depth(self):
+        """The depth of the model.
+
+        Equivalent to number of convolutional blocks.
+        """
         return len(self.down_blocks)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         down_blocks = self.down_blocks
         pool_blocks = self.pool_blocks
         up_blocks = self.up_blocks

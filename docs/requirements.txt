@@ -21,5 +21,11 @@ recommonmark
 sphinx_bootstrap_theme
 sphinxcontrib-bibtex>=2.0.0
 m2r2
-nbsphinx
 docutils<0.18
+sphinx_autodoc_typehints
+nbsphinx
+toml
+pydata_sphinx_theme
+ipython
+jupyter-sphinx
+sphinx-panels
