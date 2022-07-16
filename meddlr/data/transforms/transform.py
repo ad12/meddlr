@@ -384,6 +384,7 @@ class MotionDataTransform:
         is_test: bool = False,
         add_noise: bool = False,
         add_motion: bool = False,
+        two_dimensional: bool = True,
         angle: Optional[Tuple[float, float]] = (-5., 5.),
         translation: Optional[Tuple[float, float]] = (0.1, 0.1),
         trajectory: str = "blocked",
@@ -410,6 +411,7 @@ class MotionDataTransform:
         # These will be used for the motion corruption.
         self.angle = angle
         self.translation = translation
+        self.two_dimensional = two_dimensional
 
         if nshots is None:
             raise ValueError("The paramter nshots must be set to some integer value.")
@@ -461,12 +463,6 @@ class MotionDataTransform:
         if is_fixed and not acceleration:
             raise ValueError("Accelerations must be specified for undersampled scans")
 
-        # If augmentor is defined, use it to do computation.
-        if self.augmentor is not None:
-            return self._call_augmentor(
-                kspace, maps, target, fname, slice_id, is_fixed, acceleration
-            )
-
         # Convert everything from numpy arrays to tensors
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
         maps = cplx.to_tensor(maps).unsqueeze(0)
@@ -480,7 +476,14 @@ class MotionDataTransform:
 
         # TODO: Add other transforms here.
 
-        seed = sum(tuple(map(ord, fname))) if self._is_test else None  # noqa
+        # If 2D MRI, then each slice will have different motion - seed is some
+        # combination of the file name and the slice id (+).
+        # If 3D MRI, then each slice should have the same motion - seed is 
+        # determined only by the file name.  
+        if self.two_dimensional:
+            seed = sum(tuple(map(ord, fname))) + slice if self._is_test else None  # noqa
+        else:
+            seed = sum(tuple(map(ord, fname))) if self._is_test else None  # noqa
 
         # Zero-filled Sense Recon.
         if torch.is_complex(target_init):

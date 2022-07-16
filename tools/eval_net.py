@@ -188,6 +188,7 @@ def update_metrics(metrics_new: pd.DataFrame, metrics_old: pd.DataFrame, on: Seq
 def eval(cfg, args, model, weights_basename, criterion, best_value):
     zero_filled = args.zero_filled
 
+    two_dimensional = args.two_dimensional != "false"
     angle = args.angle
     translation = args.translation
     nshots = args.nshots
@@ -308,6 +309,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             as_test=True,
             add_noise=noise_level > 0,
             add_motion=include_motion != "false",
+            two_dimensional=two_dimensional,
             angle=angle,
             translation=translation,
             nshots=nshots,
@@ -497,6 +499,13 @@ if __name__ == "__main__":
         help=(
             "Chooses between interleaved or blocked shots for motion " "corruption of the dataset"
         ),
+    )
+
+    parser.add_argument(
+        "--two-dimensional",
+        default="true",
+        choice=("true", "false"),
+        help=("If true, MRI is 2D. Otherwise, MRI is 3D.")
     )
 
     # End of Arguments for 2D Motion Corruption of the Dataset
