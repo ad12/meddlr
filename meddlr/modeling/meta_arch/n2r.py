@@ -7,6 +7,7 @@ from torch import nn
 from meddlr.config.config import configurable
 from meddlr.data.transforms.noise import NoiseModel
 from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
+from meddlr.modeling.meta_arch.ssdu import SSDUModel
 from meddlr.ops import complex as cplx
 from meddlr.utils.events import get_event_storage
 
@@ -33,10 +34,10 @@ class N2RModel(nn.Module):
     ):
         """
         Args:
-            model (nn.Module): The base model.
-            noiser (NoiseModel): The additive noise module.
-            use_supervised_consistency (bool, optional): If ``True``, use consistency
-                with supervised examples too.
+            model: The base model.
+            noiser: The additive noise module.
+            use_supervised_consistency: Whether to apply noise-based consistency
+                to supervised examples.
             vis_period (int, optional): The period over which to visualize images.
                 If ``<=0``, it is ignored. Note if the ``model`` has a ``vis_period``
                 attribute, it will be overridden so that this class handles visualization.
@@ -44,12 +45,18 @@ class N2RModel(nn.Module):
         super().__init__()
         self.model = model
 
-        # Visualization done by this model
-        if hasattr(self.model, "vis_period") and vis_period > 0:
+        # Visualization done by this model.
+        # If sub-model is SSDU, we allow SSDU to log images
+        # for the recon pipeline.
+        if (
+            not isinstance(self.model, SSDUModel)
+            and hasattr(self.model, "vis_period")
+            and vis_period > 0
+        ):
             self.model.vis_period = -1
         self.vis_period = vis_period
 
-        # Keep gradient for base images in transform.
+        # Whether to keep gradient for base images in transform.
         self.use_base_grad = False
         # Use supervised examples for consistency
         self.use_supervised_consistency = use_supervised_consistency
@@ -175,11 +182,16 @@ class N2RModel(nn.Module):
         inputs_unsupervised = inputs.get("unsupervised", None)
         if inputs_supervised is None and inputs_unsupervised is None:
             raise ValueError("Examples not formatted in the proper way")
+        # Whether to use self-supervised via data undersampling (SSDU) for reconstruction.
+        is_ssdu_enabled = isinstance(self.model, SSDUModel)
         output_dict = {}
 
         # Reconstruction (supervised).
-        # TODO: Add support for SSDU here.
-        if inputs_supervised is not None:
+        if is_ssdu_enabled:
+            output_dict["recon"] = self.model(
+                inputs,
+            )
+        elif inputs_supervised is not None:
             output_dict["recon"] = self.model(
                 inputs_supervised, return_pp=True, vis_training=vis_training
             )
@@ -187,18 +199,20 @@ class N2RModel(nn.Module):
         # Consistency (unsupervised).
         # kspace_aug = kspace + U \sigma \mathcal{N}
         # Loss = L(f(kspace_aug, \theta), f(kspace, \theta))
+        # If the model is an SSDU model, unpack it to use the internal model for consistency.
+        model = self.model.model if is_ssdu_enabled else self.model
         consistency_inputs = self._format_consistency_inputs(inputs_supervised, inputs_unsupervised)
         if len(consistency_inputs) > 0:
             inputs_consistency = consistency_inputs["base"]
             inputs_consistency_aug = consistency_inputs["aug"]
 
             with torch.no_grad():
-                pred_base = self.model(inputs_consistency)
+                pred_base = model(inputs_consistency)
                 # Target only used for visualization purposes not for loss.
                 target = inputs_consistency.get("target", None)
                 pred_base = pred_base["pred"]
 
-            pred_aug: Dict[str, torch.Tensor] = self.model(inputs_consistency_aug, return_pp=True)
+            pred_aug: Dict[str, torch.Tensor] = model(inputs_consistency_aug, return_pp=True)
 
             pred_aug.pop("target", None)
             pred_aug["target"] = pred_base.detach()

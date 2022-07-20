@@ -134,7 +134,8 @@ class SSDUModel(nn.Module):
 
         # Get the signal model reconstructed images.
         # TODO: Make it possible to use these are the target instead of multi-coil images.
-        pred_img, target_img, zf_image = outputs["pred"], outputs["target"], outputs["zf_image"]
+        pred_img = outputs["pred"]
+        target_img, zf_image = outputs.get("target", None), outputs.get("zf_image", None)
 
         # Use signal model (SENSE) to get weighted kspace.
         A = SenseModel(maps=inputs_aug["maps"])  # no weights - we do not want to mask the data.
