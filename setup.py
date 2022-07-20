@@ -103,6 +103,7 @@ EXTRAS = {
         "medpy",
         "pooch",
         "gdown",
+        "parameterized",
         # Documentation
         "sphinx",
         "sphinxcontrib-bibtex",
