@@ -5,7 +5,9 @@ from typing import Any, Dict
 
 from meddlr.metrics.collection import MetricCollection
 from meddlr.metrics.image import MAE, MSE, NRMSE, PSNR, RMSE, SSIM
+from meddlr.metrics.LPIPS import LPIPS
 from meddlr.metrics.sem_seg import ASSD, CV, DSC, VOE
+from meddlr.metrics.SSFD import SSFD
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +56,11 @@ _BUILTIN_METRICS = {
     "DSC": (DSC, {}),
     "VOE": (VOE, {}),
     "ASSD": (ASSD, {"connectivity": 1}),
-    "CV": (CV, {})
+    "CV": (CV, {}),
+
+    # ======== Feature Based Metrics ============= #
+    "LPIPS": (LPIPS, {}),  # use defaults for LPIPS
+    "SSFD": (SSFD, {})  # add default args here as the layers used in paper
 }
 # fmt: on
 

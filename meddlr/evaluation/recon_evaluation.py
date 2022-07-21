@@ -97,6 +97,7 @@ class ReconEvaluator(ScanEvaluator):
         self._channel_names = channel_names
         self._structure_channel_by = structure_channel_by
         self._prefix = prefix
+        self._cfg = cfg
 
         if save_scans and (not output_dir or not aggregate_scans):
             raise ValueError("`output_dir` and `aggregate_scans` must be specified to save scans.")
@@ -140,6 +141,7 @@ class ReconEvaluator(ScanEvaluator):
         self._predictions = []
         self._is_flushing = False
         self._memory = defaultdict(list)
+        device = self._cfg.MODEL.DEVICE
 
         metrics = self._metric_names
         prefix = self._prefix + "_" if self._prefix else ""
@@ -149,12 +151,13 @@ class ReconEvaluator(ScanEvaluator):
             slice_metrics,
             fmt=prefix + "{}",
             channel_names=self._channel_names,
-        )
+        ).to(device)
         self.scan_metrics = build_metrics(
             scan_metrics,
             fmt=prefix + "{}_scan",
             channel_names=self._channel_names,
-        )
+        ).to(device)
+
         self.slice_metrics.eval()
         self.scan_metrics.eval()
 
