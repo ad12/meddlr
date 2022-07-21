@@ -72,6 +72,7 @@ class LPIPS(Metric):
         Returns:
             Preprocessed tensor shape Bx3xHxW
         """
+        # import pdb; pdb.set_trace()
         # mode here as well...
         is_complex = cplx.is_complex(img) or cplx.is_complex_as_real(img)
         abs_func = cplx.abs if is_complex else torch.abs
@@ -79,10 +80,11 @@ class LPIPS(Metric):
         img = abs_func(img)
         shape = (img.shape[0], img.shape[1], -1)
 
-        img_min = torch.min(img.view(shape), dim=-1)[:, :, None, None]
-        img_max = torch.max(img.view(shape), dim=-1)[:, :, None, None]
+        img_min = torch.amin(img.view(shape), dim=-1, keepdim=True)
+        img_max = torch.amax(img.view(shape), dim=-1, keepdim=True)
 
         img = 2 * (img - img_min) / (img_max - img_min) - 1
+
         img = img.repeat(1, 3, 1, 1)
 
         return img
