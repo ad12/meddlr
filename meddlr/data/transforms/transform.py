@@ -1,6 +1,7 @@
 """Basic Transforms.
 """
 from functools import partial
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -8,6 +9,8 @@ from fvcore.common.registry import Registry
 
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
+from meddlr.transforms.functional import add_motion_corruption
+from meddlr.transforms.gen.spatial import RandomAffine
 from meddlr.utils import transforms as T
 
 from .motion import MotionModel
@@ -358,6 +361,191 @@ class DataTransform:
             # Motion seed should not be different for each slice for now.
             # TODO: Change this for 2D acquisitions.
             masked_kspace = self.motion_simulator(masked_kspace, seed=seed)
+        # Get rid of batch dimension...
+        masked_kspace = masked_kspace.squeeze(0)
+        maps = maps.squeeze(0)
+        target = target.squeeze(0)
+
+        return masked_kspace, maps, target, mean, std, norm
+
+
+class MotionDataTransform:
+    """
+    Data Transformer for training unrolled reconstruction models.
+
+    This is for emulating 2D roto-translational motion corrupted MR scans.
+    """
+
+    def __init__(
+        self,
+        cfg,
+        mask_func,
+        nshots: int,
+        is_test: bool = False,
+        add_noise: bool = False,
+        add_motion: bool = False,
+        mri_dim: int = 2,
+        angle: Optional[Tuple[float, float]] = (-5.0, 5.0),
+        translation: Optional[Tuple[float, float]] = (0.1, 0.1),
+        trajectory: str = "blocked",
+    ):
+        """
+        Args:
+            mask_func (utils.subsample.MaskFunc): A function that can create a
+                mask of appropriate shape.
+            is_test (bool): If `True`, this class behaves with test-time
+                functionality. In particular, it computes a pseudo random number
+                generator seed from the filename. This ensures that the same
+                mask is used for all the slices of a given volume every time.
+        """
+        if not is_test:
+            raise ValueError(
+                "is_test must be true for this class to work - it is currently set to false"
+            )
+
+        self._cfg = cfg
+        self.mask_func = mask_func
+        self._is_test = is_test
+
+        # Build subsampler.
+        # mask_func = build_mask_func(cfg)
+        self._subsampler = Subsampler(self.mask_func)
+        self.add_noise = add_noise
+        self.add_motion = add_motion
+
+        # These will be used for the motion corruption.
+        self.angle = angle
+        self.translation = translation
+        self.mri_dim = mri_dim
+
+        if nshots is None:
+            raise ValueError("The paramter nshots must be set to some integer value.")
+
+        self.nshots = nshots
+        self.trajectory = trajectory
+
+        seed = cfg.SEED if cfg.SEED > -1 else None
+        self.rng = np.random.RandomState(seed)
+
+        if is_test:
+            # When we test we dont want to initialize with certain parameters (e.g. scheduler).
+            self.noiser = NoiseModel(cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV, seed=seed)
+        else:
+            pass
+
+        self.p_noise = cfg.AUG_TRAIN.NOISE_P
+        self.p_motion = cfg.AUG_TRAIN.MOTION_P
+        self._normalizer = build_normalizer(cfg)
+
+        # Build augmentation pipeline.
+        self.augmentor = None
+        if not is_test and cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS:
+            pass
+
+    def __call__(self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None):
+        """
+        Args:
+            kspace (numpy.array): Input k-space of shape
+                (num_coils, rows, cols, 2) for multi-coil
+                data or (rows, cols, 2) for single coil data.
+            target (numpy.array): Target image
+            attrs (dict): Acquisition related information stored in the HDF5
+                object.
+            fname (str): File name
+            slice (int): Serial number of the slice.
+            is_fixed (bool, optional): If `True`, transform the example
+                to have a fixed mask and acceleration factor.
+            acceleration (int): Acceleration factor. Must be provided if
+                `is_undersampled=True`.
+        Returns:
+            (tuple): tuple containing:
+                image (torch.Tensor): Zero-filled input image.
+                target (torch.Tensor): Target image converted to a torch Tensor.
+                mean (float): Mean value used for normalization.
+                std (float): Standard deviation value used for normalization.
+                norm (float): L2 norm of the entire volume.
+        """
+        if is_fixed and not acceleration:
+            raise ValueError("Accelerations must be specified for undersampled scans")
+
+        # Convert everything from numpy arrays to tensors
+        kspace = cplx.to_tensor(kspace).unsqueeze(0)
+        maps = cplx.to_tensor(maps).unsqueeze(0)
+        target_init = cplx.to_tensor(target).unsqueeze(0)
+        target = (
+            torch.complex(target_init, torch.zeros_like(target_init)).unsqueeze(-1)
+            if not torch.is_complex(target_init)
+            else target_init
+        )  # handle rss vs. sensitivity-integrated
+        norm = torch.sqrt(torch.mean(cplx.abs(target) ** 2))
+
+        # TODO: Add other transforms here.
+
+        # If 2D MRI, then each slice will have different motion - seed is some
+        # combination of the file name and the slice id (+).
+        # If 3D MRI, then each slice should have the same motion - seed is
+        # determined only by the file name.
+        if self.mri_dim == 2:
+            seed = sum(tuple(map(ord, fname))) + slice_id if self._is_test else None  # noqa
+        elif self.mri_dim == 3:
+            seed = sum(tuple(map(ord, fname))) if self._is_test else None  # noqa
+
+        # Zero-filled Sense Recon.
+        if torch.is_complex(target_init):
+            A = SenseModel(maps)
+            image = A(kspace, adjoint=True)
+        # Zero-filled RSS Recon.
+        else:
+            image = T.ifft2(kspace)
+            image_rss = torch.sqrt(torch.sum(cplx.abs(image) ** 2, axis=-1))
+            image = torch.complex(image_rss, torch.zeros_like(image_rss)).unsqueeze(-1)
+
+        add_motion = self.add_motion and self._is_test
+        if add_motion:
+            # Motion seed should not be different for each slice for now.
+            # TODO: Change this for 2D acquisitions.
+
+            tfm_gen = RandomAffine(p=1.0, translate=self.translation, angle=self.angle)
+            tfm_gen.seed(seed)
+
+            kspace = add_motion_corruption(
+                image=image,
+                nshots=self.nshots,
+                translation=tfm_gen,
+                trajectory=self.trajectory,
+            )
+
+        # Apply mask in k-space
+        masked_kspace, mask = self._subsampler(
+            kspace, mode="2D", seed=seed, acceleration=acceleration
+        )
+
+        # Zero-filled Sense Recon.
+        if torch.is_complex(target_init):
+            A = SenseModel(maps, weights=mask)
+            image = A(masked_kspace, adjoint=True)
+        # Zero-filled RSS Recon.
+        else:
+            image = T.ifft2(masked_kspace)
+            image_rss = torch.sqrt(torch.sum(cplx.abs(image) ** 2, axis=-1))
+            image = torch.complex(image_rss, torch.zeros_like(image_rss)).unsqueeze(-1)
+
+        # Normalize
+        normalized = self._normalizer.normalize(
+            **{"masked_kspace": masked_kspace, "image": image, "target": target, "mask": mask}
+        )
+        masked_kspace = normalized["masked_kspace"]
+        target = normalized["target"]
+        mean = normalized["mean"]
+        std = normalized["std"]
+
+        add_noise = self.add_noise and self._is_test
+
+        if add_noise:
+            # Seed should be different for each slice of a scan.
+            noise_seed = seed + slice_id if seed is not None else None
+            masked_kspace = self.noiser(masked_kspace, mask=mask, seed=noise_seed)
+
         # Get rid of batch dimension...
         masked_kspace = masked_kspace.squeeze(0)
         maps = maps.squeeze(0)
