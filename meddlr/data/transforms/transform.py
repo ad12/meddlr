@@ -7,9 +7,9 @@ import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
-from meddlr.data.transforms.motion_corruption_2D import add_motion_corruption
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
+from meddlr.transforms.functional import add_motion_corruption
 from meddlr.transforms.gen.spatial import RandomAffine
 from meddlr.utils import transforms as T
 
@@ -384,8 +384,8 @@ class MotionDataTransform:
         is_test: bool = False,
         add_noise: bool = False,
         add_motion: bool = False,
-        two_dimensional: bool = True,
-        angle: Optional[Tuple[float, float]] = (-5., 5.),
+        mri_dim: int = 2,
+        angle: Optional[Tuple[float, float]] = (-5.0, 5.0),
         translation: Optional[Tuple[float, float]] = (0.1, 0.1),
         trajectory: str = "blocked",
     ):
@@ -398,6 +398,11 @@ class MotionDataTransform:
                 generator seed from the filename. This ensures that the same
                 mask is used for all the slices of a given volume every time.
         """
+        if not is_test:
+            raise ValueError(
+                "is_test must be true for this class to work - it is currently set to false"
+            )
+
         self._cfg = cfg
         self.mask_func = mask_func
         self._is_test = is_test
@@ -411,7 +416,7 @@ class MotionDataTransform:
         # These will be used for the motion corruption.
         self.angle = angle
         self.translation = translation
-        self.two_dimensional = two_dimensional
+        self.mri_dim = mri_dim
 
         if nshots is None:
             raise ValueError("The paramter nshots must be set to some integer value.")
@@ -478,11 +483,11 @@ class MotionDataTransform:
 
         # If 2D MRI, then each slice will have different motion - seed is some
         # combination of the file name and the slice id (+).
-        # If 3D MRI, then each slice should have the same motion - seed is 
-        # determined only by the file name.  
-        if self.two_dimensional:
-            seed = sum(tuple(map(ord, fname))) + slice if self._is_test else None  # noqa
-        else:
+        # If 3D MRI, then each slice should have the same motion - seed is
+        # determined only by the file name.
+        if self.mri_dim == 2:
+            seed = sum(tuple(map(ord, fname))) + slice_id if self._is_test else None  # noqa
+        elif self.mri_dim == 3:
             seed = sum(tuple(map(ord, fname))) if self._is_test else None  # noqa
 
         # Zero-filled Sense Recon.

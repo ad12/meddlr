@@ -9,7 +9,7 @@ Example:
 import itertools
 import os
 from copy import deepcopy
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 import pandas as pd
 import torch
@@ -19,6 +19,8 @@ import meddlr.ops.complex as cplx
 from meddlr.checkpoint import Checkpointer
 from meddlr.config import get_cfg
 from meddlr.data.build import build_recon_val_loader
+from meddlr.data.transforms import transform as T
+from meddlr.data.transforms.subsample import build_mask_func
 from meddlr.engine import DefaultTrainer, default_argument_parser, default_setup
 from meddlr.evaluation import DatasetEvaluators, ReconEvaluator, inference_on_dataset
 from meddlr.evaluation.testing import check_consistency, find_weights
@@ -188,7 +190,7 @@ def update_metrics(metrics_new: pd.DataFrame, metrics_old: pd.DataFrame, on: Seq
 def eval(cfg, args, model, weights_basename, criterion, best_value):
     zero_filled = args.zero_filled
 
-    two_dimensional = args.two_dimensional != "false"
+    mri_dim = args.mri_dim
     angle = args.angle
     translation = args.translation
     nshots = args.nshots
@@ -208,6 +210,44 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     # use_wandb = args.use_wandb
     # if use_wandb:
     #     run = init_wandb_run(cfg, resume=True, job_type="eval", use_api=True)
+
+    data_transform = None
+
+    if not (
+        mri_dim is None
+        and angle is None
+        and translation is None
+        and nshots is None
+        and trajectory == "None"
+    ):
+        transform_mri_dim = 2
+        transform_angle = 0
+        transform_translation = 0
+        transform_nshots = 0
+        transform_trajectory = 0
+        if mri_dim is not None:
+            transform_mri_dim = mri_dim
+        if angle is not None:
+            transform_angle = angle
+        if translation is not None:
+            transform_translation = translation
+        if nshots is not None:
+            transform_nshots = nshots
+        if trajectory is not None:
+            transform_trajectory = trajectory
+        mask_func = build_mask_func(cfg.AUG_TRAIN)
+        data_transform = T.MotionDataTransform(
+            cfg,
+            mask_func,
+            nshots=transform_nshots,
+            is_test=True,
+            add_noise=include_noise,
+            add_motion=include_motion != "false",
+            mri_dim=transform_mri_dim,
+            angle=transform_angle,
+            translation=transform_translation,
+            trajectory=transform_trajectory,
+        )
 
     device = cfg.MODEL.DEVICE
     model = model.to(device)
@@ -309,11 +349,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             as_test=True,
             add_noise=noise_level > 0,
             add_motion=include_motion != "false",
-            two_dimensional=two_dimensional,
-            angle=angle,
-            translation=translation,
-            nshots=nshots,
-            trajectory=trajectory,
+            data_transform=data_transform,
         )
 
         # Build evaluators. Only save reconstructions for last scan.
@@ -475,37 +511,34 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--angle",
-        default=0,
-        type=float,
+        default=None,
+        type=Optional[float],
         help=("How much rotation angle should be used for motion corruption " "of the dataset"),
     )
 
     parser.add_argument(
         "--translation",
-        default=0,
-        type=float,
+        default=None,
+        type=Optional[float],
         help=("How much translation should be used for motion " "corruption of the dataset"),
     )
     parser.add_argument(
         "--nshots",
-        default=0,
-        type=int,
+        default=None,
+        type=Optional[float],
         help=("How many shots should be used for motion corruption " "of the dataset."),
     )
     parser.add_argument(
         "--trajectory",
-        default="blocked",
-        choice=("interleaved", "blocked"),
+        default="None",
+        choice=("None", "interleaved", "blocked"),
         help=(
             "Chooses between interleaved or blocked shots for motion " "corruption of the dataset"
         ),
     )
 
     parser.add_argument(
-        "--two-dimensional",
-        default="true",
-        choice=("true", "false"),
-        help=("If true, MRI is 2D. Otherwise, MRI is 3D.")
+        "--mri_dim", default=None, type=Optional[float], help=("Selects dimensionality number")
     )
 
     # End of Arguments for 2D Motion Corruption of the Dataset
