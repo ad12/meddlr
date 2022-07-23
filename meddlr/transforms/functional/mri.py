@@ -6,7 +6,6 @@ import torch
 
 import meddlr.ops as F
 import meddlr.ops.complex as cplx
-from meddlr.transforms.gen.spatial import RandomAffine
 
 
 def add_even_odd_motion(
