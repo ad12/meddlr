@@ -128,9 +128,15 @@ def find_metrics(
     Note:
         This function is experimental. The API may change without warning.
     """
-    return _find_metric_details(
-        cfg=cfg, criterion=criterion, operation=operation, iter_limit=iter_limit, top_k=top_k
+    metric_details = _find_metric_details(
+        cfg=cfg,
+        criterion=criterion,
+        operation=operation,
+        iter_limit=iter_limit,
+        top_k=-1,
     )
+    best_iter_and_values = metric_details["best_iter_and_values"][:top_k]
+    return best_iter_and_values[0] if top_k == 1 else best_iter_and_values
 
 
 def find_weights(
@@ -168,15 +174,15 @@ def find_weights(
     """
     logger = logging.getLogger(__name__)
 
-    best_iter_and_values, last_iter = _find_metric_details(
+    metric_details = _find_metric_details(
         cfg=cfg,
         criterion=criterion,
         operation=operation,
         iter_limit=iter_limit,
         top_k=-1,
-        return_last_iteration=True,
     )
-    best_iter_and_values = best_iter_and_values[:top_k]
+    best_iter_and_values = metric_details["best_iter_and_values"][:top_k]
+    last_iter = metric_details["last_iter"]
 
     all_filepaths = []
     all_values = []
@@ -321,7 +327,6 @@ def _find_metric_details(
     operation: str = "auto",
     iter_limit: int = None,
     top_k: int = 1,
-    return_last_iteration: bool = False,
 ):
     """Find the iteration(s) resulting in best metrics for a given criterion.
 
@@ -419,6 +424,7 @@ def _find_metric_details(
     best_iter_and_values = sorted(metrics, key=lambda x: x[1], reverse=operation == "max")
     if top_k > 0:
         best_iter_and_values = best_iter_and_values[:top_k]
-    if len(best_iter_and_values) == 1:
-        best_iter_and_values = best_iter_and_values[0]
-    return best_iter_and_values, last_iter if return_last_iteration else best_iter_and_values
+    return {
+        "best_iter_and_values": best_iter_and_values,
+        "last_iter": last_iter,
+    }
