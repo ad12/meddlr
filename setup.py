@@ -100,6 +100,7 @@ EXTRAS = {
         "flake8-comprehensions",
         "pre-commit>=2.9.3",
         # Testing
+        "pytest",
         "medpy",
         "pooch",
         "gdown",

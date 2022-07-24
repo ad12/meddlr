@@ -28,7 +28,13 @@ IMAGE_LOSSES = [
     "ssim_phase_loss",
     "ssim_mag_phase_loss",
 ]
-KSPACE_LOSSES = ["k_l1", "k_l1_normalized", "k_l1_l2_sum_normalized"]
+KSPACE_LOSSES = [
+    "k_l1",
+    "k_l1_sum",
+    "k_l1_normalized",
+    "k_l1_sum_normalized",
+    "k_l1_l2_sum_normalized",
+]
 
 
 def build_loss_computer(cfg, name, **kwargs):
@@ -98,8 +104,12 @@ class LossComputer(ABC):
             abs_error = cplx.abs(target - output)
             if loss_name == "k_l1":
                 metrics_dict["loss"] = torch.mean(abs_error)
+            elif loss_name == "k_l1_sum":
+                metrics_dict["loss"] = torch.sum(abs_error)
             elif loss_name == "k_l1_normalized":
                 metrics_dict["loss"] = torch.mean(abs_error / (cplx.abs(target) + EPS))
+            elif loss_name == "k_l1_sum_normalized":
+                metrics_dict["loss"] = torch.sum(abs_error) / torch.sum(cplx.abs(target))
             elif loss_name == "k_l1_l2_sum_normalized":
                 kl1_norm = torch.sum(abs_error) / torch.sum(cplx.abs(target))
                 kl2_norm = torch.sqrt(torch.sum(abs_error**2)) / torch.sqrt(
