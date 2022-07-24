@@ -58,7 +58,7 @@ def setup(args):
         opts = opts[1:]
     cfg.merge_from_list(opts)
     cfg.freeze()
-    default_setup(cfg, args, save_cfg=False)
+    default_setup(cfg, args, save_cfg=args.save_cfg)
 
     # Setup logger for test results
     global logger
@@ -504,6 +504,9 @@ if __name__ == "__main__":
         default=["metrics"],
         choices=["metrics", "save_scans"],
         help="Operations to run. 'metrics': Compute metrics. 'save_scans': Save Scans",
+    )
+    parser.add_argument(
+        "--save_cfg", default=False, action="store_true", help="Save the config file"
     )
 
     args = parser.parse_args()
