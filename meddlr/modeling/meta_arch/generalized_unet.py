@@ -1,11 +1,16 @@
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Union
 
 import torch
 from torch import nn
 
 from meddlr.config.config import configurable
 from meddlr.modeling.blocks import SimpleConvBlockNd
-from meddlr.modeling.layers.build import get_layer_kind, get_layer_type
+from meddlr.modeling.layers.build import (
+    LayerInfo,
+    LayerInfoRawType,
+    build_layer_info_from_seq,
+    get_layer_type,
+)
 from meddlr.modeling.meta_arch import META_ARCH_REGISTRY
 
 
@@ -40,7 +45,14 @@ class GeneralizedUNet(nn.Module):
         kernel_size: Union[Sequence[int], int] = 3,
         up_kernel_size: Union[Sequence[int], int] = None,
         dropout: float = 0.0,
-        block_order: Tuple[str, ...] = ("conv", "relu", "conv", "relu", "batchnorm", "dropout"),
+        block_order: Sequence[Union[LayerInfoRawType, LayerInfo]] = (
+            "conv",
+            "relu",
+            "conv",
+            "relu",
+            "batchnorm",
+            "dropout",
+        ),
     ):
         """
         Args:
@@ -71,10 +83,16 @@ class GeneralizedUNet(nn.Module):
         strides = self._arg_to_seq(strides, depth)
         pool_type = get_layer_type("maxpool", dimension=dimensions)
 
-        block_order_names: Sequence[str] = [x if isinstance(x, str) else x[0] for x in block_order]
-        act_idx = [i for i, x in enumerate(block_order_names) if get_layer_kind(x) == "act"][0]
-        norm_idx = [i for i, x in enumerate(block_order_names) if get_layer_kind(x) == "norm"][0]
-        up_block_order = ("convtranspose", block_order[act_idx], block_order[norm_idx])
+        # Up-sampling block construction.
+        # The order of the conv transpose block will be convtranspose -> act/norm -> norm/act.
+        # Whether act or norm appear first will depend on the order of the block_order.
+        # TODO (arjundd): Make this order configurable.
+        block_layer_info = build_layer_info_from_seq(block_order, dimension=dimensions)
+        act_idx = [i for i, x in enumerate(block_layer_info) if x.kind == "act"][0]
+        norm_idx = [i for i, x in enumerate(block_layer_info) if x.kind == "norm"][0]
+        up_block_order = ("convtranspose",) + tuple(
+            block_order[idx] for idx in sorted([act_idx, norm_idx])
+        )
 
         # Down blocks + Bottleneck
         down_blocks = {}
