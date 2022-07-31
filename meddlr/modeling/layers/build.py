@@ -1,5 +1,6 @@
+import copy
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from fvcore.common.registry import Registry
 from torch import nn
@@ -127,7 +128,8 @@ _LayerInfoInitKwargsType = Union[
     _LayerInfoInitKwargsDict, _LayerInfoInitKwargsFlatSequence, _LayerInfoInitKwargsNestedSequence
 ]
 
-LayerInfoType = Union[
+# LayerInfo type schema with raw Python types (str, int, float, tuple, list, etc.).
+LayerInfoRawType = Union[
     str, Dict[str, _LayerInfoInitKwargsType], Tuple[str, _LayerInfoInitKwargsType]
 ]
 
@@ -151,7 +153,7 @@ class LayerInfo:
         return get_layer_type(self.name, dimension=self.dimension)
 
     @classmethod
-    def format(cls, layer_info: LayerInfoType) -> "LayerInfo":
+    def format(cls, layer_info: LayerInfoRawType) -> "LayerInfo":
         """Formats layer information from Python raw types to LayerInfo object.
 
         Args:
@@ -166,15 +168,17 @@ class LayerInfo:
         if isinstance(layer_info, Dict):
             if len(layer_info) != 1:
                 raise ValueError(
-                    "Dictionary format for LayerInfo can only have one key-value pair. "
-                    "e.g. {'dropout': {'p': 0.5}}"
+                    "Dictionary format for LayerInfo can only have one key-value pair - "
+                    "e.g. {'dropout': {'p': 0.5}}. "
+                    f"Got {layer_info}"
                 )
             name, init_kwargs = list(layer_info.items())[0]
         elif isinstance(layer_info, (Tuple, List)):
             if len(layer_info) != 2:
                 raise ValueError(
-                    "Sequence format for LayerInfo should be formatted as (name, init_kwargs) "
-                    "e.g. ('dropout': {'p': 0.5}), ('dropout', ('p', 0.5)"
+                    "Sequence format for LayerInfo should be formatted as (name, init_kwargs) - "
+                    "e.g. ('dropout': {'p': 0.5}), ('dropout', ('p', 0.5). "
+                    f"Got {layer_info}"
                 )
             name, init_kwargs = layer_info[0], layer_info[1]
         else:
@@ -185,7 +189,8 @@ class LayerInfo:
             "Unknown init_kwargs format. init_kwargs must follow one of these formats: "
             "\n\t- dict: {key1: value1, key2: value2}"
             "\n\t- flat sequence: [key1, value1, key2, value2, ...]"
-            "\n\t- nested sequence: [(key1, value1), (key2, value2), ...]"
+            "\n\t- nested sequence: [(key1, value1), (key2, value2), ...]\n"
+            f"Got {init_kwargs}"
         )
         if isinstance(init_kwargs, (Tuple, List)):
             if all(isinstance(x, (Tuple, List)) and len(x) == 2 for x in init_kwargs):
@@ -211,3 +216,29 @@ class LayerInfo:
                 are conflicts.
         """
         return self.ltype(*args, **{**self.init_kwargs, **kwargs})
+
+
+def build_layer_info_from_seq(
+    layers_info: Sequence[Union[LayerInfoRawType, LayerInfo]], dimension: Optional[int] = None
+) -> List[LayerInfo]:
+    """Builds a sequence of layer info objects from a sequence of layer info types.
+
+    Args:
+        layers_info: Sequence of layer info types.
+
+    Returns:
+        List[LayerInfo]: list of LayerInfo objects corresponding to each element
+            in layers_info.
+    """
+    out = [
+        copy.deepcopy(x) if isinstance(x, LayerInfo) else LayerInfo.format(x) for x in layers_info
+    ]
+    if dimension is not None:
+        # TODO (arjundd): We probably want some extra logic here where we don't
+        # the dimension if it already exists in the name (e.g. conv1d).
+        # Currently, if the name contains the dimension and a dimension is passed
+        # (e.g. conv1d, 2), then the dimension value is ignored.
+        for x in out:
+            x.dimension = dimension
+
+    return out
