@@ -203,9 +203,6 @@ class GeneralizedUNet(nn.Module):
             "dropout": cfg.DROPOUT,
         }
         block_order = cfg.get("BLOCK_ORDER", None)
-        import pdb
-
-        pdb.set_trace()
         if block_order is not None:
             init_args["block_order"] = block_order
         init_args.update(**kwargs)
