@@ -16,8 +16,31 @@ SSFD_HUGGINGFACE_URL = "https://huggingface.co/philadamson93/SSFD/resolve/main/m
 
 
 class SSFD(Metric):
+    """
+    Self-Supervised Feature Distance. SSFD evaluates the feature distance between a
+    pair of images from features extracted from a pre-trained neural network trained on
+    a self-supervision task with fastMRI datasets [1]. SSFD has been shown to correspond
+    well to Radiologist Reader Scores of accelerated  MR reconstructions.
+
+
+    Attributes:
+        mode (str):
+            This flag determines how to interpret the channel dimension of the inputs.
+            ['grayscale']: Each channel corresponds to a distinct grayscale input image.
+            ['rgb']: The 3 channel dimensions correspond to a single rgb image.
+                     Exception will be thrown if channel dimension != 3.
+
+
+    References:
+    ..  [1] Adamson, Philip M., et al.
+        SSFD: Self-Supervised Feature Distance as an MR Image Reconstruction Quality Metric."
+        NeurIPS 2021 Workshop on Deep Learning and Inverse Problems. 2021.
+        https://openreview.net/forum?id=dgMvTzf6M_3
+    """
+
     def __init__(
         self,
+        mode: str = "grayscale",
         channel_names: Sequence[str] = None,
         reduction="none",
         compute_on_step: bool = False,
@@ -36,6 +59,15 @@ class SSFD(Metric):
             dist_sync_fn=dist_sync_fn,
         )
 
+        valid_modes = ("grayscale", "rgb")
+        if mode not in valid_modes:
+            raise ValueError(
+                f"Argument `mode` must be one \
+                            of {valid_modes}, but got {mode}."
+            )
+
+        self.mode = mode
+
         path_manager = env.get_path_manager()
         file_path = path_manager.get_local_path(SSFD_HUGGINGFACE_URL, force=False)
 
@@ -44,12 +76,18 @@ class SSFD(Metric):
         self.net.eval()
 
     def func(self, preds, targets) -> torch.Tensor:
-        # if channel dimension != 1 then reshape into batch*channel x 1 then undo when you do that.
-        # Also make this a test
-        # take in an argument if you want to collapse (average) channels.
-        # mode (what does opencv call this?).
-        # If you specify RGB then SSFD will average and convert to greyscale,
-        # otherwise each channel will be passed independently...
+
+        if self.mode == "grayscale":
+            loss_shape = (targets.shape[0], targets.shape[1])
+
+        elif self.mode == "rgb":
+            if targets.shape[1] != 3:
+                raise ValueError(
+                    f"Channel dimension must have size 3 for rgb mode,\
+                    but got tensor of shape {targets.shape}."
+                )
+
+            loss_shape = (targets.shape[0], 1)
 
         preds = self.preprocess_ssfd(preds)
         targets = self.preprocess_ssfd(targets)
@@ -72,18 +110,16 @@ class SSFD(Metric):
         pred_features = features["encoder3.conv_block.conv2"]
 
         loss = torch.mean(mse(target_features, pred_features), dim=1)
-        shape = (targets.shape[0], targets.shape[1])
-        loss = loss.view(shape)
+        loss = loss.view(loss_shape)
 
         return loss
 
     def preprocess_ssfd(self, img):
-        """Preprocess image for SSFD model input.
-
-        Converts to a magnitude scan, normalizes between -1 and 1, and reshape to tensor of shape
+        """Preprocess image for SSFD model input. Converts to a magnitude scan and
+        normalizes to zero-mean, unit variance.
 
         Args:
-            img (torch.Tensor): Tensor to preprocess of shape (N, 1, H, W)
+            img (torch.Tensor): Tensor to preprocess
 
         Returns:
             Preprocessed tensor
@@ -91,19 +127,27 @@ class SSFD(Metric):
 
         is_complex = cplx.is_complex(img) or cplx.is_complex_as_real(img)
         abs_func = cplx.abs if is_complex else torch.abs
-
         img = abs_func(img)
+
+        if self.mode == "grayscale":
+            img = img.view(img.shape[0] * img.shape[1], 1, img.shape[2], img.shape[3])
+
+        elif self.mode == "rgb":
+            img = torch.mean(img, axis=1, keepdim=True)
 
         shape = (img.shape[0], img.shape[1], -1)
 
-        img_mean = torch.mean(img.view(shape), dim=-1)[:, :, None, None]
-        img_std = torch.std(img.view(shape), dim=-1)[:, :, None, None]
+        img_mean = torch.mean(img.view(shape), dim=-1, keepdim=True).unsqueeze(-1)
+        img_std = torch.std(img.view(shape), dim=-1, keepdim=True).unsqueeze(-1)
+        # import pdb; pdb.set_trace()
         img = (img - img_mean) / img_std
 
         return img
 
 
 class SSFD_Encoder(nn.Module):
+    """Pytorch architecture of pre-trained SSFD network"""
+
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.in_ch = in_channels
