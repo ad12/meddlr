@@ -97,8 +97,6 @@ class ReconEvaluator(ScanEvaluator):
         self._channel_names = channel_names
         self._structure_channel_by = structure_channel_by
         self._prefix = prefix
-        self._cfg = cfg
-
         if save_scans and (not output_dir or not aggregate_scans):
             raise ValueError("`output_dir` and `aggregate_scans` must be specified to save scans.")
         self._save_scans = save_scans

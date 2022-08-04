@@ -5,9 +5,9 @@ from typing import Any, Dict
 
 from meddlr.metrics.collection import MetricCollection
 from meddlr.metrics.image import MAE, MSE, NRMSE, PSNR, RMSE, SSIM
-from meddlr.metrics.LPIPS import LPIPS
+from meddlr.metrics.lpips_meddlr import LPIPS
 from meddlr.metrics.sem_seg import ASSD, CV, DSC, VOE
-from meddlr.metrics.SSFD import SSFD
+from meddlr.metrics.ssfd import SSFD
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +59,13 @@ _BUILTIN_METRICS = {
     "CV": (CV, {}),
 
     # ======== Feature Based Metrics ============= #
-    "LPIPS": (LPIPS, {}),  # use defaults for LPIPS
-    "SSFD": (SSFD, {})  # add default args here as the layers used in paper
+    "LPIPS": (LPIPS, {"net_type": "vgg",
+                      "mode": "grayscale",
+                      "lpips": True,
+                      "pretrained": True
+                      }),
+    "SSFD": (SSFD, {"mode": "grayscale",
+                    "layer_names": ['block4_relu2']})
 }
 # fmt: on
 
