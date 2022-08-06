@@ -1,5 +1,6 @@
 """Basic Transforms.
 """
+import math
 from functools import partial
 from typing import Optional, Tuple
 
@@ -7,6 +8,7 @@ import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
+import meddlr.ops as F
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
 from meddlr.transforms.gen.spatial import RandomAffine
@@ -19,6 +21,7 @@ NORMALIZER_REGISTRY = Registry("NORMALIZER")
 NORMALIZER_REGISTRY.__doc__ = """
 Registry for normalizing images
 """
+
 
 def add_motion_corruption(
     image: torch.Tensor,
@@ -65,7 +68,7 @@ def add_motion_corruption(
         else:
             raise ValueError(f"trajectory '{trajectory}' not supported.")
 
-    return kspace
+    return F.ifft2c(kspace)
 
 
 def build_normalizer(cfg):
@@ -554,12 +557,18 @@ class MotionDataTransform:
             tfm_gen = RandomAffine(p=1.0, translate=self.translation, angle=self.angle)
             tfm_gen.seed(seed)
 
-            kspace = add_motion_corruption(
+            image = image.permute(0, 3, 1, 2)
+
+            motion_img = add_motion_corruption(
                 image=image,
                 nshots=self.nshots,
                 translation=tfm_gen,
                 trajectory=self.trajectory,
             )
+
+            motion_img = motion_img.permute(0, 2, 3, 1)
+            sense = SenseModel(maps)
+            kspace = sense(motion_img)
 
         # Apply mask in k-space
         masked_kspace, mask = self._subsampler(
