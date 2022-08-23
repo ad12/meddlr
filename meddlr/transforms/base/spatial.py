@@ -91,7 +91,12 @@ class AffineTransform(GeometricMixin, Transform):
             img = TF.pad(img, padding=pad, padding_mode="reflect")
 
         img = TF.affine(
-            img, angle=angle, translate=translate, scale=scale, shear=shear, resample=2  # bilinear
+            img,
+            angle=angle,
+            translate=translate,
+            scale=scale,
+            shear=shear,
+            interpolation=TF.InterpolationMode.BILINEAR,
         )
 
         if self.pad_like == "MRAugment":
