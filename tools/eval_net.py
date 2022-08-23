@@ -3,11 +3,8 @@
 This consists of comparing both zero-filled recon and DL-recon to fully-sampled
 scans. All comparisons are done per volume (not per slice).
 
-Supported metrics include:
-    - ssim
-    - ssim_center (ssim_50)
-    - psnr
-    - nrmse
+Example:
+    python eval_net.py --config-file my/experiment/folder/config.yaml --metric val_psnr_scan
 """
 import itertools
 import os
@@ -24,7 +21,7 @@ from meddlr.config import get_cfg
 from meddlr.data.build import build_recon_val_loader
 from meddlr.engine import DefaultTrainer, default_argument_parser, default_setup
 from meddlr.evaluation import DatasetEvaluators, ReconEvaluator, inference_on_dataset
-from meddlr.evaluation.testing import SUPPORTED_VAL_METRICS, check_consistency, find_weights
+from meddlr.evaluation.testing import check_consistency, find_weights
 from meddlr.modeling.meta_arch import CSModel
 from meddlr.utils.logger import setup_logger
 
@@ -61,7 +58,7 @@ def setup(args):
         opts = opts[1:]
     cfg.merge_from_list(opts)
     cfg.freeze()
-    default_setup(cfg, args, save_cfg=False)
+    default_setup(cfg, args, save_cfg=args.save_cfg)
 
     # Setup logger for test results
     global logger
@@ -411,10 +408,11 @@ def main(args):
     if isinstance(model, CSModel):
         weights, criterion, best_value = None, None, 0
     else:
+        metric = args.metric if args.metric else f"val_{cfg.MODEL.RECON_LOSS.NAME}"
         weights, criterion, best_value = (
             (cfg.MODEL.WEIGHTS, None, None)
             if cfg.MODEL.WEIGHTS
-            else find_weights(cfg, args.metric, args.iter_limit)
+            else find_weights(cfg, metric, iter_limit=args.iter_limit)
         )
         model = model.to(cfg.MODEL.DEVICE)
         Checkpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(weights, resume=args.resume)
@@ -450,7 +448,6 @@ if __name__ == "__main__":
             "Defaults to recon loss. "
             "Ignored if `MODEL.WEIGHTS` specified"
         ),
-        choices=list(SUPPORTED_VAL_METRICS.keys()),
     )
     parser.add_argument(
         "--zero-filled", action="store_true", help="Calculate metrics for zero-filled images"
@@ -507,6 +504,9 @@ if __name__ == "__main__":
         default=["metrics"],
         choices=["metrics", "save_scans"],
         help="Operations to run. 'metrics': Compute metrics. 'save_scans': Save Scans",
+    )
+    parser.add_argument(
+        "--save_cfg", default=False, action="store_true", help="Save the config file"
     )
 
     args = parser.parse_args()

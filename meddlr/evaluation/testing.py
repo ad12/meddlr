@@ -3,15 +3,17 @@ import logging
 import os
 import pprint
 import re
-import sys
-from typing import Dict, Mapping
+from numbers import Number
+from typing import Any, Dict, List, Mapping, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import torch
 
+from meddlr.config import CfgNode
 
-def print_csv_format(results):  # pragma: no cover
+
+def print_csv_format(results: Dict[str, Dict[str, Number]]):  # pragma: no cover
     """Print metrics for easy copypaste.
 
     Args:
@@ -32,21 +34,27 @@ def print_csv_format(results):  # pragma: no cover
     )
 
 
-def verify_results(cfg, results):  # pragma: no cover
-    """
+def verify_results(cfg: CfgNode, results: Dict[str, Any]) -> bool:  # pragma: no cover
+    """Verify that the results are consistent with what is expected in the config.
+
+    Adapted from detectron2:
+    https://github.com/facebookresearch/detectron2/blob/main/detectron2/evaluation/testing.py
+
     Args:
-        results (OrderedDict[dict]): task_name -> {metric -> score}
+        results: A mapping from metrics -> scores.
 
     Returns:
-        bool: whether the verification succeeds or not
+        bool: Whether the verification succeeds or not
     """
     expected_results = cfg.TEST.EXPECTED_RESULTS
     if not len(expected_results):
         return True
 
+    results = flatten_results_dict(results)
+
     ok = True
-    for task, metric, expected, tolerance in expected_results:
-        actual = results[task][metric]
+    for metric, expected, tolerance in expected_results:
+        actual = results[metric]
         if not np.isfinite(actual):
             ok = False
         diff = abs(actual - expected)
@@ -58,14 +66,12 @@ def verify_results(cfg, results):  # pragma: no cover
         logger.error("Result verification failed!")
         logger.error("Expected Results: " + str(expected_results))
         logger.error("Actual Results: " + pprint.pformat(results))
-
-        sys.exit(1)
     else:
         logger.info("Results verification passed.")
     return ok
 
 
-def flatten_results_dict(results, delimiter="/"):
+def flatten_results_dict(results: Dict[str, Any], delimiter: str = "/") -> Dict[str, Number]:
     """
     Expand a hierarchical dict of scalars into a flat dict of scalars.
     If results[k1][k2][k3] = v, the returned dict will have the entry
@@ -87,104 +93,96 @@ def flatten_results_dict(results, delimiter="/"):
 
 # Supported validation metrics and the operation to perform on them.
 # TODO (arjundd): Do not hardcode these. Match to metrics in meddlr instead.
-SUPPORTED_VAL_METRICS = {
+_METRICS_TO_OPERATION = {
     "l1": "min",
     "l2": "min",
     "psnr": "max",
     "ssim": "max",
-    "ssim_old": "max",
-    "ssim (Wang)": "max",
-    "l1_scan": "min",
-    "l2_scan": "min",
-    "psnr_scan": "max",
-    "ssim (Wang)_scan": "max",
     "iteration": "max",  # find the last checkpoint
     "loss": "min",
     "mae": "min",
-    "mae_scan": "min",
 }
 
 
-def find_weights(cfg, criterion="", iter_limit=None, file_name_fmt="model_{:07d}.pth", top_k=1):
-    """Find the best weights based on a validation criterion/metric.
+def find_metrics(
+    cfg: CfgNode, criterion: str, operation: str = "auto", iter_limit: int = None, top_k: int = 1
+):
+    """Find the iteration(s) resulting in best metrics for a given criterion.
 
     Args:
         cfg: The config.
-        criterion (str, optional): The criterion that we use to select weights.
-            Defaults to ``cfg.MODEL.RECON_LOSS.NAME``.
+        criterion: The criterion that we use to select weights.
+        operation: The operation for selecting the best value of the criterion.
+            One of `'auto'`, `'min'`, `'max'`.
+        iter_limit: If specified, only iterations ``<=iter_limit` will be searched.
+            If this value is negative, it is interpreted as the epoch limit.
+            A positive value is recommended for avoiding ambiguity.
+        top_k: The number of (iteration, metric) pairs to return.
+            If ``-1``, return all pairs in sorted in order of best to worst.
+
+    Returns:
+        List[Tuple[int, float]] | Tuple[int, float]: A list of tuples of the
+            form (iteration, metric) if ``top_k > 1``. Otherwise, a tuple of
+            the form (iteration, metric).
+
+    Note:
+        This function is experimental. The API may change without warning.
+    """
+    metric_details = _find_metric_details(
+        cfg=cfg,
+        criterion=criterion,
+        operation=operation,
+        iter_limit=iter_limit,
+        top_k=-1,
+    )
+    best_iter_and_values = metric_details["best_iter_and_values"][:top_k]
+    return best_iter_and_values[0] if top_k == 1 else best_iter_and_values
+
+
+def find_weights(
+    cfg: CfgNode,
+    criterion: str,
+    operation: str = "auto",
+    iter_limit: int = None,
+    file_name_fmt: str = "model_{:07d}.pth",
+    top_k: int = 1,
+) -> Tuple[Union[str, List[str]], str, Union[float, List[float]]]:
+    """Find the best weights based on a metric criterion.
+
+    TODO (arjundd): Use :func:`find_metrics` to find the appropriate metrics.
+
+    Args:
+        cfg: The config.
+        criterion (str): The criterion that we use to select weights.
+        operation (str, optional): The operation for the best value of the criterion.
+            One of `'auto'`, `'min'`, `'max'`.
         iter_limit (int, optional): If specified, all weights will be before
             this iteration. If this value is negative, it is
             interpreted as the epoch limit.
         file_name_fmt (int, optional): The naming format for checkpoint files.
-        top_k (int, optional): The number of top weights to keep.
+        top_k (int, optional): The number of top checkpoints to return.
 
     Returns:
         Tuple: ``k`` filepath(s), selection criterion, and ``k`` criterion value(s).
             If ``k=1``, filepath is a string and value is a float.
+
+    Examples:
+        >>> checkpoint_file, criterion, value = find_weights(cfg, "val_loss", "min")
+
+    Note:
+        This function is experimental. The API may change without warning.
     """
     logger = logging.getLogger(__name__)
 
-    # Negative iter_limit is interpreted as epoch limit.
-    if iter_limit is not None and iter_limit < 0:
-        iter_limit = int(abs(iter_limit) * get_iters_per_epoch_eval(cfg))
-
-    ckpt_period = cfg.SOLVER.CHECKPOINT_PERIOD
-    eval_period = cfg.TEST.EVAL_PERIOD
-    if (
-        ckpt_period * eval_period <= 0  # same sign (i.e. same time scale)
-        or abs(eval_period) % abs(ckpt_period) != 0  # checkpoint period is multiple of eval period
-    ):
-        raise ValueError(  # pragma: no cover
-            "Cannot find weights if checkpoint/eval periods "
-            "at different time scales or eval period is not"
-            "a multiple of checkpoint period."
-        )
-
-    if not criterion:
-        criterion = cfg.MODEL.RECON_LOSS.NAME.lower()
-        operation = "min"  # loss is always minimized
-    else:
-        operation = SUPPORTED_VAL_METRICS[criterion]
-
-    assert operation in ["min", "max"]
-    if criterion != "iteration":
-        criterion = "val_{}".format(criterion)
-
-    logger.info("Finding best weights in {} using {}...".format(cfg.OUTPUT_DIR, criterion))
-
-    # Filter metrics to find reporting of real validation metrics.
-    # If metric is wrapped (e.g. "mridata_knee_2019_val/val_l1"), that means
-    # multiple datasets were validated on.
-    # We filter out metrics from datasets that contain the word "test".
-    # The criterion from all other datasets are averaged and used as the
-    # target criterion.
-    metrics_file = os.path.join(cfg.OUTPUT_DIR, "metrics")
-    metrics = _metrics_from_x(metrics_file, criterion)
-
-    # Filter out all metrics calculated above iter limit.
-    if iter_limit:
-        metrics = [x for x in metrics if x[0] < iter_limit]
-
-    last_iter = metrics[-1][0]
-
-    # Retraining does not overwrite the metrics file.
-    # We make sure that the metrics correspond only to the most
-    # recent run.
-    metrics_recent_order = metrics[::-1]
-    iterations = [m[0] for m in metrics_recent_order]
-    intervals = np.diff(iterations)
-    if any(intervals > 0):
-        stop_idx = np.argmax(intervals > 0) + 1
-        metrics_recent_order = metrics_recent_order[:stop_idx]
-        metrics = metrics_recent_order[::-1]
-
-    # Note that resuming can sometimes report metrics for the same
-    # iteration. We handle this by taking the most recent metric for the
-    # iteration __after__ filtering out old training runs.
-    # metrics = {iteration: value for iteration, value in metrics}
-    metrics = [(iteration, value) for iteration, value in metrics]
-
-    best_iter_and_values = sorted(metrics, key=lambda x: x[1], reverse=operation == "max")[:top_k]
+    metric_details = _find_metric_details(
+        cfg=cfg,
+        criterion=criterion,
+        operation=operation,
+        iter_limit=iter_limit,
+        top_k=-1,
+    )
+    best_iter_and_values = metric_details["best_iter_and_values"][:top_k]
+    last_iter = metric_details["last_iter"]
 
     all_filepaths = []
     all_values = []
@@ -225,7 +223,7 @@ def find_weights(cfg, criterion="", iter_limit=None, file_name_fmt="model_{:07d}
         return all_filepaths, criterion, all_values
 
 
-def check_consistency(state_dict, model):
+def check_consistency(state_dict: Dict[str, Any], model: torch.nn.Module):
     """Verifies that the proper weights were loaded into the model.
 
     Related to issue that loading weights from checkpoints of a cuda model
@@ -239,6 +237,7 @@ def check_consistency(state_dict, model):
     """
     _state_dict = model.state_dict()
     for k in state_dict:
+        assert k in _state_dict, f"{k} not in model state_dict: {_state_dict.keys()}"
         assert torch.equal(state_dict[k], _state_dict[k]), f"Mismatch values: {k}"
 
 
@@ -320,3 +319,112 @@ def get_iters_per_epoch_eval(cfg) -> int:
     iters_per_epoch = iterations[0] / eval_period
     assert iters_per_epoch == int(iters_per_epoch)
     return int(iters_per_epoch)
+
+
+def _find_metric_details(
+    cfg: CfgNode,
+    criterion: str,
+    operation: str = "auto",
+    iter_limit: int = None,
+    top_k: int = 1,
+):
+    """Find the iteration(s) resulting in best metrics for a given criterion.
+
+    Args:
+        cfg: The config.
+        criterion: The criterion that we use to select weights.
+        operation: The operation for selecting the best value of the criterion.
+            One of `'auto'`, `'min'`, `'max'`.
+        iter_limit: If specified, only iterations ``<=iter_limit` will be searched.
+            If this value is negative, it is interpreted as the epoch limit.
+            A positive value is recommended for avoiding ambiguity.
+        top_k: The number of (iteration, metric) pairs to return.
+            If ``-1``, return all pairs in sorted in order of best to worst.
+
+    Returns:
+        List[Tuple[int, float]] | Tuple[int, float]: A list of tuples of the
+            form (iteration, metric) if ``top_k > 1``. Otherwise, a tuple of
+            the form (iteration, metric). Also returns last iteration if requested.
+
+    Note:
+        This function is experimental. The API may change without warning.
+    """
+    logger = logging.getLogger(__name__)
+
+    if operation not in ["min", "max", "auto"]:
+        raise ValueError(f"Invalid operation: {operation}. Expected one of 'min', 'max', 'auto'.")
+
+    # Negative iter_limit is interpreted as epoch limit.
+    if iter_limit is not None and iter_limit < 0:
+        iter_limit = int(abs(iter_limit) * get_iters_per_epoch_eval(cfg))
+
+    ckpt_period = cfg.SOLVER.CHECKPOINT_PERIOD
+    eval_period = cfg.TEST.EVAL_PERIOD
+    if (
+        ckpt_period * eval_period <= 0  # same sign (i.e. same time scale)
+        or abs(eval_period) % abs(ckpt_period) != 0  # checkpoint period is multiple of eval period
+    ):
+        raise ValueError(  # pragma: no cover
+            "Cannot find weights if checkpoint/eval periods "
+            "at different time scales or eval period is not "
+            "a multiple of checkpoint period."
+        )
+
+    if operation == "auto":
+        operation = [
+            op for name, op in _METRICS_TO_OPERATION.items() if name.lower() in criterion.lower()
+        ]
+        if len(operation) == 0:
+            raise ValueError(f"Could not find operation for criterion '{criterion}'.")
+        if len(operation) > 1:
+            raise ValueError(f"Found multiple operations for criterion '{criterion}': {operation}")
+        operation = operation[0]
+    assert operation in ["min", "max"]
+
+    logger.info("Finding best weights in {} using {}...".format(cfg.OUTPUT_DIR, criterion))
+
+    # Filter metrics to find reporting of real validation metrics.
+    # If metric is wrapped (e.g. "mridata_knee_2019_val/val_l1"), that means
+    # multiple datasets were validated on.
+    # We filter out metrics from datasets that contain the word "test".
+    # The criterion from all other datasets are averaged and used as the
+    # target criterion.
+    metrics_file = os.path.join(cfg.OUTPUT_DIR, "metrics")
+    try:
+        metrics = _metrics_from_x(metrics_file, criterion)
+    except IndexError:
+        raise ValueError(f"No metrics found matching criterion '{criterion}'.")
+
+    # Last iteration that was logged.
+    # Note if the run did not complete, `model_final.pth` may not correspond
+    # with this iteration. Use with caution.
+    last_iter = metrics[-1][0]
+
+    # Filter out all metrics calculated above iter limit.
+    if iter_limit:
+        metrics = [x for x in metrics if x[0] < iter_limit]
+
+    # Retraining does not overwrite the metrics file.
+    # We make sure that the metrics correspond only to the most
+    # recent run.
+    metrics_recent_order = metrics[::-1]
+    iterations = [m[0] for m in metrics_recent_order]
+    intervals = np.diff(iterations)
+    if any(intervals > 0):
+        stop_idx = np.argmax(intervals > 0) + 1
+        metrics_recent_order = metrics_recent_order[:stop_idx]
+        metrics = metrics_recent_order[::-1]
+
+    # Note that resuming can sometimes report metrics for the same
+    # iteration. We handle this by taking the most recent metric for the
+    # iteration __after__ filtering out old training runs.
+    # metrics = {iteration: value for iteration, value in metrics}
+    metrics = [(iteration, value) for iteration, value in metrics]
+
+    best_iter_and_values = sorted(metrics, key=lambda x: x[1], reverse=operation == "max")
+    if top_k > 0:
+        best_iter_and_values = best_iter_and_values[:top_k]
+    return {
+        "best_iter_and_values": best_iter_and_values,
+        "last_iter": last_iter,
+    }

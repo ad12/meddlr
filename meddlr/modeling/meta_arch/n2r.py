@@ -127,11 +127,8 @@ class N2RModel(nn.Module):
             inputs = inputs.get("supervised", inputs)
             return self.model(inputs)
 
-        vis_training = False
-        if self.training and self.vis_period > 0:
-            storage = get_event_storage()
-            if storage.iter % self.vis_period == 0:
-                vis_training = True
+        storage = get_event_storage()
+        vis_training = self.training and self.vis_period > 0 and storage.iter % self.vis_period == 0
 
         inputs_supervised = inputs.get("supervised", None)
         inputs_unsupervised = inputs.get("unsupervised", None)

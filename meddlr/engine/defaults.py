@@ -94,7 +94,7 @@ def default_setup(cfg, args, save_cfg: bool = True):
     auto_version = hasattr(args, "auto_version") and args.auto_version
 
     cfg.defrost()
-    cfg.format_fields()
+    cfg.format_fields(unroll=True)
     cfg.freeze()
 
     if auto_version and not eval_only:
@@ -152,12 +152,14 @@ def default_setup(cfg, args, save_cfg: bool = True):
                 gpus = [gpus]
         else:
             gpus = get_available_gpus(args.num_gpus)
+            if len(gpus) != args.num_gpus:
+                raise ValueError(f"Could not find '{args.num_gpus}' free gpus")
 
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(x) for x in gpus])
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(x) for x in gpus]) if gpus else "-1"
 
         # TODO: Remove this and find a better way to launch the script
         # with the desired gpus.
-        if gpus[0] >= 0:
+        if gpus and gpus[0] >= 0:
             torch.cuda.set_device(gpus[0])
 
     logger.info("Running with full config:\n{}".format(cfg))

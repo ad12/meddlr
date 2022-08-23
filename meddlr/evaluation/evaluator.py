@@ -3,7 +3,7 @@ import logging
 import time
 from collections import OrderedDict
 from contextlib import contextmanager
-from typing import Mapping, Sequence
+from typing import Iterable, Mapping, Sequence
 
 import torch
 
@@ -121,13 +121,15 @@ class DatasetEvaluators(DatasetEvaluator):
         return obj in self.values()
 
 
-def inference_on_dataset(model, data_loader, evaluator):
+def inference_on_dataset(
+    model: torch.nn.Module, data_loader: Iterable, evaluator: DatasetEvaluator
+):
     """
     Run model on the data_loader and evaluate the metrics with evaluator.
     The model will be used in eval mode.
 
     Args:
-        model (nn.Module): a module which accepts an object from
+        model: a module which accepts an object from
             `data_loader` and returns some outputs. It will be temporarily set
             to `eval` mode.
 
@@ -136,7 +138,7 @@ def inference_on_dataset(model, data_loader, evaluator):
             `.train()`.
         data_loader: an iterable object with a length.
             The elements it generates will be the inputs to the model.
-        evaluator (DatasetEvaluator): the evaluator to run. Use
+        evaluator: the evaluator to run. Use
             :class:`DatasetEvaluators([])` if you only want to benchmark, but
             don't want to do any evaluation.
 

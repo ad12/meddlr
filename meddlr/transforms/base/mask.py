@@ -1,5 +1,5 @@
 import warnings
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Union
 
 import torch
 
@@ -24,10 +24,12 @@ class KspaceMaskTransform(Transform):
     Attributes:
         rho (float): The fraction of non-zero pixels to drop.
         kind (str): The kind of mask to use.
+            Either ``'uniform'`` or ``'gaussian'``.
         std_scale (float): The standard deviation of the gaussian mask.
         per_example (bool): Whether to apply the mask per example
-            separately or over the full batch. Defaults to False.
+            separately or over the full batch.
         calib_size (int, Tuple[int]): The size of the calibration region to use.
+            Samples in the calibration region are not dropped.
         seed (int): The seed to use for the random number generator.
         generator (torch.Generator): The random number generator to use.
 
@@ -50,10 +52,10 @@ class KspaceMaskTransform(Transform):
     def __init__(
         self,
         rho: float,
-        kind="uniform",
-        std_scale=4.0,
-        per_example=False,
-        calib_size=None,
+        kind: str = "uniform",
+        std_scale: float = 4.0,
+        per_example: bool = False,
+        calib_size: Union[int, Tuple[int]] = None,
         seed: int = None,
         generator: torch.Generator = None,
     ):
@@ -65,8 +67,12 @@ class KspaceMaskTransform(Transform):
             per_example (bool, optional): Whether to apply the mask per example
                 separately or over the full batch. Defaults to False.
             calib_size (int or Tuple[int], optional): The size of the calibration region to use.
+                If int, the calibration region is a square of size ``(calib_size, calib_size)``.
+                If tuple, the calibration region is a rectangle of size
+                ``(calib_size[0], calib_size[1])``. Defaults to not using a calibration region.
             seed (int, optional): The seed to use for the random number generator.
             generator (torch.Generator, optional): The random number generator to use.
+                Must be specified if ``seed`` is not set.
         """
         if kind not in self._SUPPORTED_MASK_KINDS:
             raise ValueError(
@@ -86,13 +92,15 @@ class KspaceMaskTransform(Transform):
 
     def generate_mask(
         self, kspace: torch.Tensor, mask: torch.Tensor = None, channels_last: bool = False
-    ):
+    ) -> torch.Tensor:
         """Generates mask with approximiately ``1-self.rho`` times number of pixels.
 
         Args:
             kspace (torch.Tensor): The batch of kspace to generate the mask for.
+                Shape: ``[batch, #coils, height, width, ...]`` or
+                ``[batch, height, width, ...,  #coils]`` (i.e ``channels_last=True``).
             channels_last (bool, optional): If ``True``, the kspace is
-                of shape ``[B, H, W, C]``. Defaults to ``False``.
+                of shape ``[batch, height, width, ...,  #coils]``.
 
         Returns:
             torch.Tensor: The generated mask.
@@ -140,6 +148,7 @@ class KspaceMaskTransform(Transform):
 
         Args:
             kspace (torch.Tensor): The batch of kspace to generate the mask for.
+                Shape: ``[B, C, H, W]`` or ``[B, H, W, C]`` (i.e ``channels_last=True``).
             channels_last (bool, optional): If ``True``, the kspace is
                 of shape ``[B, H, W, C]``. Defaults to ``False``.
 
@@ -149,7 +158,7 @@ class KspaceMaskTransform(Transform):
         mask = self.generate_mask(kspace, channels_last=channels_last)
         return mask * kspace
 
-    def _generator(self, data):
+    def _generator(self, data: torch.Tensor) -> torch.Generator:
         seed = self.seed
 
         g = torch.Generator(device=data.device)
@@ -159,7 +168,7 @@ class KspaceMaskTransform(Transform):
             g = g.manual_seed(seed)
         return g
 
-    def _subsample(self, data: torch.Tensor):  # pragma: no cover
+    def _subsample(self, data: torch.Tensor) -> torch.Tensor:  # pragma: no cover
         klass_name = {type(self).__name__}
         warnings.warn(
             f"{klass_name}._subsample is deprecated. Use {klass_name}.apply_kspace instead",
@@ -173,11 +182,31 @@ class KspaceMaskTransform(Transform):
         return ("std_dev", "use_mask", "rho", "seed", "_generator_state")
 
 
-def _uniform_mask(kspace, rho, mask=True, calib_size=None, generator=None):
-    """
+def _uniform_mask(
+    kspace: torch.Tensor,
+    rho: float,
+    mask: Union[bool, torch.Tensor] = True,
+    calib_size: Union[int, Tuple[int]] = None,
+    generator: torch.Generator = None,
+):
+    """Subsamples a mask uniformly at random.
+
+    The output will have approximately ``1-rho`` times number of valid pixels in the input mask.
+    Samples will be selected uniformly at random.
+
     Args:
-        kspace (torch.Tensor): The kspace to mask. Shape: ``BxCxHxWx...``.
-        rho (float): Fraction of samples to drop.
+        kspace: A complex-valued tensor of shape: [batch, #coils, height, width, ...].
+            where `...` represents additional spatial dimensions.
+        rho: Fraction of samples to drop.
+        mask: The mask to use.
+            If ``mask is True``, the mask is considered to the be the non-zero
+            entries of ``kspace``.
+        calib_size: The size of the calibration region to use.
+            Samples in the calibration region are not dropped.
+        generator: The random number generator to use.
+
+    Returns:
+        torch.Tensor: A subsampled mask of shape ``[batch, 1, height, width, ...]``.
     """
     kspace = kspace[:, 0:1, ...]
     orig_mask = cplx.get_mask(kspace) if mask is True else mask
@@ -211,10 +240,34 @@ def _uniform_mask(kspace, rho, mask=True, calib_size=None, generator=None):
     return mask
 
 
-def _gaussian_mask(kspace, rho, std_scale, mask=True, calib_size=None, generator=None):
-    """
+def _gaussian_mask(
+    kspace: torch.Tensor,
+    rho: float,
+    std_scale: float,
+    mask: bool = True,
+    calib_size: Union[int, Tuple[int]] = None,
+    generator: torch.Generator = None,
+):
+    """Subsamples a mask based on Gaussian weighted distribution.
+
+    The output will have approximately ``1-rho`` times number of valid pixels in the input mask.
+    Samples will be selected based on a Gaussian weighted distribution, where the center of kspace
+    is most likely to be selected.
+
     Args:
-        rho (float): Fraction of samples to drop.
+        kspace: A complex-valued tensor of shape: [batch, #coils, height, width, ...].
+            where `...` represents additional spatial dimensions.
+        rho: Fraction of samples to drop.
+        std_scale: The standard deviation of the Gaussian distribution.
+        mask: The mask to use.
+            If ``mask is True``, the mask is considered to the be the non-zero
+            entries of ``kspace``.
+        calib_size: The size of the calibration region to use.
+            Samples in the calibration region are not dropped.
+        generator: The random number generator to use.
+
+    Returns:
+        torch.Tensor: A subsampled mask of shape ``[batch, 1, height, width, ...]``.
 
     Note:
         Currently this creates the same mask for all the examples.

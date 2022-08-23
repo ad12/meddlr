@@ -1,3 +1,5 @@
+torch
+torchvision
 h5py
 matplotlib
 numpy
@@ -19,3 +21,11 @@ recommonmark
 sphinx_bootstrap_theme
 sphinxcontrib-bibtex>=2.0.0
 m2r2
+docutils<0.18
+sphinx_autodoc_typehints
+toml
+pydata_sphinx_theme
+ipython
+jupyter-sphinx
+sphinx-panels
+nbsphinx

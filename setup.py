@@ -100,9 +100,13 @@ EXTRAS = {
         "flake8-comprehensions",
         "pre-commit>=2.9.3",
         # Testing
+        "pytest",
         "medpy",
         "pooch",
         "gdown",
+        # tifffile==2022.7.28 not reading scipy data.
+        # TODO (arjundd): Investigate tifffile issue.
+        "tifffile<=2022.5.4",
         # Documentation
         "sphinx",
         "sphinxcontrib-bibtex",
