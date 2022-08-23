@@ -13,6 +13,7 @@ from meddlr.utils import env
 SSFD_HUGGINGFACE_URL = "https://huggingface.co/philadamson93/SSFD/resolve/main/model.ckpt"
 
 
+# TODO: Refactor SSFD Class to extract shared logic into parent class FeatureMetric
 class SSFD(Metric):
     """
     Self-Supervised Feature Distance. SSFD evaluates the feature distance between a
@@ -30,7 +31,7 @@ class SSFD(Metric):
     def __init__(
         self,
         mode: str = "grayscale",
-        layer_names: Sequence[str] = ["block4_relu2"],
+        layer_names: Sequence[str] = ("block4_relu2",),
         channel_names: Sequence[str] = None,
         reduction="none",
         compute_on_step: bool = False,
@@ -75,10 +76,9 @@ class SSFD(Metric):
         self.net.eval()
 
     def func(self, preds, targets) -> torch.Tensor:
-
+        print("preds shape", preds.shape)
         if self.mode == "grayscale":
             loss_shape = (targets.shape[0], targets.shape[1])
-
         elif self.mode == "rgb":
             if targets.shape[1] != 3:
                 raise ValueError(
@@ -128,7 +128,6 @@ class SSFD(Metric):
 
         if self.mode == "grayscale":
             img = img.reshape(img.shape[0] * img.shape[1], 1, img.shape[2], img.shape[3])
-
         elif self.mode == "rgb":
             img = torch.mean(img, axis=1, keepdim=True)
 

@@ -10,6 +10,7 @@ if env.package_available("lpips"):
     from lpips import LPIPS as _LPIPS
 
 
+# TODO: Refactor SSFD Class to extract shared logic into parent class FeatureMetric
 class LPIPS(Metric):
     """
     Learned Perceptual Image Patch Similarity.
@@ -26,7 +27,7 @@ class LPIPS(Metric):
 
     def __init__(
         self,
-        net_type: str = "vgg",
+        net_type: str = "alex",
         mode: str = "grayscale",
         lpips: bool = True,
         pretrained: bool = True,
@@ -58,6 +59,12 @@ class LPIPS(Metric):
             * ``False``: linear layers are randomly initialized.
         """
 
+        if not env.package_available("lpips"):
+            raise ModuleNotFoundError(
+                "LPIPS metric requires that lpips is installed."
+                "Either install as `pip install meddlr[metrics]` or `pip install lpips`."
+            )
+
         super().__init__(
             channel_names=channel_names,
             units="",
@@ -67,12 +74,6 @@ class LPIPS(Metric):
             process_group=process_group,
             dist_sync_fn=dist_sync_fn,
         )
-
-        if not env.package_available("lpips"):
-            raise ModuleNotFoundError(
-                "LPIPS metric requires that lpips is installed."
-                "Either install as `pip install meddlr[metrics]` or `pip install lpips`."
-            )
 
         valid_net_type = ("vgg", "alex", "squeeze")
         if net_type not in valid_net_type:
@@ -91,7 +92,6 @@ class LPIPS(Metric):
 
         if self.mode == "grayscale":
             loss_shape = (targets.shape[0], targets.shape[1])
-
         elif self.mode == "rgb":
             if targets.shape[1] != 3:
                 raise ValueError(
@@ -135,16 +135,17 @@ class LPIPS(Metric):
             img = cplx.abs(img)
 
         if self.mode == "grayscale":
-            shape = (img.shape[0], img.shape[1], -1)  # normalize over batch and channel dimensions
+            # normalize each image independently (channel dim. represents different images)
+            shape = (img.shape[0], img.shape[1], -1)
             img_min = torch.amin(img.reshape(shape), dim=-1, keepdim=True).unsqueeze(-1)
             img_max = torch.amax(img.reshape(shape), dim=-1, keepdim=True).unsqueeze(-1)
             img = 2 * (img - img_min) / (img_max - img_min) - 1
 
             img = img.reshape(img.shape[0] * img.shape[1], 1, img.shape[2], img.shape[3])
             img = img.repeat(1, 3, 1, 1)
-
         elif self.mode == "rgb":
-            shape = (img.shape[0], -1)  # normalize over batch dimension only
+            # normalize each image independently (channel dim. represents the same image)
+            shape = (img.shape[0], -1)
             img_min = (
                 torch.amin(img.reshape(shape), dim=-1, keepdim=True).unsqueeze(-1).unsqueeze(-1)
             )

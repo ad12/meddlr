@@ -21,7 +21,7 @@ def test_LPIPS_torchmetrics_reproducibility():
     meddlr_metric(preds, targets)
     meddlr_out = meddlr_metric.compute().sum()
 
-    torchmetrics_metric = LearnedPerceptualImagePatchSimilarity(net_type="vgg", reduction="sum")
+    torchmetrics_metric = LearnedPerceptualImagePatchSimilarity(net_type="alex", reduction="sum")
     # torchmetrics lpips has no built-in preprocessing so we use our own
     preds = LPIPS(mode="rgb").preprocess_lpips(preds)
     targets = LPIPS(mode="rgb").preprocess_lpips(targets)
