@@ -1,6 +1,9 @@
 import os
 import unittest
 
+import pytest
+from packaging import version
+
 from meddlr.utils import env
 
 
@@ -90,6 +93,34 @@ def test_is_package_installed():
     numpy_version = env.get_package_version("numpy")
     assert not env.is_package_installed("numpy==0.0.1")
     assert env.is_package_installed(f"numpy=={numpy_version}")
+
+
+@pytest.mark.parametrize("comp_type", ["str", "int_list", "version"])
+def test_version(comp_type):
+    """Test that we can compare with list and strings."""
+
+    def _format_value(val):
+        if comp_type == "str":
+            return val
+        elif comp_type == "int_list":
+            return [int(x) for x in val.split(".")]
+        elif comp_type == "version":
+            return version.Version(val)
+        else:
+            raise ValueError(f"Unknown comp_type '{comp_type}'.")
+
+    curr_version = env.Version("1.0.0")
+    assert curr_version == _format_value("1.0.0")
+    assert curr_version > _format_value("0.9.9")
+    assert curr_version >= _format_value("0.9.9")
+    assert curr_version < _format_value("1.1.1")
+    assert curr_version <= _format_value("1.1.1")
+    assert curr_version != _format_value("1.1.1")
+
+
+def test_custom_pt_version_parsing():
+    """Test that custom builds of PyTorch can be parsed and compared."""
+    assert env.Version("1.13.0a0+08820cb") >= [1, 10]
 
 
 if __name__ == "__main__":
