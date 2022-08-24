@@ -1,11 +1,20 @@
+import unittest
+
 import numpy as np
 import torch
 from skimage import data
-from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 from meddlr.metrics.lpips_meddlr import LPIPS
+from meddlr.utils import env
+
+if [int(ver) for ver in env.get_package_version("torchmetrics").split(".")] >= [0, 8]:
+    from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 
+@unittest.skipIf(
+    [int(ver) for ver in env.get_package_version("torchmetrics").split(".")] < [0, 8],
+    "TorchMetrics does not support LPIPS before version 0.8",
+)
 def test_LPIPS_torchmetrics_reproducibility():
     """Test reproducibility between LPIPS implementations in meddlr and torchmetrics."""
 
