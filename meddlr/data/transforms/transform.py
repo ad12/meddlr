@@ -1,5 +1,6 @@
 """Basic Transforms.
 """
+import math
 from functools import partial
 from typing import Optional, Tuple
 
@@ -7,9 +8,9 @@ import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
+import meddlr.ops as F
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
-from meddlr.transforms.functional import add_motion_corruption
 from meddlr.transforms.gen.spatial import RandomAffine
 from meddlr.utils import transforms as T
 
@@ -20,6 +21,54 @@ NORMALIZER_REGISTRY = Registry("NORMALIZER")
 NORMALIZER_REGISTRY.__doc__ = """
 Registry for normalizing images
 """
+
+
+def affine_transform(
+    image: torch.Tensor,
+    nshots: int,
+    translation: Optional[RandomAffine] = None,
+    trajectory: str = "blocked",
+) -> torch.Tensor:
+    """
+    Simulate 2D motion for multi-shot Cartesian MRI.
+
+    This function supports two trajectories:
+    - 'blocked': Where each shot corresponds to a consecutive block of kspace.
+       (e.g. 1 1 2 2 3 3)
+    - 'interleaved': Where shots are interleaved (e.g. 1 2 3 1 2 3)
+
+    We assume the phase encode direction is left to right
+    (i.e. along width dimension).
+
+    TODO: Add support for sensitivity maps.
+
+    Args:
+        image: The complex-valued image. Shape [..., height, width].
+        nshots: The number of shots in the image.
+            This should be equivalent to ceil(phase_encode_dim / echo_train_length).
+        translation: This is the translation to augment images in the image
+            domain. This is either 'None' or 'RandomAffine' for now.
+        trajectory: One of 'interleaved' or 'consecutive'.
+
+    Returns:
+        A motion corrupted image.
+    """
+    kspace = torch.zeros_like(image)
+    offset = int(math.ceil(kspace.shape[-1] / nshots))
+
+    for shot in range(nshots):
+        motion_image = translation.get_transform(image).apply_image(image)
+        motion_kspace = F.fft2c(motion_image)
+        if trajectory == "blocked":
+            kspace[..., shot * offset : (shot + 1) * offset] = motion_kspace[
+                ..., shot * offset : (shot + 1) * offset
+            ]
+        elif trajectory == "interleaved":
+            kspace[..., shot::nshots] = motion_kspace[..., shot::nshots]
+        else:
+            raise ValueError(f"trajectory '{trajectory}' not supported.")
+
+    return F.ifft2c(kspace)
 
 
 def build_normalizer(cfg):
@@ -387,6 +436,7 @@ class MotionDataTransform:
         mri_dim: int = 2,
         angle: Optional[Tuple[float, float]] = (-5.0, 5.0),
         translation: Optional[Tuple[float, float]] = (0.1, 0.1),
+        pad_like: str = "none",
         trajectory: str = "blocked",
     ):
         """
@@ -419,10 +469,11 @@ class MotionDataTransform:
         self.mri_dim = mri_dim
 
         if nshots is None:
-            raise ValueError("The paramter nshots must be set to some integer value.")
+            raise ValueError("The parameter nshots must be set to some integer value.")
 
         self.nshots = nshots
         self.trajectory = trajectory
+        self.pad_like = pad_like
 
         seed = cfg.SEED if cfg.SEED > -1 else None
         self.rng = np.random.RandomState(seed)
@@ -490,6 +541,11 @@ class MotionDataTransform:
         elif self.mri_dim == 3:
             seed = sum(tuple(map(ord, fname))) if self._is_test else None  # noqa
 
+        if self.pad_like == "none":
+            pad = None
+        if self.pad_like == "mraugment":
+            pad = "MRAugment"
+
         # Zero-filled Sense Recon.
         if torch.is_complex(target_init):
             A = SenseModel(maps)
@@ -505,15 +561,23 @@ class MotionDataTransform:
             # Motion seed should not be different for each slice for now.
             # TODO: Change this for 2D acquisitions.
 
-            tfm_gen = RandomAffine(p=1.0, translate=self.translation, angle=self.angle)
+            tfm_gen = RandomAffine(
+                p=1.0, translate=self.translation, angle=self.angle, pad_like=pad
+            )
             tfm_gen.seed(seed)
 
-            kspace = add_motion_corruption(
+            image = image.permute(0, 3, 1, 2) # Shape: (B, 1, H, W)
+
+            motion_img = affine_transform(
                 image=image,
                 nshots=self.nshots,
                 translation=tfm_gen,
                 trajectory=self.trajectory,
             )
+
+            motion_img = motion_img.permute(0, 2, 3, 1) # Shape: (B, H, W, 1)
+            sense = SenseModel(maps)
+            kspace = sense(motion_img)
 
         # Apply mask in k-space
         masked_kspace, mask = self._subsampler(

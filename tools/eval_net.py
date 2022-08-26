@@ -9,7 +9,7 @@ Example:
 import itertools
 import os
 from copy import deepcopy
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Sequence
 
 import pandas as pd
 import torch
@@ -194,6 +194,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     angle = args.angle
     translation = args.translation
     nshots = args.nshots
+    padlike = args.pad_like.lower()
     trajectory = args.trajectory.lower()
 
     noise_arg = args.noise.lower()
@@ -218,23 +219,27 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         and angle is None
         and translation is None
         and nshots is None
-        and trajectory == "None"
+        and trajectory == "none"
+        and padlike == "none"
     ):
         transform_mri_dim = 2
         transform_angle = 0
         transform_translation = 0
         transform_nshots = 0
         transform_trajectory = 0
+        transform_padlike = "none"
         if mri_dim is not None:
             transform_mri_dim = mri_dim
         if angle is not None:
-            transform_angle = angle
+            transform_angle = (-angle, angle)
         if translation is not None:
-            transform_translation = translation
+            transform_translation = (translation, translation)
         if nshots is not None:
             transform_nshots = nshots
-        if trajectory is not None:
+        if trajectory != "none":
             transform_trajectory = trajectory
+        if padlike != "none":
+            transform_padlike = padlike
         mask_func = build_mask_func(cfg.AUG_TRAIN)
         data_transform = T.MotionDataTransform(
             cfg,
@@ -246,6 +251,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             mri_dim=transform_mri_dim,
             angle=transform_angle,
             translation=transform_translation,
+            pad_like=transform_padlike,
             trajectory=transform_trajectory,
         )
 
@@ -303,6 +309,11 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             "dataset": dataset_name,
             "Noise Level": noise_level,
             "Motion Level": motion_level,
+            "Angle": str(angle),
+            "Translation": str(translation),
+            "Trajectory": trajectory,
+            "n-shots": str(nshots),
+            "mri_dim": str(mri_dim),
             "weights": weights_basename,
             "rescaled": not skip_rescale,
         }
@@ -348,7 +359,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             dataset_name,
             as_test=True,
             add_noise=noise_level > 0,
-            add_motion=include_motion != "false",
+            add_motion=(include_motion and data_transform is not None),
             data_transform=data_transform,
         )
 
@@ -512,33 +523,37 @@ if __name__ == "__main__":
     parser.add_argument(
         "--angle",
         default=None,
-        type=Optional[float],
-        help=("How much rotation angle should be used for motion corruption " "of the dataset"),
+        type=float,
+        help="How much rotation angle should be used for motion corruption of the dataset",
     )
 
     parser.add_argument(
         "--translation",
         default=None,
-        type=Optional[float],
-        help=("How much translation should be used for motion " "corruption of the dataset"),
+        type=float,
+        help="How much translation should be used for motion corruption of the dataset",
     )
     parser.add_argument(
         "--nshots",
         default=None,
-        type=Optional[float],
-        help=("How many shots should be used for motion corruption " "of the dataset."),
-    )
-    parser.add_argument(
-        "--trajectory",
-        default="None",
-        choice=("None", "interleaved", "blocked"),
-        help=(
-            "Chooses between interleaved or blocked shots for motion " "corruption of the dataset"
-        ),
+        type=int,
+        help="How many shots should be used for motion corruption of the dataset.",
     )
 
     parser.add_argument(
-        "--mri_dim", default=None, type=Optional[float], help=("Selects dimensionality number")
+        "--trajectory",
+        default="None",
+        choices=("None", "interleaved", "blocked"),
+        help= "Chooses between interleaved or blocked shots for motion corruption of the dataset",
+    )
+
+    parser.add_argument("--mri_dim", default=None, type=int, help="Selects dimensionality number")
+
+    parser.add_argument(
+        "--pad_like",
+        default="None",
+        choices=("None", "MRAugment"),
+        help=("Specify pad like argument to Random Affine transformation"),
     )
 
     # End of Arguments for 2D Motion Corruption of the Dataset
