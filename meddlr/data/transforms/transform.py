@@ -436,6 +436,7 @@ class MotionDataTransform:
         mri_dim: int = 2,
         angle: Optional[Tuple[float, float]] = (-5.0, 5.0),
         translation: Optional[Tuple[float, float]] = (0.1, 0.1),
+        pad_like: str = "none",
         trajectory: str = "blocked",
     ):
         """
@@ -468,10 +469,11 @@ class MotionDataTransform:
         self.mri_dim = mri_dim
 
         if nshots is None:
-            raise ValueError("The paramter nshots must be set to some integer value.")
+            raise ValueError("The parameter nshots must be set to some integer value.")
 
         self.nshots = nshots
         self.trajectory = trajectory
+        self.pad_like = pad_like
 
         seed = cfg.SEED if cfg.SEED > -1 else None
         self.rng = np.random.RandomState(seed)
@@ -539,6 +541,11 @@ class MotionDataTransform:
         elif self.mri_dim == 3:
             seed = sum(tuple(map(ord, fname))) if self._is_test else None  # noqa
 
+        if self.pad_like == "none":
+            pad = None
+        if self.pad_like == "mraugment":
+            pad = "MRAugment"
+
         # Zero-filled Sense Recon.
         if torch.is_complex(target_init):
             A = SenseModel(maps)
@@ -554,7 +561,9 @@ class MotionDataTransform:
             # Motion seed should not be different for each slice for now.
             # TODO: Change this for 2D acquisitions.
 
-            tfm_gen = RandomAffine(p=1.0, translate=self.translation, angle=self.angle)
+            tfm_gen = RandomAffine(
+                p=1.0, translate=self.translation, angle=self.angle, pad_like=pad
+            )
             tfm_gen.seed(seed)
 
             image = image.permute(0, 3, 1, 2)

@@ -194,6 +194,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     angle = args.angle
     translation = args.translation
     nshots = args.nshots
+    padlike = args.pad_like.lower()
     trajectory = args.trajectory.lower()
 
     noise_arg = args.noise.lower()
@@ -219,12 +220,14 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         and translation is None
         and nshots is None
         and trajectory == "none"
+        and padlike == "none"
     ):
         transform_mri_dim = 2
         transform_angle = 0
         transform_translation = 0
         transform_nshots = 0
         transform_trajectory = 0
+        transform_padlike = "none"
         if mri_dim is not None:
             transform_mri_dim = mri_dim
         if angle is not None:
@@ -233,8 +236,10 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             transform_translation = (translation, translation)
         if nshots is not None:
             transform_nshots = nshots
-        if trajectory is not None:
+        if trajectory != "none":
             transform_trajectory = trajectory
+        if padlike != "none":
+            transform_padlike = padlike
         mask_func = build_mask_func(cfg.AUG_TRAIN)
         data_transform = T.MotionDataTransform(
             cfg,
@@ -246,6 +251,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             mri_dim=transform_mri_dim,
             angle=transform_angle,
             translation=transform_translation,
+            pad_like=transform_padlike,
             trajectory=transform_trajectory,
         )
 
@@ -544,6 +550,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("--mri_dim", default=None, type=int, help=("Selects dimensionality number"))
+
+    parser.add_argument(
+        "--pad_like",
+        default="None",
+        choices=("None", "MRAugment"),
+        help=("Specify pad like argument to Random Affine transformation"),
+    )
 
     # End of Arguments for 2D Motion Corruption of the Dataset
 
