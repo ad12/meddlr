@@ -313,7 +313,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             "Translation": str(translation),
             "Trajectory": trajectory,
             "n-shots": str(nshots),
-            "MRI DIM": str(mri_dim),
+            "mri_dim": str(mri_dim),
             "weights": weights_basename,
             "rescaled": not skip_rescale,
         }
@@ -359,7 +359,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             dataset_name,
             as_test=True,
             add_noise=noise_level > 0,
-            add_motion=(include_motion != "false" and data_transform is not None),
+            add_motion=(include_motion and data_transform is not None),
             data_transform=data_transform,
         )
 
@@ -524,32 +524,30 @@ if __name__ == "__main__":
         "--angle",
         default=None,
         type=float,
-        help=("How much rotation angle should be used for motion corruption " "of the dataset"),
+        help="How much rotation angle should be used for motion corruption of the dataset",
     )
 
     parser.add_argument(
         "--translation",
         default=None,
         type=float,
-        help=("How much translation should be used for motion " "corruption of the dataset"),
+        help="How much translation should be used for motion corruption of the dataset",
     )
     parser.add_argument(
         "--nshots",
         default=None,
         type=int,
-        help=("How many shots should be used for motion corruption " "of the dataset."),
+        help="How many shots should be used for motion corruption of the dataset.",
     )
 
     parser.add_argument(
         "--trajectory",
         default="None",
         choices=("None", "interleaved", "blocked"),
-        help=(
-            "Chooses between interleaved or blocked shots for motion " "corruption of the dataset"
-        ),
+        help= "Chooses between interleaved or blocked shots for motion corruption of the dataset",
     )
 
-    parser.add_argument("--mri_dim", default=None, type=int, help=("Selects dimensionality number"))
+    parser.add_argument("--mri_dim", default=None, type=int, help="Selects dimensionality number")
 
     parser.add_argument(
         "--pad_like",

@@ -23,7 +23,7 @@ Registry for normalizing images
 """
 
 
-def add_motion_corruption(
+def affine_transform(
     image: torch.Tensor,
     nshots: int,
     translation: Optional[RandomAffine] = None,
@@ -566,16 +566,16 @@ class MotionDataTransform:
             )
             tfm_gen.seed(seed)
 
-            image = image.permute(0, 3, 1, 2)
+            image = image.permute(0, 3, 1, 2) # Shape: (B, 1, H, W)
 
-            motion_img = add_motion_corruption(
+            motion_img = affine_transform(
                 image=image,
                 nshots=self.nshots,
                 translation=tfm_gen,
                 trajectory=self.trajectory,
             )
 
-            motion_img = motion_img.permute(0, 2, 3, 1)
+            motion_img = motion_img.permute(0, 2, 3, 1) # Shape: (B, H, W, 1)
             sense = SenseModel(maps)
             kspace = sense(motion_img)
 
