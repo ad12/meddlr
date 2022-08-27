@@ -28,7 +28,13 @@ IMAGE_LOSSES = [
     "ssim_phase_loss",
     "ssim_mag_phase_loss",
 ]
-KSPACE_LOSSES = ["k_l1", "k_l1_normalized", "k_l1_l2_sum_normalized"]
+KSPACE_LOSSES = [
+    "k_l1",
+    "k_l1_sum",
+    "k_l1_normalized",
+    "k_l1_sum_normalized",
+    "k_l1_l2_sum_normalized",
+]
 
 
 def build_loss_computer(cfg, name, **kwargs):
