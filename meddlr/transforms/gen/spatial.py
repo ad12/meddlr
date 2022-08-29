@@ -95,7 +95,9 @@ class RandomAffine(TransformGen):
             return NoOpTransform()
 
         angle, translate, scale, shear = out
-        return AffineTransform(angle=angle, translate=translate, scale=scale, shear=shear)
+        return AffineTransform(
+            angle=angle, translate=translate, scale=scale, shear=shear, pad_like=self.pad_like
+        )
 
 
 @TRANSFORM_REGISTRY.register()
