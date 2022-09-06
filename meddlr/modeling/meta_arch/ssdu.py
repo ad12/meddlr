@@ -74,11 +74,17 @@ class SSDUModel(nn.Module):
         tfm: KspaceMaskTransform = masker.get_transform(kspace)
         train_mask = tfm.generate_mask(kspace, channels_last=True)
         loss_mask = mask - train_mask
+
+        # Pad the train mask so that all unacquired kspace points
+        # are included in the train_mask.
+        train_mask = _pad_train_mask(mask, train_mask)
+
         # TODO (arjundd): See if we can remove this check for speed reasons.
         assert torch.all(loss_mask >= 0)
 
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = train_mask * kspace
+        inputs["mask"] = train_mask
         return inputs, mask[..., 0:1], train_mask, loss_mask[..., 0:1]
 
     @torch.no_grad()
@@ -110,6 +116,11 @@ class SSDUModel(nn.Module):
                 "unsupervised" not in inputs
             ), "unsupervised inputs should not be provided in eval mode"
             inputs = inputs.get("supervised", inputs)
+            mask = cplx.get_mask(inputs["kspace"])
+            # FIXME (arjundd): Recommended by SSDU authors during test time as well.
+            # Why is this necessary during test time?
+            mask = _pad_train_mask(mask, mask)
+            inputs["mask"] = mask
             return self.model(inputs)
 
         storage = get_event_storage()
@@ -188,3 +199,27 @@ class SSDUModel(nn.Module):
         masker.to(cfg.MODEL.DEVICE)
 
         return {"model": model, "masker": masker}
+
+
+def _pad_train_mask(original_mask: torch.Tensor, train_mask: torch.Tensor) -> torch.Tensor:
+    """Perform SSDU training mask padding.
+
+    In SSDU, all k-space points that are not acquired in the original
+    undersampling mask should be kept in the training mask. This is to
+    ensure appropriate data consistency with the unused points.
+
+    Args:
+        original_mask: The original undersampling mask.
+        train_mask: The training mask.
+
+    Returns:
+        torch.Tensor: The padded training mask.
+    """
+    assert original_mask.shape[:-1] == train_mask.shape[:-1]
+    assert train_mask.shape[-1] in [1, original_mask.shape[-1]]
+
+    if train_mask.shape[-1] == 1:
+        train_mask[original_mask[..., 0:1] == 0] = True
+    else:
+        train_mask[original_mask == 0] = True
+    return train_mask
