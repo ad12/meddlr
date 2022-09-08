@@ -24,7 +24,7 @@ Registry for normalizing images
 """
 
 
-def affine_transform(
+def add_affine_motion(
     image: torch.Tensor,
     nshots: int,
     transforms: Sequence[TransformGen],
@@ -584,7 +584,7 @@ class MotionDataTransform:
 
             image = image.permute(0, 3, 1, 2)  # Shape: (B, 1, H, W)
 
-            motion_img = affine_transform(
+            motion_img = add_affine_motion(
                 image=image,
                 nshots=self.nshots,
                 transforms=transforms,
