@@ -97,11 +97,7 @@ class ReconEvaluator(ScanEvaluator):
         self._channel_names = channel_names
         self._structure_channel_by = structure_channel_by
         self._prefix = prefix
-
-        if torch.cuda.is_available():
-            self.device = cfg.MODEL.DEVICE
-        else:
-            self.device = torch.device("cpu")
+        self.device = cfg.MODEL.DEVICE
 
         if save_scans and (not output_dir or not aggregate_scans):
             raise ValueError("`output_dir` and `aggregate_scans` must be specified to save scans.")
