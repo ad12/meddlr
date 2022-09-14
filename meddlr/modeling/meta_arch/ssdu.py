@@ -119,8 +119,9 @@ class SSDUModel(nn.Module):
             mask = cplx.get_mask(inputs["kspace"])
             # FIXME (arjundd): Recommended by SSDU authors during test time as well.
             # Why is this necessary during test time?
-            mask = _pad_train_mask(mask, mask)
-            inputs["mask"] = mask
+            dc_mask = _pad_train_mask(mask, mask)
+            inputs["mask"] = dc_mask
+            # inputs["postprocessing_mask"] = dc_mask - mask
             return self.model(inputs)
 
         storage = get_event_storage()
@@ -204,7 +205,7 @@ class SSDUModel(nn.Module):
 def _pad_train_mask(original_mask: torch.Tensor, train_mask: torch.Tensor) -> torch.Tensor:
     """Perform SSDU training mask padding.
 
-    In SSDU, all k-space points that are not acquired in the original
+    In SSDU, all edge k-space points that are not acquired in the original
     undersampling mask should be kept in the training mask. This is to
     ensure appropriate data consistency with the unused points.
 
@@ -215,11 +216,28 @@ def _pad_train_mask(original_mask: torch.Tensor, train_mask: torch.Tensor) -> to
     Returns:
         torch.Tensor: The padded training mask.
     """
+
+    def get_center(size: int) -> float:
+        """Get the center of the matrix."""
+        return size // 2 if size % 2 == 1 else size // 2 - 0.5
+
     assert original_mask.shape[:-1] == train_mask.shape[:-1]
     assert train_mask.shape[-1] in [1, original_mask.shape[-1]]
 
-    if train_mask.shape[-1] == 1:
-        train_mask[original_mask[..., 0:1] == 0] = True
-    else:
-        train_mask[original_mask == 0] = True
+    # This is only for PoissonDisc undersampling.
+    # The edges of the ellipse are not sampled.
+    # These points should be set to 1 in the training mask.
+    # y: the row dimension, x: the column dimension.
+    h, w = train_mask.shape[1:3]
+    grid_y, grid_x = torch.meshgrid(
+        torch.arange(h).to(train_mask.device), torch.arange(w).to(train_mask.device), indexing="ij"
+    )
+    # grid_y, grid_x = grid_y.to(train_mask.device), grid_x.to(train_mask.device)
+    yc, xc = get_center(h), get_center(w)
+    outer_ellipse_mask = (grid_y - yc) ** 2 / (h / 2) ** 2 + (grid_x - xc) ** 2 / (w / 2) ** 2 > 1
+    outer_ellipse_mask = outer_ellipse_mask.reshape(1, h, w, 1)
+    dtype = train_mask.dtype
+    train_mask = train_mask.type(torch.bool) | outer_ellipse_mask.type(torch.bool)
+    train_mask = train_mask.type(dtype)
+
     return train_mask
