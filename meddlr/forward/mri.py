@@ -103,3 +103,32 @@ class SenseModel(nn.Module):
         else:
             output = self._forward_op(input)
         return output
+
+
+def hard_data_consistency(
+    image: torch.Tensor, acq_kspace: torch.Tensor, mask: torch.Tensor, maps: torch.Tensor
+):
+    """Hard project acquired k-space into reconstructed k-space.
+
+    Args:
+        image: The reconstructed image. Shape ``(B, H, W, #maps, [2])``.
+        acq_kspace: The acquired k-space. Shape ``(B, H, W, #coils, [2])``.
+        mask: The consistency mask. Shape ``(B, H, W)``.
+        maps: The sensitivity maps. Shape ``(B, H, W, #coils, #maps, [2])``.
+
+    Returns:
+        torch.Tensor: The projected image. Shape ``(B, H, W, #maps, [2])``.
+    """
+    # Do not pass the mask to the SenseModel. We do not want to mask out any k-space values.
+    device = image.device
+    A = SenseModel(maps=maps.to(device))
+    kspace = A(image, adjoint=False)
+    # TODO (arjundd): Profile this operation. It may be faster to do torch.where.
+    # Performance may also depend on the device.
+    if mask.dtype != torch.bool:
+        mask = mask.bool()
+    mask = mask.to(device)
+    acq_kspace = acq_kspace.to(device)
+    kspace = mask * acq_kspace + (~mask) * kspace
+    recon = A(kspace, adjoint=True)
+    return recon
