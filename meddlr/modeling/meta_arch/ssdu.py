@@ -70,15 +70,22 @@ class SSDUModel(nn.Module):
         masker = self.masker
         kspace = inputs["kspace"].clone()
         mask = cplx.get_mask(kspace)
+        edge_mask = inputs["edge_mask"]
 
         tfm: KspaceMaskTransform = masker.get_transform(kspace)
         train_mask = tfm.generate_mask(kspace, channels_last=True)
         loss_mask = mask - train_mask
+
+        # Pad the train mask so that all unacquired kspace points
+        # are included in the train_mask.
+        train_mask = (train_mask.type(torch.bool) | edge_mask.type(torch.bool)).type(torch.float32)
+
         # TODO (arjundd): See if we can remove this check for speed reasons.
         assert torch.all(loss_mask >= 0)
 
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = train_mask * kspace
+        inputs["mask"] = train_mask
         return inputs, mask[..., 0:1], train_mask, loss_mask[..., 0:1]
 
     @torch.no_grad()
@@ -110,6 +117,12 @@ class SSDUModel(nn.Module):
                 "unsupervised" not in inputs
             ), "unsupervised inputs should not be provided in eval mode"
             inputs = inputs.get("supervised", inputs)
+            mask = cplx.get_mask(inputs["kspace"])
+            # The mask should be the union of the edge mask and the sampled data mask.
+            # https://github.com/byaman14/SSDU
+            dc_mask = (mask + inputs["edge_mask"]).bool().to(mask.dtype)
+            inputs["mask"] = dc_mask
+            # inputs["postprocessing_mask"] = dc_mask - mask
             return self.model(inputs)
 
         storage = get_event_storage()
