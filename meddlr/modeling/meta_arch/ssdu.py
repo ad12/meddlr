@@ -70,6 +70,7 @@ class SSDUModel(nn.Module):
         masker = self.masker
         kspace = inputs["kspace"].clone()
         mask = cplx.get_mask(kspace)
+        edge_mask = inputs["edge_mask"]
 
         tfm: KspaceMaskTransform = masker.get_transform(kspace)
         train_mask = tfm.generate_mask(kspace, channels_last=True)
@@ -77,7 +78,7 @@ class SSDUModel(nn.Module):
 
         # Pad the train mask so that all unacquired kspace points
         # are included in the train_mask.
-        train_mask = _pad_train_mask(mask, train_mask)
+        train_mask = (train_mask.type(torch.bool) | edge_mask.type(torch.bool)).type(torch.float32)
 
         # TODO (arjundd): See if we can remove this check for speed reasons.
         assert torch.all(loss_mask >= 0)
@@ -117,9 +118,9 @@ class SSDUModel(nn.Module):
             ), "unsupervised inputs should not be provided in eval mode"
             inputs = inputs.get("supervised", inputs)
             mask = cplx.get_mask(inputs["kspace"])
-            # FIXME (arjundd): Recommended by SSDU authors during test time as well.
-            # Why is this necessary during test time?
-            dc_mask = _pad_train_mask(mask, mask)
+            # The mask should be the union of the edge mask and the sampled data mask.
+            # https://github.com/byaman14/SSDU
+            dc_mask = (mask + inputs["edge_mask"]).bool().to(mask.dtype)
             inputs["mask"] = dc_mask
             # inputs["postprocessing_mask"] = dc_mask - mask
             return self.model(inputs)
@@ -200,44 +201,3 @@ class SSDUModel(nn.Module):
         masker.to(cfg.MODEL.DEVICE)
 
         return {"model": model, "masker": masker}
-
-
-def _pad_train_mask(original_mask: torch.Tensor, train_mask: torch.Tensor) -> torch.Tensor:
-    """Perform SSDU training mask padding.
-
-    In SSDU, all edge k-space points that are not acquired in the original
-    undersampling mask should be kept in the training mask. This is to
-    ensure appropriate data consistency with the unused points.
-
-    Args:
-        original_mask: The original undersampling mask.
-        train_mask: The training mask.
-
-    Returns:
-        torch.Tensor: The padded training mask.
-    """
-
-    def get_center(size: int) -> float:
-        """Get the center of the matrix."""
-        return size // 2 if size % 2 == 1 else size // 2 - 0.5
-
-    assert original_mask.shape[:-1] == train_mask.shape[:-1]
-    assert train_mask.shape[-1] in [1, original_mask.shape[-1]]
-
-    # This is only for PoissonDisc undersampling.
-    # The edges of the ellipse are not sampled.
-    # These points should be set to 1 in the training mask.
-    # y: the row dimension, x: the column dimension.
-    h, w = train_mask.shape[1:3]
-    grid_y, grid_x = torch.meshgrid(
-        torch.arange(h).to(train_mask.device), torch.arange(w).to(train_mask.device), indexing="ij"
-    )
-    # grid_y, grid_x = grid_y.to(train_mask.device), grid_x.to(train_mask.device)
-    yc, xc = get_center(h), get_center(w)
-    outer_ellipse_mask = (grid_y - yc) ** 2 / (h / 2) ** 2 + (grid_x - xc) ** 2 / (w / 2) ** 2 > 1
-    outer_ellipse_mask = outer_ellipse_mask.reshape(1, h, w, 1)
-    dtype = train_mask.dtype
-    train_mask = train_mask.type(torch.bool) | outer_ellipse_mask.type(torch.bool)
-    train_mask = train_mask.type(dtype)
-
-    return train_mask

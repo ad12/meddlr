@@ -342,9 +342,11 @@ class DataTransform:
         masked_kspace, mask = self._subsampler(
             kspace, mode="2D", seed=seed, acceleration=acceleration
         )
+
+        edge_mask = self._subsampler.edge_mask(kspace, mode="2D")
         postprocessing_mask = None
         if self._is_test and self._postprocessor:
-            postprocessing_mask = self._subsampler.edge_mask(kspace, mode="2D")
+            postprocessing_mask = edge_mask
             if self._postprocessor == "hard_dc_all":
                 postprocessing_mask = (postprocessing_mask + mask).bool().type(torch.float32)
 
@@ -393,6 +395,7 @@ class DataTransform:
             "mean": mean,
             "std": std,
             "norm": norm,
+            "edge_mask": edge_mask.squeeze(0),
         }
         if postprocessing_mask is not None:
             out["postprocessing_mask"] = postprocessing_mask.squeeze(0)

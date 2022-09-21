@@ -4,7 +4,12 @@ import numpy as np
 import pytest
 import torch
 
-from meddlr.data.transforms.subsample import PoissonDiskMaskFunc, RandomMaskFunc1D, _get_center
+from meddlr.data.transforms.subsample import (
+    PoissonDiskMaskFunc,
+    RandomMaskFunc1D,
+    _get_center,
+    get_cartesian_edge_mask,
+)
 
 
 def test_poisson_disc():
@@ -123,3 +128,43 @@ def test_random1d_randomness(acc, cf, shape, seed):
             return
 
     assert False
+
+
+def test_get_cartesian_edge_mask_1d():
+    shape = (1, 10, 8)  # (batch, height, width)
+
+    kspace = torch.randn(shape, dtype=torch.complex64)
+    kspace[:, :, :2] = 0
+    kspace[:, :, 5:] = 0
+    mask = get_cartesian_edge_mask(kspace, dims=2)
+    assert mask.shape == shape
+    assert torch.all(mask[:, :, :2] == 1)
+    assert torch.all(mask[:, :, 5:] == 1)
+    assert torch.all(mask[:, :, 2:5] == 0)
+
+    kspace = torch.randn(shape, dtype=torch.complex64)
+    kspace[:, :3, :] = 0
+    kspace[:, 8:, :] = 0
+    mask = get_cartesian_edge_mask(kspace, dims=1)
+    assert mask.shape == shape
+    assert torch.all(mask[:, :3, :] == 1)
+    assert torch.all(mask[:, 8:, :] == 1)
+    assert torch.all(mask[:, 3:8, :] == 0)
+
+
+@pytest.mark.parametrize("dims", [(1, 2), (-1, -2)])
+def test_get_cartesian_edge_mask_2d(dims):
+    shape = (1, 10, 8)  # (batch, height, width)
+
+    kspace = torch.randn(shape, dtype=torch.complex64)
+    kspace[:, :3, :] = 0
+    kspace[:, 8:, :] = 0
+    kspace[:, :, :2] = 0
+    kspace[:, :, 5:] = 0
+    mask = get_cartesian_edge_mask(kspace, dims=dims)
+    assert mask.shape == shape
+    assert torch.all(mask[:, :3, :] == 1)
+    assert torch.all(mask[:, 8:, :] == 1)
+    assert torch.all(mask[:, :, :2] == 1)
+    assert torch.all(mask[:, :, 5:] == 1)
+    assert torch.all(mask[:, 3:8, 2:5] == 0)
