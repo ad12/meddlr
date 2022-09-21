@@ -337,6 +337,8 @@ _C.TEST.VAL_METRICS.RECON = ()
 # Specify if you are getting OOM errors during evaluation.
 # Set to 0 to disable.
 _C.TEST.FLUSH_PERIOD = 0
+_C.TEST.POSTPROCESSOR = CN()
+_C.TEST.POSTPROCESSOR.NAME = ""  # e.g. "hard_dc" for hard data consistency
 
 # ---------------------------------------------------------------------------- #
 # Misc options

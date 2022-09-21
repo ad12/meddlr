@@ -4,8 +4,10 @@ import torch
 
 import meddlr.ops.complex as cplx
 import meddlr.utils.transforms as T
-from meddlr.forward import SenseModel
+from meddlr.forward.mri import SenseModel, hard_data_consistency
 from meddlr.utils import env
+
+from ..transforms.mock import generate_mock_mri_data
 
 
 class TestSenseModel(unittest.TestCase):
@@ -79,3 +81,14 @@ class TestSenseModel(unittest.TestCase):
         out_kspace = A(out_image, adjoint=False)
         # both clauses required for CI to pass on python 3.7 - torch.allclose does not work
         assert torch.allclose(out_kspace, expected, atol=1e-5)
+
+
+def test_hard_data_consistency_trivial():
+    ky = 20
+    kz = 20
+    nc = 8
+
+    kspace, maps, target = generate_mock_mri_data(ky=ky, kz=kz, nc=nc, nm=1, bsz=1)
+    mask = torch.ones_like(kspace)
+    recon = hard_data_consistency(target, kspace, mask=mask, maps=maps)
+    assert torch.allclose(recon, target, atol=1e-5)
