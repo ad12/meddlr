@@ -232,7 +232,13 @@ class GeneralizedUnrolledCNN(nn.Module):
             if use_cplx:
                 image = torch.view_as_complex(image)
 
-        output_dict = {"pred": image, "target": target}  # N x Y x Z x 1 x 2  # N x Y x Z x 1 x 2
+        # pred: shape [batch, height, width, #maps, 2]
+        # target: shape [batch, height, width, #maps, 2]
+        output_dict = {
+            "pred": image,
+            "target": target,
+            "signal_model": A,
+        }
 
         if return_pp:
             output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"]})
