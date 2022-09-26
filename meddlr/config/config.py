@@ -51,7 +51,6 @@ class CfgNode(_CfgNode):
         )
 
         if loaded_ver == self.VERSION:
-            print("loaded_cfg", loaded_cfg)
             self.merge_from_other_cfg(loaded_cfg)
         else:
             # compat.py needs to import CfgNode

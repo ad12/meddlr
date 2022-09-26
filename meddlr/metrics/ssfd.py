@@ -76,7 +76,6 @@ class SSFD(Metric):
         self.net.eval()
 
     def func(self, preds, targets) -> torch.Tensor:
-        print("preds shape", preds.shape)
         if self.mode == "grayscale":
             loss_shape = (targets.shape[0], targets.shape[1])
         elif self.mode == "rgb":
