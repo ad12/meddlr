@@ -15,6 +15,7 @@ from tqdm import tqdm
 import meddlr.utils.comm as comm
 from meddlr.data.transforms.transform import build_normalizer
 from meddlr.evaluation.scan_evaluator import ScanEvaluator, structure_scans
+from meddlr.forward.mri import hard_data_consistency
 from meddlr.metrics.build import build_metrics
 from meddlr.metrics.collection import MetricCollection
 from meddlr.ops import complex as cplx
@@ -97,8 +98,9 @@ class ReconEvaluator(ScanEvaluator):
         self._channel_names = channel_names
         self._structure_channel_by = structure_channel_by
         self._prefix = prefix
+        self._postprocess = cfg.TEST.POSTPROCESSOR.NAME
         self.device = cfg.MODEL.DEVICE
-
+        
         if save_scans and (not output_dir or not aggregate_scans):
             raise ValueError("`output_dir` and `aggregate_scans` must be specified to save scans.")
         self._save_scans = save_scans
@@ -182,6 +184,15 @@ class ReconEvaluator(ScanEvaluator):
 
         preds: torch.Tensor
         targets: torch.Tensor
+
+        # Hacky way to postprocess the targets with hard data consistency (if specified).
+        if "hard_dc" in self._postprocess:
+            outputs["pred"] = hard_data_consistency(
+                outputs["pred"],
+                acq_kspace=inputs["kspace"],
+                mask=inputs["postprocessing_mask"],
+                maps=inputs["maps"],
+            )
 
         if self._skip_rescale:
             # Do not rescale the outputs

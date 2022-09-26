@@ -1,12 +1,15 @@
 import inspect
 import os
-from typing import Sequence
+from typing import List, Sequence, Union
 
 import numba as nb
 import numpy as np
 import sigpy.mri
 import torch
+import torch.nn.functional as F
 from fvcore.common.registry import Registry
+
+import meddlr.ops.complex as cplx
 
 MASK_FUNC_REGISTRY = Registry("MASK_FUNC")
 MASK_FUNC_REGISTRY.__doc__ = """
@@ -63,6 +66,37 @@ class MaskFunc:
         acceleration = self.accelerations[0] + accel_range * self.rng.rand()
         return acceleration
 
+    def get_edge_mask(self, kspace: torch.Tensor, out_shape: Sequence[int] = None) -> torch.Tensor:
+        """Get the mask of the edges of kspace that are not sampled.
+
+        ``True`` values indicate the point is an edge location.
+
+        To accelerate the scan, edges of kspace are often not sampled
+        or are zero-padded during reconstruction. This method returns
+        an estimate of these edges based on the kspace.
+
+        Different undersampling methods have different mechanisms for estimating
+        the edges.
+
+        This method should be applied on the fully-sampled kspace (when possible)
+        for most accurate edge estimation. It should also be applied prior to
+        any additional padding on the kspace (e.g. ZIP2). If padding is used,
+        the edge mask must be manually padded as well.
+
+        Args:
+            kspace (torch.Tensor): The kspace to estimate the edges of.
+                Shape depends on the implementation in the subclass.
+
+        Returns:
+            torch.Tensor: A mask of the edges of kspace.
+            out_shape: The optional shape of the output mask.
+                There will be some constraints on the shape based on the
+                subclass implementation. Most typically, it will require
+                that the spatial dimensions of the output_shape match
+                the spatial dimensions of the kspace.
+        """
+        raise NotImplementedError()
+
 
 class CacheableMaskMixin:
     def get_filename(self):
@@ -106,6 +140,14 @@ class RandomMaskFunc(MaskFunc):
         ] = torch.Tensor([1])
 
         return mask.reshape(out_shape)
+
+    def get_edge_mask(self, kspace: torch.Tensor, out_shape: Sequence[int] = None):
+        """See :method:`MaskFunc.get_edge_mask`.
+
+        Expected `kspace` shape (batch, ky, kz, ...).
+        """
+        # TODO: dims should be configured based on the number of dimenions in the input.
+        return get_cartesian_edge_mask(kspace, dims=(1, 2), out_shape=out_shape)
 
 
 @MASK_FUNC_REGISTRY.register()
@@ -182,6 +224,40 @@ class PoissonDiskMaskFunc(CacheableMaskMixin, MaskFunc):
         mask = torch.from_numpy(mask.reshape(out_shape))
 
         return mask
+
+    def get_edge_mask(self, kspace: torch.Tensor, out_shape: Sequence[int] = None):
+        """See :method:`MaskFunc.get_edge_mask`.
+
+        Expected `kspace` shape (batch, ky, kz, ...).
+        """
+
+        if out_shape is not None and out_shape[1:3] != kspace.shape[1:3]:
+            raise ValueError("out_shape must have the same ky and kz dimensions as kspace.")
+
+        if out_shape is None:
+            out_shape = kspace.shape
+        h, w = kspace.shape[1:3]
+
+        # When crop corner is disabled, all edges are sampled.
+        if not self.crop_corner:
+            return torch.zeros(out_shape, dtype=torch.float32, device=kspace.device)
+
+        # The edges of the ellipse are not sampled.
+        # These points should be set to 1 in the training mask.
+        # y: the row dimension, x: the column dimension.
+        # Ellipse equation: (x - xc)^2 / w^2 + (y - yc)^2 / h^2 = 1
+        grid_y, grid_x = torch.meshgrid(
+            torch.arange(h, device=kspace.device, dtype=torch.float32),
+            torch.arange(w, device=kspace.device, dtype=torch.float32),
+            indexing="ij",
+        )
+        yc, xc = _get_center(h), _get_center(w)
+        outer_ellipse_mask = (grid_y - yc) ** 2 / (h / 2) ** 2 + (grid_x - xc) ** 2 / (
+            w / 2
+        ) ** 2 > 1
+
+        outer_ellipse_mask = outer_ellipse_mask.type(torch.float32)
+        return _reshape_or_tile(outer_ellipse_mask, shape=out_shape, ndim=2)
 
     def _get_args(self):
         return {
@@ -293,6 +369,85 @@ class RandomMaskFunc1D(MaskFunc):
 
         return mask
 
+    def get_edge_mask(self, kspace: torch.Tensor, out_shape: Sequence[int] = None):
+        """See :method:`MaskFunc.get_edge_mask`.
+
+        Expected `kspace` shape (batch, ky, kz, ...).
+        """
+        # TODO: dims should be configured based on the number of dimenions in the input.
+        return get_cartesian_edge_mask(kspace, dims=(1, 2), out_shape=out_shape)
+
+
+def get_cartesian_edge_mask(
+    kspace: torch.Tensor,
+    dims: Union[int, Sequence[int]],
+    out_shape: Sequence[int] = None,
+    dtype=torch.float32,
+):
+    """See :method:`MaskFunc.get_edge_mask`.
+
+    Expected `kspace` shape (batch, ky, kz, ...).
+    """
+    if isinstance(dims, int):
+        dims = (dims,)
+    dims = tuple(dims)
+
+    if out_shape is None:
+        out_shape = kspace.shape
+    if any(out_shape[i] != kspace.shape[i] for i in (0,) + dims):
+        raise ValueError(
+            "out_shape must have the same shape as kspace along batch and `dims` dimensions."
+        )
+    if kspace.ndim != len(out_shape):
+        raise ValueError("out_shape must have the same number of dimensions as kspace.")
+
+    mask = cplx.get_mask(kspace)
+    non_edge_mask = torch.zeros(out_shape, dtype=torch.bool, device=kspace.device)
+    batch = kspace.shape[0]
+
+    # Slices for each dimension in the output mask.
+    # We will isolate areas in the slices that
+    sls = [[slice(None)] * batch for _ in range(kspace.ndim - 1)]
+    sls = [list(range(batch))] + sls  # add slice to index batch dimension
+    for dim in dims:
+        sls[dim] = _get_nonedge_indices_slice(mask, dim=dim)
+
+    # Set the non-edge mask to 1 in the slice region.
+    for sl in zip(*sls):
+        non_edge_mask[sl] = True
+    # Negate the non-edge mask to get the edge mask.
+    return (~non_edge_mask).type(dtype)
+
+
+def _get_nonedge_indices_slice(mask: torch.Tensor, dim: int) -> List[slice]:
+    """Get the slice of indices that correspond to non-edge region along the given dimension.
+
+    Args:
+        mask: A mask of shape (batch, ...).
+        dim: The dimension along which to get the slice.
+            The nonedge slice cannot be computed along the batch dimension (i.e. dim>0).
+
+    Return:
+        List[slice]: The slice of indices that correspond to non-edge region
+            for each example in the batch.
+    """
+    # If dim is negative, convert it to the positive index.
+    if dim < 0:
+        dim = mask.ndim + dim
+    reduce_idxs = [i for i in range(1, mask.ndim) if i != dim]
+    is_zero = mask.sum(reduce_idxs) == 0  # shape: (batch, dim)
+    is_zero = F.pad(is_zero, (1, 1), value=True)
+
+    sls = []
+    # For each example in the batch,
+    # determine the first and last non-zero indices.
+    for batch_idx in range(is_zero.shape[0]):
+        zero_offset = torch.where(~(is_zero[batch_idx, :-1] & is_zero[batch_idx, 1:]))[0]
+        i0 = zero_offset[0].cpu().item()
+        i1 = zero_offset[-1].cpu().item()
+        sls.append(slice(i0, i1))
+    return sls
+
 
 class MaskLoader(MaskFunc):
     """Loads masks from predefined file format instead of computing on the fly."""
@@ -327,6 +482,32 @@ class MaskLoader(MaskFunc):
 
         mask = mask.reshape(out_shape)
         return torch.from_numpy(mask)
+
+
+def _reshape_or_tile(x: torch.Tensor, shape: Sequence[int], ndim: int) -> torch.Tensor:
+    """Reshape the tensor to the output shape or k-space shape.
+
+    k-space shape will require tiling the tensor to match the
+    k-space shape.
+    """
+    leading_dims = ndim + 1  # number of spatial dimensions + batch dimension
+
+    # This is a broadcasted output shape, where all non-zero dimensions match
+    # the shape of the tensor and all other dimensions are 1.
+    shape_tensor = torch.as_tensor(shape)
+    if shape[:leading_dims] == (1, *x.shape) and all(shape_tensor[leading_dims:] == 1):
+        return x.reshape(shape)
+
+    leading_dims = ndim + 1  # number of spatial dimensions + batch dimension
+    extra_dims = len(shape) - (leading_dims)
+    mask_shape = (1,) + shape[1:leading_dims] + (1,) * extra_dims
+    x = x.reshape(mask_shape)
+    return x.repeat(shape[0], 1, 1, *shape[leading_dims:])
+
+
+def _get_center(size: int) -> float:
+    """Get the center of the matrix."""
+    return size // 2 if size % 2 == 1 else size // 2 - 0.5
 
 
 # ================================================================ #

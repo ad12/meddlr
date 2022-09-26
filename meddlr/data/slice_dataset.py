@@ -157,18 +157,10 @@ class SliceData(Dataset):
         target = data["target"]
 
         fname = os.path.splitext(os.path.basename(file_path))[0]
-        masked_kspace, maps, target, mean, std, norm = self.transform(
-            kspace, maps, target, fname, slice_id, is_unsupervised, fixed_acc
-        )
+        vals = self.transform(kspace, maps, target, fname, slice_id, is_unsupervised, fixed_acc)
+        target = vals.pop("target", None)
 
-        vals = {
-            "kspace": masked_kspace,
-            "maps": maps,
-            "mean": mean,
-            "std": std,
-            "norm": norm,
-            "is_unsupervised": is_unsupervised,
-        }
+        vals["is_unsupervised"] = is_unsupervised
         if (
             hasattr(self.transform, "augmentor")
             and isinstance(self.transform, DataTransform)
