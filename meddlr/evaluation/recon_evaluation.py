@@ -100,7 +100,7 @@ class ReconEvaluator(ScanEvaluator):
         self._prefix = prefix
         self._postprocess = cfg.TEST.POSTPROCESSOR.NAME
         self.device = cfg.MODEL.DEVICE
-        
+
         if save_scans and (not output_dir or not aggregate_scans):
             raise ValueError("`output_dir` and `aggregate_scans` must be specified to save scans.")
         self._save_scans = save_scans
