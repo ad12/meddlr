@@ -5,7 +5,9 @@ from typing import Any, Dict
 
 from meddlr.metrics.collection import MetricCollection
 from meddlr.metrics.image import MAE, MSE, NRMSE, PSNR, RMSE, SSIM
+from meddlr.metrics.lpips_meddlr import LPIPS
 from meddlr.metrics.sem_seg import ASSD, CV, DSC, VOE
+from meddlr.metrics.ssfd import SSFD
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +56,28 @@ _BUILTIN_METRICS = {
     "DSC": (DSC, {}),
     "VOE": (VOE, {}),
     "ASSD": (ASSD, {"connectivity": 1}),
-    "CV": (CV, {})
+    "CV": (CV, {}),
+
+    # ======== Feature Based Metrics ============= #
+    # Defaults of net_type: 'alex', lpips: True and pretrained: True chosen based on LPIPS paper:
+    #   R. Zhang, P. Isola, A. A. Efros, E. Shechtman, O. Wang.
+    #   The Unreasonable Effectiveness of Deep Features as a Perceptual Metric.
+    #   In CVPR, 2018 http://arxiv.org/abs/1801.03924
+    # and the LPIPS Github Repo: https://github.com/richzhang/PerceptualSimilarity
+    # Default of mode: grayscale chosen as we work with grayscale images in MRI.
+    "LPIPS": (LPIPS, {"net_type": "alex",
+                      "mode": "grayscale",
+                      "lpips": True,
+                      "pretrained": True
+                      }),
+    # Default of layer_names: ('block4_relu2') chosen based on original SSFD implementation:
+    #   Adamson, Philip M., et al.
+    #   SSFD: Self-Supervised Feature Distance as an MR Image Reconstruction Quality Metric."
+    #   NeurIPS 2021 Workshop on Deep Learning and Inverse Problems. 2021.
+    #   https://openreview.net/forum?id=dgMvTzf6M_3
+    # Default of mode: grayscale chosen as we work with grayscale images in MRI.
+    "SSFD": (SSFD, {"mode": "grayscale",
+                    "layer_names": ("block4_relu2",)})
 }
 # fmt: on
 

@@ -23,6 +23,7 @@ class MockReconEvaluator(ReconEvaluator):
         if metrics is None:
             metrics = ["nrmse", "psnr", "ssim (Wang)", "nrmse_scan", "psnr_scan"]
         cfg = get_cfg()
+        cfg.MODEL.DEVICE = "cpu"
         super().__init__(
             dataset_name,
             cfg,
