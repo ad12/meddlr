@@ -99,6 +99,7 @@ class ReconEvaluator(ScanEvaluator):
         self._structure_channel_by = structure_channel_by
         self._prefix = prefix
         self._postprocess = cfg.TEST.POSTPROCESSOR.NAME
+        self.device = cfg.MODEL.DEVICE
 
         if save_scans and (not output_dir or not aggregate_scans):
             raise ValueError("`output_dir` and `aggregate_scans` must be specified to save scans.")
@@ -151,12 +152,13 @@ class ReconEvaluator(ScanEvaluator):
             slice_metrics,
             fmt=prefix + "{}",
             channel_names=self._channel_names,
-        )
+        ).to(self.device)
         self.scan_metrics = build_metrics(
             scan_metrics,
             fmt=prefix + "{}_scan",
             channel_names=self._channel_names,
-        )
+        ).to(self.device)
+
         self.slice_metrics.eval()
         self.scan_metrics.eval()
 
