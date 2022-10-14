@@ -196,6 +196,11 @@ class N2RModelTest(unittest.TestCase):
     def test_n2r_ssdu(self):
         """Test using self-supervised N2R (i.e. N2R+SSDU)."""
         inputs = self._build_inputs(0, 1, ky=10, kz=20)  # only undersampled inputs
+        # SSDU requires an edge mask.
+        kspace = inputs["unsupervised"]["kspace"]
+        inputs["unsupervised"]["edge_mask"] = torch.zeros(
+            kspace.shape[:3] + (1,), device=kspace.device
+        )
 
         masker = RandomKspaceMask(p=1.0, rhos=0.4)
         model = SSDUModel(DummyFCN(), masker=masker, vis_period=10)

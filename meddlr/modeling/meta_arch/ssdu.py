@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 import torchvision.utils as tv_utils
 from torch import nn
@@ -120,7 +122,14 @@ class SSDUModel(nn.Module):
             mask = cplx.get_mask(inputs["kspace"])
             # The mask should be the union of the edge mask and the sampled data mask.
             # https://github.com/byaman14/SSDU
-            dc_mask = (mask + inputs["edge_mask"]).bool().to(mask.dtype)
+            # If the edge mask is not passed in, we assume that we do not want to get
+            # the edge mask.
+            if "edge_mask" not in inputs:
+                edge_mask = torch.tensor(0, device=mask.device, dtype=mask.dtype)
+                warnings.warn("Edge mask not found in `inputs`. Assuming no edge mask.")
+            else:
+                edge_mask = inputs["edge_mask"]
+            dc_mask = (mask + edge_mask).bool().to(mask.dtype)
             inputs["mask"] = dc_mask
             # inputs["postprocessing_mask"] = dc_mask - mask
             return self.model(inputs)
