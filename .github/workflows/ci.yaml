@@ -77,7 +77,7 @@ jobs:
           make dev
           pip install -e '.[alldev]'
           if [[ $IGNORE_LPIPS == "true" ]]; then
-            pip uninstall lpips
+            pip uninstall -y lpips
           fi
 
       - name: Test with pytest
