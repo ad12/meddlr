@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 from meddlr.metrics.collection import MetricCollection
 from meddlr.metrics.image import MAE, MSE, NRMSE, PSNR, RMSE, SSIM
-from meddlr.metrics.lpips_meddlr import LPIPS
+from meddlr.metrics.lpip import LPIPS
 from meddlr.metrics.sem_seg import ASSD, CV, DSC, VOE
 from meddlr.metrics.ssfd import SSFD
 
