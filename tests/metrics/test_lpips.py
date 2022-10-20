@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from skimage import data
 
-from meddlr.metrics.lpips_meddlr import LPIPS
+from meddlr.metrics.lpip import LPIPS
 from meddlr.utils import env
 
 if [int(ver) for ver in env.get_package_version("torchmetrics").split(".")] >= [0, 8]:
@@ -12,7 +12,8 @@ if [int(ver) for ver in env.get_package_version("torchmetrics").split(".")] >= [
 
 
 @unittest.skipIf(
-    [int(ver) for ver in env.get_package_version("torchmetrics").split(".")] < [0, 8],
+    [int(ver) for ver in env.get_package_version("torchmetrics").split(".")] < [0, 8]
+    or not env.package_available("lpips"),
     "TorchMetrics does not support LPIPS before version 0.8",
 )
 def test_LPIPS_torchmetrics_reproducibility():
@@ -40,6 +41,10 @@ def test_LPIPS_torchmetrics_reproducibility():
     assert torch.allclose(meddlr_out, torchmetrics_out)
 
 
+@unittest.skipIf(
+    not env.package_available("lpips"),
+    "LPIPS metric requires that lpips is installed.",
+)
 def test_LPIPS_noise():
     """Test that LPIPS increases as Gaussian noise increases."""
 
@@ -95,6 +100,10 @@ def test_LPIPS_noise():
     assert torch.allclose(sorted_out, out)
 
 
+@unittest.skipIf(
+    not env.package_available("lpips"),
+    "LPIPS metric requires that lpips is installed.",
+)
 def test_LPIPS_mode():
     """Test that the rgb and grayscale modes are handled correctly"""
 
@@ -119,6 +128,10 @@ def test_LPIPS_mode():
     assert torch.allclose(grayscale_out, rgb_out)
 
 
+@unittest.skipIf(
+    not env.package_available("lpips"),
+    "LPIPS metric requires that lpips is installed.",
+)
 def test_LPIPS_batch_channel_shape():
     """Test that multiple channel dimensions are handled properly in grayscale mode"""
 
