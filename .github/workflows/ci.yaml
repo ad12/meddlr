@@ -53,7 +53,7 @@ jobs:
       TORCHMETRICS: ${{ matrix.torchmetrics-version }}
       IGNORE_LPIPS: ${{ matrix.ignore-lpips }}
     
-    name: py${{ matrix.python-version  }}, torchmetrics-${{ matrix.torchmetrics-version }}, ${{ matrix.os }}
+    name: py${{ matrix.python-version  }}, torchmetrics-${{ matrix.torchmetrics-version }}, ignore-lpips-${{ matrix.ignore-lpips }}, ${{ matrix.os }}
 
     timeout-minutes: 50
     steps:
