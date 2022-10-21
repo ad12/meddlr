@@ -5,7 +5,6 @@ import os
 import time
 import uuid
 
-import pandas as pd
 import torch
 from tqdm import tqdm
 
@@ -242,18 +241,20 @@ class SemSegEvaluator(ScanEvaluator):
         return copy.deepcopy(self._results)
 
     def log_summary(self):
+        slice_metrics_summary = self.slice_metrics.summary()
+        scan_metrics_summary = self.scan_metrics.summary()
+        slice_metrics_df = self.slice_metrics.to_pandas()
+        scan_metrics_df = self.scan_metrics.to_pandas()
+
         if not comm.is_main_process():
             return
+
         output_dir = self._output_dir
         self._logger.info(
-            "[{}] Slice metrics summary:\n{}".format(
-                type(self).__name__, self.slice_metrics.summary()
-            )
+            "[{}] Slice metrics summary:\n{}".format(type(self).__name__, slice_metrics_summary)
         )
         self._logger.info(
-            "[{}] Scan metrics summary:\n{}".format(
-                type(self).__name__, self.scan_metrics.summary()
-            )
+            "[{}] Scan metrics summary:\n{}".format(type(self).__name__, scan_metrics_summary)
         )
 
         if not output_dir:
@@ -273,19 +274,16 @@ class SemSegEvaluator(ScanEvaluator):
             f.write("--" * 40)
             f.write("\n")
             f.write("Slice Metrics:\n")
-            f.write(self.slice_metrics.summary())
+            f.write(slice_metrics_summary)
             f.write("--" * 40)
             f.write("\n")
             f.write("Scan Metrics:\n")
-            f.write(self.scan_metrics.summary())
+            f.write(scan_metrics_summary)
             f.write("--" * 40)
             f.write("\n")
 
-        df: pd.DataFrame = self.slice_metrics.to_pandas()
-        df.to_csv(slice_metrics_path, header=True, index=True)
-
-        df: pd.DataFrame = self.scan_metrics.to_pandas()
-        df.to_csv(scan_metrics_path, header=True, index=True)
+        slice_metrics_df.to_csv(slice_metrics_path, header=True, index=True)
+        scan_metrics_df.to_csv(scan_metrics_path, header=True, index=True)
 
     def _parse_sem_seg_pred(self, input):
         # TODO: Update these values

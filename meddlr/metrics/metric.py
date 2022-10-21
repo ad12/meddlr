@@ -1,11 +1,13 @@
 import inspect
 import itertools
-from typing import Any, Dict, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
 import torch
 from torchmetrics.metric import Metric as _Metric
 from torchmetrics.utilities import reduce
+from torchmetrics.utilities.data import _flatten
+from torchmetrics.utilities.distributed import gather_all_tensors
 
 from meddlr.utils import comm
 
@@ -62,7 +64,7 @@ class Metric(_Metric):
         self._update_kwargs_aliases = {}
 
         # Identifiers for the examples that are seen.
-        self.add_state("ids", default=[], dist_reduce_fx=lambda x: itertools.chain(*x))
+        self.add_state("ids", default=[], dist_reduce_fx=lambda x: list(itertools.chain(x)))
         self.add_state("values", default=[], dist_reduce_fx="cat")
 
     def func(self, preds, targets, *args, **kwargs) -> torch.Tensor:
@@ -108,8 +110,39 @@ class Metric(_Metric):
             data = self._to_dict(device=device)
         return data
 
-    def _to_dict(self, device=None):
-        if not self.values:
+    def _sync_dist(
+        self,
+        dist_sync_fn: Callable = gather_all_tensors,
+        process_group: Optional[Any] = None,
+        **kwargs,
+    ) -> None:  # pragma: no cover
+        """Includes synchronizing ids, which is not a tensor object.
+
+        torchmetrics only synchronizes tensors. This method extends the synchronization
+        to `ids`, which is a non-tensor object.
+        """
+        super()._sync_dist(dist_sync_fn=dist_sync_fn, process_group=process_group, **kwargs)
+
+        input_dict = {"ids": self.ids}
+        output_dict = {
+            k: comm.all_gather(v, group=process_group or self.process_group)
+            for k, v in input_dict.items()
+        }
+
+        for attr in output_dict.keys():
+            reduction_fn = self._reductions[attr]
+            if isinstance(output_dict[attr][0], list):
+                output_dict[attr] = _flatten(output_dict[attr])
+            if not (callable(reduction_fn) or reduction_fn is None):
+                raise TypeError("reduction_fn must be callable or None")
+
+            reduced = (
+                reduction_fn(output_dict[attr]) if reduction_fn is not None else output_dict[attr]
+            )
+            setattr(self, attr, reduced)
+
+    def _to_dict(self, device=None) -> Dict[str, Any]:
+        if _is_empty(self.values):
             return {"id": self.ids}
 
         values = torch.cat(self.values) if isinstance(self.values, list) else self.values
@@ -183,3 +216,10 @@ def _filter_kwargs(sig, **kwargs: Any) -> Dict[str, Any]:
     if not filtered_kwargs:
         filtered_kwargs = kwargs
     return filtered_kwargs
+
+
+def _is_empty(x: Optional[Union[List[torch.Tensor], torch.Tensor]]):  # pragma: no cover
+    if isinstance(x, list):
+        return len(x) == 0
+    else:
+        return x is None or x.numel() == 0

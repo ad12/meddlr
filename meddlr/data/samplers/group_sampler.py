@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Any, Dict, Hashable, List, Mapping, Sequence, Tuple, Union
+from typing import Any, Dict, Hashable, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -348,29 +348,52 @@ class AlternatingGroupSampler(GroupSampler):
 
 
 class DistributedGroupSampler(Sampler):
-    """Samples examples such that examples from the same group are on the same node.
+    """Samples examples such that examples from the same group are on the same process.
 
     `dataset` must support the following attributes and methods
         * `groups(group_by) -> Dict`: Returns mapping from group id to indices
 
     dataset examples is a list of tuples (fname, instance),
     where fname is essentially the volume name (actually a filename).
+
+    Note:
+        Because the same groups will appear on the same process, this sampler is not
+        recommended for training.
     """
 
-    def __init__(self, dataset, group_by: str, shuffle: bool = False):
+    def __init__(
+        self,
+        dataset,
+        group_by: str,
+        num_replicas: Optional[int] = None,
+        rank: Optional[int] = None,
+        shuffle: bool = False,
+        seed: int = 0,
+        pad: bool = False,
+    ):
         self.dataset = dataset
-        self.world_size = self._world_size()
-        self.rank = self._rank()
+        self.num_replicas = self._world_size() if num_replicas is None else num_replicas
+        self.rank = self._rank() if rank is None else rank
         self.epoch = 0
+        self.seed = seed
         self._group_by = group_by
         self.shuffle = shuffle
+        # TODO: Determine what drop_last=True should mean for this sampler.
+        self.drop_last = False
+        self.pad = pad
 
-        # All nodes
-        all_groups = dataset.groups(group_by)
-        self.all_groups = np.array(sorted(all_groups.keys()))
-        self.all_groups_split = np.array_split(self.all_groups, self.world_size)
+        # All processes.
+        all_groups: Dict[Hashable, List[int]] = dataset.groups(group_by)
+        group_to_size = {k: len(v) for k, v in all_groups.items()}
+        all_groups_split = _split_groups_greedy(group_to_size, self.num_replicas)
+        max_size = max(
+            sum(len(all_groups[x]) for x in process_split) for process_split in all_groups_split
+        )
 
-        # This node
+        self.all_groups_split: List[List[Hashable]] = all_groups_split
+        self.max_size = max_size
+
+        # This process.
         self.groups = self.all_groups_split[self.rank]
         self.indices = np.concatenate([all_groups[group_id] for group_id in self.groups])
         self.num_samples = len(self.indices)
@@ -382,21 +405,23 @@ class DistributedGroupSampler(Sampler):
         return comm.get_rank()
 
     def __iter__(self):
-        # deterministically shuffle based on epoch
         if self.shuffle:
             g = torch.Generator()
-            g.manual_seed(self.epoch)
+            g.manual_seed(self.seed + self.epoch)
             ordering = torch.randperm(self.num_samples, generator=g).tolist()
             indices = self.indices[ordering]
         else:
             indices = self.indices
+
+        # Distributed sampler needs to pad so that
+        if self.pad and len(indices) < self.max_size:
+            pad_size = self.max_size - self.num_samples
+            indices = np.concatenate([indices, indices[:pad_size]])
+
         return iter(indices.tolist())
 
     def __len__(self):
         return self.num_samples
-
-    def set_epoch(self, epoch):
-        self.epoch = epoch
 
 
 def _shuffle_groups(groups, rng):
@@ -441,3 +466,27 @@ def _build_groups(
         group_to_idxs[val].append(idx)
 
     return group_to_idxs
+
+
+def _split_groups_greedy(group_sizes: Dict[Hashable, int], num_splits: int) -> List[List[Hashable]]:
+    """Split array into approximately equal chunks.
+
+    This process is greedy, so it may not result in the most optimal splits.
+
+    Args:
+        group_sizes: The group_name -> size mapping.
+        num_splits: Number of splits.
+
+    Returns:
+        List of arrays.
+    """
+    split_groups = [[] for _ in range(num_splits)]
+    split_sizes = np.zeros(num_splits)
+
+    group_names = sorted(group_sizes.keys(), key=lambda x: group_sizes[x], reverse=True)
+    for group_name in group_names:
+        split_idx = np.argmin(split_sizes)
+        split_groups[split_idx].append(group_name)
+        split_sizes[split_idx] += group_sizes[group_name]
+
+    return split_groups
