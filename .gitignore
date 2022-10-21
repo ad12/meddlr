@@ -58,3 +58,6 @@ build/
 
 # Generated docs
 docs/source/apidocs/generated
+
+# temp
+**/temp

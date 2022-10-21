@@ -28,6 +28,8 @@ dev-lint:
 build-docs:
 	rm -rf docs/build
 	rm -rf docs/source/apidocs/generated
+	rm -rf docs/assets/temp
+	python docs/source/autogen.py
 	sphinx-build -b html docs/source/ docs/build/html/
 
 all: autoformat test build-docs

@@ -29,3 +29,4 @@ ipython
 jupyter-sphinx
 sphinx-panels
 nbsphinx
+sphinx-togglebutton
