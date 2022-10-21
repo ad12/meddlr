@@ -37,7 +37,7 @@ _C.MODEL.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.WEIGHTS = ""
 
 # -----------------------------------------------------------------------------
-# Unrolled model config - TODO: Deprecate
+# Unrolled model config
 # -----------------------------------------------------------------------------
 _C.MODEL.UNROLLED = CN()
 # Block type to use for the unrolled model.
@@ -72,29 +72,40 @@ _C.MODEL.UNROLLED.NUM_EMAPS = 1
 _C.MODEL.UNROLLED.CONV_BLOCK = CN()
 # Either "relu" or "leaky_relu"
 _C.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION = "relu"
-# Either "none", "instance", or "batch"
+# Normalization type. Either "none", "instance", or "batch"
 _C.MODEL.UNROLLED.CONV_BLOCK.NORM = "none"
-# Use affine on norm
+# Use affine on normalization block.
 _C.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE = False
 _C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
 
+# Reconstruction loss parameters.
 _C.MODEL.RECON_LOSS = CN()
+# The reconstruction loss type. See :obj:`meddlr.modeling.loss_computer` for options.
 _C.MODEL.RECON_LOSS.NAME = "l1"
+# Whether to renormalize the predicted image before computing the loss.
 _C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
+# Consistency configuration. Used for Noise2Recon and VORTEX.
 _C.MODEL.CONSISTENCY = CN()
+# Whether to use consistency loss in the latent space.
 _C.MODEL.CONSISTENCY.USE_LATENT = False
+# Whether to use the consistency loss.
 _C.MODEL.CONSISTENCY.USE_CONSISTENCY = True
+# The loss to use for latent space consistency.
 _C.MODEL.CONSISTENCY.LATENT_LOSS_NAME = "mag_l1"
 _C.MODEL.CONSISTENCY.NUM_LATENT_LAYERS = 1
+# The consistency loss.
 _C.MODEL.CONSISTENCY.LOSS_NAME = "l1"
+# The weighting for consistency loss.
 _C.MODEL.CONSISTENCY.LOSS_WEIGHT = 0.1
+# The weighting for latent space consistency loss.
 _C.MODEL.CONSISTENCY.LATENT_LOSS_WEIGHT = 0.1
 # Consistency Augmentations
 _C.MODEL.CONSISTENCY.AUG = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
-_C.MODEL.CONSISTENCY.AUG.MOTION = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
+_C.MODEL.CONSISTENCY.AUG.MOTION = CN()
+# Motion range (alpha in the VORTEX paper).
 _C.MODEL.CONSISTENCY.AUG.MOTION.RANGE = (0.2, 0.5)
 
 # Noise scheduler
