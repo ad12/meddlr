@@ -45,14 +45,15 @@ jobs:
         torchmetrics-version: ["0.6.0", "0.7.3", "latest"]
         ignore-lpips: ["false"]
         include:
-          - python-version: "3.9"
-          - torchmetrics-version: "latest"
-          - ignore-lpips: "true"
+          - os: ubuntu-latest
+            python-version: "3.9"
+            torchmetrics-version: "latest"
+            ignore-lpips: "true"
     env:
       TORCHMETRICS: ${{ matrix.torchmetrics-version }}
       IGNORE_LPIPS: ${{ matrix.ignore-lpips }}
     
-    name: py${{ matrix.python-version  }}, torchmetrics-${{ matrix.torchmetrics-version }}, ${{ matrix.os }}
+    name: py${{ matrix.python-version  }}, torchmetrics-${{ matrix.torchmetrics-version }}, ignore-lpips-${{ matrix.ignore-lpips }}, ${{ matrix.os }}
 
     timeout-minutes: 50
     steps:
@@ -76,7 +77,11 @@ jobs:
           make dev
           pip install -e '.[alldev]'
           if [[ $IGNORE_LPIPS == "true" ]]; then
+<<<<<<< HEAD
             pip uninstall lpips
+=======
+            pip uninstall -y lpips
+>>>>>>> main
           fi
 
       - name: Test with pytest

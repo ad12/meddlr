@@ -59,7 +59,7 @@ def build_train_sampler(cfg, dataset, distributed=False):
             drop_last=cfg.DATALOADER.DROP_LAST,
             seed=seed,
         )
-    elif sampler == "":
+    elif sampler in ("", None):
         sampler = DistributedSampler(dataset, shuffle=True) if distributed else None
     else:
         raise ValueError("Unknown Sampler {}".format(sampler))
@@ -89,12 +89,8 @@ def build_val_sampler(cfg, dataset, distributed: bool = False, dist_group_by="fi
             shuffle=False,
             seed=seed,
         )
-    elif sampler == "":
-        sampler = (
-            DistributedGroupSampler(dataset, group_by=dist_group_by, shuffle=False)
-            if distributed
-            else None
-        )
+    elif sampler in ("", None) and distributed and dist_group_by:
+        sampler = DistributedGroupSampler(dataset, group_by=dist_group_by, shuffle=False)
     else:
         sampler = None
 

@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Hashable, List, Optional
 
 import h5py
 import numpy as np
@@ -82,7 +82,7 @@ class SliceData(Dataset):
 
         self._hdf5_manager = HDF5Manager(cache=False, max_attempts=max_attempts)
 
-    def groups(self, group_by):
+    def groups(self, group_by: Any) -> Dict[Hashable, List[int]]:
         _groups = defaultdict(list)
         for idx, example in enumerate(self.examples):
             try:
