@@ -13,6 +13,11 @@
 import os
 import sys
 
+from autogen import run
+
+# Run autogeneration scripts.
+run()
+
 sys.path.insert(0, os.path.abspath(""))
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("../.."))
@@ -64,6 +69,7 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
     "jupyter_sphinx",
+    "sphinx_togglebutton",
 ]
 autosummary_generate = True
 autosummary_imported_members = True

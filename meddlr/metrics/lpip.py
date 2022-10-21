@@ -157,8 +157,13 @@ class LPIPS(Metric):
         return img
 
 
-class NoTrainLpips(_LPIPS):
-    def train(self, mode: bool) -> "NoTrainLpips":
-        """the network should not be able to be switched away from evaluation mode.
-        Implementation adapted from torchmetrics LPIPS."""
-        return super().train(False)
+if env.package_available("lpips"):
+
+    class NoTrainLpips(_LPIPS):
+        def train(self, mode: bool) -> "NoTrainLpips":
+            """the network should not be able to be switched away from evaluation mode.
+            Implementation adapted from torchmetrics LPIPS."""
+            return super().train(False)
+
+else:
+    NoTrainLpips = None
