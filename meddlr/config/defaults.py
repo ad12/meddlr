@@ -24,30 +24,48 @@ _MRI_RECON_TFM.AUG_SENSITIVITY_MAPS = True
 # -----------------------------------------------------------------------------
 
 _C = CN()
+# The config version.
 _C.VERSION = 1
 
 _C.MODEL = CN()
+# The device to use for the experiment.
 _C.MODEL.DEVICE = "cuda"
+# The name of the model. See meddlr/modeling/meta_arch for options.
 _C.MODEL.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+# Path to weights to use to initialize the model.
+# Useful if you want to fine tune the model.
 _C.MODEL.WEIGHTS = ""
 
 # -----------------------------------------------------------------------------
-# Unrolled model - TODO: Deprecate
+# Unrolled model config - TODO: Deprecate
 # -----------------------------------------------------------------------------
 _C.MODEL.UNROLLED = CN()
+# Block type to use for the unrolled model.
 _C.MODEL.UNROLLED.BLOCK_ARCHITECTURE = "ResNet"
+# Number of unrolled steps.
 _C.MODEL.UNROLLED.NUM_UNROLLED_STEPS = 5
+# Number of residual blocks per unrolled step.
+# Only applicable for ResNet block architecture.
 _C.MODEL.UNROLLED.NUM_RESBLOCKS = 2
+# Number of channels for ResNet conv block.
+# Only applicable for ResNet block architecture.
 _C.MODEL.UNROLLED.NUM_FEATURES = 256
+# Dropout after each conv block.
+# Only applicable for ResNet block architecture.
 _C.MODEL.UNROLLED.DROPOUT = 0.0
-# Padding options. "" for now. TODO: add "circular"
+# Padding options.
+# Only applicable for ResNet block architecture.
 _C.MODEL.UNROLLED.PADDING = ""
+# Step size for each unrolled block.
+# If only one element, the same step size is used for all blocks.
 _C.MODEL.UNROLLED.STEP_SIZES = (-2.0,)
+# Whether to fix the step size or make it learnable.
 _C.MODEL.UNROLLED.FIX_STEP_SIZE = False
+# Whether to share weights between each unrolled block.
 _C.MODEL.UNROLLED.SHARE_WEIGHTS = False
 # Kernel size
 _C.MODEL.UNROLLED.KERNEL_SIZE = (3,)
-# Number of ESPIRiT maps
+# Number of sensitivity maps per scan. Currently only 1 is supported.
 _C.MODEL.UNROLLED.NUM_EMAPS = 1
 
 # Conv block parameters
@@ -132,7 +150,7 @@ _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
 # randomly generated undersampled kspace.
 _C.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET = True
 # Same as above, but at eval time (e.g. validation).
-# Defaults to MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET
+# Defaults to :obj:`MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET`
 _C.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL = None
 
 # -----------------------------------------------------------------------------
@@ -148,7 +166,7 @@ _C.MODEL.CS.MAX_ITER = 200
 _C.MODEL.N2R = CN()
 _C.MODEL.N2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
-# Use MODEL.CONSISTENCY.AUG.NOISE.STD_DEV to control noise parameters.
+# Use :obj:`MODEL.CONSISTENCY.AUG.NOISE.STD_DEV` to control noise parameters.
 
 # -----------------------------------------------------------------------------
 # Motion2Recon (M2R) model
@@ -156,7 +174,7 @@ _C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
 _C.MODEL.M2R = CN()
 _C.MODEL.M2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.M2R.USE_SUPERVISED_CONSISTENCY = False
-# Use MODEL.CONSISTENCY.AUG.MOTION_RANGE to control motion parameters.
+# Use :obj:`MODEL.CONSISTENCY.AUG.MOTION_RANGE` to control motion parameters.
 
 # -----------------------------------------------------------------------------
 # NoiseMotion2Recon (NM2R) model

@@ -77,3 +77,13 @@ Recommended Practices
 1. Keep config files lightweight. Refactor common config fields into a base config.
 2. Save your config file in your experiments. This will be done for you if you use `meddlr.engine.default_setup`
 3. Reuse config fields in your code when possible. Do not duplicate existing config fields.
+
+
+Default Fields in Meddlr
+--------------------------
+.. toggle::
+
+   .. csv-table:: Meddlr default config
+      :file: ../../assets/temp/config-docs.csv
+      :widths: 30, 70
+      :header-rows: 1
