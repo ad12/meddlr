@@ -115,7 +115,7 @@ class Metric(_Metric):
         dist_sync_fn: Callable = gather_all_tensors,
         process_group: Optional[Any] = None,
         **kwargs,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """Includes synchronizing ids, which is not a tensor object.
 
         torchmetrics only synchronizes tensors. This method extends the synchronization
@@ -218,7 +218,7 @@ def _filter_kwargs(sig, **kwargs: Any) -> Dict[str, Any]:
     return filtered_kwargs
 
 
-def _is_empty(x: Optional[Union[List[torch.Tensor], torch.Tensor]]):
+def _is_empty(x: Optional[Union[List[torch.Tensor], torch.Tensor]]):  # pragma: no cover
     if isinstance(x, list):
         return len(x) == 0
     else:
