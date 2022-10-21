@@ -108,8 +108,6 @@ class SemSegEvaluator(ScanEvaluator):
 
         if flush_period is None:
             flush_period = cfg.TEST.FLUSH_PERIOD
-        if distributed and flush_period != 0:
-            raise ValueError("Result flushing is not enabled in distributed mode.")
         self.flush_period = flush_period
 
         self._remaining_state = None

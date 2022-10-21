@@ -4,7 +4,7 @@ import logging
 import os
 import time
 from collections import defaultdict
-from typing import List, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,7 @@ import torch
 from tqdm import tqdm
 
 import meddlr.utils.comm as comm
+from meddlr.config.config import CfgNode
 from meddlr.data.transforms.transform import build_normalizer
 from meddlr.evaluation.scan_evaluator import ScanEvaluator, structure_scans
 from meddlr.forward.mri import hard_data_consistency
@@ -22,34 +23,35 @@ from meddlr.ops import complex as cplx
 
 
 class ReconEvaluator(ScanEvaluator):
-    """
-    Evaluate reconstruction quality using the metrics listed below:
+    """Image reconstruction evaluator.
 
-    - reconstruction loss (as specified by `loss_computer`)
-    - L1, L2
-    - Magnitude PSNR
-    - Complex PSNR
-    - SSIM (to be implemented)
+    This evaluator can be used for image reconstruction, recovery and generation tasks.
+    It uses image quality metrics (e.g. SSIM, PSNR) to evaluate the quality of
+    the reconstructed images. For more details on metrics, see :mod:`meddlr.metrics.build`.
+
+    This evaluator also supports restacking slices into volumes.
+    To compute a metric on the full volume (i.e. scan), use metrics with the
+    suffix ``_scan`` (e.g. ``'psnr_scan'``).
     """
 
     def __init__(
         self,
-        dataset_name,
-        cfg,
-        distributed=False,
-        sync_outputs=False,
-        aggregate_scans=True,
-        group_by_scan=False,
-        output_dir=None,
-        skip_rescale=False,
-        save_scans=False,
-        metrics=None,
+        dataset_name: str,
+        cfg: CfgNode,
+        distributed: bool = False,
+        sync_outputs: bool = False,
+        aggregate_scans: bool = True,
+        group_by_scan: bool = False,
+        output_dir: Optional[str] = None,
+        skip_rescale: bool = False,
+        save_scans: bool = False,
+        metrics: Sequence[str] = None,
         flush_period: int = None,
-        to_cpu=False,
-        channel_names=None,
-        eval_in_process=False,
+        to_cpu: bool = False,
+        channel_names: Optional[Sequence[str]] = None,
+        eval_in_process: bool = False,
         structure_channel_by=None,
-        prefix="val",
+        prefix: str = "val",
     ):
         """
         Args:
@@ -59,7 +61,7 @@ class ReconEvaluator(ScanEvaluator):
                 results predicted on the dataset.
             distributed (bool, optional): If ``True``, collect results from all
                 ranks for evaluation. Otherwise, will evaluate the results in the
-                current process. ∂If using ``DistributedDataParallel``, this should likely
+                current process. If using ``DistributedDataParallel``, this should likely
                 be ``True``.
             sync_outputs (bool, optional): If ``True``, synchronizes all predictions
                 before evaluation. If ``False``, synchronizes metrics before reduction.
@@ -80,7 +82,8 @@ class ReconEvaluator(ScanEvaluator):
                 (not batches).
             to_cpu (bool, optional): If ``True``, move all data to the cpu to do computation.
             eval_in_process (bool, optional): If ``True``, run slice/patch evaluation
-                while processing. This may increase overall throughput.
+                while processing. This may increase overall speed.
+            prefix (str): prefix to add to metric names.
         """
         self._dataset_name = dataset_name
         self._output_dir = output_dir
@@ -118,8 +121,6 @@ class ReconEvaluator(ScanEvaluator):
 
         if flush_period is None:
             flush_period = cfg.TEST.FLUSH_PERIOD
-        if distributed and flush_period != 0:
-            raise ValueError("Result flushing is not enabled in distributed mode.")
         self.flush_period = flush_period
         self.to_cpu = to_cpu
         self.eval_in_process = eval_in_process
