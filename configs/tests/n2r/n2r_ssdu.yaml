@@ -1,0 +1,33 @@
+# Self-Supervised N2R (i.e. N2R+SSDU)
+_BASE_: "standard.yaml"
+MODEL:
+  META_ARCHITECTURE: "N2RModel"
+  N2R:
+    META_ARCHITECTURE: "SSDUModel"
+  SSDU:
+    META_ARCHITECTURE: "UnetModel"
+    MASKER:
+      PARAMS:
+        p: 1.0
+        rhos: 0.4  # Based on hyperparameter search
+        kind: "uniform"  # Choices: ["uniform", "gaussian"]
+        per_example: True
+        std_scale: 4  # Default value in SSDU code
+  UNET:
+    IN_CHANNELS: 2
+    OUT_CHANNELS: 2
+    CHANNELS: 32
+    NUM_POOL_LAYERS: 4
+    DROPOUT: 0.
+  RECON_LOSS:
+    NAME: "k_l1"
+    RENORMALIZE_DATA: False
+DATALOADER:
+  NUM_WORKERS: 0  # for debugging purposes
+  SUBSAMPLE_TRAIN:
+    NUM_UNDERSAMPLED: 14  # undersample all scans - N2R + SSDU should still train.
+SOLVER:
+  TRAIN_BATCH_SIZE: 1
+TIME_SCALE: "iter"
+OUTPUT_DIR: "results://tests/n2r/n2r_ssdu"
+VERSION: 1 

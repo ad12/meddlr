@@ -104,6 +104,7 @@ EXTRAS = {
         "medpy",
         "pooch",
         "gdown",
+        "parameterized",
         # tifffile==2022.7.28 not reading scipy data.
         # TODO (arjundd): Investigate tifffile issue.
         "tifffile<=2022.5.4",

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 import torch
 from fvcore.common.registry import Registry
@@ -6,6 +7,7 @@ from fvcore.common.registry import Registry
 import meddlr.metrics.functional as mF
 import meddlr.ops as oF
 from meddlr.data.transforms.transform import build_normalizer
+from meddlr.forward.mri import SenseModel
 from meddlr.ops import complex as cplx
 
 LOSS_COMPUTER_REGISTRY = Registry("LOSS_COMPUTER")  # noqa F401 isort:skip
@@ -35,6 +37,9 @@ KSPACE_LOSSES = [
     "k_l1_sum_normalized",
     "k_l1_l2_sum_normalized",
 ]
+# Add option for signal model corrected loss computation.
+# TODO (arjundd): Clean up.
+KSPACE_LOSSES += [f"signal_model_corr_{loss}" for loss in KSPACE_LOSSES]
 
 
 def build_loss_computer(cfg, name, **kwargs):
@@ -49,7 +54,13 @@ class LossComputer(ABC):
     def __call__(self, input, output):
         pass
 
-    def _get_metrics(self, target: torch.Tensor, output: torch.Tensor, loss_name):
+    def _get_metrics(
+        self,
+        target: torch.Tensor,
+        output: torch.Tensor,
+        loss_name,
+        signal_model: Optional[SenseModel] = None,
+    ):
         # Compute metrics
         if loss_name == "mag_l1":
             abs_error = torch.abs(output - target)
@@ -99,8 +110,14 @@ class LossComputer(ABC):
             metrics_dict["ssim_mag_phase_loss"] = 1.0 - avg_ssim
 
         if loss_name in KSPACE_LOSSES:
-            target = oF.fft2c(target, channels_last=True)
-            output = oF.fft2c(output, channels_last=True)
+            if loss_name.startswith("signal_model_corr_"):
+                assert signal_model is not None
+                loss_name = loss_name.split("signal_model_corr_")[1]
+                output = signal_model(output)
+                target = signal_model(target)
+            else:
+                target = oF.fft2c(target, channels_last=True)
+                output = oF.fft2c(output, channels_last=True)
             abs_error = cplx.abs(target - output)
             if loss_name == "k_l1":
                 metrics_dict["loss"] = torch.mean(abs_error)
@@ -137,6 +154,7 @@ class BasicLossComputer(LossComputer):
     def __call__(self, input, output):
         pred: torch.Tensor = output["pred"]
         target = output["target"].to(pred.device)
+        signal_model = output.get("signal_model")
 
         if self.renormalize_data:
             normalization_args = {k: input.get(k, output.get(k, None)) for k in ["mean", "std"]}
@@ -151,7 +169,7 @@ class BasicLossComputer(LossComputer):
         else:
             output = pred
 
-        metrics_dict = self._get_metrics(target, output, self.loss)
+        metrics_dict = self._get_metrics(target, output, self.loss, signal_model=signal_model)
         return metrics_dict
 
 
@@ -187,6 +205,7 @@ class N2RLossComputer(LossComputer):
 
         pred: torch.Tensor = output["pred"]
         target = output["target"].to(pred.device)
+        signal_model = output.get("signal_model")
         if self.renormalize_data:
             normalized = self._normalizer.undo(
                 image=pred, target=target, mean=input["mean"], std=input["std"]
@@ -197,7 +216,7 @@ class N2RLossComputer(LossComputer):
             output = pred
 
         # Compute metrics
-        metrics_dict = self._get_metrics(target, output, loss)
+        metrics_dict = self._get_metrics(target, output, loss, signal_model=signal_model)
         return metrics_dict
 
     # def compute_robust_loss(self, group_loss):

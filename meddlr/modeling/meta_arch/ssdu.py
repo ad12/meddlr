@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 import torchvision.utils as tv_utils
 from torch import nn
@@ -120,7 +122,14 @@ class SSDUModel(nn.Module):
             mask = cplx.get_mask(inputs["kspace"])
             # The mask should be the union of the edge mask and the sampled data mask.
             # https://github.com/byaman14/SSDU
-            dc_mask = (mask + inputs["edge_mask"]).bool().to(mask.dtype)
+            # If the edge mask is not passed in, we assume that we do not want to get
+            # the edge mask.
+            if "edge_mask" not in inputs:
+                edge_mask = torch.tensor(0, device=mask.device, dtype=mask.dtype)
+                warnings.warn("Edge mask not found in `inputs`. Assuming no edge mask.")
+            else:
+                edge_mask = inputs["edge_mask"]
+            dc_mask = (mask + edge_mask).bool().to(mask.dtype)
             inputs["mask"] = dc_mask
             # inputs["postprocessing_mask"] = dc_mask - mask
             return self.model(inputs)
@@ -147,7 +156,8 @@ class SSDUModel(nn.Module):
 
         # Get the signal model reconstructed images.
         # TODO: Make it possible to use these are the target instead of multi-coil images.
-        pred_img, target_img, zf_image = outputs["pred"], outputs["target"], outputs["zf_image"]
+        pred_img = outputs["pred"]
+        target_img, zf_image = outputs.get("target", None), outputs.get("zf_image", None)
 
         # Use signal model (SENSE) to get weighted kspace.
         A = SenseModel(maps=inputs_aug["maps"])  # no weights - we do not want to mask the data.

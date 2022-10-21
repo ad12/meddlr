@@ -6,7 +6,12 @@ import re
 import tempfile
 import uuid
 from functools import wraps
-from typing import Sequence, Union
+from typing import Any, Dict, Sequence, Union
+
+import numpy as np
+
+from meddlr.utils.events import EventStorage
+from meddlr.utils.general import flatten_dict
 
 TEST_MODEL_ZOOS = os.environ.get("MEDDLR_TEST_MODEL_ZOOS", "") == "True"
 
@@ -38,6 +43,22 @@ def temp_env(func):
         finally:
             os.environ.clear()
             os.environ.update(old_env)
+        return out
+
+    return wrapper if "self" in inspect.signature(func).parameters else wrapper_func
+
+
+def temp_event_storage(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        with EventStorage(start_iter=0):
+            out = func(self, *args, **kwargs)
+        return out
+
+    @wraps(func)
+    def wrapper_func(*args, **kwargs):
+        with EventStorage(start_iter=0):
+            out = func(*args, **kwargs)
         return out
 
     return wrapper if "self" in inspect.signature(func).parameters else wrapper_func
@@ -140,3 +161,9 @@ class cplx_tensor_support:
             os.environ.pop("MEDDLR_ENABLE_CPLX_TENSORS")
         else:
             os.environ["MEDDLR_ENABLE_CPLX_TENSORS"] = self.prev_val
+
+
+def assert_shape(x: Dict[str, Any], expected_shape: Dict[str, Any]):
+    """Check the shape of tensors in `x` are equivalent to `expected_shape`."""
+    x_shape = {k: tuple(v.shape) for k, v in flatten_dict(x).items()}
+    np.testing.assert_equal(x_shape, flatten_dict(expected_shape))
