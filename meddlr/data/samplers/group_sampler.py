@@ -4,7 +4,7 @@ from typing import Any, Dict, Hashable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-from torch.utils.data import DistributedSampler, Sampler, SubsetRandomSampler
+from torch.utils.data import Sampler, SubsetRandomSampler
 
 from meddlr.utils import comm
 
@@ -347,7 +347,7 @@ class AlternatingGroupSampler(GroupSampler):
         return [self._next_batch() for _ in range(len(self))]
 
 
-class DistributedGroupSampler(DistributedSampler):
+class DistributedGroupSampler(Sampler):
     """Samples examples such that examples from the same group are on the same process.
 
     `dataset` must support the following attributes and methods

@@ -13,19 +13,6 @@ from meddlr.data.slice_dataset import SliceData
 from .mock import MockSliceDataset, _MockDataset
 
 
-class MockGroupSampler(DistributedGroupSampler):
-    def __init__(self, dataset, group_by: str, shuffle=False, world_size=1, rank=0):
-        self._world_size_val = world_size
-        self._rank_val = rank
-        super().__init__(dataset, group_by, shuffle)
-
-    def _world_size(self):
-        return self._world_size_val
-
-    def _rank(self):
-        return self._rank_val
-
-
 class TestGroupSampler(unittest.TestCase):
     def test_group_sampler_errors(self):
         """Test init values that would cause errors."""
@@ -180,7 +167,9 @@ class TestDistributedGroupSampler(unittest.TestCase):
         # Simulate what happens in DDP
         for i in range(world_size):
             dataset = self._build_mock_dataset(num_scans=num_scans)
-            sampler = MockGroupSampler(dataset, group_by="file_name", world_size=world_size, rank=i)
+            sampler = DistributedGroupSampler(
+                dataset, group_by="file_name", num_replicas=world_size, rank=i
+            )
             samplers.append(sampler)
 
         expected_dataset = self._build_mock_dataset(num_scans=num_scans)
@@ -209,7 +198,9 @@ class TestDistributedGroupSampler(unittest.TestCase):
         # Simulate what happens in DDP
         for i in range(world_size):
             dataset = self._build_mock_dataset(num_scans=num_scans)
-            sampler = MockGroupSampler(dataset, group_by="file_name", world_size=world_size, rank=i)
+            sampler = DistributedGroupSampler(
+                dataset, group_by="file_name", num_replicas=world_size, rank=i
+            )
             samplers.append(sampler)
 
         expected_dataset = self._build_mock_dataset(num_scans=num_scans)
