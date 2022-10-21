@@ -5,8 +5,8 @@ import re
 
 import pandas as pd
 
-_MEDDLR_PATH = pathlib.Path(os.path.join(os.path.dirname(__file__), "..", "meddlr"))
-_OUT_DIR = pathlib.Path(os.path.join(os.path.dirname(__file__), "assets", "temp"))
+_MEDDLR_PATH = pathlib.Path(os.path.join(os.path.dirname(__file__), "..", "..", "meddlr"))
+_OUT_DIR = pathlib.Path(os.path.join(os.path.dirname(__file__), "..", "assets", "temp"))
 
 
 def parse_config_to_csv(out_file: str):
