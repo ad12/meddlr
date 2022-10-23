@@ -42,3 +42,11 @@ class TestConfig(unittest.TestCase):
         assert cfg.get_recursive("DESCRIPTION.FOO", None) is None
         with pytest.raises(KeyError):
             cfg.get_recursive("DESCRIPTION.FOO")
+
+    def test_get_recursive_with_list(self):
+        cfg = get_cfg()
+        cfg.DESCRIPTION.BRIEF = "foobar"
+
+        assert cfg.get_recursive("DESCRIPTION.BRIEF[0]") == "f"
+        with pytest.raises(IndexError):
+            cfg.get_recursive("DESCRIPTION.BRIEF[1000]")

@@ -117,7 +117,14 @@ class CfgNode(_CfgNode):
         d = self
         try:
             for k in key.split("."):
-                d = d[k]
+                # Extract groups matching sequence-indexing syntax (e.g. 'field[0]').
+                match_val = re.match("^(?P<field>[a-zA-Z0-9_]+)\[(?P<index>[-?0-9]+)\]$", k)
+                if match_val:
+                    k = match_val.group("field")
+                    index = int(match_val.group("index"))
+                    d = d[k][index]
+                else:
+                    d = d[k]
         except KeyError:
             if default != np._NoValue:
                 return default
