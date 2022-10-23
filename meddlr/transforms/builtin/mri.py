@@ -1,3 +1,4 @@
+import inspect
 from numbers import Number
 from typing import Callable, Dict, Iterable, List, Sequence, Union
 
@@ -86,6 +87,7 @@ class MRIReconAugmentor(DeviceMixin):
         mask: Union[bool, torch.Tensor] = None,
         mask_gen: Callable = None,
         skip_tfm: bool = False,
+        apply_mask_after_invariant_tfms: bool = False,
     ):
         """Apply augmentations to the set of recon data.
 
@@ -102,6 +104,10 @@ class MRIReconAugmentor(DeviceMixin):
             mask_gen: A callable that returns undersampled kspace and the undersampling mask.
                 This undersampling will occur after image-based, equivariant transformations.
             skip_tfm: Whether to skip applying the transformations.
+            apply_mask_after_invariant_tfms: Whether to apply the mask after invariant transforms.
+                Certain invariant operations (like multi-shot motion) can cause non-sampled kspace
+                (i.e. entries with zeros) to have non-zero values. Applying the mask after these
+                transforms resets those values to zero.
 
         Returns:
             Tuple[Dict[str, torch.Tensor], List[Transform], List[Transform]]: A tuple of
@@ -169,10 +175,17 @@ class MRIReconAugmentor(DeviceMixin):
 
         # Apply invariant transforms.
         # Invariant transforms only impact the input (i.e. kspace).
+        # However, they may need the sensitivity maps to perform the operation.
         if len(tfms_invariant) > 0:
+            if apply_mask_after_invariant_tfms:
+                mask = cplx.get_mask(kspace)
             kspace = self._permute_data(kspace, spatial_last=True)
-            kspace, tfms_invariant = self._apply_ti(tfms_invariant, kspace)
+            kspace, tfms_invariant = self._apply_ti(
+                tfms_invariant, kspace, maps=self._permute_data(maps, spatial_last=True)
+            )
             kspace = self._permute_data(kspace, spatial_last=False)
+            if apply_mask_after_invariant_tfms:
+                kspace = mask * kspace
 
         out = {"kspace": kspace, "maps": maps, "target": target, "mean": mean, "std": std}
 
@@ -271,7 +284,10 @@ class MRIReconAugmentor(DeviceMixin):
         return image, target, maps, TransformList(tfms, ignore_no_op=True)
 
     def _apply_ti(
-        self, tfms_invariant: Iterable[Union[Transform, TransformGen]], kspace: torch.Tensor
+        self,
+        tfms_invariant: Iterable[Union[Transform, TransformGen]],
+        kspace: torch.Tensor,
+        maps: torch.Tensor,
     ):
         """Apply invariant transforms.
 
@@ -290,7 +306,11 @@ class MRIReconAugmentor(DeviceMixin):
             tfm: Transform = g.get_transform(kspace) if isinstance(g, TransformGen) else g
             if isinstance(tfm, NoOpTransform):
                 continue
-            kspace = tfm.apply_kspace(kspace)
+            # FIXME: maybe we dont want to use the maps here?
+            if inspect.signature(tfm.apply_kspace).parameters.get("maps", None) is not None:
+                kspace = tfm.apply_kspace(kspace, maps=maps)
+            else:
+                kspace = tfm.apply_kspace(kspace)
             tfms.append(tfm)
         return kspace, TransformList(tfms, ignore_no_op=True)
 

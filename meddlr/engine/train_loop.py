@@ -254,6 +254,11 @@ class SimpleTrainer(TrainerBase):
                 {k: v for k, v in inputs.get("metrics", {}).items() if k not in metrics_dict}
             )
         )
+        metrics_dict.update(
+            flatten_dict(
+                {k: v for k, v in output_dict.get("metrics", {}).items() if k not in metrics_dict}
+            )
+        )
         metrics_dict["data_time"] = data_time
         metrics_dict["total_loss"] = losses
         metrics_dict.update(self.metrics_computer(output_dict) if self.metrics_computer else {})

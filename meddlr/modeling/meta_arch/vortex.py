@@ -1,4 +1,5 @@
 import logging
+import time
 
 import torch
 import torchvision.utils as tv_utils
@@ -178,7 +179,9 @@ class VortexModel(nn.Module):
                 # Target only used for visualization purposes not for loss.
                 target = inputs_unsupervised.get("target", None)
                 pred_base = pred_base["pred"]
+            time_start = time.perf_counter()
             inputs_consistency_aug, pred_base = self.augment(inputs_consistency, pred_base)
+            aug_time = time.perf_counter() - time_start
             pred_aug = self.model(inputs_consistency_aug, return_pp=True)
             if "target" in pred_aug:
                 del pred_aug["target"]
@@ -192,6 +195,11 @@ class VortexModel(nn.Module):
                     pred_base,
                     target=target,
                 )
+
+            # Record the augmentation time.
+            metrics = output_dict.get("metrics", {})
+            metrics["aug_time"] = aug_time
+            output_dict["metrics"] = metrics
 
         return output_dict
 

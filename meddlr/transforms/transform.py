@@ -290,3 +290,6 @@ class TransformList:
 
     def __str__(self) -> str:
         return self.__repr__()
+
+    def append(self, other: Transform):
+        self += other

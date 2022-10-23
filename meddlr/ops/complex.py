@@ -254,7 +254,7 @@ def channels_last(x: torch.Tensor):
     """
     assert is_complex_as_real(x) or is_complex(x)
     if is_complex(x):
-        return x.permute((0,) + tuple(range(2, x.ndim) + (1,)))
+        return x.permute((0,) + tuple(range(2, x.ndim)) + (1,))
     else:
         order = (0,) + tuple(range(2, x.ndim - 2)) + (1, x.ndim - 1)
         return x.permute(order)

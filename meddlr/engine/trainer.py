@@ -307,7 +307,11 @@ class DefaultTrainer(SimpleTrainer):
             ret.append(hooks.MemoryProfiler(20))
 
         # Writing should be last
-        ret.append(hooks.PeriodicWriter(self.build_writers(), periods=(20, cfg.TEST.EVAL_PERIOD)))
+        ret.append(
+            hooks.PeriodicWriter(
+                self.build_writers(), periods=(min(cfg.VIS_PERIOD, 20), cfg.TEST.EVAL_PERIOD)
+            )
+        )
         ret = [x for x in ret if x is not None]
         return ret
 
@@ -382,6 +386,7 @@ class DefaultTrainer(SimpleTrainer):
             or cfg.MODEL.META_ARCHITECTURE == "M2RModel"
             or cfg.MODEL.META_ARCHITECTURE == "NM2RModel"
             or cfg.MODEL.META_ARCHITECTURE == "A2RModel"
+            or cfg.MODEL.META_ARCHITECTURE == "VortexModel"
             else "BasicLossComputer"
         )
         return build_loss_computer(cfg, loss_computer)

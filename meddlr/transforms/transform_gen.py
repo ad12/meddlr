@@ -94,7 +94,7 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
         Returns:
             float: The sample between [0, 1).
         """
-        return torch.rand(1, generator=self._generator).cpu().item()
+        return torch.rand(1, generator=self._generator, device=self._generator.device).cpu().item()
 
     def _rand_choice(self, n=None, probs: torch.Tensor = None) -> int:
         """Chooses random integer between [0, n-1].
@@ -132,7 +132,9 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
         if high - low == 0:
             val = low
         else:
-            val = (low + (high - low) * torch.rand(size, generator=self._generator)).cpu().item()
+            scale = torch.rand(size, generator=self._generator, device=self._generator.device)
+            scale = scale.cpu().item()
+            val = low + (high - low) * scale
         return val
 
     def _format_param(self, val, kind: ParamKind, ndim=None):
