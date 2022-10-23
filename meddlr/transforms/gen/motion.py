@@ -137,7 +137,9 @@ class RandomMRIMultiShotMotion(TransformGen):
     def __repr__(self):
         classname = type(self).__name__
         argstr = ",\n  ".join("{}".format(repr(t)) for t in zip(self.tfms_or_gens))
-        return "{}(\n  {}\n)".format(classname, argstr)
+        params = ["nshots", "trajectory", "p"]
+        params_str = ",\n  ".join("{}={}".format(k, repr(getattr(self, k))) for k in params)
+        return "{}(\n  {},\n  {}\n)".format(classname, argstr, params_str)
 
     @classmethod
     def from_dict(cls, cfg: CfgNode, init_kwargs: Mapping[str, Any], **kwargs):

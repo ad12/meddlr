@@ -55,8 +55,10 @@ class TransformGen(DeviceMixin, SchedulableMixin, TransformCacheMixin):
         self._param_kinds = param_kinds
         self._schedulers: Sequence[TFScheduler] = []
 
-        self._generator = None
         self._device = "cpu"
+        # Instantiate a generator by default.
+        # This way user does not need to provide a seed if they don't want to.
+        self._generator = torch.Generator(device=self._device)
 
     def _set_attributes(self, params: Dict[str, Any] = None, **kwargs):
         if params is None:
