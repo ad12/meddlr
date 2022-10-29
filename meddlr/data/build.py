@@ -250,6 +250,7 @@ def build_recon_val_loader(
     as_test: bool = False,
     add_noise: bool = False,
     add_motion: bool = False,
+    use_augmentor: bool = False,
     dataset_type=None,
 ):
     if (
@@ -277,7 +278,12 @@ def build_recon_val_loader(
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
     data_transform = T.DataTransform(
-        cfg, mask_func, is_test=as_test, add_noise=add_noise, add_motion=add_motion
+        cfg,
+        mask_func,
+        is_test=as_test,
+        add_noise=add_noise,
+        add_motion=add_motion,
+        use_augmentor=use_augmentor,
     )
 
     val_data = _build_dataset(

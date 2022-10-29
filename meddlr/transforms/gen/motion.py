@@ -82,6 +82,10 @@ class RandomMRIMultiShotMotion(TransformGen):
     ):
         self.tfms_or_gens = tfms_or_gens
         self.trajectory = trajectory
+        if isinstance(nshots, float):
+            if not nshots.is_integer():
+                raise ValueError("`nshots` must be an integer")
+            nshots = int(nshots)
         if isinstance(nshots, int):
             nshots = (nshots, nshots)
         super().__init__(params={"nshots": nshots}, p=p)
@@ -99,10 +103,14 @@ class RandomMRIMultiShotMotion(TransformGen):
             device=input.device,
         )
 
+        gen = self._generator
+        if gen is None or gen.device != input.device:
+            gen = torch.Generator(device=input.device).manual_seed(int(self._rand() * 1e10))
+
         return MRIMultiShotMotion(
             tfm_gens=self.tfms_or_gens,
             trajectory=trajectory,
-            seed=torch.randint(0, 2**32, (1,)).cpu().item(),
+            generator=gen,
         )
 
     def schedulers(self):

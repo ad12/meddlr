@@ -163,6 +163,15 @@ class TestRandomAffine(unittest.TestCase):
         assert all(abs(x) <= s_h for x in h_shear)
         assert all(s_w1 <= x <= s_w2 for x in w_shear)
 
+    def test_trivial(self):
+        h, w = 100, 100
+        img = torch.randn(1, 1, h, w)
+
+        affine = RandomAffine(angle=0, translate=(0, 0), scale=0, shear=0, p=1.0)
+        tfm = affine.get_transform(img)
+        out = tfm.apply_image(img)
+        assert torch.allclose(img, out)
+
 
 class TestRandomTranslation(unittest.TestCase):
     def test_scheduler_basic(self):

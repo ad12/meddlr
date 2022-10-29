@@ -1,6 +1,8 @@
 """
 Utilities for doing complex-valued operations.
 """
+from typing import Union
+
 import numpy as np
 import torch
 
@@ -385,10 +387,12 @@ def to_numpy(x: torch.Tensor):
         return x[..., 0] + 1j * x[..., 1]
 
 
-def to_tensor(x: np.ndarray):
+def to_tensor(x: Union[torch.Tensor, np.ndarray]):
     """
     Convert complex-valued numpy array to real-valued PyTorch tensor.
     """
+    if isinstance(x, torch.Tensor):
+        return x
     if not supports_cplx_tensor():
         x = np.stack((x.real, x.imag), axis=-1)
     return torch.from_numpy(x)

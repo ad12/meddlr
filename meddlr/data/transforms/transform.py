@@ -200,6 +200,7 @@ class DataTransform:
         is_test: bool = False,
         add_noise: bool = False,
         add_motion: bool = False,
+        use_augmentor: bool = None,
     ):
         """
         Args:
@@ -238,14 +239,17 @@ class DataTransform:
 
         # Build augmentation pipeline.
         self.augmentor = None
-        if not is_test and cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS:
+        if use_augmentor is None:
+            use_augmentor = not is_test and cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS
+        if not is_test and use_augmentor:
+            self.augmentor = MRIReconAugmentor.from_cfg(cfg, aug_kind="aug_train", seed=seed)
+        elif is_test and use_augmentor:
+            # TODO: Rename aug_train -> aug so we can use it at test time.
             self.augmentor = MRIReconAugmentor.from_cfg(cfg, aug_kind="aug_train", seed=seed)
 
     def _call_augmentor(
         self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None
     ):
-        assert not self._is_test, "Augmentor is not supported with testing yet"
-
         # Convert everything from numpy arrays to tensors
         kspace = cplx.to_tensor(kspace).unsqueeze(0)
         maps = cplx.to_tensor(maps).unsqueeze(0)
@@ -262,6 +266,16 @@ class DataTransform:
             self._subsampler.__call__, mode="2D", seed=seed, acceleration=acceleration
         )
 
+        extra_kwargs = {}
+        if self._is_test:
+            # Certain invariant transforms do not respect the sampling mask.
+            # Reapplying the sampling mask ensures that the kspace is masked.
+            extra_kwargs["apply_mask_after_invariant_tfms"] = True
+            # See the augmentor transforms for reproducibility.
+            # Assume the seed should be applied on a per slice basis.
+            aug_seed = int(sum(tuple(map(ord, fname))) * 1e6 + slice_id)
+            self.augmentor.reset().seed(aug_seed)
+
         out, _, _ = self.augmentor(
             kspace,
             maps=maps,
@@ -269,6 +283,7 @@ class DataTransform:
             normalizer=self._normalizer,
             mask_gen=mask_gen,
             skip_tfm=is_fixed,  # Skip augmentations for unsupervised scans.
+            **extra_kwargs,
         )
         masked_kspace = out["kspace"]
         maps = out["maps"]

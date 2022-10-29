@@ -6,14 +6,29 @@ from meddlr.transforms.tf_scheduler import SchedulableMixin
 
 
 def generate_mock_mri_data(
-    ky=20, kz=20, nc=8, nm=1, bsz=1, scale=1.0, rand_func="randn", as_dict: bool = False
+    ky=20,
+    kz=20,
+    nc=8,
+    nm=1,
+    bsz=1,
+    scale=1.0,
+    rand_func="randn",
+    as_dict: bool = False,
+    remove_batch_dim: bool = False,
 ):
+    if remove_batch_dim and bsz > 1:
+        raise ValueError("Cannot remove batch dim if batch size is greater than 1.")
+
     func = getattr(torch, rand_func)
     kspace = torch.view_as_complex(func(bsz, ky, kz, nc, 2)) * scale
     maps = torch.view_as_complex(func(bsz, ky, kz, nc, nm, 2))
     maps = maps / cplx.rss(maps, dim=-2).unsqueeze(-2)
     A = SenseModel(maps)
     target = A(kspace, adjoint=True)
+    if remove_batch_dim:
+        kspace = kspace.squeeze(0)
+        maps = maps.squeeze(0)
+        target = target.squeeze(0)
     if as_dict:
         return {"kspace": kspace, "maps": maps, "target": target}
     else:

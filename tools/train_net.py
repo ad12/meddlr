@@ -33,6 +33,10 @@ def setup(args):
     cfg.merge_from_list(opts)
     cfg.freeze()
 
+    # Reproducibility should always be on.
+    # TODO: Refactor this argument.
+    args.reproducible = True
+
     if not cfg.OUTPUT_DIR:
         raise ValueError("OUTPUT_DIR not specified")
 

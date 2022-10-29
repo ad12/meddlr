@@ -57,6 +57,7 @@ class MRIReconAugmentor(DeviceMixin):
         aug_sensitivity_maps: bool = True,
         seed: int = None,
         device: torch.device = None,
+        apply_mask_after_invariant_tfms: bool = False,
     ) -> None:
         """
         Args:
@@ -67,11 +68,16 @@ class MRIReconAugmentor(DeviceMixin):
             device: The device to use for the transforms.
                 If ``None``, the device will be determined automatically
                 based on the data passed in.
+            apply_mask_after_invariant_tfms: Whether to apply the mask after invariant transforms.
+                Certain invariant operations (like multi-shot motion) can cause non-sampled kspace
+                (i.e. entries with zeros) to have non-zero values. Applying the mask after these
+                transforms resets those values to zero.
         """
         if isinstance(tfms_or_gens, TransformList):
             tfms_or_gens = tfms_or_gens.transforms
         self.tfms_or_gens = tfms_or_gens
         self.aug_sensitivity_maps = aug_sensitivity_maps
+        self.apply_mask_after_invariant_tfms = apply_mask_after_invariant_tfms
 
         if device is not None:
             self.to(device)
@@ -87,7 +93,7 @@ class MRIReconAugmentor(DeviceMixin):
         mask: Union[bool, torch.Tensor] = None,
         mask_gen: Callable = None,
         skip_tfm: bool = False,
-        apply_mask_after_invariant_tfms: bool = False,
+        apply_mask_after_invariant_tfms: bool = None,
     ):
         """Apply augmentations to the set of recon data.
 
@@ -104,16 +110,16 @@ class MRIReconAugmentor(DeviceMixin):
             mask_gen: A callable that returns undersampled kspace and the undersampling mask.
                 This undersampling will occur after image-based, equivariant transformations.
             skip_tfm: Whether to skip applying the transformations.
-            apply_mask_after_invariant_tfms: Whether to apply the mask after invariant transforms.
-                Certain invariant operations (like multi-shot motion) can cause non-sampled kspace
-                (i.e. entries with zeros) to have non-zero values. Applying the mask after these
-                transforms resets those values to zero.
+            apply_mask_after_invariant_tfms: See __init__. This value will override the value
+                provided in the constructor.
 
         Returns:
             Tuple[Dict[str, torch.Tensor], List[Transform], List[Transform]]: A tuple of
                 a dictionary of transformed data, a list of deterministic equivariant
                 transformations, and a list of deterministic invariant transformations.
         """
+        if apply_mask_after_invariant_tfms is None:
+            apply_mask_after_invariant_tfms = self.apply_mask_after_invariant_tfms
         if skip_tfm:
             tfms_equivariant, tfms_invariant = [], []
         else:
@@ -178,7 +184,7 @@ class MRIReconAugmentor(DeviceMixin):
         # However, they may need the sensitivity maps to perform the operation.
         if len(tfms_invariant) > 0:
             if apply_mask_after_invariant_tfms:
-                mask = cplx.get_mask(kspace)
+                assert mask is not None
             kspace = self._permute_data(kspace, spatial_last=True)
             kspace, tfms_invariant = self._apply_ti(
                 tfms_invariant, kspace, maps=self._permute_data(maps, spatial_last=True)
@@ -319,6 +325,12 @@ class MRIReconAugmentor(DeviceMixin):
         for g in self.tfms_or_gens:
             if isinstance(g, TransformGen):
                 g.reset()
+        return self
+
+    def seed(self, value: int):
+        """Seed all transformation generators."""
+        seed_tfm_gens(self.tfms_or_gens, value)
+        return self
 
     def to(self, device: torch.device) -> "MRIReconAugmentor":
         """Moves transformations to a torch device.
@@ -388,4 +400,5 @@ class MRIReconAugmentor(DeviceMixin):
             aug_sensitivity_maps=mri_tfm_cfg.AUG_SENSITIVITY_MAPS,
             seed=seed,
             device=device,
+            apply_mask_after_invariant_tfms=mri_tfm_cfg.APPLY_MASK_AFTER_INVARIANT_TRANSFORMS,
         )

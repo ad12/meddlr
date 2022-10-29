@@ -9,6 +9,7 @@ from functools import wraps
 from typing import Any, Dict, Sequence, Union
 
 import numpy as np
+import torch
 
 from meddlr.utils.events import EventStorage
 from meddlr.utils.general import flatten_dict
@@ -167,3 +168,24 @@ def assert_shape(x: Dict[str, Any], expected_shape: Dict[str, Any]):
     """Check the shape of tensors in `x` are equivalent to `expected_shape`."""
     x_shape = {k: tuple(v.shape) for k, v in flatten_dict(x).items()}
     np.testing.assert_equal(x_shape, flatten_dict(expected_shape))
+
+
+def assert_allclose(x: Dict[str, Any], expected: Dict[str, Any], rtol=1e-5, atol=1e-8):
+    """Check the values of tensors in `x` are equivalent to `expected`."""
+    x = flatten_dict(x)
+    expected = flatten_dict(expected)
+    if x.keys() != expected.keys():
+        raise ValueError(
+            "Keys in x and expected do not match.\nx: {}\nexpected: {}".format(
+                x.keys(), expected.keys()
+            )
+        )
+
+    for k, v in x.items():
+        if isinstance(v, (torch.Tensor, np.ndarray, np.generic, np.number, int, float)):
+            try:
+                np.testing.assert_allclose(v, expected[k], rtol=rtol, atol=atol)
+            except AssertionError as e:
+                raise AssertionError(f"Values for {k} do not match." + "\n" + str(e)) from None
+        else:
+            assert v == expected[k]

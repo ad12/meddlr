@@ -18,6 +18,7 @@ _MRI_RECON_TFM.TRANSFORMS = ()
 _MRI_RECON_TFM.SCHEDULER_P = CN(new_allowed=True)
 _MRI_RECON_TFM.SCHEDULER_P.IGNORE = False
 _MRI_RECON_TFM.AUG_SENSITIVITY_MAPS = True
+_MRI_RECON_TFM.APPLY_MASK_AFTER_INVARIANT_TRANSFORMS = False
 
 # -----------------------------------------------------------------------------
 # Config definition
