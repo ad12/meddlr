@@ -1,10 +1,12 @@
 import logging
+from typing import Dict, Optional
 
 import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
 from meddlr.config.config import configurable
+from meddlr.modeling.meta_arch import SSDUModel
 from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from meddlr.ops import complex as cplx
 from meddlr.transforms.builtin.mri import MRIReconAugmentor
@@ -67,12 +69,21 @@ class VortexModel(nn.Module):
             self.model.vis_period = -1
         self.vis_period = vis_period
 
-    def augment(self, inputs, pred_base):
+    def augment(self, inputs: Dict[str, torch.Tensor], pred_base: torch.Tensor):
+        """Apply augmentations to inputs and base image reconstruction.
+
+        Args:
+            inputs (Dict[str, torch.Tensor]): The inputs to augment.
+            pred_base (torch.Tensor): The reconstruction of the base (i.e. non-augmented) image.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], torch.Tensor]: The augmented inputs and pseudo-targets.
+        """
         inputs = move_to_device(inputs, device="cuda")
         pred_base = move_to_device(pred_base, device="cuda")
         kspace, maps = inputs["kspace"].clone(), inputs["maps"].clone()
 
-        out, _, _ = self.augmentor(kspace, maps, pred_base, mask=True)
+        out, _, _ = self.augmentor(kspace=kspace, maps=maps, target=pred_base, mask=True)
 
         inputs = {
             k: v.clone() if isinstance(v, torch.Tensor) else v
@@ -130,6 +141,42 @@ class VortexModel(nn.Module):
                 data = tv_utils.make_grid(data, nrow=1, padding=1, normalize=True, scale_each=True)
                 storage.put_image("train_aug/{}".format(name), data.numpy(), data_format="CHW")
 
+    def _aggregate_consistency_inputs(
+        self,
+        inputs_supervised: Optional[Dict[str, torch.Tensor]] = None,
+        inputs_unsupervised: Optional[Dict[str, torch.Tensor]] = None,
+    ) -> Dict[str, torch.Tensor]:
+        """Aggregates consistency inputs into a single dictionary.
+
+        Args:
+            inputs_supervised: A dict of inputs, their metadata, and their ground truth references.
+            inputs_unsupervised: A dict of inputs and their metadata.
+
+        Returns:
+            Dict[str, Dict[str, Tensor]]: A dictionary of base inputs and augmented inputs:
+                - 'base': Inputs to be used to generate the pseudo-label (i.e. target)
+                  for consistency optimization.
+                - 'aug': Augmented inputs to use for consistency training.
+        """
+        inputs_consistency = []
+        if inputs_unsupervised is not None:
+            inputs_consistency.append(inputs_unsupervised)
+        if self.use_supervised_consistency and inputs_supervised is not None:
+            inputs_consistency.append({k: v for k, v in inputs_supervised.items() if k != "target"})
+
+        if len(inputs_consistency) == 0:
+            return {}  # No consistency training.
+
+        if len(inputs_consistency) > 1:
+            inputs_consistency = {
+                k: torch.cat([x[k] for x in inputs_consistency], dim=0)
+                for k in inputs_consistency[0].keys()
+            }
+        else:
+            inputs_consistency = inputs_consistency[0]
+
+        return inputs_consistency
+
     def forward(self, inputs):
         if not self.training:
             assert (
@@ -148,38 +195,31 @@ class VortexModel(nn.Module):
         inputs_unsupervised = inputs.get("unsupervised", None)
         if inputs_supervised is None and inputs_unsupervised is None:
             raise ValueError("Examples not formatted in the proper way")
+        # Whether to use self-supervised via data undersampling (SSDU) for reconstruction.
+        is_ssdu_enabled = isinstance(self.model, SSDUModel)
         output_dict = {}
 
-        # Recon
-        if inputs_supervised is not None:
+        # Reconstruction (supervised).
+        if is_ssdu_enabled:
+            output_dict["recon"] = self.model(inputs)
+        elif inputs_supervised is not None:
             output_dict["recon"] = self.model(
                 inputs_supervised, return_pp=True, vis_training=vis_training
             )
 
         # Consistency.
-        # kspace_aug = kspace + U \sigma \mathcal{N}
-        # Loss = L(f(Ti(Te(kspace)), \theta), Te(f(kspace, \theta)))
-        inputs_consistency = []
-        if inputs_unsupervised is not None:
-            inputs_consistency.append(inputs_unsupervised)
-        if self.use_supervised_consistency and inputs_supervised is not None:
-            inputs_consistency.append({k: v for k, v in inputs_supervised.items() if k != "target"})
-
+        model = self.model.model if is_ssdu_enabled else self.model
+        inputs_consistency = self._aggregate_consistency_inputs(
+            inputs_supervised, inputs_unsupervised
+        )
         if len(inputs_consistency) > 0:
-            if len(inputs_consistency) > 1:
-                inputs_consistency = {
-                    k: torch.cat([x[k] for x in inputs_consistency], dim=0)
-                    for k in inputs_consistency[0].keys()
-                }
-            else:
-                inputs_consistency = inputs_consistency[0]
             with torch.no_grad():
-                pred_base = self.model(inputs_consistency)
+                pred_base = model(inputs_consistency)
                 # Target only used for visualization purposes not for loss.
                 target = inputs_unsupervised.get("target", None)
                 pred_base = pred_base["pred"]
             inputs_consistency_aug, pred_base = self.augment(inputs_consistency, pred_base)
-            pred_aug = self.model(inputs_consistency_aug, return_pp=True)
+            pred_aug = model(inputs_consistency_aug, return_pp=True)
             if "target" in pred_aug:
                 del pred_aug["target"]
             pred_aug["target"] = pred_base.detach()

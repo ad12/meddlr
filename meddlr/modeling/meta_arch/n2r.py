@@ -188,9 +188,7 @@ class N2RModel(nn.Module):
 
         # Reconstruction (supervised).
         if is_ssdu_enabled:
-            output_dict["recon"] = self.model(
-                inputs,
-            )
+            output_dict["recon"] = self.model(inputs)
         elif inputs_supervised is not None:
             output_dict["recon"] = self.model(
                 inputs_supervised, return_pp=True, vis_training=vis_training
