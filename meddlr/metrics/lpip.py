@@ -25,6 +25,9 @@ class LPIPS(Metric):
         In CVPR, 2018 http://arxiv.org/abs/1801.03924
     """
 
+    is_differentiable = True
+    higher_is_better = False
+
     def __init__(
         self,
         net_type: str = "alex",
