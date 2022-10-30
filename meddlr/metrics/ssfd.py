@@ -28,6 +28,9 @@ class SSFD(Metric):
         https://openreview.net/forum?id=dgMvTzf6M_3
     """
 
+    is_differentiable = True
+    higher_is_better = False
+
     def __init__(
         self,
         mode: str = "grayscale",
