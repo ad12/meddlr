@@ -1,0 +1,26 @@
+# Test
+_BASE_: "standard.yaml"
+DESCRIPTION:
+  BRIEF: Testing VORTEX multi-shot motion config
+  EXP_NAME: test/vortex/multi-shot-motion
+  PROJECT_NAME: vortex
+  TAGS: ("mridata_knee_2019", "unet", "16x", "vortex")
+OUTPUT_DIR: "results://tests/vortex/multi-shot-motion"
+MODEL:
+  CONSISTENCY:
+    AUG:
+      MRI_RECON:
+        AUG_SENSITIVITY_MAPS: false
+        SCHEDULER_P:
+          IGNORE: false
+        TRANSFORMS:
+        - name: RandomMRIMultiShotMotion
+          p: 1.0
+          nshots: 8
+          trajectory: blocked
+          tfms_or_gens:
+          - name: RandomAffine
+            p:
+              angle: 1.0
+            pad_like: MRAugment
+            angle: 5

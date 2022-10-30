@@ -1,0 +1,48 @@
+# Self-Supervised VORTEX (i.e. VORTEX+SSDU)
+_BASE_: "standard.yaml"
+MODEL:
+  META_ARCHITECTURE: "VortexModel"
+  A2R:
+    META_ARCHITECTURE: "SSDUModel"
+  SSDU:
+    META_ARCHITECTURE: "UnetModel"
+    MASKER:
+      PARAMS:
+        p: 1.0
+        rhos: 0.4  # Based on hyperparameter search
+        kind: "uniform"  # Choices: ["uniform", "gaussian"]
+        per_example: True
+        std_scale: 4  # Default value in SSDU code
+  UNET:
+    IN_CHANNELS: 2
+    OUT_CHANNELS: 2
+    CHANNELS: 32
+    NUM_POOL_LAYERS: 4
+    DROPOUT: 0.
+  CONSISTENCY:
+    AUG:
+      MRI_RECON:
+        AUG_SENSITIVITY_MAPS: true
+        SCHEDULER_P:
+          IGNORE: false
+        TRANSFORMS:
+        # Motion Transform
+        - name: RandomMRIMotion
+          p: 1.0
+          std_devs:
+          - 0.2
+          - 0.5
+  RECON_LOSS:
+    NAME: "k_l1"
+    RENORMALIZE_DATA: False
+DATALOADER:
+  NUM_WORKERS: 0  # for debugging purposes
+  SAMPLER_TRAIN: ""  # Random sampler in self-supervised settings
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 14
+    NUM_UNDERSAMPLED: 14  # undersample all scans - N2R + SSDU should still train.
+SOLVER:
+  TRAIN_BATCH_SIZE: 1
+TIME_SCALE: "iter"
+OUTPUT_DIR: "results://tests/vortex/vortex_ssdu"
+VERSION: 1 

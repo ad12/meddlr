@@ -1,0 +1,60 @@
+DESCRIPTION:
+  BRIEF: Testing VORTEX config
+  EXP_NAME: test/vortex/standard
+  PROJECT_NAME: vortex
+  TAGS: ("mridata_knee_2019", "unet", "16x", "vortex")
+OUTPUT_DIR: "results://tests/vortex/standard"
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "PoissonDiskMaskFunc"
+    ACCELERATIONS: (16,)
+    CALIBRATION_SIZE: 20
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+DATALOADER:
+  NUM_WORKERS: 0
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 6  # Number of total scans to use
+    NUM_UNDERSAMPLED: 5  # Number of undersampled scans to use
+  SAMPLER_TRAIN: "AlternatingSampler"  # Choices: ["", "AlternatingSampler"]
+  ALT_SAMPLER:
+    PERIOD_SUPERVISED: 1
+    PERIOD_UNSUPERVISED: 1
+MODEL:
+  META_ARCHITECTURE: "VortexModel"
+  UNET:
+    CHANNELS: 32
+    DROPOUT: 0.0
+    IN_CHANNELS: 2
+    NUM_POOL_LAYERS: 4
+    OUT_CHANNELS: 2
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+  A2R:
+    META_ARCHITECTURE: "UnetModel"
+  CONSISTENCY:
+    AUG:
+      MRI_RECON:
+        AUG_SENSITIVITY_MAPS: true
+        SCHEDULER_P:
+          IGNORE: false
+        TRANSFORMS: ()  # TODO: This must be filled in
+SOLVER:
+  TRAIN_BATCH_SIZE: 2
+  TEST_BATCH_SIZE: 2
+  CHECKPOINT_PERIOD: 20
+  MAX_ITER: 60
+TEST:
+  EVAL_PERIOD: 40
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim (Wang)", "ssim (Wang)_scan")
+TIME_SCALE: "iter"
+SEED: 1000
+VIS_PERIOD: 10
+VERSION: 1
