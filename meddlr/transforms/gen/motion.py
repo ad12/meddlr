@@ -90,16 +90,18 @@ class RandomMRIMultiShotMotion(TransformGen):
             nshots = (nshots, nshots)
         super().__init__(params={"nshots": nshots}, p=p)
 
-    def get_transform(self, input: torch.Tensor):
+    def get_transform(self, input: torch.Tensor, channel_first: bool = True):
         params = self._get_param_values(use_schedulers=True)
         if self._rand() >= params["p"]:
             return NoOpTransform()
+
+        shape = input.shape[-2:] if channel_first else input.shape[1:3]
 
         nshots = self._rand_range(*params["nshots"])
         trajectory = tF.get_multishot_trajectory(
             kind=self.trajectory,
             nshots=int(round(nshots)),
-            shape=input.shape[-2:],
+            shape=shape,
             device=input.device,
         )
 
