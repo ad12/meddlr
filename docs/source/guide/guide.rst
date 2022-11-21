@@ -9,3 +9,4 @@ Meddlr Basics
    config
    datasets
    path
+   models
