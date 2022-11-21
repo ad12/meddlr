@@ -118,6 +118,7 @@ EXTRAS = {
     "deployment": ["gdown", "requests", "iocursor"],
     "docs": ["sphinx", "sphinxcontrib.bibtex", "sphinx-rtd-theme", "m2r2"],
     "metrics": ["lpips"],
+    "modeling": ["monai"],
 }
 
 base_extras = [EXTRAS[k] for k in EXTRAS.keys() if k not in ["dev", "docs"]]
