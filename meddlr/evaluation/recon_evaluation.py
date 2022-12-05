@@ -101,7 +101,11 @@ class ReconEvaluator(ScanEvaluator):
         self._channel_names = channel_names
         self._structure_channel_by = structure_channel_by
         self._prefix = prefix
-        self._postprocess = cfg.TEST.POSTPROCESSOR.NAME
+        if hasattr(cfg.TEST, "POSTPROCESSOR"):
+            self._postprocess = cfg.TEST.POSTPROCESSOR.NAME
+        else:
+            # This is required to be compatible with the skm-tea config.
+            self._postprocess = ""
         self.device = cfg.MODEL.DEVICE
 
         if save_scans and (not output_dir or not aggregate_scans):
