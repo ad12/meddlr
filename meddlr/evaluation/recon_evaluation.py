@@ -52,7 +52,7 @@ class ReconEvaluator(ScanEvaluator):
         skip_rescale: bool = False,
         save_scans: bool = False,
         metrics: Sequence[str] = None,
-        flush_period: int = None,
+        flush_period: int = 0,
         to_cpu: bool = False,
         channel_names: Optional[Sequence[str]] = None,
         eval_in_process: bool = False,
@@ -109,6 +109,10 @@ class ReconEvaluator(ScanEvaluator):
             postprocess = init_kwargs.pop("postprocess")
             device = init_kwargs.pop("device")
             flush_period = init_kwargs.pop("flush_period")
+            assert len(init_kwargs) == 0, f"Unrecognized arguments: {init_kwargs.keys()}"
+
+        if flush_period is None:
+            flush_period = 0
 
         self._cpu_device = torch.device("cpu")
         self._logger = logging.getLogger(__name__)
