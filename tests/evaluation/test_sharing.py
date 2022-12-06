@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 
 from meddlr.config import get_cfg
-from meddlr.engine.deploy import prepare_model
+from meddlr.engine.sharing import prepare_model
 from meddlr.evaluation.testing import find_weights
 from meddlr.utils import env
 
