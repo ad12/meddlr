@@ -309,8 +309,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         exp_output_dir = os.path.join(output_dir, dataset_name, params_str)
         evaluators = [
             ReconEvaluator(
-                dataset_name,
                 s_cfg,
+                dataset_name=dataset_name,
                 group_by_scan=group_by_scan,
                 skip_rescale=skip_rescale,
                 save_scans=save_scans,
@@ -325,8 +325,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
             evaluators.append(
                 ZFReconEvaluator(
-                    dataset_name,
                     s_cfg,
+                    dataset_name=dataset_name,
                     group_by_scan=group_by_scan,
                     skip_rescale=skip_rescale,
                     save_scans=save_scans,

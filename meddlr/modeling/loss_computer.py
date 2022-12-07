@@ -65,7 +65,8 @@ class LossComputer(ABC):
         signal_model: Optional[SenseModel] = None,
     ):
         if self.loss is not None:
-            assert loss_name is None
+            is_same_loss = isinstance(self.loss, str) and loss_name == self.loss
+            assert loss_name is None or is_same_loss
 
         # Compute metrics
         if loss_name == "mag_l1":

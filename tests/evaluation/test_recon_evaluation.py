@@ -19,21 +19,34 @@ class MockReconEvaluator(ReconEvaluator):
         flush_period: int = None,
         eval_in_process: bool = False,
         output_dir: str = None,
+        init_cfg_arg: bool = False,
     ):
         if metrics is None:
             metrics = ["nrmse", "psnr", "ssim (Wang)", "nrmse_scan", "psnr_scan"]
         cfg = get_cfg()
         cfg.MODEL.DEVICE = "cpu"
-        super().__init__(
-            dataset_name,
-            cfg,
-            output_dir=output_dir,
-            group_by_scan=group_by_scan,
-            metrics=metrics,
-            flush_period=flush_period,
-            skip_rescale=True,
-            eval_in_process=eval_in_process,
-        )
+        if init_cfg_arg:
+            super().__init__(
+                dataset_name,
+                cfg,
+                output_dir=output_dir,
+                group_by_scan=group_by_scan,
+                metrics=metrics,
+                flush_period=flush_period,
+                skip_rescale=True,
+                eval_in_process=eval_in_process,
+            )
+        else:
+            super().__init__(
+                cfg,
+                dataset_name=dataset_name,
+                output_dir=output_dir,
+                group_by_scan=group_by_scan,
+                metrics=metrics,
+                flush_period=flush_period,
+                skip_rescale=True,
+                eval_in_process=eval_in_process,
+            )
         self._output_dir = output_dir
         self._cpu_device = torch.device("cpu")
         self._normalizer = None
@@ -196,6 +209,10 @@ class TestReconEvaluator(unittest.TestCase):
         assert all(chr(ord("A") + i) in results for i in range(len(scan_slices)))
         for v in results.values():
             assert all(f"val_{name}" in v for name in metrics)
+
+    def test_init_with_config_as_argument(self):
+        with self.assertWarns(DeprecationWarning):
+            _ = MockReconEvaluator(init_cfg_arg=True)
 
 
 if __name__ == "__main__":

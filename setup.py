@@ -103,7 +103,7 @@ EXTRAS = {
         "pytest",
         "medpy",
         "pooch",
-        "gdown",
+        "gdown<4.6.0",
         "parameterized",
         # tifffile==2022.7.28 not reading scipy data.
         # TODO (arjundd): Investigate tifffile issue.
@@ -115,7 +115,7 @@ EXTRAS = {
         "m2r2",
     ],
     "benchmarking": ["medpy"],
-    "deployment": ["gdown", "requests", "iocursor"],
+    "deployment": ["gdown<4.6.0", "requests", "iocursor"],
     "docs": ["sphinx", "sphinxcontrib.bibtex", "sphinx-rtd-theme", "m2r2"],
     "metrics": ["lpips"],
     "modeling": ["monai"],
