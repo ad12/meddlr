@@ -65,6 +65,8 @@ def build_monai_net(cfg, name: str):
     if not _SUPPORTS_MONAI:
         raise ImportError("MONAI is not installed. Install with `pip install monai`.")
 
+    # The import statement needs to be in the function to avoid creating temporary
+    # files at import time. This can cause issues on Google Colab with skm-tea.
     from monai.networks import nets as monai_nets
 
     logger.warn(
