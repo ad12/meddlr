@@ -10,14 +10,14 @@ from torch import nn
 from meddlr.modeling.layers.build import get_layer_kind
 from meddlr.utils.registry import Registry
 
-try:
-    from monai.networks import nets as monai_nets
+# try:
+#     from monai.networks import nets as monai_nets
 
-    _SUPPORTS_MONAI = True
-except ImportError:
-    monai_nets = None
-    _SUPPORTS_MONAI = False
-
+#     _SUPPORTS_MONAI = True
+# except ImportError:
+#     monai_nets = None
+#     _SUPPORTS_MONAI = False
+_SUPPORTS_MONAI = False
 
 META_ARCH_REGISTRY = Registry("META_ARCH")  # noqa F401 isort:skip
 META_ARCH_REGISTRY.__doc__ = """
@@ -76,7 +76,7 @@ def build_monai_net(cfg, name: str):
         "Newer versions of MONAI may require careful configuration of network arguments."
     )
 
-    klass = getattr(monai_nets, name)
+    klass = getattr(monai_nets, name)  # noqa: F821
     sig = inspect.signature(klass)
 
     build_cfg = cfg.get_recursive(f"MODEL.MONAI.{name}")
