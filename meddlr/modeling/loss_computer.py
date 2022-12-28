@@ -208,6 +208,7 @@ class N2RLossComputer(LossComputer):
         assert recon_loss in IMAGE_LOSSES or recon_loss in KSPACE_LOSSES
         assert consistency_loss in IMAGE_LOSSES or consistency_loss in KSPACE_LOSSES
 
+        self.loss = None
         self.recon_loss = recon_loss
         self.consistency_loss = consistency_loss
         self.latent_loss = latent_loss
