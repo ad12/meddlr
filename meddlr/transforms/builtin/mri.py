@@ -1,5 +1,5 @@
 from numbers import Number
-from typing import Callable, Dict, Iterable, List, Sequence, Union
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 import torch
 
@@ -319,7 +319,12 @@ class MRIReconAugmentor(DeviceMixin):
 
     @classmethod
     def from_cfg(
-        cls, cfg: CfgNode, aug_kind: str, seed: int = None, device: torch.device = None, **kwargs
+        cls,
+        cfg: CfgNode,
+        aug_kind: Optional[str],
+        seed: int = None,
+        device: torch.device = None,
+        **kwargs,
     ):
         """Build :cls:`MRIReconAugmentor` from a config.
 
@@ -336,8 +341,9 @@ class MRIReconAugmentor(DeviceMixin):
         Returns:
             MRIReconAugmentor: An augmentor.
         """
-        mri_tfm_cfg = None
-        assert aug_kind in ("aug_train", "consistency")
+        assert aug_kind in ("aug_train", "consistency", None)
+
+        mri_tfm_cfg = cfg
         if aug_kind == "aug_train":
             mri_tfm_cfg = cfg.AUG_TRAIN.MRI_RECON
         elif aug_kind == "consistency":
