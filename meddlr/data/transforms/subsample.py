@@ -596,7 +596,6 @@ def equispaced_mask(
     # Perform masking on 1D tensor and reshape.
     dim_shape = shape[-dim:]
     offset = _flatten_offset(offset, dim_shape)
-    print(offset)
     mask = torch.zeros(np.prod(dim_shape), dtype=dtype, device=device)
     mask[offset::accel] = 1
     mask = mask.reshape(dim_shape)
