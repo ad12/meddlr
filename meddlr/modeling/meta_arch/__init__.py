@@ -7,5 +7,5 @@ from .n2r import N2RModel  # noqa: F401
 from .nm2r import NM2RModel  # noqa: F401
 from .ssdu import SSDUModel  # noqa: F401
 from .unet import UnetModel  # noqa: F401
-from .unrolled import GeneralizedUnrolledCNN  # noqa: F401
+from .unrolled import CGUnrolledCNN, GeneralizedUnrolledCNN  # noqa: F401
 from .vortex import VortexModel  # noqa: F401
