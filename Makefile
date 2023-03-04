@@ -23,7 +23,7 @@ dev:
 	pre-commit install
 
 dev-lint:
-	pip install --upgrade black==22.3.0 coverage isort flake8 flake8-bugbear flake8-comprehensions pre-commit pooch
+	pip install --upgrade black==22.12.0 coverage isort flake8 flake8-bugbear flake8-comprehensions pre-commit pooch
 
 build-docs:
 	rm -rf docs/build
