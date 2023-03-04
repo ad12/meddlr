@@ -1,12 +1,11 @@
 import unittest
-from unittest.mock import MagicMock
 
 import torch
 from torch import nn
 
 from meddlr.modeling.meta_arch.unrolled import GeneralizedUnrolledCNN
 
-from ...transforms.mock import generate_mock_mri_data, MockCounter
+from ...transforms.mock import MockCounter, generate_mock_mri_data
 
 
 class TestGeneralizedUnrolledCNN(unittest.TestCase):
@@ -27,4 +26,3 @@ class TestGeneralizedUnrolledCNN(unittest.TestCase):
             _ = unrolled({"kspace": kspace, "maps": maps})
 
         assert reg.call_count("__call__") == num_steps
-
