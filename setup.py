@@ -102,6 +102,7 @@ EXTRAS = {
         # Testing
         "pytest",
         "medpy",
+        "wrapt",
         "pooch",
         "gdown<4.6.0",
         "parameterized",

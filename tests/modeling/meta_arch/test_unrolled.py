@@ -6,14 +6,17 @@ from torch import nn
 
 from meddlr.modeling.meta_arch.unrolled import GeneralizedUnrolledCNN
 
-from ...transforms.mock import generate_mock_mri_data
+from ...transforms.mock import generate_mock_mri_data, MockCounter
 
 
 class TestGeneralizedUnrolledCNN(unittest.TestCase):
     def test_build_shared_weights(self):
-        reg = nn.Sequential(nn.Conv2d(2, 2, 3), nn.ReLU())
-        mock = MagicMock()
-        reg.__call__ = mock
+        """
+        If the model is sharing weights, the same regularization block
+        should be called multiple times.
+        """
+        reg = nn.Sequential(nn.Conv2d(2, 2, 3, padding=1), nn.ReLU())
+        reg = MockCounter(reg)
 
         num_steps = 3
         unrolled = GeneralizedUnrolledCNN(blocks=reg, num_grad_steps=num_steps)
@@ -23,4 +26,5 @@ class TestGeneralizedUnrolledCNN(unittest.TestCase):
         with torch.no_grad():
             _ = unrolled({"kspace": kspace, "maps": maps})
 
-        assert mock.call_count == num_steps
+        assert reg.call_count("__call__") == num_steps
+
