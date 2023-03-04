@@ -134,10 +134,9 @@ def test_ssim_scikit_image_reproducibility():
     img3d_noise[img3d_noise < 0.0] = 0.0
     data_range = img3d.max() - img3d.min()
 
-    tensor_base = torch.from_numpy(img3d).permute(1, 0, 2, 3).unsqueeze(0)  # B x C x D x H x W
-    tensor_noise = (
-        torch.from_numpy(img3d_noise).permute(1, 0, 2, 3).unsqueeze(0)
-    )  # B x C x D x H x W
+    # Reshape tensors to [batch, channel, depth, height, width]
+    tensor_base = torch.from_numpy(img3d).permute(1, 0, 2, 3).unsqueeze(0)
+    tensor_noise = torch.from_numpy(img3d_noise).permute(1, 0, 2, 3).unsqueeze(0)
 
     ks = 11
     sigma = 1.5
@@ -154,6 +153,7 @@ def test_ssim_scikit_image_reproducibility():
             data_range=data_range,
             gaussian_weights=True,
             use_sample_covariance=False,
+            channel_axis=-1,
         )
 
         ssim_val = ssim(
@@ -178,6 +178,7 @@ def test_ssim_scikit_image_reproducibility():
         use_sample_covariance=False,
         K1=k1,
         K2=k2,
+        channel_axis=-1,
     )
 
     ssim_val = ssim(
