@@ -78,6 +78,11 @@ _C.MODEL.UNROLLED.CONV_BLOCK.NORM = "none"
 _C.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE = False
 _C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
 
+# Data consistency parameters.
+_C.MODEL.UNROLLED.DC = CN()
+_C.MODEL.UNROLLED.DC.MAX_ITER = 10
+_C.MODEL.UNROLLED.DC.EPS = 1e-4
+
 # Reconstruction loss parameters.
 _C.MODEL.RECON_LOSS = CN()
 # The reconstruction loss type. See :obj:`meddlr.modeling.loss_computer` for options.
@@ -209,6 +214,11 @@ _C.MODEL.SSDU = CN()
 _C.MODEL.SSDU.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.SSDU.MASKER = CN()
 _C.MODEL.SSDU.MASKER.PARAMS = CN(new_allowed=True)
+
+# -----------------------------------------------------------------------------
+# MONAI wrapper
+# -----------------------------------------------------------------------------
+_C.MODEL.MONAI = CN(new_allowed=True)
 
 # -----------------------------------------------------------------------------
 # Dataset

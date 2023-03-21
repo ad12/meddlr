@@ -442,3 +442,20 @@ def center_crop(x: torch.Tensor, shape, channels_last: bool = False):
         end = start + shp
         sl[d] = slice(start, end)
     return x[sl]
+
+
+def bdot(x: torch.Tensor, y: torch.Tensor, keepdim: bool = False) -> torch.Tensor:
+    """Batch dot product (inner product) of two complex-valued tensors.
+
+    Args:
+        x: The first input tensor.
+        y: The second input tensor.
+
+    Returns:
+        torch.Tensor: The batch inner product :math:`<x, y>_i = sum(conj(x_i) * y_i)`.
+
+    Note:
+        To avoid ambiguity, use torch.complex tensors to represent complex values.
+    """
+    dim = tuple(range(1, x.ndim))
+    return torch.sum((x.conj() * y), dim=dim, keepdim=keepdim)

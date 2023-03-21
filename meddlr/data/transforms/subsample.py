@@ -1,6 +1,6 @@
 import inspect
 import os
-from typing import List, Sequence, Union
+from typing import List, Sequence, Tuple, Union
 
 import numba as nb
 import numpy as np
@@ -158,12 +158,12 @@ class PoissonDiskMaskFunc(CacheableMaskMixin, MaskFunc):
 
     def __init__(
         self,
-        accelerations,
-        calib_size,
-        center_fractions=None,
-        max_attempts=30,
-        crop_corner=True,
-        module="internal",
+        accelerations: Union[int, Tuple[int, int]],
+        calib_size: Union[int, Tuple[int, int]],
+        center_fractions: Union[float, Tuple[float, float]] = None,
+        max_attempts: int = 30,
+        crop_corner: bool = True,
+        module: str = "internal",
     ):
         if center_fractions:
             raise ValueError(f"center_fractions not yet supported for class {type(self)}.")

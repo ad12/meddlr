@@ -95,15 +95,16 @@ EXTRAS = {
         "coverage",
         "flake8",
         "isort",
-        "black==22.3.0",
+        "black==22.12.0",
         "flake8-bugbear",
         "flake8-comprehensions",
         "pre-commit>=2.9.3",
         # Testing
         "pytest",
         "medpy",
+        "wrapt",
         "pooch",
-        "gdown",
+        "gdown<4.6.0",
         "parameterized",
         # tifffile==2022.7.28 not reading scipy data.
         # TODO (arjundd): Investigate tifffile issue.
@@ -115,9 +116,10 @@ EXTRAS = {
         "m2r2",
     ],
     "benchmarking": ["medpy"],
-    "deployment": ["gdown", "requests", "iocursor"],
+    "deployment": ["gdown<4.6.0", "requests", "iocursor"],
     "docs": ["sphinx", "sphinxcontrib.bibtex", "sphinx-rtd-theme", "m2r2"],
     "metrics": ["lpips"],
+    "modeling": ["monai"],
 }
 
 base_extras = [EXTRAS[k] for k in EXTRAS.keys() if k not in ["dev", "docs"]]

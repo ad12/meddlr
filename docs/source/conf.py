@@ -13,10 +13,10 @@
 import os
 import sys
 
-from autogen import run
+# from autogen import run
 
-# Run autogeneration scripts.
-run()
+# # Run autogeneration scripts.
+# run()
 
 sys.path.insert(0, os.path.abspath(""))
 sys.path.insert(0, os.path.abspath(".."))
