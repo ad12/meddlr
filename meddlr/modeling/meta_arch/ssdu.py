@@ -154,6 +154,9 @@ class SSDUModel(nn.Module):
         # Put supervised and unsupervised scans in a single tensor.
         sup = inputs.get("supervised", {})
         unsup = inputs.get("unsupervised", {})
+        # TODO: Make the cat operation recursive.
+        sup = {k: v for k, v in sup.items() if k != "metrics"}
+        unsup = {k: v for k, v in unsup.items() if k != "metrics"}
         if sup or unsup:
             inputs = {
                 k: torch.cat([sup.get(k, torch.tensor([])), unsup.get(k, torch.tensor([]))])
