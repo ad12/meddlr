@@ -128,11 +128,11 @@ class BumpVersionCommand(Command):
             raise RuntimeError("Failed to commit file to git.")
 
         # Push the commit to origin.
-        self.status("Pushing commit to origin")
-        err_code = os.system("git push")
-        if err_code != 0:
-            # TODO: undo the commit automatically.
-            raise RuntimeError("Failed to push commit to origin.")
+        # self.status("Pushing commit to origin")
+        # err_code = os.system("git push")
+        # if err_code != 0:
+        #     # TODO: undo the commit automatically.
+        #     raise RuntimeError("Failed to push commit to origin.")
 
         sys.exit()
 
