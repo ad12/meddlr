@@ -8,10 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish:
-    if: "contains(github.event.head_commit.message, '[build]')"
-
-jobs:
   pypi-publish:
     if: "contains(github.event.head_commit.message, '[bumpversion]')"
     name: Build dist folder
@@ -47,8 +43,8 @@ jobs:
           python setup.py sdist bdist_wheel --universal
           twine check dist/*
 
-      - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          verbose: true
+      # - name: Publish distribution 📦 to PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     password: ${{ secrets.PYPI_API_TOKEN }}
+      #     verbose: true
