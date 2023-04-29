@@ -3,9 +3,11 @@ import sys
 from os import path
 from shutil import rmtree
 
+from packaging import version
 from setuptools import Command, find_packages, setup
 
 here = os.path.abspath(os.path.dirname(__file__))
+_INIT_FILE = path.join(path.abspath(path.dirname(__file__)), "meddlr", "__init__.py")
 
 
 class UploadCommand(Command):
@@ -47,12 +49,72 @@ class UploadCommand(Command):
         sys.exit()
 
 
+class BumpVersionCommand(Command):
+    """
+    To use: python setup.py bumpversion -v <version>
+    """
+
+    description = "Installs the foo."
+    user_options = [
+        ("version=", "v", "the new version number"),
+    ]
+
+    @staticmethod
+    def status(s):
+        """Prints things in bold."""
+        print("\033[1m{0}\033[0m".format(s))
+
+    def initialize_options(self):
+        self.version = None
+
+    def finalize_options(self):
+        if self.version is None:
+            raise ValueError("Please specify a version number.")
+
+        current_version = get_version()
+        if not version.Version(self.version) > version.Version(current_version):
+            raise ValueError(
+                f"New version ({self.version}) must be greater than "
+                f"current version ({current_version})."
+            )
+
+    def _undo(self):
+        os.system("git restore --staged meddlr/__init__.py")
+        os.system("git checkout -- meddlr/__init__.py")
+
+    def run(self):
+        # Change the version in __init__.py
+        update_version(self.version)
+
+        # Add the file to git.
+        err_code = os.system("git add meddlr/__init__.py")
+        if err_code != 0:
+            self._undo()
+            raise RuntimeError("Failed to add file to git.")
+
+        # Commit the file with a message '[bumpversion] v<version>'.
+        err_code = os.system("git commit -m '[bumpversion] v{}'".format(get_version()))
+        if err_code != 0:
+            self._undo()
+            raise RuntimeError("Failed to commit file to git.")
+
+        sys.exit()
+
+
 def get_version():
-    init_py_path = path.join(path.abspath(path.dirname(__file__)), "meddlr", "__init__.py")
-    init_py = open(init_py_path, "r").readlines()
-    version_line = [l.strip() for l in init_py if l.startswith("__version__")][0]  # noqa: E741
+    init_py = open(_INIT_FILE, "r").readlines()
+    version_line = [line.strip() for line in init_py if line.startswith("__version__")][0]
     version = version_line.split("=")[-1].strip().strip("'\"")
     return version
+
+
+def update_version(version):
+    init_py = [
+        line if not line.startswith("__version__") else f'__version__ = "{version}"\n'
+        for line in open(_INIT_FILE, "r").readlines()
+    ]
+    with open(_INIT_FILE, "w") as f:
+        f.writelines(init_py)
 
 
 # ---------------------------------------------------
@@ -150,5 +212,5 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     # $ setup.py publish support.
-    cmdclass={"upload": UploadCommand},
+    cmdclass={"upload": UploadCommand, "bumpversion": BumpVersionCommand},
 )
