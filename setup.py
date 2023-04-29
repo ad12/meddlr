@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 from os import path
 from shutil import rmtree
@@ -52,6 +53,8 @@ class UploadCommand(Command):
 class BumpVersionCommand(Command):
     """
     To use: python setup.py bumpversion -v <version>
+
+    This command will push the new version directly and tag it.
     """
 
     description = "Installs the foo."
@@ -83,16 +86,42 @@ class BumpVersionCommand(Command):
         os.system("git checkout -- meddlr/__init__.py")
 
     def run(self):
-        # Change the version in __init__.py
-        update_version(self.version)
+        self.status("Checking current branch is 'main'")
+        # current_branch = get_git_branch()
+        # if current_branch != "main":
+        #     raise RuntimeError(
+        #         "You can only bump the version from the main branch. "
+        #         "You are currently on the {} branch.".format(current_branch)
+        #     )
 
-        # Add the file to git.
+        self.status("Pulling latest changes from origin")
+        err_code = os.system("git pull")
+        if err_code != 0:
+            raise RuntimeError("Failed to pull from origin.")
+
+        self.status("Checking working directory is clean")
+        err_code = os.system("git diff --exit-code")
+        err_code += os.system("git diff --cached --exit-code")
+        if err_code != 0:
+            raise RuntimeError("Working directory is not clean.")
+
+        # TODO: Add check to see if all tests are passing on main.
+
+        # Change the version in __init__.py
+        self.status(f"Updating version {get_version()} -> {self.version}")
+        update_version(self.version)
+        if get_version() != self.version:
+            self._undo()
+            raise RuntimeError("Failed to update version.")
+
+        self.status("Adding meddlr/__init__.py to git")
         err_code = os.system("git add meddlr/__init__.py")
         if err_code != 0:
             self._undo()
             raise RuntimeError("Failed to add file to git.")
 
         # Commit the file with a message '[bumpversion] v<version>'.
+        self.status(f"Commit with message '[bumpversion] v{self.version}'")
         err_code = os.system("git commit -m '[bumpversion] v{}'".format(get_version()))
         if err_code != 0:
             self._undo()
@@ -115,6 +144,18 @@ def update_version(version):
     ]
     with open(_INIT_FILE, "w") as f:
         f.writelines(init_py)
+
+
+def get_git_branch():
+    """Return the name of the current branch."""
+    proc = subprocess.Popen(["git branch"], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if err is not None:
+        raise RuntimeError(f"Error finding git branch: {err}")
+    out = out.decode("utf-8").split("\n")
+    current_branch = [line for line in out if line.startswith("*")][0]
+    current_branch = current_branch.replace("*", "").strip()
+    return current_branch
 
 
 # ---------------------------------------------------
