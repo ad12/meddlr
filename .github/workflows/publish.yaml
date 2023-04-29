@@ -3,19 +3,19 @@ name: Publish Python 🐍 distributions 📦 to PyPI
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   pypi-publish:
-    # if: "contains(github.event.head_commit.message, '[bumpversion]')"
+    if: "contains(github.event.head_commit.message, '[bumpversion]')"
     runs-on: ubuntu-latest
     environment: 
       name: pypi
       url: https://pypi.org/p/meddlr
+    env:
+      commitmsg: ${{ github.event.head_commit.message }}
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
   
@@ -32,7 +32,7 @@ jobs:
           key: ${{ runner.os }}-pip
       
       - name: Print commit message
-        run: echo "${{ github.event.head_commit.message }}"
+        run: echo Commit MSG = ${{ env.commitmsg }}
 
       - name: Install Dependencies
         run: |
