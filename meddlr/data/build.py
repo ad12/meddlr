@@ -241,11 +241,9 @@ def build_recon_train_loader(cfg, dataset_type=None):
 
     train_loader = DataLoader(
         dataset=train_data,
-        num_workers=cfg.DATALOADER.NUM_WORKERS,
         num_workers=num_workers,
         pin_memory=True,
         collate_fn=collate_fn,
-        prefetch_factor=cfg.DATALOADER.PREFETCH_FACTOR,
         prefetch_factor=prefetch_factor,
         **dl_kwargs,
     )
