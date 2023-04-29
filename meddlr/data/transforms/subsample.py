@@ -378,6 +378,53 @@ class RandomMaskFunc1D(MaskFunc):
         return get_cartesian_edge_mask(kspace, dims=(1, 2), out_shape=out_shape)
 
 
+@MASK_FUNC_REGISTRY.register()
+class EquispacedMaskFunc2D(MaskFunc):
+    """
+
+    Adapted from https://github.com/facebookresearch/fastMRI/blob/master/common/subsample.py
+    """
+
+    def __init__(self, accelerations, calib_size=None, center_fractions=None):
+        if not calib_size and not center_fractions:
+            raise ValueError("Either calib_size or center_fractions must be specified.")
+        if calib_size and center_fractions:
+            raise ValueError("Only one of calib_size or center_fractions can be specified")
+        assert not center_fractions, "Center fractions not supported for equispaced sampling."
+
+        self.center_fractions = center_fractions
+        self.calib_size = calib_size
+        super().__init__(accelerations)
+
+    def choose_acceleration(self) -> int:
+        # Accelerations for equispaced sampling must be an integer.
+        acc = super().choose_acceleration()
+        return int(round(acc))
+
+    def __call__(self, shape, seed: int = None, acceleration: int = None):
+        """
+        Args:
+            shape (iterable[int]): The shape of the mask to be created. The shape should have
+                at least 3 dimensions. Samples are drawn along the second last dimension.
+            seed (int, optional): Seed for the random number generator. Setting the seed
+                ensures the same mask is generated each time for the same shape.
+        Returns:
+            torch.Tensor: A mask of the specified shape.
+        """
+        if len(shape) < 3:
+            raise ValueError("Shape should have 3 or more dimensions")
+
+        calib = self.calib_size
+        if acceleration is None:
+            acceleration = self.choose_acceleration()
+
+        return equispaced_mask(shape, accel=acceleration, calib=calib, dim=2)
+
+    def get_edge_mask(self, kspace: torch.Tensor, out_shape: Sequence[int] = None):
+        # TODO: dims should be configured based on the number of dimenions in the input.
+        return get_cartesian_edge_mask(kspace, dims=(1, 2), out_shape=out_shape)
+
+
 def get_cartesian_edge_mask(
     kspace: torch.Tensor,
     dims: Union[int, Sequence[int]],
@@ -508,6 +555,67 @@ def _reshape_or_tile(x: torch.Tensor, shape: Sequence[int], ndim: int) -> torch.
 def _get_center(size: int) -> float:
     """Get the center of the matrix."""
     return size // 2 if size % 2 == 1 else size // 2 - 0.5
+
+
+def equispaced_mask(
+    shape: Union[int, Tuple[int]],
+    accel: int,
+    offset: Union[int, Tuple[int]] = 0,
+    calib: int = None,
+    device=None,
+    dtype=torch.float32,
+    dim: int = None,
+) -> torch.Tensor:
+    """Generate equispaced mask.
+
+    Args:
+        shape: Shape of the mask to generate.
+        accel: Acceleration factor.
+        offset: Offset of the mask.
+        calib: Size of the calibration region.
+        device: Device to place the mask on.
+        dtype: Data type of the mask.
+        dim: Dimension of undersampling.
+            For example, `dim=1` will generate a 1D undersampling mask.
+            If `None`, `dim` will be set to the length of `shape`.
+
+    Returns:
+        torch.Tensor: The mask.
+    """
+    if isinstance(shape, int):
+        shape = (shape,)
+    if dim is None:
+        dim = len(shape)
+    if isinstance(offset, int):
+        offset = (offset,) * dim
+    if len(offset) != dim:
+        raise ValueError("offset must have the same length as shape")
+    if isinstance(calib, int):
+        calib = (calib,) * dim
+
+    # Perform masking on 1D tensor and reshape.
+    dim_shape = shape[-dim:]
+    offset = _flatten_offset(offset, dim_shape)
+    mask = torch.zeros(np.prod(dim_shape), dtype=dtype, device=device)
+    mask[offset::accel] = 1
+    mask = mask.reshape(dim_shape)
+
+    # TODO: Add calibration region.
+    if calib is not None:
+        pad = ((d - c + 1) // 2 for d, c in zip(dim_shape, calib))
+        calib_sl = tuple(slice(p, p + c) for p, c in zip(pad, calib))
+        mask[(Ellipsis,) + calib_sl] = 1
+
+    return mask.broadcast_to(shape)
+
+
+def _flatten_offset(offset, shape):
+    """Flatten the offset to a single integer."""
+    assert len(offset) == len(shape)
+    offset = np.asarray(offset)
+    multiplier = np.cumprod((1,) + shape[1:][::-1])
+
+    return np.sum(offset[::-1] * multiplier)
 
 
 # ================================================================ #

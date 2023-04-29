@@ -368,10 +368,7 @@ class DataTransform:
         target = normalized["target"]
         mean = normalized["mean"]
         std = normalized["std"]
-
-        add_noise = self.add_noise and (
-            self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise)
-        )
+        add_noise = self.add_noise and (self._is_test or (self.rng.uniform() < self.p_noise))
         add_motion = self.add_motion and (
             self._is_test or (not is_fixed and self.rng.uniform() < self.p_motion)
         )
