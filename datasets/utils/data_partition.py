@@ -316,11 +316,9 @@ def approximately_split_weighted(
     assert np.sum([len(x) for x in outputs]) == num_values
     assert len(outputs) == len(split_percentages)
     assert all(
-        [
-            len(set(outputs[i]) & set(outputs[j])) == 0
-            for i in range(len(outputs))
-            for j in range(i + 1, len(outputs))
-        ]
+        len(set(outputs[i]) & set(outputs[j])) == 0
+        for i in range(len(outputs))
+        for j in range(i + 1, len(outputs))
     )
 
     for x in outputs:

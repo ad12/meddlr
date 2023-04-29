@@ -249,7 +249,7 @@ def structure_patches(
     assert coords_arr.ndim == 2
     stack_shape = tuple(np.max(coords_arr[:, c]).item() + 1 for c in range(coords_arr.shape[1]))
 
-    struct = np.empty(stack_shape, dtype=np.object)
+    struct = np.empty(stack_shape, dtype="object")
     for coord, patch in zip(coords, patches):
         struct[coord] = patch
     if any(x is None for x in struct.flatten()):
