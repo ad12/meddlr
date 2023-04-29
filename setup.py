@@ -90,8 +90,8 @@ class BumpVersionCommand(Command):
         current_branch = get_git_branch()
         if current_branch != "main":
             raise RuntimeError(
-                "You can only bump the version from the main branch. "
-                "You are currently on the {} branch.".format(current_branch)
+                "You can only bump the version from the 'main' branch. "
+                "You are currently on the '{}' branch.".format(current_branch)
             )
 
         self.status("Pulling latest changes from origin")
@@ -126,6 +126,13 @@ class BumpVersionCommand(Command):
         if err_code != 0:
             self._undo()
             raise RuntimeError("Failed to commit file to git.")
+
+        # Push the commit to origin.
+        self.status("Pushing commit to origin")
+        err_code = os.system("git push")
+        if err_code != 0:
+            # TODO: undo the commit automatically.
+            raise RuntimeError("Failed to push commit to origin.")
 
         sys.exit()
 
