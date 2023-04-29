@@ -4,7 +4,6 @@ import sys
 from os import path
 from shutil import rmtree
 
-from packaging import version
 from setuptools import Command, find_packages, setup
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -71,6 +70,10 @@ class BumpVersionCommand(Command):
         self.version = None
 
     def finalize_options(self):
+        # This package cannot be imported at top level because it
+        # is not recognized by Github Actions.
+        from packaging import version
+
         if self.version is None:
             raise ValueError("Please specify a version number.")
 
