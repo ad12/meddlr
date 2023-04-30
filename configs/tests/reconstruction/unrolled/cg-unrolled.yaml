@@ -1,0 +1,10 @@
+_BASE_: "basic.yaml"
+MODEL:
+  META_ARCHITECTURE: "CGUnrolledCNN"
+  UNROLLED:
+    STEP_SIZES: (2,)
+    DC:
+      MAX_ITER: 10
+      EPS: 1e-5
+OUTPUT_DIR: "results://tests/reconstruction/unrolled/cg-unrolled"
+VERSION: 1
