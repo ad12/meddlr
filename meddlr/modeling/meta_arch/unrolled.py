@@ -9,11 +9,11 @@ import meddlr.ops.complex as cplx
 from meddlr.config import CfgNode
 from meddlr.config.config import configurable
 from meddlr.forward.mri import SenseModel
+from meddlr.modeling.meta_arch.resnet import ResNetModel
 from meddlr.ops.opt import conjgrad
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
 
-from ..layers.layers2D import ResNet
 from .build import META_ARCH_REGISTRY, build_model
 
 __all__ = ["GeneralizedUnrolledCNN"]
@@ -407,7 +407,7 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         return init_kwargs
 
 
-def _build_resblock(cfg: CfgNode) -> ResNet:
+def _build_resblock(cfg: CfgNode) -> ResNetModel:
     """Build the resblock for unrolled network.
 
     Args:
@@ -438,4 +438,4 @@ def _build_resblock(cfg: CfgNode) -> ResNet:
         order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
     )
 
-    return ResNet(**resnet_params)
+    return ResNetModel(**resnet_params)
