@@ -16,10 +16,8 @@ class TestSimpleConvBlock(unittest.TestCase):
         # 2D
         block = SimpleConvBlockNd(16, 32, 3, 2, dropout=0.5)
         assert all(
-            [
-                isinstance(x, cls)
-                for x, cls in zip(block, [nn.Conv2d, nn.BatchNorm2d, nn.ReLU, nn.Dropout2d])
-            ]
+            isinstance(x, cls)
+            for x, cls in zip(block, [nn.Conv2d, nn.BatchNorm2d, nn.ReLU, nn.Dropout2d])
         ), f"Got {block}"
         assert block[0].in_channels == 16
         assert block[0].out_channels == 32
@@ -28,10 +26,8 @@ class TestSimpleConvBlock(unittest.TestCase):
         # 3D
         block = SimpleConvBlockNd(16, 32, 3, 3, dropout=0.5)
         assert all(
-            [
-                isinstance(x, cls)
-                for x, cls in zip(block, [nn.Conv3d, nn.BatchNorm3d, nn.ReLU, nn.Dropout3d])
-            ]
+            isinstance(x, cls)
+            for x, cls in zip(block, [nn.Conv3d, nn.BatchNorm3d, nn.ReLU, nn.Dropout3d])
         ), f"Got {block}"
         assert block[0].in_channels == 16
         assert block[0].out_channels == 32
@@ -47,7 +43,7 @@ class TestSimpleConvBlock(unittest.TestCase):
             order=("convws", ("groupnorm", {"num_groups": 8}), "relu"),
         )
         assert all(
-            [isinstance(x, cls) for x, cls in zip(block, [ConvWS2d, nn.GroupNorm, nn.ReLU])]
+            isinstance(x, cls) for x, cls in zip(block, [ConvWS2d, nn.GroupNorm, nn.ReLU])
         ), f"Got {block}"
         assert block[0].in_channels == 16
         assert block[0].out_channels == 32

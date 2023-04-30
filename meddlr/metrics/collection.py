@@ -58,7 +58,7 @@ class MetricCollection(_MetricCollection):
         if len(np.unique(df["category"])) > 1:
             df["Metric"] = df["Metric"] + "/" + df["category"]
         df = df.drop(columns="category")
-        values = df.groupby(by=group_by).mean()
+        values = df.groupby(by=group_by).mean(numeric_only=True)
         return values.to_dict()["value"]
 
     def summary(self, sync_dist: bool = True) -> str:

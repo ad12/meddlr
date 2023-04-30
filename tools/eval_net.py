@@ -62,8 +62,8 @@ def setup(args):
 
     # Setup logger for test results
     global logger
-    dirname = "test_results"
-    logger = setup_logger(os.path.join(cfg.OUTPUT_DIR, dirname), name=_FILE_NAME)
+    # dirname = "test_results"
+    logger = setup_logger(os.path.join(cfg.OUTPUT_DIR, args.test_folder), name=_FILE_NAME)
 
     logger.info(f"Command Line Args: {args}")
     return cfg
@@ -207,7 +207,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     model = model.eval()
 
     # Get and load metrics file
-    output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
+    output_dir = os.path.join(cfg.OUTPUT_DIR, args.test_folder)
     metrics_file = os.path.join(output_dir, args.metrics_file)
     if not overwrite and os.path.isfile(metrics_file):
         metrics = pd.read_csv(metrics_file, index_col=0)
@@ -323,7 +323,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         if zero_filled:
             zf_output_dir = os.path.join(output_dir, dataset_name, "ZeroFilled-" + params_str)
 
-            evaluators.append(
+            evaluators = [
                 ZFReconEvaluator(
                     s_cfg,
                     dataset_name=dataset_name,
@@ -334,7 +334,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
                     metrics=eval_metrics if compute_metrics else False,
                     prefix=None,
                 )
-            )
+            ]
         evaluators = DatasetEvaluators(evaluators, as_list=True)
 
         results = inference_on_dataset(model, dataloader, evaluators)
@@ -344,7 +344,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
         results[0]["Method"] = s_cfg.MODEL.META_ARCHITECTURE
         if zero_filled:
-            results[1]["Method"] = "Zero-Filled"
+            results[0]["Method"] = "Zero-Filled"
         scan_results = pd.concat(results, ignore_index=True)
 
         if existing_metrics is not None and len(existing_metrics) > 0:
@@ -507,6 +507,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--save_cfg", default=False, action="store_true", help="Save the config file"
+    )
+    parser.add_argument(
+        "--test-folder",
+        "--test_folder",
+        type=str,
+        default="test_results",
+        help="The folder to store test results",
     )
 
     args = parser.parse_args()
