@@ -24,8 +24,8 @@ def conjgrad(
         b: The residual. Shape (B, ...). Must be same shape as `x`.
         A_op: The function performing the normal equations.
             For complex numbers, this should be adjoint(A) * A.
+        mu: The L2 lambda, or regularization parameter (must be positive).
         max_iter: Maximum number of times to run conjugate gradient descent.
-        l2lam: The L2 lambda, or regularization parameter (must be positive).
         eps: Determines how small the residuals must be before termination.
             Stopping criterion is conj(r).T * r < eps ** 2.
         pbar: Whether to show a progress bar.

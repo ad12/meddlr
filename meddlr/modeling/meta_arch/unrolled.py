@@ -1,5 +1,5 @@
 from numbers import Number
-from typing import Any, Dict, Sequence, Tuple, Union
+from typing import Any, Dict, Literal, Sequence, Tuple, Union
 
 import torch
 import torchvision.utils as tv_utils
@@ -181,6 +181,24 @@ class GeneralizedUnrolledCNN(nn.Module):
             image = torch.view_as_complex(image)
         return image
 
+    def step(
+        self,
+        *,
+        image: torch.Tensor,
+        model: nn.Module,
+        A: SenseModel,
+        zf_image: torch.Tensor,
+        step_size: Union[torch.Tensor, float],
+        dims: torch.Size
+    ):
+        if self._dc_first:
+            image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
+            image = self.reg(image=image, model=model, dims=dims)
+        else:
+            image = self.reg(image=image, model=model, dims=dims)
+            image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
+        return image
+
     def forward(self, inputs: Dict[str, Any], return_pp: bool = False, vis_training: bool = False):
         """Reconstructs the image from the kspace.
 
@@ -256,12 +274,15 @@ class GeneralizedUnrolledCNN(nn.Module):
         # Begin unrolled proximal gradient descent
         image = zf_image
         for resnet, step_size in zip(conv_blocks, step_sizes):
-            if self._dc_first:
-                image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
-                image = self.reg(image=image, model=resnet, dims=dims)
-            else:
-                image = self.reg(image=image, model=resnet, dims=dims)
-                image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
+            image = self.step(
+                image=image,
+                model=resnet,
+                A=A,
+                zf_image=zf_image,
+                step_size=step_size,
+                A=A,
+                dims=dims,
+            )
 
         # pred: shape [batch, height, width, #maps, 2]
         # target: shape [batch, height, width, #maps, 2]
@@ -337,7 +358,10 @@ class GeneralizedUnrolledCNN(nn.Module):
 
 @META_ARCH_REGISTRY.register()
 class CGUnrolledCNN(GeneralizedUnrolledCNN):
-    """Unrolled CNN with conjugate gradient descent (CG) data consistency."""
+    """Unrolled CNN with conjugate gradient descent (CG) data consistency.
+
+    Identical to MoDL.
+    """
 
     @configurable
     def __init__(
@@ -350,6 +374,7 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         num_grad_steps: int = None,
         cg_max_iter: int = 10,
         cg_eps: float = 1e-4,
+        cg_init: Literal["zeros", "reg"] = None,
     ):
         super().__init__(
             blocks=blocks,
@@ -362,6 +387,7 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         )
         self.cg_max_iter = cg_max_iter
         self.cg_eps = cg_eps
+        self.cg_init = cg_init
 
         for step_size in self.step_sizes:
             if step_size < 0:
@@ -381,6 +407,38 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         x_opt = conjgrad(
             x=image,
             b=zf_image + step_size * image,
+            A_op=A_op,
+            mu=step_size,
+            max_iter=self.cg_max_iter,
+            pbar=False,
+            eps=self.cg_eps,
+        )
+        return x_opt
+
+    def step(
+        self,
+        *,
+        image: torch.Tensor,
+        model: nn.Module,
+        A: SenseModel,
+        zf_image: torch.Tensor,
+        step_size: Union[torch.Tensor, float],
+        dims: torch.Size
+    ):
+        def A_op(x):
+            return A(A(x), adjoint=True)
+
+        x_reg = self.reg(image=image, model=model, dims=dims)
+
+        cg_init = image
+        if self.cg_init == "zeros":
+            cg_init = torch.zeros_like(image)
+        elif self.cg_init == "reg":
+            cg_init = x_reg
+
+        x_opt = conjgrad(
+            x=cg_init,
+            b=zf_image + step_size * x_reg,
             A_op=A_op,
             mu=step_size,
             max_iter=self.cg_max_iter,
