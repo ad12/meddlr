@@ -159,7 +159,7 @@ _C.MODEL.UNET.BLOCK_ORDER = ("conv", "relu", "conv", "relu", "batchnorm", "dropo
 _C.MODEL.RESNET = CN()
 _C.MODEL.RESNET.IN_CHANNELS = 2
 _C.MODEL.RESNET.CHANNELS = 256
-_C.MODEL.RESNET.NUM_RESBLOCKS = 2
+_C.MODEL.RESNET.NUM_BLOCKS = 2
 _C.MODEL.RESNET.KERNEL_SIZE = (3,)
 _C.MODEL.RESNET.DROPOUT = 0.0
 _C.MODEL.RESNET.PADDING = ""
@@ -171,7 +171,7 @@ _C.MODEL.RESNET.CONV_BLOCK.NUM_BLOCKS = 2
 _C.MODEL.RESNET.CONV_BLOCK.ACTIVATION = "relu"
 _C.MODEL.RESNET.CONV_BLOCK.NORM = "none"
 _C.MODEL.RESNET.CONV_BLOCK.NORM_AFFINE = False
-_C.MODEL.RESNET.CONV_BLOCK.ORDER = (("norm", "act", "drop", "conv"),)
+_C.MODEL.RESNET.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
 
 # -----------------------------------------------------------------------------
 # Denoising model

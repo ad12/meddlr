@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Union
+from typing import Dict, Sequence, Tuple, Union
 
 from pyparsing import Any
 from torch import nn
@@ -20,7 +20,7 @@ class ResNetModel(nn.Module):
     @configurable
     def __init__(
         self,
-        num_resblocks: int,
+        num_blocks: int,
         in_channels: int,
         channels: int,
         *,
@@ -34,11 +34,11 @@ class ResNetModel(nn.Module):
         pre_conv: bool = False,
         post_conv: bool = False,
         bias: bool = True,
-        num_convblocks: int = 2,
+        num_conv_blocks: int = 2,
     ):
         """
         Args:
-            num_resblocks: Number of ResBlocks to use.
+            num_blocks: Number of ResBlocks to use.
             in_channels: Number of channels in the input (``C_{in}``).
             chans: Number of output channels of the first convolutional layer
             kernel_size: Kernel size of the convolutional layers.
@@ -51,7 +51,7 @@ class ResNetModel(nn.Module):
             pre_conv: Whether to use a convolutional layer before the ResBlocks.
             post_conv: Whether to use a convolutional layer after the ResBlocks.
             bias: Whether to use a bias in the convolutional layers.
-            num_convblocks: Number of ConvBlocks to use in each ResBlock.
+            num_conv_blocks: Number of ConvBlocks to use in each ResBlock.
         """
         super().__init__()
 
@@ -61,7 +61,7 @@ class ResNetModel(nn.Module):
                 "It is retained in the init to be used in the future."
             )
         self.circular_pad = circular_pad
-        self.pad_size = 2 * num_resblocks + 1
+        self.pad_size = 2 * num_blocks + 1
         padding = _get_same_padding(kernel_size)
 
         self.pre_conv = None
@@ -78,11 +78,13 @@ class ResNetModel(nn.Module):
             "kernel_size": kernel_size,
             "drop_prob": dropout,
             "bias": bias,
-            "num_conv_blocks": num_convblocks,
+            "num_conv_blocks": num_conv_blocks,
         }
         # Declare ResBlock layers
-        self.res_blocks = nn.ModuleList([ResBlock(in_channels, channels, **resblock_params)])
-        for _ in range(num_resblocks - 1):
+        self.res_blocks: Sequence[ResBlock] = nn.ModuleList(
+            [ResBlock(in_channels, channels, **resblock_params)]
+        )
+        for _ in range(num_blocks - 1):
             self.res_blocks += [ResBlock(channels, channels, **resblock_params)]
 
         # Declare final conv layer (down-sample to original in_chans)
@@ -129,20 +131,24 @@ class ResNetModel(nn.Module):
 
     @classmethod
     def from_config(cls, cfg: CfgNode, **kwargs) -> Dict[str, Any]:
+        kernel_size = cfg.MODEL.RESNET.KERNEL_SIZE
+        if len(kernel_size) == 1:
+            kernel_size = kernel_size[0]
         out = {
-            "num_resblocks": cfg.MODEL.RESNET.NUM_RESBLOCKS,
-            "in_chans": cfg.MODEL.RESNET.IN_CHANNELS,
-            "chans": cfg.MODEL.RESNET.CHANNELS,
-            "kernel_size": cfg.MODEL.RESNET.KERNEL_SIZE,
-            "drop_prob": cfg.MODEL.RESNET.DROPOUT,
+            "num_blocks": cfg.MODEL.RESNET.NUM_BLOCKS,
+            "in_channels": cfg.MODEL.RESNET.IN_CHANNELS,
+            "channels": cfg.MODEL.RESNET.CHANNELS,
+            "kernel_size": kernel_size,
+            "dropout": cfg.MODEL.RESNET.DROPOUT,
             "circular_pad": cfg.MODEL.RESNET.PADDING == "circular",
             "act_type": cfg.MODEL.RESNET.CONV_BLOCK.ACTIVATION,
             "norm_type": cfg.MODEL.RESNET.CONV_BLOCK.NORM,
             "norm_affine": cfg.MODEL.RESNET.CONV_BLOCK.NORM_AFFINE,
             "order": cfg.MODEL.RESNET.CONV_BLOCK.ORDER,
+            "num_conv_blocks": cfg.MODEL.RESNET.CONV_BLOCK.NUM_BLOCKS,
             "pre_conv": cfg.MODEL.RESNET.PRE_CONV,
             "post_conv": cfg.MODEL.RESNET.POST_CONV,
-            "bias": cfg.MODEL.RESNET.CONV_BLOCK.BIAS,
+            "bias": cfg.MODEL.RESNET.BIAS,
         }
         out.update(kwargs)
         return out
