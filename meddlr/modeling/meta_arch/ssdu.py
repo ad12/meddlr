@@ -80,7 +80,9 @@ class SSDUModel(nn.Module):
         """
         masker = self.masker
         kspace = inputs["kspace"].clone()
-        mask = cplx.get_mask(kspace)
+        mask = inputs.get("mask", None)
+        if mask is None:
+            cplx.get_mask(kspace)
         edge_mask = inputs["edge_mask"]
 
         tfm: KspaceMaskTransform = masker.get_transform(kspace)
@@ -92,9 +94,13 @@ class SSDUModel(nn.Module):
         is_loss_mask_valid = torch.all(loss_mask >= 0)
         if not is_loss_mask_valid:
             idx = torch.where(loss_mask < 0)
+            print("keys", inputs.keys())
             raise ValueError(
-                "Loss mask is not a subset of the original mask.\n"
+                "Train mask is not a subset of the original mask.\n"
                 f"Invalid indices: {idx}\n"
+                f"Mask: {mask[idx]}\n"
+                f"Mask (coils): {mask[idx[:-1]]}\n"
+                f"Train mask: {train_mask[idx[:-1]]}\n"
                 f"Loss mask: {loss_mask[idx]}\n"
             )
         assert is_loss_mask_valid
