@@ -7,6 +7,7 @@ import torch
 from torch import nn
 
 from meddlr.modeling.layers.conv import ConvWS2d
+from meddlr.modeling.layers.scale import Scale2d
 
 
 class ConvBlock(nn.Module):
@@ -91,8 +92,18 @@ class ConvBlock(nn.Module):
             "drop": lambda: nn.Dropout2d(p=drop_prob),
             "act": activations[act_type],
             "norm": normalizations[norm_type],
+            "scale": lambda **kwargs: Scale2d(**kwargs),
         }
-        layers = [layer_dict[lyr]() for lyr in order]
+
+        layers = []
+        for lyr in order:
+            if isinstance(lyr, dict):
+                lyr = lyr.copy()
+                name = lyr.pop("name")
+                layers.append(layer_dict[name](**lyr))
+                continue
+
+            layers.append(layer_dict[lyr]())
 
         # Define forward pass
         self.layers = nn.Sequential(*layers)

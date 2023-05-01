@@ -1,6 +1,5 @@
-from typing import Dict, Sequence, Tuple, Union
+from typing import Any, Dict, Sequence, Tuple, Union
 
-from pyparsing import Any
 from torch import nn
 
 from meddlr.config.config import CfgNode, configurable
@@ -82,7 +81,7 @@ class ResNetModel(nn.Module):
         }
         # Declare ResBlock layers
         self.res_blocks: Sequence[ResBlock] = nn.ModuleList(
-            [ResBlock(in_channels, channels, **resblock_params)]
+            [ResBlock(channels if pre_conv else in_channels, channels, **resblock_params)]
         )
         for _ in range(num_blocks - 1):
             self.res_blocks += [ResBlock(channels, channels, **resblock_params)]
@@ -114,10 +113,11 @@ class ResNetModel(nn.Module):
         #         input, 2 * (self.pad_size,) + (0, 0), mode="circular"
         #     )
 
-        if self.pre_conv:
-            input = self.pre_conv(input)
-
         output = input
+
+        if self.pre_conv:
+            output = self.pre_conv(output)
+
         for res_block in self.res_blocks:
             output = res_block(output)
         output = self.final_layer(output) + input

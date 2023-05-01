@@ -87,12 +87,21 @@ class SSDUModel(nn.Module):
         train_mask = tfm.generate_mask(kspace, channels_last=True)
         loss_mask = mask - train_mask
 
+        # The loss mask should be a subset of the original mask.
+        # TODO (arjundd): See if we can remove this check for speed reasons.
+        is_loss_mask_valid = torch.all(loss_mask >= 0)
+        if not is_loss_mask_valid:
+            idx = torch.where(loss_mask < 0)
+            raise ValueError(
+                "Loss mask is not a subset of the original mask.\n"
+                f"Invalid indices: {idx}\n"
+                f"Loss mask: {loss_mask[idx]}\n"
+            )
+        assert is_loss_mask_valid
+
         # Pad the train mask so that all unacquired kspace points
         # are included in the train_mask.
         train_mask = (train_mask.type(torch.bool) | edge_mask.type(torch.bool)).type(torch.float32)
-
-        # TODO (arjundd): See if we can remove this check for speed reasons.
-        assert torch.all(loss_mask >= 0)
 
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = train_mask * kspace

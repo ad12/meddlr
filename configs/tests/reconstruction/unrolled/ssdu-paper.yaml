@@ -51,8 +51,9 @@ MODEL:
       - "conv"
       - "act"
       - "conv"
-      # TODO: Fix scale.
-      - scale: 0.1
+      - name: "scale"
+        factor: 0.1
+        trainable: false
   RECON_LOSS:
     NAME: "k_l1"  # Optimal value based on hyperparameter search
     RENORMALIZE_DATA: False

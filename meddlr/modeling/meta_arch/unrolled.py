@@ -1,5 +1,5 @@
 from numbers import Number
-from typing import Any, Dict, Literal, Sequence, Tuple, Union
+from typing import Any, Dict, Sequence, Tuple, Union
 
 import torch
 import torchvision.utils as tv_utils
@@ -15,6 +15,11 @@ from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
 
 from .build import META_ARCH_REGISTRY, build_model
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 __all__ = ["GeneralizedUnrolledCNN"]
 
@@ -280,7 +285,6 @@ class GeneralizedUnrolledCNN(nn.Module):
                 A=A,
                 zf_image=zf_image,
                 step_size=step_size,
-                A=A,
                 dims=dims,
             )
 
@@ -484,7 +488,7 @@ def _build_resblock(cfg: CfgNode) -> ResNetModel:
     if len(kernel_size) == 1:
         kernel_size = kernel_size[0]
     resnet_params = dict(
-        num_resblocks=cfg.MODEL.UNROLLED.NUM_RESBLOCKS,
+        num_blocks=cfg.MODEL.UNROLLED.NUM_RESBLOCKS,
         in_channels=2 * num_emaps,  # complex -> real/imag
         channels=cfg.MODEL.UNROLLED.NUM_FEATURES,
         kernel_size=kernel_size,
