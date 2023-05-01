@@ -147,7 +147,7 @@ class ResBlock(nn.Module):
 
         channels = [(in_chans, out_chans)] + [(out_chans, out_chans)] * (num_conv_blocks - 1)
         self.layers = nn.Sequential(
-            [ConvBlock(in_ch, out_ch, **conv_block_kwargs) for (in_ch, out_ch) in channels]
+            *[ConvBlock(in_ch, out_ch, **conv_block_kwargs) for (in_ch, out_ch) in channels]
         )
 
         if in_chans != out_chans:

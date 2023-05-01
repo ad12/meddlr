@@ -427,10 +427,10 @@ def _build_resblock(cfg: CfgNode) -> ResNetModel:
         kernel_size = kernel_size[0]
     resnet_params = dict(
         num_resblocks=cfg.MODEL.UNROLLED.NUM_RESBLOCKS,
-        in_chans=2 * num_emaps,  # complex -> real/imag
-        chans=cfg.MODEL.UNROLLED.NUM_FEATURES,
+        in_channels=2 * num_emaps,  # complex -> real/imag
+        channels=cfg.MODEL.UNROLLED.NUM_FEATURES,
         kernel_size=kernel_size,
-        drop_prob=cfg.MODEL.UNROLLED.DROPOUT,
+        dropout=cfg.MODEL.UNROLLED.DROPOUT,
         circular_pad=cfg.MODEL.UNROLLED.PADDING == "circular",
         act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
         norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,

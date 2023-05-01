@@ -1,5 +1,4 @@
-from ast import Dict
-from typing import Tuple, Union
+from typing import Dict, Tuple, Union
 
 from pyparsing import Any
 from torch import nn
@@ -24,6 +23,7 @@ class ResNetModel(nn.Module):
         num_resblocks: int,
         in_channels: int,
         channels: int,
+        *,
         kernel_size: Union[int, Tuple[int, int]] = 3,
         dropout: float = 0.0,
         circular_pad: bool = False,
@@ -33,7 +33,7 @@ class ResNetModel(nn.Module):
         order: Tuple[str, str, str, str] = ("norm", "act", "drop", "conv"),
         pre_conv: bool = False,
         post_conv: bool = False,
-        bias: bool = False,
+        bias: bool = True,
         num_convblocks: int = 2,
     ):
         """
