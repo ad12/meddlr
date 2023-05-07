@@ -228,6 +228,16 @@ _C.MODEL.A2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.A2R.USE_SUPERVISED_CONSISTENCY = False
 
 # -----------------------------------------------------------------------------
+# VarNet
+# -----------------------------------------------------------------------------
+_C.MODEL.VARNET = CN()
+_C.MODEL.VARNET.SENSITIVITY_NET = CN()
+_C.MODEL.VARNET.SENSITIVITY_NET.UNET = CN()
+_C.MODEL.VARNET.SENSITIVITY_NET.UNET.CHANNELS = 8
+_C.MODEL.VARNET.SENSITIVITY_NET.UNET.NUM_POOL_LAYERS = 4
+_C.MODEL.VARNET.SENSITIVITY_NET.UNET.DROPOUT = 0.0
+
+# -----------------------------------------------------------------------------
 # SSDU model
 # -----------------------------------------------------------------------------
 _C.MODEL.SSDU = CN()
