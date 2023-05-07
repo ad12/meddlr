@@ -5,6 +5,7 @@ import re
 from collections import OrderedDict
 from typing import Mapping, Sequence, Union
 
+from torch import nn
 from torch.nn import DataParallel
 
 from meddlr.checkpoint import Checkpointer
@@ -183,7 +184,7 @@ class DefaultTrainer(SimpleTrainer):
         trainer.train()
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, model: nn.Module = None):
         """
         Args:
             cfg (CfgNode):
@@ -206,7 +207,8 @@ class DefaultTrainer(SimpleTrainer):
         del data_loader
         data_loader = self.build_train_loader(cfg)
 
-        model = self.build_model(cfg)
+        if model is None:
+            model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
 
         # For training, wrap with DP. But don't need this for inference.
