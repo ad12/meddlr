@@ -80,7 +80,7 @@ def volumetric_overlap_error(y_pred, y_true):
     count_nonzero = torch.count_nonzero if is_tensor else np.count_nonzero
     intersection = count_nonzero(y_true & y_pred, -1)
     union = count_nonzero(y_true | y_pred, -1)
-    union = union.type(torch.float) if is_tensor else union.astype(np.float)
+    union = union.type(torch.float) if is_tensor else union.astype("float")
 
     return 1 - intersection / union
 
