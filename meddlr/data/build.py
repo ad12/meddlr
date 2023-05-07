@@ -65,7 +65,7 @@ def get_recon_dataset_dicts(
     limit_scans = (
         num_scans_total > 0 if isinstance(num_scans_total, (float, int)) else bool(num_scans_total)
     )
-    if limit_scans or num_scans_subsample > 0:
+    if limit_scans or num_scans_subsample != 0:
         # Sort to ensure same order for all users.
         # Shuffle for randomness.
         dataset_dicts = sorted(dataset_dicts, key=lambda x: x["file_name"])
@@ -108,6 +108,8 @@ def get_recon_dataset_dicts(
         "Dropped {} scans. {} scans remaining".format(num_after_filter - num_after, num_after)
     )
 
+    if num_scans_subsample == -1:
+        num_scans_subsample = len(dataset_dicts)
     num_scans_subsample = max(0, num_scans_subsample)
     if num_scans_subsample > 0:
         if num_scans_subsample > len(dataset_dicts):

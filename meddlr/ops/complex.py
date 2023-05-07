@@ -260,7 +260,7 @@ def channels_last(x: torch.Tensor):
         return x.permute(order)
 
 
-def get_mask(x, eps=1e-11):
+def get_mask(x, eps=1e-11, coil_dim=None):
     """Returns a binary mask for where ``x`` is nonzero with ``eps`` tolerance.
 
       - 0, if both real and imaginary components are zero.
@@ -269,6 +269,11 @@ def get_mask(x, eps=1e-11):
     Args:
         x (torch.Tensor): A complex-valued tensor.
         eps (float): Tolerance for zer0-value.
+        coil_dim (int): The coil dimension.
+            When this is provided, if a pixel is non-zero for any coil,
+            we assume that pixel was acquired. This is useful when
+            a coil ``i`` has zero signal but the location was actually
+            acquired.
 
     Returns:
         torch.Tensor: A binary mask of shape ``x.shape``.
@@ -278,8 +283,13 @@ def get_mask(x, eps=1e-11):
         unsqueeze = False
         x = torch.view_as_real(x)
     assert x.size(-1) == 2
-    absx = abs(x)  # squashes last dimension
-    mask = torch.where(absx > eps, torch.ones_like(absx), torch.zeros_like(absx))
+
+    absx = abs(x)
+    loc = absx > eps  # squashes last dimension
+    if coil_dim is not None:
+        loc = loc.any(coil_dim, keepdims=True)
+    mask = torch.where(loc, torch.ones_like(absx), torch.zeros_like(absx))
+
     if unsqueeze:
         mask = mask.unsqueeze(-1)
     return mask

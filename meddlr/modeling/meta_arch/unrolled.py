@@ -9,12 +9,17 @@ import meddlr.ops.complex as cplx
 from meddlr.config import CfgNode
 from meddlr.config.config import configurable
 from meddlr.forward.mri import SenseModel
+from meddlr.modeling.meta_arch.resnet import ResNetModel
 from meddlr.ops.opt import conjgrad
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
 
-from ..layers.layers2D import ResNet
 from .build import META_ARCH_REGISTRY, build_model
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 __all__ = ["GeneralizedUnrolledCNN"]
 
@@ -181,6 +186,24 @@ class GeneralizedUnrolledCNN(nn.Module):
             image = torch.view_as_complex(image)
         return image
 
+    def step(
+        self,
+        *,
+        image: torch.Tensor,
+        model: nn.Module,
+        A: SenseModel,
+        zf_image: torch.Tensor,
+        step_size: Union[torch.Tensor, float],
+        dims: torch.Size
+    ):
+        if self._dc_first:
+            image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
+            image = self.reg(image=image, model=model, dims=dims)
+        else:
+            image = self.reg(image=image, model=model, dims=dims)
+            image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
+        return image
+
     def forward(self, inputs: Dict[str, Any], return_pp: bool = False, vis_training: bool = False):
         """Reconstructs the image from the kspace.
 
@@ -256,12 +279,14 @@ class GeneralizedUnrolledCNN(nn.Module):
         # Begin unrolled proximal gradient descent
         image = zf_image
         for resnet, step_size in zip(conv_blocks, step_sizes):
-            if self._dc_first:
-                image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
-                image = self.reg(image=image, model=resnet, dims=dims)
-            else:
-                image = self.reg(image=image, model=resnet, dims=dims)
-                image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
+            image = self.step(
+                image=image,
+                model=resnet,
+                A=A,
+                zf_image=zf_image,
+                step_size=step_size,
+                dims=dims,
+            )
 
         # pred: shape [batch, height, width, #maps, 2]
         # target: shape [batch, height, width, #maps, 2]
@@ -337,7 +362,10 @@ class GeneralizedUnrolledCNN(nn.Module):
 
 @META_ARCH_REGISTRY.register()
 class CGUnrolledCNN(GeneralizedUnrolledCNN):
-    """Unrolled CNN with conjugate gradient descent (CG) data consistency."""
+    """Unrolled CNN with conjugate gradient descent (CG) data consistency.
+
+    Identical to MoDL.
+    """
 
     @configurable
     def __init__(
@@ -350,6 +378,7 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         num_grad_steps: int = None,
         cg_max_iter: int = 10,
         cg_eps: float = 1e-4,
+        cg_init: Literal["zeros", "reg"] = None,
     ):
         super().__init__(
             blocks=blocks,
@@ -362,6 +391,7 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         )
         self.cg_max_iter = cg_max_iter
         self.cg_eps = cg_eps
+        self.cg_init = cg_init
 
         for step_size in self.step_sizes:
             if step_size < 0:
@@ -389,6 +419,38 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         )
         return x_opt
 
+    def step(
+        self,
+        *,
+        image: torch.Tensor,
+        model: nn.Module,
+        A: SenseModel,
+        zf_image: torch.Tensor,
+        step_size: Union[torch.Tensor, float],
+        dims: torch.Size
+    ):
+        def A_op(x):
+            return A(A(x), adjoint=True)
+
+        x_reg = self.reg(image=image, model=model, dims=dims)
+
+        cg_init = image
+        if self.cg_init == "zeros":
+            cg_init = torch.zeros_like(image)
+        elif self.cg_init == "reg":
+            cg_init = x_reg
+
+        x_opt = conjgrad(
+            x=cg_init,
+            b=zf_image + step_size * x_reg,
+            A_op=A_op,
+            mu=step_size,
+            max_iter=self.cg_max_iter,
+            pbar=False,
+            eps=self.cg_eps,
+        )
+        return x_opt
+
     @classmethod
     def from_config(cls, cfg: CfgNode, **kwargs) -> Dict[str, Any]:
         """Build :cls:`CGUnrolledCNN` from a config.
@@ -407,7 +469,7 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         return init_kwargs
 
 
-def _build_resblock(cfg: CfgNode) -> ResNet:
+def _build_resblock(cfg: CfgNode) -> ResNetModel:
     """Build the resblock for unrolled network.
 
     Args:
@@ -426,11 +488,11 @@ def _build_resblock(cfg: CfgNode) -> ResNet:
     if len(kernel_size) == 1:
         kernel_size = kernel_size[0]
     resnet_params = dict(
-        num_resblocks=cfg.MODEL.UNROLLED.NUM_RESBLOCKS,
-        in_chans=2 * num_emaps,  # complex -> real/imag
-        chans=cfg.MODEL.UNROLLED.NUM_FEATURES,
+        num_blocks=cfg.MODEL.UNROLLED.NUM_RESBLOCKS,
+        in_channels=2 * num_emaps,  # complex -> real/imag
+        channels=cfg.MODEL.UNROLLED.NUM_FEATURES,
         kernel_size=kernel_size,
-        drop_prob=cfg.MODEL.UNROLLED.DROPOUT,
+        dropout=cfg.MODEL.UNROLLED.DROPOUT,
         circular_pad=cfg.MODEL.UNROLLED.PADDING == "circular",
         act_type=cfg.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION,
         norm_type=cfg.MODEL.UNROLLED.CONV_BLOCK.NORM,
@@ -438,4 +500,4 @@ def _build_resblock(cfg: CfgNode) -> ResNet:
         order=cfg.MODEL.UNROLLED.CONV_BLOCK.ORDER,
     )
 
-    return ResNet(**resnet_params)
+    return ResNetModel(**resnet_params)
