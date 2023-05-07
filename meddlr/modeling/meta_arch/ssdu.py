@@ -82,7 +82,7 @@ class SSDUModel(nn.Module):
         kspace = inputs["kspace"].clone()
         mask = inputs.get("mask", None)
         if mask is None:
-            cplx.get_mask(kspace)
+            mask = cplx.get_mask(kspace)
         edge_mask = inputs["edge_mask"]
 
         tfm: KspaceMaskTransform = masker.get_transform(kspace)
