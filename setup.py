@@ -186,7 +186,8 @@ REQUIRED = [
     "pyxb",  # need to install before ismrmrd
     "h5py",
     "matplotlib",
-    "numpy",
+    # Pin the numpy version because other libraries dont handle the np.float dtype yet.
+    "numpy<=1.23.5",
     "tensorboard",
     "fvcore",
     "mridata",
