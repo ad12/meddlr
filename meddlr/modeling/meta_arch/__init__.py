@@ -8,4 +8,22 @@ from .nm2r import NM2RModel  # noqa: F401
 from .ssdu import SSDUModel  # noqa: F401
 from .unet import UnetModel  # noqa: F401
 from .unrolled import CGUnrolledCNN, GeneralizedUnrolledCNN  # noqa: F401
+from .varnet import VarNet  # noqa: F401
 from .vortex import VortexModel  # noqa: F401
+
+__all__ = [
+    "META_ARCH_REGISTRY",
+    "build_model",
+    "initialize_model",
+    "CSModel",
+    "DenoisingModel",
+    "GeneralizedUNet",
+    "M2RModel",
+    "N2RModel",
+    "SSDUModel",
+    "UnetModel",
+    "CGUnrolledCNN",
+    "GeneralizedUnrolledCNN",
+    "VortexModel",
+    "VarNet",
+]
