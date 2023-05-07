@@ -72,6 +72,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Pin the numpy version because other libraries dont handle the np.float dtype yet.
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -87,6 +88,7 @@ jobs:
           if [[ $IGNORE_LPIPS == "true" ]]; then
             pip uninstall -y lpips
           fi
+          pip install numpy==1.23.5
 
       - name: Test with pytest
         run: |
