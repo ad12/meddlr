@@ -241,6 +241,11 @@ class DataTransform:
         if not is_test and cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS:
             self.augmentor = MRIReconAugmentor.from_cfg(cfg, aug_kind="aug_train", seed=seed)
 
+    def _get_mask(self, masked_kspace):
+        # If any of the coils are non-zero at a coordinate, we assume
+        assert torch.is_complex(masked_kspace)
+        return cplx.get_mask(masked_kspace, coil_dim=-1)
+
     def _call_augmentor(
         self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None
     ):
@@ -288,6 +293,7 @@ class DataTransform:
             "mean": mean,
             "std": std,
             "norm": norm,
+            "mask": self._get_mask(masked_kspace),
         }
 
     def __call__(
@@ -368,10 +374,7 @@ class DataTransform:
         target = normalized["target"]
         mean = normalized["mean"]
         std = normalized["std"]
-
-        add_noise = self.add_noise and (
-            self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise)
-        )
+        add_noise = self.add_noise and (self._is_test or (self.rng.uniform() < self.p_noise))
         add_motion = self.add_motion and (
             self._is_test or (not is_fixed and self.rng.uniform() < self.p_motion)
         )
@@ -396,6 +399,7 @@ class DataTransform:
             "std": std,
             "norm": norm,
             "edge_mask": edge_mask.squeeze(0),
+            "mask": self._get_mask(masked_kspace),
         }
         if postprocessing_mask is not None:
             out["postprocessing_mask"] = postprocessing_mask.squeeze(0)

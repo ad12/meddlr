@@ -10,6 +10,7 @@ from meddlr.forward.mri import SenseModel
 from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from meddlr.ops import complex as cplx
 from meddlr.transforms.base.mask import KspaceMaskTransform
+from meddlr.transforms.builtin.mri import MRIReconAugmentor
 from meddlr.transforms.gen.mask import RandomKspaceMask
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
@@ -36,15 +37,23 @@ class SSDUModel(nn.Module):
     _version = 1
 
     @configurable
-    def __init__(self, model: nn.Module, masker: RandomKspaceMask, vis_period: int = None):
+    def __init__(
+        self,
+        model: nn.Module,
+        masker: RandomKspaceMask,
+        augmentor: MRIReconAugmentor = None,
+        vis_period: int = None,
+    ):
         """
         Args:
             model (nn.Module): The base model.
-            masker (NoiseModel): The additive noise module.
+            masker (NoiseModel): The masking model.
+            augmentor: An augmentation model that can be used
         """
         super().__init__()
         self.model = model
         self.masker = masker
+        self.augmentor = augmentor
         # Visualization done by this model
         if hasattr(self.model, "vis_period"):
             if vis_period is not None:
@@ -71,23 +80,43 @@ class SSDUModel(nn.Module):
         """
         masker = self.masker
         kspace = inputs["kspace"].clone()
-        mask = cplx.get_mask(kspace)
+        mask = inputs.get("mask", None)
+        if mask is None:
+            mask = cplx.get_mask(kspace)
         edge_mask = inputs["edge_mask"]
 
         tfm: KspaceMaskTransform = masker.get_transform(kspace)
         train_mask = tfm.generate_mask(kspace, channels_last=True)
         loss_mask = mask - train_mask
 
+        # The loss mask should be a subset of the original mask.
+        # TODO (arjundd): See if we can remove this check for speed reasons.
+        is_loss_mask_valid = torch.all(loss_mask >= 0)
+        if not is_loss_mask_valid:
+            idx = torch.where(loss_mask < 0)
+            print("keys", inputs.keys())
+            raise ValueError(
+                "Train mask is not a subset of the original mask.\n"
+                f"Invalid indices: {idx}\n"
+                f"Mask: {mask[idx]}\n"
+                f"Mask (coils): {mask[idx[:-1]]}\n"
+                f"Train mask: {train_mask[idx[:-1]]}\n"
+                f"Loss mask: {loss_mask[idx]}\n"
+            )
+        assert is_loss_mask_valid
+
         # Pad the train mask so that all unacquired kspace points
         # are included in the train_mask.
         train_mask = (train_mask.type(torch.bool) | edge_mask.type(torch.bool)).type(torch.float32)
 
-        # TODO (arjundd): See if we can remove this check for speed reasons.
-        assert torch.all(loss_mask >= 0)
-
         inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
         inputs["kspace"] = train_mask * kspace
         inputs["mask"] = train_mask
+
+        if self.augmentor is not None:
+            out, _, _ = self.augmentor(kspace=inputs["kspace"], maps=inputs["maps"])
+            inputs["kspace"] = out["kspace"]
+
         return inputs, mask[..., 0:1], train_mask, loss_mask[..., 0:1]
 
     @torch.no_grad()
@@ -140,6 +169,9 @@ class SSDUModel(nn.Module):
         # Put supervised and unsupervised scans in a single tensor.
         sup = inputs.get("supervised", {})
         unsup = inputs.get("unsupervised", {})
+        # TODO: Make the cat operation recursive.
+        sup = {k: v for k, v in sup.items() if k != "metrics"}
+        unsup = {k: v for k, v in unsup.items() if k != "metrics"}
         if sup or unsup:
             inputs = {
                 k: torch.cat([sup.get(k, torch.tensor([])), unsup.get(k, torch.tensor([]))])
@@ -205,9 +237,17 @@ class SSDUModel(nn.Module):
         model_cfg.freeze()
         model = build_model(model_cfg)
 
-        # TODO: Configure this
+        # Train/loss mask splitter.
         params = cfg.MODEL.SSDU.MASKER.PARAMS
         masker = RandomKspaceMask(**params)
         masker.to(cfg.MODEL.DEVICE)
 
-        return {"model": model, "masker": masker}
+        init_kwargs = {"model": model, "masker": masker}
+
+        # Build augmentor.
+        aug_cfg = cfg.MODEL.SSDU.AUGMENTOR
+        if aug_cfg.TRANSFORMS:
+            augmentor = MRIReconAugmentor.from_cfg(aug_cfg, aug_kind=None, seed=cfg.SEED)
+            init_kwargs["augmentor"] = augmentor
+
+        return init_kwargs

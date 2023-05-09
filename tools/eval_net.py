@@ -344,7 +344,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
         results[0]["Method"] = s_cfg.MODEL.META_ARCHITECTURE
         if zero_filled:
-            results[1]["Method"] = "Zero-Filled"
+            results[0]["Method"] = "Zero-Filled"
         scan_results = pd.concat(results, ignore_index=True)
 
         if existing_metrics is not None and len(existing_metrics) > 0:
