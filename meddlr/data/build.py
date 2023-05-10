@@ -304,12 +304,17 @@ def build_recon_val_loader(
             "drop_last": False,
         }
 
+    num_workers = cfg.DATALOADER.NUM_WORKERS
+    prefetch_factor = cfg.DATALOADER.PREFETCH_FACTOR
+    if env.pt_version() >= "2.0" and num_workers == 0:
+        prefetch_factor = None
+
     val_loader = DataLoader(
         dataset=val_data,
         num_workers=cfg.DATALOADER.NUM_WORKERS,
         pin_memory=True,
         collate_fn=default_collate,
-        prefetch_factor=cfg.DATALOADER.PREFETCH_FACTOR,
+        prefetch_factor=prefetch_factor,
         **dl_kwargs,
     )
     return val_loader

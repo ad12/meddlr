@@ -170,7 +170,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             image = torch.view_as_real(image)
 
         # prox update
-        image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(0, 3, 1, 2)
+        image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(0, 3, 1, 2).contiguous()
         if hasattr(model, "base_forward") and callable(model.base_forward):
             image = model.base_forward(image)
         else:

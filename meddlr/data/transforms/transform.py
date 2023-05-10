@@ -390,6 +390,7 @@ class DataTransform:
         masked_kspace = masked_kspace.squeeze(0)
         maps = maps.squeeze(0)
         target = target.squeeze(0)
+        mask = mask.squeeze(0)
 
         out = {
             "kspace": masked_kspace,
@@ -399,7 +400,7 @@ class DataTransform:
             "std": std,
             "norm": norm,
             "edge_mask": edge_mask.squeeze(0),
-            "mask": self._get_mask(masked_kspace),
+            "mask": mask,
         }
         if postprocessing_mask is not None:
             out["postprocessing_mask"] = postprocessing_mask.squeeze(0)

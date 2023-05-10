@@ -225,8 +225,11 @@ class VortexModel(nn.Module):
                 # Target only used for visualization purposes not for loss.
                 target = inputs_unsupervised.get("target", None)
                 pred_base = pred_base["pred"]
-            inputs_consistency_aug, pred_base = self.augment(inputs_consistency, pred_base)
+                # Augment the inputs.
+                inputs_consistency_aug, pred_base = self.augment(inputs_consistency, pred_base)
+
             pred_aug = model(inputs_consistency_aug, return_pp=True)
+
             if "target" in pred_aug:
                 del pred_aug["target"]
             pred_aug["target"] = pred_base.detach()
