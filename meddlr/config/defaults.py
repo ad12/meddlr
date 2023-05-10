@@ -215,6 +215,8 @@ _C.MODEL.SSDU.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.SSDU.MASKER = CN()
 _C.MODEL.SSDU.MASKER.PARAMS = CN(new_allowed=True)
 _C.MODEL.SSDU.AUGMENTOR = _MRI_RECON_TFM.clone()
+# _C.MODEL.SSDU.POSTPROCESSOR = CN()
+# _C.MODEL.SSDU.POSTPROCESSOR.NAME = ""
 
 # -----------------------------------------------------------------------------
 # MONAI wrapper

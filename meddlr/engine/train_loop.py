@@ -236,10 +236,16 @@ class SimpleTrainer(TrainerBase):
 
         data_time = time.perf_counter() - start
 
+        # Pop keys that the model doesnt need.
+        profiler = inputs.pop("_profiler", {})
+
         """
         If your want to do something with the losses, you can wrap the model.
         """
+        forward_time = time.perf_counter()
         output_dict = self.model(inputs)
+        forward_time = time.perf_counter() - forward_time
+
         output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"] if k in inputs})
         loss_dict = {k: v for k, v in output_dict.items() if "loss" in k}
         loss_dict.update(self.loss_computer(inputs, output_dict))
@@ -255,8 +261,15 @@ class SimpleTrainer(TrainerBase):
             )
         )
         metrics_dict["data_time"] = data_time
+        metrics_dict["forward_time"] = forward_time
         metrics_dict["total_loss"] = losses
         metrics_dict.update(self.metrics_computer(output_dict) if self.metrics_computer else {})
+
+        if profiler is not None:
+            metrics_dict.update(flatten_dict({"profiler": profiler}))
+        # for k in ["_profiler", "profiler"]:
+        #     if k in inputs:
+        #         metrics_dict.update(flatten_dict({k.strip("_"): inputs[k]}))
         self._write_metrics(metrics_dict)
 
         """

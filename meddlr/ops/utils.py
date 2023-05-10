@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Any, Sequence
 
 import torch
 import torch.nn.functional as F
@@ -9,6 +9,7 @@ __all__ = [
     "roll",
     "pad",
     "zero_pad",
+    "constant_pad",
     "time_average",
     "sliding_window",
     "center_crop",
@@ -102,6 +103,10 @@ def zero_pad(x: torch.Tensor, shape: Sequence[int]) -> torch.Tensor:
         torch.Size([1, 200, 250, 3])
     """
     return pad(x, shape, mode="constant", value=0)
+
+
+def constant_pad(x: torch.Tensor, shape: Sequence[int], value: Any) -> torch.Tensor:
+    return pad(x, shape, mode="constant", value=value)
 
 
 def time_average(x, dim, eps=1e-6, keepdim=True):

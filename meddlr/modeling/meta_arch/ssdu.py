@@ -13,7 +13,7 @@ from meddlr.transforms.base.mask import KspaceMaskTransform
 from meddlr.transforms.builtin.mri import MRIReconAugmentor
 from meddlr.transforms.gen.mask import RandomKspaceMask
 from meddlr.utils.events import get_event_storage
-from meddlr.utils.general import move_to_device
+from meddlr.utils.general import move_to_device, nested_apply
 
 
 @META_ARCH_REGISTRY.register()
@@ -42,6 +42,7 @@ class SSDUModel(nn.Module):
         model: nn.Module,
         masker: RandomKspaceMask,
         augmentor: MRIReconAugmentor = None,
+        postprocessor: str = None,
         vis_period: int = None,
     ):
         """
@@ -49,6 +50,7 @@ class SSDUModel(nn.Module):
             model (nn.Module): The base model.
             masker (NoiseModel): The masking model.
             augmentor: An augmentation model that can be used
+            postprocessor: The postprocessing to perform on the image.
         """
         super().__init__()
         self.model = model
@@ -62,6 +64,8 @@ class SSDUModel(nn.Module):
                 vis_period = self.model.vis_period
             self.model.vis_period = -1
         self.vis_period = vis_period
+        self.postprocessor = postprocessor
+        # self.postprocessor = "hard_dc_edge"
 
     def augment(self, inputs):
         """Noise augmentation module for the consistency branch.
@@ -94,7 +98,11 @@ class SSDUModel(nn.Module):
         # TODO (arjundd): See if we can remove this check for speed reasons.
         assert torch.all(loss_mask >= 0)
 
-        inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
+        # Done for skm-tea. make this cleaner by making the inputs recursively clone.
+        # inputs.pop("stats", None)
+        inputs = {
+            k: nested_apply(v, lambda _v: _v.clone()) for k, v in inputs.items() if k != "kspace"
+        }
         inputs["kspace"] = train_mask * kspace
         inputs["mask"] = train_mask
 
@@ -155,8 +163,8 @@ class SSDUModel(nn.Module):
         sup = inputs.get("supervised", {})
         unsup = inputs.get("unsupervised", {})
         # TODO: Make the cat operation recursive.
-        sup = {k: v for k, v in sup.items() if k != "metrics"}
-        unsup = {k: v for k, v in unsup.items() if k != "metrics"}
+        sup = {k: v for k, v in sup.items() if k not in ["metrics", "_profiler", "stats"]}
+        unsup = {k: v for k, v in unsup.items() if k not in ["metrics", "_profiler", "stats"]}
         if sup or unsup:
             inputs = {
                 k: torch.cat([sup.get(k, torch.tensor([])), unsup.get(k, torch.tensor([]))])
@@ -180,6 +188,18 @@ class SSDUModel(nn.Module):
         A = SenseModel(maps=inputs_aug["maps"])  # no weights - we do not want to mask the data.
         loss_pred_kspace = loss_mask * A(outputs["pred"], adjoint=False)
         loss_kspace = loss_mask * kspace
+
+        # TODO: Add post processing with edge mask if specified.
+        postprocessing_mask = None
+        if self.postprocessor == "hard_dc_edge":
+            postprocessing_mask = inputs["edge_mask"]
+        elif self.postprocessor == "hard_dc_all":
+            postprocessing_mask = train_mask
+        # Do this for differentiability reasons.
+        if postprocessing_mask is not None:
+            loss_pred_kspace = (
+                1 - postprocessing_mask
+            ) * loss_pred_kspace + postprocessing_mask * inputs["kspace"]
 
         # A hacky way to prepare the predictions and target for the loss.
         # This may result in inaccurate training metrics outside of the loss.
@@ -234,5 +254,9 @@ class SSDUModel(nn.Module):
         if aug_cfg.TRANSFORMS:
             augmentor = MRIReconAugmentor.from_cfg(aug_cfg, aug_kind=None, seed=cfg.SEED)
             init_kwargs["augmentor"] = augmentor
+
+        # Build postprocessor.
+        # postprocessor = cfg.MODEL.SSDU.POSTPROCESSOR.NAME or None
+        # init_kwargs["postprocessor"] = postprocessor
 
         return init_kwargs
