@@ -65,7 +65,6 @@ class SSDUModel(nn.Module):
             self.model.vis_period = -1
         self.vis_period = vis_period
         self.postprocessor = postprocessor
-        # self.postprocessor = "hard_dc_edge"
 
     def augment(self, inputs):
         """Noise augmentation module for the consistency branch.
@@ -113,8 +112,6 @@ class SSDUModel(nn.Module):
         # are included in the train_mask.
         train_mask = (train_mask.type(torch.bool) | edge_mask.type(torch.bool)).type(torch.float32)
 
-        # Done for skm-tea. make this cleaner by making the inputs recursively clone.
-        # inputs.pop("stats", None)
         inputs = {
             k: nested_apply(v, lambda _v: _v.clone()) for k, v in inputs.items() if k != "kspace"
         }
@@ -204,7 +201,7 @@ class SSDUModel(nn.Module):
         loss_pred_kspace = loss_mask * A(outputs["pred"], adjoint=False)
         loss_kspace = loss_mask * kspace
 
-        # TODO: Add post processing with edge mask if specified.
+        # TODO: Refactor post processing to be general to all reconstruction networks.
         postprocessing_mask = None
         if self.postprocessor == "hard_dc_edge":
             postprocessing_mask = inputs["edge_mask"]
@@ -271,7 +268,7 @@ class SSDUModel(nn.Module):
             init_kwargs["augmentor"] = augmentor
 
         # Build postprocessor.
-        # postprocessor = cfg.MODEL.SSDU.POSTPROCESSOR.NAME or None
-        # init_kwargs["postprocessor"] = postprocessor
+        postprocessor = cfg.MODEL.SSDU.POSTPROCESSOR.NAME or None
+        init_kwargs["postprocessor"] = postprocessor
 
         return init_kwargs
