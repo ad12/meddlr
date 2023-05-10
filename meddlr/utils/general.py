@@ -1,5 +1,5 @@
 import os
-from typing import List, Mapping
+from typing import List, Mapping, Union
 
 import torch
 
@@ -102,3 +102,29 @@ def flatten_dict(results, delimiter="/"):
         else:
             r[k] = v
     return r
+
+
+_NestedTensor = Mapping[str, torch.Tensor]
+NestedTensor = Mapping[str, Union[_NestedTensor, torch.Tensor]]
+
+
+def nested_apply(x: NestedTensor, fn):
+    if isinstance(x, Mapping):
+        return {k: nested_apply(v, fn) for k, v in x.items()}
+    assert isinstance(x, torch.Tensor)
+    return fn(x)
+
+
+def nested_cat(x: List[NestedTensor], dim=0):
+    """Concatenate a nested tensor."""
+    xtype = type(x[0])
+    for _x in x[1:]:
+        if not isinstance(_x, xtype):
+            raise ValueError(
+                "All inputs must have the same type. Got {} and {}".format(xtype, type(_x))
+            )
+
+    if isinstance(x[0], Mapping):
+        return {k: nested_cat([_x[k] for _x in x], dim=dim) for k in x[0].keys()}
+    assert isinstance(x[0], torch.Tensor)
+    return torch.cat(x, dim=dim)

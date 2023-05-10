@@ -10,6 +10,7 @@ from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from meddlr.modeling.meta_arch.ssdu import SSDUModel
 from meddlr.ops import complex as cplx
 from meddlr.utils.events import get_event_storage
+from meddlr.utils.general import nested_apply
 
 
 @META_ARCH_REGISTRY.register()
@@ -78,7 +79,9 @@ class N2RModel(nn.Module):
         kspace = inputs["kspace"].clone()
         aug_kspace = self.noiser(kspace, clone=False)
 
-        inputs = {k: v.clone() for k, v in inputs.items() if k != "kspace"}
+        inputs = {
+            k: nested_apply(v, lambda _v: _v.clone()) for k, v in inputs.items() if k != "kspace"
+        }
         inputs["kspace"] = aug_kspace
         return inputs
 
