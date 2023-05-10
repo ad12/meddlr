@@ -11,7 +11,7 @@ from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from meddlr.ops import complex as cplx
 from meddlr.transforms.builtin.mri import MRIReconAugmentor
 from meddlr.utils.events import get_event_storage
-from meddlr.utils.general import move_to_device
+from meddlr.utils.general import flatten_dict, move_to_device
 
 
 @META_ARCH_REGISTRY.register()
@@ -94,6 +94,13 @@ class VortexModel(nn.Module):
         inputs["maps"] = out["maps"]
         aug_pred_base = out["target"]
         return inputs, aug_pred_base
+
+    def log_augmentor_params(self):
+        scheduler_params = self.augmentor.get_tfm_gen_params(scalars_only=True)
+        if len(scheduler_params):
+            storage = get_event_storage()
+            scheduler_params = flatten_dict({"scheduler": scheduler_params})
+            storage.put_scalars(**scheduler_params)
 
     def visualize_aug_training(self, kspace, kspace_aug, preds, preds_base, target=None):
         """Visualize training of augmented data.
@@ -232,6 +239,9 @@ class VortexModel(nn.Module):
                     pred_base,
                     target=target,
                 )
+
+        # Log augmentor parameters.
+        self.log_augmentor_params()
 
         return output_dict
 

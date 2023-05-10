@@ -192,7 +192,7 @@ class MRIReconAugmentor(DeviceMixin):
         ]
         return [x for y in schedulers for x in y]
 
-    def get_tfm_gen_params(self, scalars_only: bool = True):
+    def get_tfm_gen_params(self, scalars_only: bool = True, filter_na=True):
         """Get dictionary of scheduler parameters."""
         schedulers: Dict[str, Sequence[TFScheduler]] = {
             type(tfm).__name__: tfm._get_param_values(use_schedulers=True)
@@ -205,7 +205,18 @@ class MRIReconAugmentor(DeviceMixin):
             # Filter out values that are not scalars
             p = {f"{tfm_name}/{k}": v for k, v in p.items()}
             if scalars_only:
-                p = {k: v for k, v in p.items() if isinstance(v, Number)}
+                _params = {}
+                # TODO: Make this recursive
+                for k, v in p.items():
+                    if isinstance(v, Number):
+                        _params[k] = v
+                    elif isinstance(v, (list, tuple)):
+                        for i, _v in enumerate(v):
+                            _params[f"{k}[{i}]"] = _v
+                p = _params
+                # p = {k: v for k, v in p.items() if isinstance(v, Number)}
+            if filter_na:
+                p = {k: v for k, v in p.items() if v is not None}
             params.update(p)
         return params
 
