@@ -393,11 +393,8 @@ def _find_format_str_keys(value: Mapping, prefix=""):
             k_prefix = f"{prefix}.{k}" if prefix else k
             accum |= _find_format_str_keys(v, prefix=k_prefix)
     elif isinstance(value, (list, tuple)):
-        # TODO: Be able to handle recursive nesting.
-        if any(_find_format_str_keys(value[i], prefix="") for i in range(len(value))):
-            # We have to force cast to a tuple to make it hashable for the set.
-            # This will be fixed when we can handle recursive nesting.
-            accum |= {(prefix, tuple(value))}
+        for i in range(len(value)):
+            accum |= _find_format_str_keys(value[i], prefix=f"{prefix}[{i}]")
     return accum
 
 
@@ -443,10 +440,17 @@ def format_config_fields(cfg: CfgNode, unroll=False, inplace=False):
         else:
             assert isinstance(value, str)
             fmt_str = _format_str(value, cfg=cfg, unroll=unroll)
-        values_list.extend([k, fmt_str])
+        values_list.append([k, fmt_str])
     if not inplace:
         cfg.clone()
-    cfg.defrost().merge_from_list(values_list)
+
+    # TODO: Determine if we want to enforce the checks in merge_from_list.
+    # This may be important if we want to handle renamed or deprecated keys.
+    # cfg.defrost().merge_from_list(values_list)
+    cfg.defrost()
+    for k, fmt_str in values_list:
+        cfg.set_recursive(k, fmt_str)
+
     return cfg
 
 
