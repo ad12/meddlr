@@ -117,14 +117,8 @@ class CfgNode(_CfgNode):
         d = self
         try:
             for k in key.split("."):
-                # Extract groups matching sequence-indexing syntax (e.g. 'field[0]').
-                match_val = re.match("^(?P<field>[a-zA-Z0-9_]+)\[(?P<index>[-?0-9]+)\]$", k)
-                if match_val:
-                    k = match_val.group("field")
-                    index = int(match_val.group("index"))
-                    d = d[k][index]
-                else:
-                    d = d[k]
+                k, index = _extract_field_index(k)
+                d = d[k] if index is None else d[k][index]
         except KeyError:
             if default != np._NoValue:
                 return default
@@ -141,9 +135,22 @@ class CfgNode(_CfgNode):
         cfg = self
         keys = name.split(".")
         for k in keys[:-1]:
-            cfg = cfg[k]
+            # Extract groups matching sequence-indexing syntax (e.g. 'field[0]').
+            k, index = _extract_field_index(k)
+            cfg = cfg[k] if index is None else cfg[k][index]
 
-        setattr(cfg, keys[-1], value)
+        k, index = _extract_field_index(keys[-1])
+        if index is not None:
+            if not isinstance(cfg[k], (list, tuple)):
+                raise TypeError(f"Cannot set index {index} for non-sequence field '{name}'")
+            current_value = cfg[k]
+            if isinstance(current_value, tuple):
+                current_value = list(current_value)
+            current_value[index] = value
+            current_value = type(cfg[k])(current_value)
+            value = current_value
+
+        setattr(cfg, k, value)
 
     def update_recursive(self, mapping: Mapping[str, Any]):
         """
@@ -441,3 +448,11 @@ def format_config_fields(cfg: CfgNode, unroll=False, inplace=False):
         cfg.clone()
     cfg.defrost().merge_from_list(values_list)
     return cfg
+
+
+def _extract_field_index(key):
+    match_val = re.match("^(?P<field>[a-zA-Z0-9_]+)\[(?P<index>[-?0-9]+)\]$", key)
+    if match_val:
+        return match_val.group("field"), int(match_val.group("index"))
+    else:
+        return key, None
