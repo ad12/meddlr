@@ -4,7 +4,7 @@ import functools
 import inspect
 import logging
 import re
-from typing import Any, Mapping
+from typing import Any, List, Mapping, Tuple
 
 import numpy as np
 from fvcore.common.config import CfgNode as _CfgNode
@@ -370,21 +370,27 @@ def _called_with_cfg(*args, **kwargs):
     return False
 
 
-def _find_format_str_keys(cfg: Mapping, prefix="", accum=()):
-    accum = set(accum)
-    for k, v in cfg.items():
-        k_prefix = prefix + "." + k if prefix else k
-        if isinstance(v, Mapping):
-            accum |= _find_format_str_keys(cfg[k], prefix=k_prefix, accum=accum)
-        elif isinstance(v, (list, tuple)):
-            if any(
-                _find_format_str_keys(v[i], prefix=k_prefix, accum=accum) for i in range(len(v))
-            ):
-                accum |= {(k_prefix, v)}
-        elif isinstance(v, str) and (
-            (v.startswith('f"') and v.endswith('"')) or (v.startswith("f'") and v.endswith("'"))
-        ):
-            accum |= {(k_prefix, v)}
+def _find_format_str_keys(value: Mapping, prefix=""):
+    accum = set()
+
+    if isinstance(value, str) and (
+        (value.startswith('f"') and value.endswith('"'))
+        or (value.startswith("f'") and value.endswith("'"))
+    ):
+        return {(prefix, value)}
+    elif not isinstance(value, (Mapping, List, Tuple)):
+        return accum
+
+    if isinstance(value, Mapping):
+        for k, v in value.items():
+            k_prefix = f"{prefix}.{k}" if prefix else k
+            accum |= _find_format_str_keys(v, prefix=k_prefix)
+    elif isinstance(value, (list, tuple)):
+        # TODO: Be able to handle recursive nesting.
+        if any(_find_format_str_keys(value[i], prefix="") for i in range(len(value))):
+            # We have to force cast to a tuple to make it hashable for the set.
+            # This will be fixed when we can handle recursive nesting.
+            accum |= {(prefix, tuple(value))}
     return accum
 
 
@@ -401,6 +407,10 @@ def _format_str(val_str: str, *, cfg: CfgNode, unroll: bool):
     start = [x.start() for x in re.finditer("\{", val_str)]
     end = [x.start() for x in re.finditer("\}", val_str)]
     assert len(start) == len(end), f"Could not determine formatting string: {val_str}"
+
+    if len(start) == 0:
+        return val_str
+
     cfg_keys_to_search = [val_str[s + 1 : e] for s, e in zip(start, end)]
     values = [cfg.get_recursive(v) for v in cfg_keys_to_search]
 

@@ -10,7 +10,7 @@ def test_format_fields():
     assert cfg.DESCRIPTION.BRIEF == f"seed={cfg.SEED},project={cfg.DESCRIPTION.PROJECT_NAME}"
 
     cfg = get_cfg()
-    cfg.DESCRIPTION.BRIEF = 'f"{SEED},project={DESCRIPTION.PROJECT_NAME}"'
+    cfg.DESCRIPTION.BRIEF = "f'{SEED},project={DESCRIPTION.PROJECT_NAME}'"
     cfg.format_fields()
     assert cfg.DESCRIPTION.BRIEF == f"{cfg.SEED},project={cfg.DESCRIPTION.PROJECT_NAME}"
 
@@ -19,6 +19,8 @@ def test_format_fields():
     cfg.format_fields()
     assert cfg.DESCRIPTION.BRIEF == f"{cfg.SEED},project={cfg.DESCRIPTION.PROJECT_NAME}-today"
 
+
+def test_format_fields_unroll():
     cfg = get_cfg()
     cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (6, 8)
     cfg.DESCRIPTION.BRIEF = (
