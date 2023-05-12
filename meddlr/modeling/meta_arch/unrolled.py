@@ -179,9 +179,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         # This doesn't work when padding is not the same.
         # i.e. when the output is a different shape than the input.
         # However, this should not ever happen.
-        image = image.permute(0, 2, 3, 1).reshape(dims[0:3] + (self.num_emaps, 2))
-        if not image.is_contiguous():
-            image = image.contiguous()
+        image = image.permute(0, 2, 3, 1).reshape(dims[0:3] + (self.num_emaps, 2)).contiguous()
         if use_cplx:
             image = torch.view_as_complex(image)
         return image
