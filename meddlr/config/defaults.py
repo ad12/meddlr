@@ -437,3 +437,10 @@ _C.DESCRIPTION.EXP_NAME = ""
 # Tags associated with experiment.
 # e.g. "fastmri_knee_mc" for fastMRI dataset; "unrolled" for using unrolled network; etc.
 _C.DESCRIPTION.TAGS = ()
+
+# ---------------------------------------------------------------------------- #
+# Miscellaneous
+# This is a free field that can be used to add any extra config fields without
+# affecting loading of any particular config.
+# ---------------------------------------------------------------------------- #
+_C.MISC = CN(new_allowed=True)

@@ -4,7 +4,7 @@ import functools
 import inspect
 import logging
 import re
-from typing import Any, Mapping
+from typing import Any, List, Mapping, Tuple
 
 import numpy as np
 from fvcore.common.config import CfgNode as _CfgNode
@@ -117,14 +117,8 @@ class CfgNode(_CfgNode):
         d = self
         try:
             for k in key.split("."):
-                # Extract groups matching sequence-indexing syntax (e.g. 'field[0]').
-                match_val = re.match("^(?P<field>[a-zA-Z0-9_]+)\[(?P<index>[-?0-9]+)\]$", k)
-                if match_val:
-                    k = match_val.group("field")
-                    index = int(match_val.group("index"))
-                    d = d[k][index]
-                else:
-                    d = d[k]
+                k, index = _extract_field_index(k)
+                d = d[k] if index is None else d[k][index]
         except KeyError:
             if default != np._NoValue:
                 return default
@@ -141,9 +135,22 @@ class CfgNode(_CfgNode):
         cfg = self
         keys = name.split(".")
         for k in keys[:-1]:
-            cfg = cfg[k]
+            # Extract groups matching sequence-indexing syntax (e.g. 'field[0]').
+            k, index = _extract_field_index(k)
+            cfg = cfg[k] if index is None else cfg[k][index]
 
-        setattr(cfg, keys[-1], value)
+        k, index = _extract_field_index(keys[-1])
+        if index is not None:
+            if not isinstance(cfg[k], (list, tuple)):
+                raise TypeError(f"Cannot set index {index} for non-sequence field '{name}'")
+            current_value = cfg[k]
+            if isinstance(current_value, tuple):
+                current_value = list(current_value)
+            current_value[index] = value
+            current_value = type(cfg[k])(current_value)
+            value = current_value
+
+        setattr(cfg, k, value)
 
     def update_recursive(self, mapping: Mapping[str, Any]):
         """
@@ -370,16 +377,24 @@ def _called_with_cfg(*args, **kwargs):
     return False
 
 
-def _find_format_str_keys(cfg: Mapping, prefix="", accum=()):
-    accum = set(accum)
-    for k, v in cfg.items():
-        k_prefix = prefix + "." + k if prefix else k
-        if isinstance(v, Mapping):
-            accum |= _find_format_str_keys(cfg[k], prefix=k_prefix, accum=accum)
-        elif isinstance(v, str) and (
-            (v.startswith('f"') and v.endswith('"')) or (v.startswith("f'") and v.endswith("'"))
-        ):
-            accum |= {(k_prefix, v)}
+def _find_format_str_keys(value: Mapping, prefix=""):
+    accum = set()
+
+    if isinstance(value, str) and (
+        (value.startswith('f"') and value.endswith('"'))
+        or (value.startswith("f'") and value.endswith("'"))
+    ):
+        return {(prefix, value)}
+    elif not isinstance(value, (Mapping, List, Tuple)):
+        return accum
+
+    if isinstance(value, Mapping):
+        for k, v in value.items():
+            k_prefix = f"{prefix}.{k}" if prefix else k
+            accum |= _find_format_str_keys(v, prefix=k_prefix)
+    elif isinstance(value, (list, tuple)):
+        for i in range(len(value)):
+            accum |= _find_format_str_keys(value[i], prefix=f"{prefix}[{i}]")
     return accum
 
 
@@ -392,25 +407,56 @@ def _unroll_value_to_str(value) -> str:
         return str(value)
 
 
+def _format_str(val_str: str, *, cfg: CfgNode, unroll: bool):
+    start = [x.start() for x in re.finditer("\{", val_str)]
+    end = [x.start() for x in re.finditer("\}", val_str)]
+    assert len(start) == len(end), f"Could not determine formatting string: {val_str}"
+
+    if len(start) == 0:
+        return val_str
+
+    cfg_keys_to_search = [val_str[s + 1 : e] for s, e in zip(start, end)]
+    values = [cfg.get_recursive(v) for v in cfg_keys_to_search]
+
+    if unroll:
+        values = [_unroll_value_to_str(v) for v in values]
+
+    fmt_str = ""
+    idxs = [0] + [y for x in zip(start, end) for y in x] + [len(val_str)]
+    for i in range(len(idxs) // 2):
+        fmt_str += val_str[idxs[2 * i] : idxs[2 * i + 1] + 1]
+    fmt_str = eval(fmt_str.format(*values))
+    return fmt_str
+
+
 def format_config_fields(cfg: CfgNode, unroll=False, inplace=False):
     keys_and_val_str = _find_format_str_keys(cfg)
     values_list = []
-    for k, val_str in keys_and_val_str:
-        start = [x.start() for x in re.finditer("\{", val_str)]
-        end = [x.start() for x in re.finditer("\}", val_str)]
-        assert len(start) == len(end), f"Could not determine formatting string: {val_str}"
-        cfg_keys_to_search = [val_str[s + 1 : e] for s, e in zip(start, end)]
-        values = [cfg.get_recursive(v) for v in cfg_keys_to_search]
-        if unroll:
-            values = [_unroll_value_to_str(v) for v in values]
-
-        fmt_str = ""
-        idxs = [0] + [y for x in zip(start, end) for y in x] + [len(val_str)]
-        for i in range(len(idxs) // 2):
-            fmt_str += val_str[idxs[2 * i] : idxs[2 * i + 1] + 1]
-        fmt_str = eval(fmt_str.format(*values))
-        values_list.extend([k, fmt_str])
+    for k, value in keys_and_val_str:
+        if isinstance(value, (list, tuple)):
+            fmt_str = type(value)(
+                _format_str(v, cfg=cfg, unroll=unroll) if isinstance(v, str) else v for v in value
+            )
+        else:
+            assert isinstance(value, str)
+            fmt_str = _format_str(value, cfg=cfg, unroll=unroll)
+        values_list.append([k, fmt_str])
     if not inplace:
         cfg.clone()
-    cfg.defrost().merge_from_list(values_list)
+
+    # TODO: Determine if we want to enforce the checks in merge_from_list.
+    # This may be important if we want to handle renamed or deprecated keys.
+    # cfg.defrost().merge_from_list(values_list)
+    cfg.defrost()
+    for k, fmt_str in values_list:
+        cfg.set_recursive(k, fmt_str)
+
     return cfg
+
+
+def _extract_field_index(key):
+    match_val = re.match("^(?P<field>[a-zA-Z0-9_]+)\[(?P<index>[-?0-9]+)\]$", key)
+    if match_val:
+        return match_val.group("field"), int(match_val.group("index"))
+    else:
+        return key, None
