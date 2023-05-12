@@ -376,6 +376,11 @@ def _find_format_str_keys(cfg: Mapping, prefix="", accum=()):
         k_prefix = prefix + "." + k if prefix else k
         if isinstance(v, Mapping):
             accum |= _find_format_str_keys(cfg[k], prefix=k_prefix, accum=accum)
+        elif isinstance(v, (list, tuple)):
+            if any(
+                _find_format_str_keys(v[i], prefix=k_prefix, accum=accum) for i in range(len(v))
+            ):
+                accum |= {(k_prefix, v)}
         elif isinstance(v, str) and (
             (v.startswith('f"') and v.endswith('"')) or (v.startswith("f'") and v.endswith("'"))
         ):
@@ -392,23 +397,35 @@ def _unroll_value_to_str(value) -> str:
         return str(value)
 
 
+def _format_str(val_str: str, *, cfg: CfgNode, unroll: bool):
+    start = [x.start() for x in re.finditer("\{", val_str)]
+    end = [x.start() for x in re.finditer("\}", val_str)]
+    assert len(start) == len(end), f"Could not determine formatting string: {val_str}"
+    cfg_keys_to_search = [val_str[s + 1 : e] for s, e in zip(start, end)]
+    values = [cfg.get_recursive(v) for v in cfg_keys_to_search]
+
+    if unroll:
+        values = [_unroll_value_to_str(v) for v in values]
+
+    fmt_str = ""
+    idxs = [0] + [y for x in zip(start, end) for y in x] + [len(val_str)]
+    for i in range(len(idxs) // 2):
+        fmt_str += val_str[idxs[2 * i] : idxs[2 * i + 1] + 1]
+    fmt_str = eval(fmt_str.format(*values))
+    return fmt_str
+
+
 def format_config_fields(cfg: CfgNode, unroll=False, inplace=False):
     keys_and_val_str = _find_format_str_keys(cfg)
     values_list = []
-    for k, val_str in keys_and_val_str:
-        start = [x.start() for x in re.finditer("\{", val_str)]
-        end = [x.start() for x in re.finditer("\}", val_str)]
-        assert len(start) == len(end), f"Could not determine formatting string: {val_str}"
-        cfg_keys_to_search = [val_str[s + 1 : e] for s, e in zip(start, end)]
-        values = [cfg.get_recursive(v) for v in cfg_keys_to_search]
-        if unroll:
-            values = [_unroll_value_to_str(v) for v in values]
-
-        fmt_str = ""
-        idxs = [0] + [y for x in zip(start, end) for y in x] + [len(val_str)]
-        for i in range(len(idxs) // 2):
-            fmt_str += val_str[idxs[2 * i] : idxs[2 * i + 1] + 1]
-        fmt_str = eval(fmt_str.format(*values))
+    for k, value in keys_and_val_str:
+        if isinstance(value, (list, tuple)):
+            fmt_str = type(value)(
+                _format_str(v, cfg=cfg, unroll=unroll) if isinstance(v, str) else v for v in value
+            )
+        else:
+            assert isinstance(value, str)
+            fmt_str = _format_str(value, cfg=cfg, unroll=unroll)
         values_list.extend([k, fmt_str])
     if not inplace:
         cfg.clone()
