@@ -65,7 +65,11 @@ class VortexModel(nn.Module):
         self.use_supervised_consistency = use_supervised_consistency
 
         # Visualization done by this model
-        if hasattr(model, "vis_period") and vis_period > 0:
+        if (
+            not isinstance(self.model, SSDUModel)
+            and hasattr(model, "vis_period")
+            and vis_period > 0
+        ):
             self.model.vis_period = -1
         self.vis_period = vis_period
 
