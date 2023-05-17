@@ -236,9 +236,13 @@ def check_consistency(state_dict: Dict[str, Any], model: torch.nn.Module):
         model (nn.Module): A Pytorch model.
     """
     _state_dict = model.state_dict()
+    mismatched_keys = []
     for k in state_dict:
         assert k in _state_dict, f"{k} not in model state_dict: {_state_dict.keys()}"
-        assert torch.equal(state_dict[k], _state_dict[k]), f"Mismatch values: {k}"
+        if not torch.equal(state_dict[k], _state_dict[k]):
+            mismatched_keys.append(k)
+    if len(mismatched_keys):
+        raise ValueError("Mismatch keys:\n\t{}".format("\t\n".join(mismatched_keys)))
 
 
 def _metrics_from_x(metrics_file, criterion):
