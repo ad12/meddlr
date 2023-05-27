@@ -219,6 +219,9 @@ class N2RLossComputer(LossComputer):
         self.use_consistency = cfg.MODEL.CONSISTENCY.USE_CONSISTENCY
         self.num_latent_layers = cfg.MODEL.CONSISTENCY.NUM_LATENT_LAYERS
         self.latent_keys = ["E4", "E3", "D3", "E2", "D2", "E1", "D1"]
+
+        # Apply data consistency loss between input and augmented recon.
+        self.use_dc = False
         # self.use_robust = cfg.MODEL.LOSS.USE_ROBUST
         # self.beta = cfg.MODEL.LOSS.BETA
         # self.robust_step_size = cfg.MODEL.LOSS.ROBUST_STEP_SIZE
@@ -285,6 +288,17 @@ class N2RLossComputer(LossComputer):
         }
         if output_consistency is not None and self.use_consistency:
             loss += self.consistency_weight * metrics_consistency["cons_loss"]
+        if output_consistency is not None and self.use_dc:
+            pred = output["dc"]["pred"].contiguous()
+            target = output["dc"]["target"].contiguous()
+            abs_error = cplx.abs(pred - target)
+            kl1_norm = torch.sum(abs_error) / torch.sum(cplx.abs(target))
+            kl2_norm = torch.sqrt(torch.sum(abs_error**2)) / torch.sqrt(
+                torch.sum(cplx.abs(target) ** 2)
+            )  # noqa: E501
+            dc_loss = 0.5 * kl1_norm + 0.5 * kl2_norm
+            # dc_loss = torch.mean(torch.abs(pred - target))
+            loss += (self.consistency_weight / 10) * dc_loss
 
         if self.use_latent:
             num_losses = self.num_latent_layers * 2 - 1
@@ -314,6 +328,8 @@ class N2RLossComputer(LossComputer):
         if self.use_latent:
             for i in range(num_losses):
                 metrics.update(all_metrics_latent[i])
+        if self.use_dc:
+            metrics["dc_loss"] = dc_loss
 
         metrics["loss"] = loss
         return metrics

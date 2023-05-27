@@ -291,18 +291,19 @@ def collect_mask(
 
     if not any(isinstance(idx, Sequence) for idx in index):
         mask = mask[..., index]
-    else:
-        o_seg = []
-        for idx in index:
-            c_seg = mask[..., idx]
-            if isinstance(idx, Sequence):
-                c_seg = np.sum(c_seg, axis=-1)
-            o_seg.append(c_seg)
-        mask = np.stack(o_seg, axis=-1)
+        if out_channel_first:
+            last_idx = len(mask.shape) - 1
+            mask = np.transpose(mask, (last_idx,) + tuple(range(last_idx)))
+        return mask
 
-    if out_channel_first:
-        last_idx = len(mask.shape) - 1
-        mask = np.transpose(mask, (last_idx,) + tuple(range(0, last_idx)))
+    o_seg = []
+    stack_axis = 0 if out_channel_first else -1
+    for idx in index:
+        c_seg = mask[..., idx]
+        if isinstance(idx, Sequence):
+            c_seg = np.sum(c_seg, axis=-1)
+        o_seg.append(c_seg)
+    mask = np.stack(o_seg, axis=stack_axis)
 
     return mask
 

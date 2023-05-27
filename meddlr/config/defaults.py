@@ -226,6 +226,7 @@ _C.MODEL.NM2R.USE_SUPERVISED_CONSISTENCY = False
 _C.MODEL.A2R = CN()
 _C.MODEL.A2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.A2R.USE_SUPERVISED_CONSISTENCY = False
+_C.MODEL.A2R.EDGE_DC = False
 
 # -----------------------------------------------------------------------------
 # SSDU model

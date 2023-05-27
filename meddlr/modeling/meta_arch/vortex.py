@@ -5,7 +5,9 @@ import torch
 import torchvision.utils as tv_utils
 from torch import nn
 
+import meddlr.ops as oF
 from meddlr.config.config import configurable
+from meddlr.forward.mri import SenseModel
 from meddlr.modeling.meta_arch import SSDUModel
 from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from meddlr.ops import complex as cplx
@@ -45,6 +47,7 @@ class VortexModel(nn.Module):
         model: nn.Module,
         augmentor: MRIReconAugmentor,
         use_supervised_consistency: bool = False,
+        edge_dc: bool = False,
         vis_period: int = -1,
     ):
         """
@@ -63,6 +66,8 @@ class VortexModel(nn.Module):
         self.augmentor = augmentor
         self.use_base_grad = False  # Keep gradient for base images in transform.
         self.use_supervised_consistency = use_supervised_consistency
+        self.edge_dc = edge_dc
+        self._multicoil_image = True
 
         # Visualization done by this model
         if (
@@ -106,7 +111,9 @@ class VortexModel(nn.Module):
             scheduler_params = flatten_dict({"scheduler": scheduler_params})
             storage.put_scalars(**scheduler_params)
 
-    def visualize_aug_training(self, kspace, kspace_aug, preds, preds_base, target=None):
+    def visualize_aug_training(
+        self, kspace, kspace_aug, preds, preds_base, target=None, dc_mask=None
+    ):
         """Visualize training of augmented data.
 
         Args:
@@ -146,6 +153,9 @@ class VortexModel(nn.Module):
                 "masks": cplx.get_mask(kspace),
                 "kspace": cplx.abs(all_kspace),
             }
+            if dc_mask is not None:
+                # Take the mask for the first coil, it should be the same for all coils.
+                imgs_to_write["dc_mask"] = dc_mask[0:1, ..., 0].cpu()
 
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
@@ -223,11 +233,22 @@ class VortexModel(nn.Module):
         inputs_consistency = self._aggregate_consistency_inputs(
             inputs_supervised, inputs_unsupervised
         )
+        inputs_consistency = move_to_device(inputs_consistency, device="cuda")
         if len(inputs_consistency) > 0:
+            # Add the edge mask to the DC layers of the unrolled network.
+            # TODO: Make this configurable.
+            if self.edge_dc and "mask" not in inputs_consistency:
+                inputs_consistency["mask"] = (
+                    (cplx.get_mask(inputs_consistency["kspace"]) + inputs_consistency["edge_mask"])
+                    .bool()
+                    .to(torch.float32)
+                )
+
             with torch.no_grad():
                 pred_base = model(inputs_consistency)
                 # Target only used for visualization purposes not for loss.
                 target = inputs_unsupervised.get("target", None)
+                pred_base_zf = pred_base["zf_image"]  # noqa: F841
                 pred_base = pred_base["pred"]
                 # Augment the inputs.
                 inputs_consistency_aug, pred_base = self.augment(inputs_consistency, pred_base)
@@ -238,6 +259,14 @@ class VortexModel(nn.Module):
                 del pred_aug["target"]
             pred_aug["target"] = pred_base.detach()
             output_dict["consistency"] = pred_aug
+
+            # Add DC loss between prediction and consistency inputs.
+            # A = SenseModel(maps=inputs_consistency["maps"], weights=cplx.get_mask(inputs_consistency["kspace"]))  # noqa: E501
+            # output_dict["dc"] = {
+            #     "pred": A(pred_aug["pred"]),
+            #     "target": inputs_consistency["kspace"],
+            # }
+
             if vis_training:
                 self.visualize_aug_training(
                     inputs_consistency["kspace"],
@@ -245,6 +274,20 @@ class VortexModel(nn.Module):
                     pred_aug["pred"],
                     pred_base,
                     target=target,
+                    dc_mask=inputs_consistency.get("mask", None),
+                )
+
+            # Convert to multicoil image.
+            # This is needed for loss to be computed over each coil rather than
+            # a coil combined k-space/image.
+            # We do this after visualization to avoid visualizing multicoil images.
+            if self._multicoil_image:
+                with torch.no_grad():
+                    pred_aug["target"] = _to_multicoil_image(
+                        x=pred_aug["target"], maps=inputs_consistency["maps"]
+                    )
+                pred_aug["pred"] = _to_multicoil_image(
+                    x=pred_aug["pred"], maps=inputs_consistency_aug["maps"]
                 )
 
         # Log augmentor parameters.
@@ -271,5 +314,13 @@ class VortexModel(nn.Module):
             "model": model,
             "augmentor": augmentor,
             "use_supervised_consistency": cfg.MODEL.A2R.USE_SUPERVISED_CONSISTENCY,
+            "edge_dc": cfg.MODEL.A2R.EDGE_DC,
             "vis_period": cfg.VIS_PERIOD,
         }
+
+
+def _to_multicoil_image(x, maps):
+    """Convert image x into multicoil image for loss computer compatibility."""
+    # Use signal model (SENSE) to get weighted kspace.
+    A = SenseModel(maps=maps)  # no weights - we do not want to mask the data.
+    return oF.ifft2c(A(x, adjoint=False), channels_last=True)
