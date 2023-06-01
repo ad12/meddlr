@@ -43,6 +43,9 @@ python /path/to/meddlr/tools/eval_net.py --config-file </path/to/config.yaml> --
 ### Model Zoo
 Models and experiment configs are available in the [model zoo](MODEL_ZOO.md).
 
+## Demo
+Check out the interactive demo in `demo.ipynb` to see how VORTEX works in practice.
+
 ## Citation
 If you use VORTEX in your work, please use the following BibTeX entry,
 ```
