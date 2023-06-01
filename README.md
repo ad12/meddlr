@@ -40,7 +40,7 @@ os.environ["MEDDLR_DATASETS_DIR"] = "/path/to/datasets"
 Detailed instructions are available in [Getting Started](GETTING_STARTED.md).
 
 ## Visualizations
-Use [MeddlrViz]() to visualize your medical imaging datasets, ML models, and algorithms.
+Use [MeddlrViz](https://github.com/ad12/meddlr-viz) to visualize your medical imaging datasets, ML models, and more!
 
 ```bash
 pip install meddlr-viz
