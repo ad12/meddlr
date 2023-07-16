@@ -2,13 +2,21 @@
 """
 import math
 from functools import partial
+<<<<<<< HEAD
 from typing import List, Optional, Sequence, Tuple
+=======
+from typing import Any, Dict
+>>>>>>> main
 
 import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
+<<<<<<< HEAD
 import meddlr.ops as F
+=======
+from meddlr.data.transforms.subsample import MaskFunc
+>>>>>>> main
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
 from meddlr.transforms.gen.spatial import RandomAffine, RandomTranslation
@@ -195,7 +203,7 @@ class TopMagnitudeNormalizer(AffineNormalizer):
 
 
 class Subsampler(object):
-    def __init__(self, mask_func):
+    def __init__(self, mask_func: MaskFunc):
         self.mask_func = mask_func
         self.zip2_padding = None
 
@@ -236,6 +244,11 @@ class Subsampler(object):
             padded_mask_shape = padded_mask_shape[1 : len(self.zip2_padding) + 1]
             mask = T.zero_pad(mask, padded_mask_shape)
         return torch.where(mask == 0, torch.tensor([0], dtype=data.dtype), data), mask
+
+    def edge_mask(self, kspace: torch.Tensor, mode: str = "2D"):
+        mask_shape = self._get_mask_shape(kspace.shape, mode=mode)
+        mask = self.mask_func.get_edge_mask(kspace, out_shape=mask_shape)
+        return mask
 
 
 class DataTransform:
@@ -285,11 +298,18 @@ class DataTransform:
         self.p_noise = cfg.AUG_TRAIN.NOISE_P
         self.p_motion = cfg.AUG_TRAIN.MOTION_P
         self._normalizer = build_normalizer(cfg)
+        self._postprocessor = cfg.TEST.POSTPROCESSOR.NAME
+        assert self._postprocessor in ["", "hard_dc_edge", "hard_dc_all"], self._postprocessor
 
         # Build augmentation pipeline.
         self.augmentor = None
         if not is_test and cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS:
             self.augmentor = MRIReconAugmentor.from_cfg(cfg, aug_kind="aug_train", seed=seed)
+
+    def _get_mask(self, masked_kspace):
+        # If any of the coils are non-zero at a coordinate, we assume
+        assert torch.is_complex(masked_kspace)
+        return cplx.get_mask(masked_kspace, coil_dim=-1)
 
     def _call_augmentor(
         self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None
@@ -331,9 +351,19 @@ class DataTransform:
         maps = maps.squeeze(0)
         target = target.squeeze(0)
 
-        return masked_kspace, maps, target, mean, std, norm
+        return {
+            "kspace": masked_kspace,
+            "maps": maps,
+            "target": target,
+            "mean": mean,
+            "std": std,
+            "norm": norm,
+            "mask": self._get_mask(masked_kspace),
+        }
 
-    def __call__(self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None):
+    def __call__(
+        self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None
+    ) -> Dict[str, Any]:
         """
         Args:
             kspace (numpy.array): Input k-space of shape
@@ -384,6 +414,13 @@ class DataTransform:
             kspace, mode="2D", seed=seed, acceleration=acceleration
         )
 
+        edge_mask = self._subsampler.edge_mask(kspace, mode="2D")
+        postprocessing_mask = None
+        if self._is_test and self._postprocessor:
+            postprocessing_mask = edge_mask
+            if self._postprocessor == "hard_dc_all":
+                postprocessing_mask = (postprocessing_mask + mask).bool().type(torch.float32)
+
         # Zero-filled Sense Recon.
         if torch.is_complex(target_init):
             A = SenseModel(maps, weights=mask)
@@ -402,10 +439,7 @@ class DataTransform:
         target = normalized["target"]
         mean = normalized["mean"]
         std = normalized["std"]
-
-        add_noise = self.add_noise and (
-            self._is_test or (not is_fixed and self.rng.uniform() < self.p_noise)
-        )
+        add_noise = self.add_noise and (self._is_test or (self.rng.uniform() < self.p_noise))
         add_motion = self.add_motion and (
             self._is_test or (not is_fixed and self.rng.uniform() < self.p_motion)
         )
@@ -422,8 +456,19 @@ class DataTransform:
         maps = maps.squeeze(0)
         target = target.squeeze(0)
 
-        return masked_kspace, maps, target, mean, std, norm
-
+        out = {
+            "kspace": masked_kspace,
+            "maps": maps,
+            "target": target,
+            "mean": mean,
+            "std": std,
+            "norm": norm,
+            "edge_mask": edge_mask.squeeze(0),
+            "mask": self._get_mask(masked_kspace),
+        }
+        if postprocessing_mask is not None:
+            out["postprocessing_mask"] = postprocessing_mask.squeeze(0)
+        return out
 
 class MotionDataTransform:
     """

@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from typing import Dict, List
+from typing import Any, Callable, Dict, Hashable, List, Optional
 
 import h5py
 import numpy as np
@@ -40,18 +40,26 @@ class SliceData(Dataset):
     _DEFAULT_MAPPING = {"kspace": "kspace", "maps": "maps", "target": "target"}
     _REQUIRED_METADATA = ("file_name", "is_unsupervised", "fixed_acc")
 
-    def __init__(self, dataset_dicts: List[Dict], transform, keys=None, include_metadata=False):
+    def __init__(
+        self,
+        dataset_dicts: List[Dict],
+        transform: Callable,
+        keys: Optional[Dict[str, str]] = None,
+        include_metadata: bool = False,
+        max_attempts: int = 100,
+    ):
         """
         Args:
-            dataset_dicts (List[Dict]): List of dictionaries. Each dictionary
+            dataset_dicts: List of dictionaries. Each dictionary
                 contains information about a single scan in Meddlr format.
-            transform (callable): A callable object that pre-processes the
+            transform: A callable object that pre-processes the
                 raw data into appropriate form. The transform function should
                 take 'kspace', 'target', 'attributes', 'filename', and 'slice'
                 as inputs. 'target' may be null for test data.
-            include_metadata (bool, optional): If `True`, includes scan metadata:
-                - "scan_id"
-                - "slice_id"
+            keys: A dictionary mapping dataset keys to HDF5 file keys.
+                Dataset keys include 'kspace`, 'target`, and 'maps`.
+            include_metadata: Whether to include scan metadata.
+            max_attempts: Maximum number of attempts to load an example in the :class:`HDF5Manager`.
         """
         self.transform = transform
 
@@ -72,9 +80,9 @@ class SliceData(Dataset):
             self.mapping.update(keys)
         self._include_metadata = include_metadata
 
-        self._hdf5_manager = HDF5Manager(cache=False, max_attempts=5, wait_time=1)
+        self._hdf5_manager = HDF5Manager(cache=False, max_attempts=max_attempts)
 
-    def groups(self, group_by):
+    def groups(self, group_by: Any) -> Dict[Hashable, List[int]]:
         _groups = defaultdict(list)
         for idx, example in enumerate(self.examples):
             try:
@@ -149,18 +157,10 @@ class SliceData(Dataset):
         target = data["target"]
 
         fname = os.path.splitext(os.path.basename(file_path))[0]
-        masked_kspace, maps, target, mean, std, norm = self.transform(
-            kspace, maps, target, fname, slice_id, is_unsupervised, fixed_acc
-        )
+        vals = self.transform(kspace, maps, target, fname, slice_id, is_unsupervised, fixed_acc)
+        target = vals.pop("target", None)
 
-        vals = {
-            "kspace": masked_kspace,
-            "maps": maps,
-            "mean": mean,
-            "std": std,
-            "norm": norm,
-            "is_unsupervised": is_unsupervised,
-        }
+        vals["is_unsupervised"] = is_unsupervised
         if (
             hasattr(self.transform, "augmentor")
             and isinstance(self.transform, DataTransform)

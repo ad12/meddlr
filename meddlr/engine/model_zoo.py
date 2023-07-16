@@ -1,6 +1,6 @@
 import os
 import warnings
-from typing import Any, Dict, Union
+from typing import Any, Callable, Dict, Union
 
 import torch
 
@@ -18,13 +18,14 @@ def get_model_from_zoo(
     strict: bool = True,
     ignore_shape_mismatch: bool = False,
     force_download: bool = False,
-    build_model_fn: callable = None,
+    build_model_fn: Callable = None,
     build_model_kwargs: Dict[str, Any] = None,
 ) -> torch.nn.Module:
     """Get model from zoo and optionally load in weights.
 
     This function is designed for distributing models for use.
     It builds the model from a configuration and optionally loads in pre-trained weights.
+
     Pre-trained weights can either be specified by the ``weights_file`` argument
     or by setting the config option ``cfg.MODEL.WEIGHTS``. If neither is specified,
     the model is initialized randomly. If ``weights_file`` is an empty string,
@@ -49,6 +50,24 @@ def get_model_from_zoo(
 
     Returns:
         torch.nn.Module: The model loaded with pre-trained weights.
+
+    Examples:
+        .. code-block:: python
+            from meddlr.config import get_cfg
+            from meddlr.engine.model_zoo import get_model_from_zoo
+
+            # Load a pretrained model from a config file.
+            cfg_file = "https://huggingface.co/arjundd/vortex-release/raw/main/mridata_knee_3dfse/Supervised/config.yaml"  # noqa: E501
+            weights_path = "https://huggingface.co/arjundd/vortex-release/resolve/main/mridata_knee_3dfse/Supervised/model.ckpt"  # noqa: E501
+            model = get_model_from_zoo(cfg_file, weights_path)
+
+            # Build a model from config file with randomly initialized weights.
+            model = get_model_from_zoo(cfg_file, weights_path="")
+
+            # Build model from a config object.
+            cfg = get_cfg()
+            cfg.MODEL.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+            model = get_model_from_zoo(cfg)
     """
     path_manager = env.get_path_manager()
 

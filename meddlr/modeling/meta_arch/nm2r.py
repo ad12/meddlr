@@ -6,11 +6,31 @@ from meddlr.config.config import configurable
 from meddlr.data.transforms.noiseandmotion import NoiseAndMotionModel
 from meddlr.modeling.meta_arch.build import META_ARCH_REGISTRY, build_model
 from meddlr.ops import complex as cplx
+from meddlr.utils.deprecated import deprecated
 from meddlr.utils.events import get_event_storage
 
 
+@deprecated(vremove="0.1.0", replacement="modeling.meta_arch.VortexModel")
 @META_ARCH_REGISTRY.register()
 class NM2RModel(nn.Module):
+    """(Deprecated) An extension of Noise2Recon to noise and motion artifacts.
+
+    See :class:`Noise2Recon` for a detailed description of the method.
+
+    Deprecated:
+        This class is deprecated. Use :class:`VortexModel` instead.
+
+    Attributes:
+        model (nn.Module): The model performing reconstruction.
+        augmentor (NoiseandMotionModel): The augmentation module.
+        vis_period (int): How often to visualize the training.
+        use_base_grad (bool): Whether to keep gradient for base
+            reconstruction in consistency training. Defaults to
+            `False`.
+        use_supervised_consistency (bool): Whether to use
+            consistency training for supervised examples.
+    """
+
     _version = 2
 
     @configurable

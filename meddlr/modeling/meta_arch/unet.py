@@ -104,9 +104,25 @@ class TransposeConvBlock(nn.Module):
 
 @META_ARCH_REGISTRY.register()
 class UnetModel(nn.Module):
-    """
-    PyTorch implementation of a U-Net model.
-    This is based on:
+    """U-Net model as implemented in fastMRI.
+
+    This model is designed for to interface with complex data.
+    It may be helpful when benchmarking MRI reconstruction models
+    as it is a benchmark model used by fastMRI (https://github.com/facebookresearch/fastMRI).
+
+    Args:
+        in_channels (int): Number of input channels.
+        out_channels (int): Number of output channels.
+        channels (int): Number of output channels for the first convolution layer.
+            At all subsequent depths, the number of output channels is doubled.
+            For example, if `channels=32`, number of channels will be
+            ``[32, 64, 128, ...]``.
+        num_pool_layers (int): Number of down-sampling and up-sampling layers.
+            By definition, the depth of the network is ``num_pool_layers + 1``.
+        dropout (float): Dropout probability.
+        use_latent (bool): Whether to use latent features
+
+    Reference:
         Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: Convolutional networks
         for biomedical image segmentation. In International Conference on Medical image
         computing and computer-assisted intervention, pages 234–241. Springer, 2015.
@@ -351,7 +367,13 @@ class UnetModel(nn.Module):
         if use_cplx:
             pred = torch.view_as_complex(pred.contiguous())
 
-        output_dict = {"pred": pred, "target": target}  # N x Y x Z x 1 (x 2)  # N x Y x Z x 1 (x 2)
+        # pred: shape [batch, height, width, #maps, 2]
+        # target: shape [batch, height, width, #maps, 2]
+        output_dict = {
+            "pred": pred,
+            "target": target,
+            "signal_model": A,
+        }
 
         if return_pp:
             output_dict.update({k: inputs[k] for k in ["mean", "std", "norm"]})

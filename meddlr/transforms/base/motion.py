@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import torch
 
@@ -10,33 +10,34 @@ from meddlr.transforms.transform import Transform
 @TRANSFORM_REGISTRY.register()
 class MRIMotionTransform(Transform):
     """A model that corrupts kspace inputs with motion.
+
     Motion is a common artifact experienced during the MR imaging forward problem.
     When a patient moves, the recorded (expected) location of the kspace sample is
     different than the actual location where the kspace sample that was acquired.
     This module is responsible for simulating different motion artifacts.
-    Args:
-        seed (int, optional): The fixed seed.
+
+    This
+
     Attributes:
         generator (torch.Generator): The generator that should be used for all
             random logic in this class.
-    Things to consider:
-        1. What other information is relevant for inducing motion corruption?
-            This could include:
-            - ``traj``: The scan trajectory
-            - ``etl``: The echo train length - how many readouts per shot.
-            - ``num_shots``: Number of shots.
-        2. What would a simple translational motion model look?
-    Note:
-        We do not store this as a module or else it would be saved to the model
-        definition, which we dont want.
     """
 
     def __init__(
         self,
         std_dev: Union[float, Sequence[float]],
-        seed: int = None,
-        generator: torch.Generator = None,
+        seed: Optional[int] = None,
+        generator: Optional[torch.Generator] = None,
     ):
+        """
+        Args:
+            std_dev: The standard deviation (i.e. extent) of motion to add to kspace.
+                Larger standard deviation enables larger phase shifts (i.e. more motion).
+                This is equivalent to the :math:`\\alpha` parameter in the paper.
+            seed (int, optional): The seed to use for the random number generator.
+            generator (torch.Generator, optional): The random number generator to use.
+                Must be specified if ``seed`` is not set.
+        """
         self.std_dev = std_dev
         self.seed = seed
 

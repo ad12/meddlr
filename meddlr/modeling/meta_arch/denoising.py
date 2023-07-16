@@ -17,6 +17,8 @@ __all__ = ["DenoisingModel"]
 
 @META_ARCH_REGISTRY.register()
 class DenoisingModel(nn.Module):
+    """A denoising trainer."""
+
     @configurable
     def __init__(
         self,

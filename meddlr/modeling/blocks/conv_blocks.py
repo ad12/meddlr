@@ -1,9 +1,9 @@
 import inspect
-from typing import Any, Dict, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import torch.nn as nn
 
-from meddlr.modeling.layers.build import get_layer_kind, get_layer_type
+from meddlr.modeling.layers.build import LayerInfo, LayerInfoRawType, build_layer_info_from_seq
 
 __all__ = [
     "SimpleConvBlockNd",
@@ -28,13 +28,12 @@ class SimpleConvBlockNd(nn.Sequential):
         * "dropout": Dropout
 
     Args:
-        in_channels (int): Number of channels in the input.
-        out_channels (int): Number of channels in the output.
-        kernel_size (`int(s)`): Convolution kernel size.
-        dimension (int): Integer specifying the dimension of convolution.
-        dropout (float, optional): Dropout probability.
-        order (:obj:`str(s)`, optional): Order of layers in the convolution block. Note layers
-            can be repeated.
+        in_channels: Number of channels in the input.
+        out_channels: Number of channels in the output.
+        kernel_size: Convolution kernel size.
+        dimension: Integer specifying the dimension of convolution.
+        dropout: Dropout probability.
+        order: Order of layers in the convolution block.
     """
 
     def __init__(
@@ -45,8 +44,13 @@ class SimpleConvBlockNd(nn.Sequential):
         dimension: int,
         stride: Union[int, Tuple[int, ...]] = 1,
         dropout: float = 0.0,
-        order: Tuple[Union[str, Tuple[str, Dict]], ...] = ("conv", "batchnorm", "relu", "dropout"),
         padding: Union[str, int, Tuple[int, ...]] = "same",
+        order: Sequence[Union[LayerInfoRawType, LayerInfo]] = (
+            "conv",
+            "batchnorm",
+            "relu",
+            "dropout",
+        ),
     ):
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -66,35 +70,32 @@ class SimpleConvBlockNd(nn.Sequential):
         elif not isinstance(padding, int) and not isinstance(padding, Tuple):  # TODO: Improve check
             raise ValueError(f"Invalid value for padding '{padding}'")
 
-        names = [x if isinstance(x, str) else x[0] for x in order]
-        layer_classes = [get_layer_type(layer_name, dimension) for layer_name in names]
-        layer_kinds = [get_layer_kind(x) for x in layer_classes]
+        order: List[LayerInfo] = build_layer_info_from_seq(order, dimension=dimension)
 
         layers = []
         running_num_channels = in_channels
-        for idx, (name, layer_cls, kind) in enumerate(zip(order, layer_classes, layer_kinds)):
-            curr_layer = order[idx]
-            lyr_kwargs: Dict[str, Any] = curr_layer[1] if isinstance(curr_layer[1], dict) else {}
+        for layer_info in order:
+            name, layer_cls, kind = layer_info.name, layer_info.ltype, layer_info.kind
             if kind == "conv":
-                layer = layer_cls(
+                layer = layer_info.build(
                     running_num_channels,
                     out_channels,
                     kernel_size=kernel_size,
                     padding=padding,
                     stride=stride,
-                    **lyr_kwargs,
                 )
                 running_num_channels = out_channels
             elif kind == "norm":
                 sig = inspect.signature(layer_cls)
+                lyr_kwargs = {}
                 for kwarg_name in ("num_channels", "num_features"):
-                    if kwarg_name not in lyr_kwargs and kwarg_name in sig.parameters:
+                    if kwarg_name not in layer_info.init_kwargs and kwarg_name in sig.parameters:
                         lyr_kwargs[kwarg_name] = running_num_channels
-                layer = layer_cls(**lyr_kwargs)
+                layer = layer_info.build(**lyr_kwargs)
             elif kind == "dropout":
-                layer = layer_cls(dropout, **lyr_kwargs)
+                layer = layer_info.build(dropout)
             elif kind == "act":
-                layer = layer_cls(**lyr_kwargs)
+                layer = layer_info.build()
             else:
                 raise ValueError(f"Layer {name} (kind: {kind}) not supported")
             layers.append(layer)

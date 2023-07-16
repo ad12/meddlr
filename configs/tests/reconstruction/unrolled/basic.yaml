@@ -1,0 +1,27 @@
+# Basic testing config
+# Use this for any testing you may want to do in the future.
+# The model will be trained for 60 iterations (not epochs)
+# on the mridata.org 2019 knee dataset.
+MODEL:
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 8
+    NUM_RESBLOCKS: 2
+    NUM_FEATURES: 128
+    DROPOUT: 0.
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
+DATALOADER:
+  NUM_WORKERS: 0  # for debugging purposes
+SOLVER:
+  TRAIN_BATCH_SIZE: 1
+  TEST_BATCH_SIZE: 2
+  CHECKPOINT_PERIOD: 20
+  MAX_ITER: 80
+TEST:
+  EVAL_PERIOD: 40
+VIS_PERIOD: 20
+TIME_SCALE: "iter"
+OUTPUT_DIR: "results://tests/basic"
+VERSION: 1

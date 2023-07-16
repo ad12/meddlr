@@ -1,0 +1,7 @@
+_BASE_: "basic.yaml"
+MODEL:
+  RECON_LOSS:
+    NAME: "LPIPS"
+    RENORMALIZE_DATA: False
+OUTPUT_DIR: "results://tests/lpips-loss"
+VERSION: 1

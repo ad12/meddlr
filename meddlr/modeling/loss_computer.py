@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
+from typing import Callable, Optional
 
 import torch
 from fvcore.common.registry import Registry
 
+import meddlr.metrics.functional as mF
+import meddlr.ops as oF
 from meddlr.data.transforms.transform import build_normalizer
+from meddlr.forward.mri import SenseModel
+from meddlr.metrics.build import build_metrics
+from meddlr.metrics.metric import Metric
 from meddlr.ops import complex as cplx
-from meddlr.utils import transforms as T
 
 LOSS_COMPUTER_REGISTRY = Registry("LOSS_COMPUTER")  # noqa F401 isort:skip
 LOSS_COMPUTER_REGISTRY.__doc__ = """
@@ -16,8 +21,27 @@ and expected to return a LossComputer object.
 """
 
 EPS = 1e-11
-IMAGE_LOSSES = ["l1", "l2", "psnr", "nrmse", "mag_l1", "perp_loss"]
-KSPACE_LOSSES = ["k_l1", "k_l1_normalized", "k_l1_l2_sum_normalized"]
+IMAGE_LOSSES = [
+    "l1",
+    "l2",
+    "psnr",
+    "nrmse",
+    "mag_l1",
+    "perp_loss",
+    "ssim_loss",
+    "ssim_phase_loss",
+    "ssim_mag_phase_loss",
+]
+KSPACE_LOSSES = [
+    "k_l1",
+    "k_l1_sum",
+    "k_l1_normalized",
+    "k_l1_sum_normalized",
+    "k_l1_l2_sum_normalized",
+]
+# Add option for signal model corrected loss computation.
+# TODO (arjundd): Clean up.
+KSPACE_LOSSES += [f"signal_model_corr_{loss}" for loss in KSPACE_LOSSES]
 
 
 def build_loss_computer(cfg, name, **kwargs):
@@ -25,14 +49,25 @@ def build_loss_computer(cfg, name, **kwargs):
 
 
 class LossComputer(ABC):
-    def __init__(self, cfg):
+    def __init__(self, cfg, loss_func: Callable = None):
         self._normalizer = build_normalizer(cfg)
+        self.loss_func = loss_func
 
     @abstractmethod
     def __call__(self, input, output):
         pass
 
-    def _get_metrics(self, target: torch.Tensor, output: torch.Tensor, loss_name):
+    def _get_metrics(
+        self,
+        target: torch.Tensor,
+        output: torch.Tensor,
+        loss_name: str = None,
+        signal_model: Optional[SenseModel] = None,
+    ):
+        if self.loss is not None:
+            is_same_loss = isinstance(self.loss, str) and loss_name == self.loss
+            assert loss_name is None or is_same_loss
+
         # Compute metrics
         if loss_name == "mag_l1":
             abs_error = torch.abs(output - target)
@@ -59,18 +94,46 @@ class LossComputer(ABC):
             "psnr": psnr.mean(),
             "nrmse": nrmse.mean(),
             "mag_l1": mag_l1,
+            "ssim_wang": mF.ssim(
+                cplx.channels_first(output).contiguous(),
+                cplx.channels_first(target).contiguous(),
+                method="wang",
+            ).mean(),
+            "ssim_wang_phase": mF.ssim(
+                cplx.channels_first(output).contiguous(),
+                cplx.channels_first(target).contiguous(),
+                method="wang",
+                im_type="phase",
+            ).mean(),
         }
-
         if loss_name == "perp_loss":
             metrics_dict.update(perp_loss(output, target))
+        if loss_name == "ssim_loss":
+            metrics_dict["ssim_loss"] = 1.0 - metrics_dict["ssim_wang"]
+        if loss_name == "ssim_phase_loss":
+            metrics_dict["ssim_phase_loss"] = 1.0 - metrics_dict["ssim_wang_phase"]
+        if loss_name == "ssim_mag_phase_loss":
+            avg_ssim = (metrics_dict["ssim_wang"] + metrics_dict["ssim_wang_phase"]) / 2
+            metrics_dict["ssim_mag_phase_loss"] = 1.0 - avg_ssim
 
         if loss_name in KSPACE_LOSSES:
-            target, output = T.fft2(target), T.fft2(output)
+            if loss_name.startswith("signal_model_corr_"):
+                assert signal_model is not None
+                loss_name = loss_name.split("signal_model_corr_")[1]
+                output = signal_model(output)
+                target = signal_model(target)
+            else:
+                target = oF.fft2c(target, channels_last=True)
+                output = oF.fft2c(output, channels_last=True)
             abs_error = cplx.abs(target - output)
             if loss_name == "k_l1":
                 metrics_dict["loss"] = torch.mean(abs_error)
+            elif loss_name == "k_l1_sum":
+                metrics_dict["loss"] = torch.sum(abs_error)
             elif loss_name == "k_l1_normalized":
                 metrics_dict["loss"] = torch.mean(abs_error / (cplx.abs(target) + EPS))
+            elif loss_name == "k_l1_sum_normalized":
+                metrics_dict["loss"] = torch.sum(abs_error) / torch.sum(cplx.abs(target))
             elif loss_name == "k_l1_l2_sum_normalized":
                 kl1_norm = torch.sum(abs_error) / torch.sum(cplx.abs(target))
                 kl2_norm = torch.sqrt(torch.sum(abs_error**2)) / torch.sqrt(
@@ -79,6 +142,10 @@ class LossComputer(ABC):
                 metrics_dict["loss"] = 0.5 * kl1_norm + 0.5 * kl2_norm
             else:
                 assert False  # should not reach here
+        elif self.loss_func is not None:
+            output = cplx.channels_first(output)
+            target = cplx.channels_first(target)
+            metrics_dict["loss"] = self.loss_func(output, target)
         else:
             loss = metrics_dict[loss_name]
             metrics_dict["loss"] = loss
@@ -89,15 +156,29 @@ class LossComputer(ABC):
 @LOSS_COMPUTER_REGISTRY.register()
 class BasicLossComputer(LossComputer):
     def __init__(self, cfg):
-        super().__init__(cfg)
         loss_name = cfg.MODEL.RECON_LOSS.NAME
-        assert loss_name in IMAGE_LOSSES or loss_name in KSPACE_LOSSES
+        if loss_name in IMAGE_LOSSES or loss_name in KSPACE_LOSSES:
+            loss_func = None
+        else:
+            loss_func: Metric = list(build_metrics([loss_name]).values(copy_state=False))[0]
+            loss_func = loss_func.to(cfg.MODEL.DEVICE)
+            loss_name = None
+            if not loss_func.is_differentiable:
+                raise ValueError("Loss function must be differentiable")
+            if loss_func.higher_is_better:
+                raise ValueError(
+                    "Loss function must be lower is better. "
+                    "We do not currently support higher_is_better losses."
+                )
         self.loss = loss_name
         self.renormalize_data = cfg.MODEL.RECON_LOSS.RENORMALIZE_DATA
+
+        super().__init__(cfg, loss_func=loss_func)
 
     def __call__(self, input, output):
         pred: torch.Tensor = output["pred"]
         target = output["target"].to(pred.device)
+        signal_model = output.get("signal_model")
 
         if self.renormalize_data:
             normalization_args = {k: input.get(k, output.get(k, None)) for k in ["mean", "std"]}
@@ -112,7 +193,7 @@ class BasicLossComputer(LossComputer):
         else:
             output = pred
 
-        metrics_dict = self._get_metrics(target, output, self.loss)
+        metrics_dict = self._get_metrics(target, output, self.loss, signal_model=signal_model)
         return metrics_dict
 
 
@@ -127,6 +208,7 @@ class N2RLossComputer(LossComputer):
         assert recon_loss in IMAGE_LOSSES or recon_loss in KSPACE_LOSSES
         assert consistency_loss in IMAGE_LOSSES or consistency_loss in KSPACE_LOSSES
 
+        self.loss = None
         self.recon_loss = recon_loss
         self.consistency_loss = consistency_loss
         self.latent_loss = latent_loss
@@ -148,6 +230,7 @@ class N2RLossComputer(LossComputer):
 
         pred: torch.Tensor = output["pred"]
         target = output["target"].to(pred.device)
+        signal_model = output.get("signal_model")
         if self.renormalize_data:
             normalized = self._normalizer.undo(
                 image=pred, target=target, mean=input["mean"], std=input["std"]
@@ -158,7 +241,7 @@ class N2RLossComputer(LossComputer):
             output = pred
 
         # Compute metrics
-        metrics_dict = self._get_metrics(target, output, loss)
+        metrics_dict = self._get_metrics(target, output, loss, signal_model=signal_model)
         return metrics_dict
 
     # def compute_robust_loss(self, group_loss):

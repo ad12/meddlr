@@ -1,0 +1,60 @@
+# Implementation of SSDU based on the paper.
+# https://doi-org.stanford.idm.oclc.org/10.1002/mrm.28378
+#
+# Architecture:
+# - Unrolled CNN (10 steps) with Conjugate Gradient (10 steps)
+# - Shared CNN weights across steps
+# - ResNet: x -> Conv -> ResBlock (x15) -> Conv -> + -> Conv ->
+#           |                                      |
+#           v______________________________________^
+# - ResBlock: x -> Conv -> ReLU -> Conv -> Scale (0.1) -> + -> 
+#             |                                           |
+#             v___________________________________________v
+
+_BASE_: "basic.yaml"
+OUTPUT_DIR: "results://tests/reconstruction/unrolled/ssdu-paper"
+MODEL:
+  META_ARCHITECTURE: "SSDUModel"
+  SSDU:
+    META_ARCHITECTURE: "CGUnrolledCNN"
+    MASKER:
+      PARAMS:
+        p: 1.0
+        rhos: 0.4  # Based on hyperparameter search
+        kind: "uniform"  # Choices: ["uniform", "gaussian"]
+        per_example: True
+        std_scale: 4  # Default value in SSDU code
+  UNROLLED:
+    BLOCK_ARCHITECTURE: "ResNetModel"
+    NUM_UNROLLED_STEPS: 10
+    # Default value in SSDU code: https://github.com/byaman14/SSDU/blob/060ec76d479156560e62f4d95708f7260925e31d/UnrollNet.py#L58
+    STEP_SIZES: (0.05,)
+    DC:
+      MAX_ITER: 10
+      # In the SSDU paper, there is no minimum epsilon value.
+      # We set it to a very small value to replicate this. 
+      EPS: 1e-8
+    SHARE_WEIGHTS: True
+  RESNET:
+    IN_CHANNELS: 2  # real/imaginary channels
+    CHANNELS: 64
+    NUM_BLOCKS: 15
+    KERNEL_SIZE: (3,)
+    PRE_CONV: True
+    POST_CONV: True
+    BIAS: False
+    CONV_BLOCK:
+      NUM_BLOCKS: 1
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER:
+      - "conv"
+      - "act"
+      - "conv"
+      - name: "scale"
+        factor: 0.1
+        trainable: false
+  RECON_LOSS:
+    NAME: "k_l1"  # Optimal value based on hyperparameter search
+    RENORMALIZE_DATA: False
+VERSION: 1

@@ -10,7 +10,7 @@ import sys
 import warnings
 from datetime import datetime
 from importlib import util
-from typing import List
+from typing import Sequence, Union
 
 import numpy as np
 import torch
@@ -23,6 +23,38 @@ _PT_VERSION = torch.__version__
 _SETTINGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.settings"))
 _GITHUB_URL = "https://github.com/ad12/meddlr"
 _SUPPORTED_PACKAGES = {}
+
+
+class Version(version.Version):
+    """
+    An extension of packaging.version.Version that supports
+    comparisons with strings and lists.
+    """
+
+    def _format_version(self, other: Union[str, Sequence[Union[str, int]]]):
+        if isinstance(other, str):
+            return version.Version(other)
+        if isinstance(other, (list, tuple)):
+            return version.Version(".".join(map(str, other)))
+        return other
+
+    def __eq__(self, other):
+        return super().__eq__(self._format_version(other))
+
+    def __lt__(self, other):
+        return super().__lt__(self._format_version(other))
+
+    def __le__(self, other):
+        return super().__le__(self._format_version(other))
+
+    def __gt__(self, other):
+        return super().__gt__(self._format_version(other))
+
+    def __ge__(self, other):
+        return super().__ge__(self._format_version(other))
+
+    def __ne__(self, other):
+        return super().__ne__(self._format_version(other))
 
 
 def seed_all_rng(seed=None):
@@ -307,12 +339,9 @@ def supports_cupy():
     return package_available("cupy")
 
 
-def pt_version(dtype=int) -> List:
-    version = list(_PT_VERSION.split("."))
-    version[-1] = version[-1].split("+")[0]
-    if not issubclass(dtype, str):
-        version = [dtype(x) for x in version]
-    return version
+def pt_version() -> Version:
+    """Returns the PyTorch version."""
+    return Version(_PT_VERSION)
 
 
 def supports_cplx_tensor() -> bool:

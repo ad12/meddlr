@@ -3,8 +3,9 @@ import itertools
 import logging
 import os
 import time
+import warnings
 from collections import defaultdict
-from typing import List, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -13,52 +14,62 @@ import torch
 from tqdm import tqdm
 
 import meddlr.utils.comm as comm
-from meddlr.data.transforms.transform import build_normalizer
+from meddlr.config.config import CfgNode, configurable
+from meddlr.data.transforms.transform import Normalizer, build_normalizer
 from meddlr.evaluation.scan_evaluator import ScanEvaluator, structure_scans
+from meddlr.forward.mri import hard_data_consistency
 from meddlr.metrics.build import build_metrics
 from meddlr.metrics.collection import MetricCollection
 from meddlr.ops import complex as cplx
 
 
 class ReconEvaluator(ScanEvaluator):
-    """
-    Evaluate reconstruction quality using the metrics listed below:
+    """Image reconstruction evaluator.
 
-    - reconstruction loss (as specified by `loss_computer`)
-    - L1, L2
-    - Magnitude PSNR
-    - Complex PSNR
-    - SSIM (to be implemented)
+    This evaluator can be used for image reconstruction, recovery and generation tasks.
+    It uses image quality metrics (e.g. SSIM, PSNR) to evaluate the quality of
+    the reconstructed images. For more details on metrics, see :mod:`meddlr.metrics.build`.
+
+    This evaluator also supports restacking slices into volumes.
+    To compute a metric on the full volume (i.e. scan), use metrics with the
+    suffix ``_scan`` (e.g. ``'psnr_scan'``).
     """
 
+    @configurable
     def __init__(
         self,
-        dataset_name,
-        cfg,
-        distributed=False,
-        sync_outputs=False,
-        aggregate_scans=True,
-        group_by_scan=False,
-        output_dir=None,
-        skip_rescale=False,
-        save_scans=False,
-        metrics=None,
-        flush_period: int = None,
-        to_cpu=False,
-        channel_names=None,
-        eval_in_process=False,
+        dataset_name: str,
+        cfg: CfgNode = None,
+        *,
+        postprocess: str = None,
+        normalizer: Normalizer = None,
+        device: str = "cuda",
+        distributed: bool = False,
+        sync_outputs: bool = False,
+        aggregate_scans: bool = True,
+        group_by_scan: bool = False,
+        output_dir: Optional[str] = None,
+        skip_rescale: bool = False,
+        save_scans: bool = False,
+        metrics: Sequence[str] = None,
+        flush_period: int = 0,
+        to_cpu: bool = False,
+        channel_names: Optional[Sequence[str]] = None,
+        eval_in_process: bool = False,
         structure_channel_by=None,
-        prefix="val",
+        prefix: str = "val",
     ):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
-            cfg (CfgNode): config instance
+            cfg (CfgNode): This argument is deprecated and will be removed in v0.1.0.
+                To instantiate the class with a config, pass the config as the first argument.
+                All other arguments
             output_dir (str): optional, an output directory to dump all
                 results predicted on the dataset.
             distributed (bool, optional): If ``True``, collect results from all
                 ranks for evaluation. Otherwise, will evaluate the results in the
-                current process. ∂If using ``DistributedDataParallel``, this should likely
+                current process. If using ``DistributedDataParallel``, this should likely
                 be ``True``.
             sync_outputs (bool, optional): If ``True``, synchronizes all predictions
                 before evaluation. If ``False``, synchronizes metrics before reduction.
@@ -79,16 +90,33 @@ class ReconEvaluator(ScanEvaluator):
                 (not batches).
             to_cpu (bool, optional): If ``True``, move all data to the cpu to do computation.
             eval_in_process (bool, optional): If ``True``, run slice/patch evaluation
-                while processing. This may increase overall throughput.
+                while processing. This may increase overall speed.
+            prefix (str): prefix to add to metric names.
         """
         self._dataset_name = dataset_name
         self._output_dir = output_dir
         if self._output_dir:
             os.makedirs(self._output_dir, exist_ok=True)
 
+        if cfg is not None:
+            warnings.warn(
+                "Passing `cfg` as an argument is deprecated and will be removed in v0.1.0. "
+                "To instantiate the class with a config, pass the config as the first argument.",
+                DeprecationWarning,
+            )
+            init_kwargs = self.from_config(cfg)
+            normalizer = init_kwargs.pop("normalizer")
+            postprocess = init_kwargs.pop("postprocess")
+            device = init_kwargs.pop("device")
+            flush_period = init_kwargs.pop("flush_period")
+            assert len(init_kwargs) == 0, f"Unrecognized arguments: {init_kwargs.keys()}"
+
+        if flush_period is None:
+            flush_period = 0
+
         self._cpu_device = torch.device("cpu")
         self._logger = logging.getLogger(__name__)
-        self._normalizer = build_normalizer(cfg)
+        self._normalizer = normalizer
         self._group_by_scan = group_by_scan
         self._distributed = distributed
         self._sync_outputs = sync_outputs
@@ -97,6 +125,8 @@ class ReconEvaluator(ScanEvaluator):
         self._channel_names = channel_names
         self._structure_channel_by = structure_channel_by
         self._prefix = prefix
+        self._postprocess = postprocess
+        self.device = device
 
         if save_scans and (not output_dir or not aggregate_scans):
             raise ValueError("`output_dir` and `aggregate_scans` must be specified to save scans.")
@@ -113,10 +143,6 @@ class ReconEvaluator(ScanEvaluator):
 
         self._results = None
 
-        if flush_period is None:
-            flush_period = cfg.TEST.FLUSH_PERIOD
-        if distributed and flush_period != 0:
-            raise ValueError("Result flushing is not enabled in distributed mode.")
         self.flush_period = flush_period
         self.to_cpu = to_cpu
         self.eval_in_process = eval_in_process
@@ -149,12 +175,13 @@ class ReconEvaluator(ScanEvaluator):
             slice_metrics,
             fmt=prefix + "{}",
             channel_names=self._channel_names,
-        )
+        ).to(self.device)
         self.scan_metrics = build_metrics(
             scan_metrics,
             fmt=prefix + "{}_scan",
             channel_names=self._channel_names,
-        )
+        ).to(self.device)
+
         self.slice_metrics.eval()
         self.scan_metrics.eval()
 
@@ -180,6 +207,15 @@ class ReconEvaluator(ScanEvaluator):
 
         preds: torch.Tensor
         targets: torch.Tensor
+
+        # Hacky way to postprocess the targets with hard data consistency (if specified).
+        if "hard_dc" in self._postprocess:
+            outputs["pred"] = hard_data_consistency(
+                outputs["pred"],
+                acq_kspace=inputs["kspace"],
+                mask=inputs["postprocessing_mask"],
+                maps=inputs["maps"],
+            )
 
         if self._skip_rescale:
             # Do not rescale the outputs
@@ -401,7 +437,13 @@ class ReconEvaluator(ScanEvaluator):
             ex_id = [ex_id]
         output, target = cplx.channel_first(output), cplx.channel_first(target)
         metrics(preds=output, targets=target, ids=ex_id)
-        return metrics.to_dict()
+        # TODO (arjundd): Add support for multiple metrics
+        # Hacky way to return an empty dict when metrics are not supported.
+        # TODO (arjundd): Handle metric-less evaluation appropriately
+        try:
+            return metrics.to_dict()
+        except ValueError:  # pragma: no cover
+            return {}
 
     def _append_memory(self, key):
         if not torch.cuda.is_available():
@@ -411,3 +453,17 @@ class ReconEvaluator(ScanEvaluator):
         if len(mem) > 1 and (mem[-1] - mem[-2] > 500):
             self._logger.info(f"Memory exceeded '{key}'- previous 5 logs: {mem[-5:]}")
             # self._logger.info(torch.cuda.memory_stats())
+
+    @classmethod
+    def from_config(cls, cfg: CfgNode):
+        if hasattr(cfg.TEST, "POSTPROCESSOR"):
+            postprocess = cfg.TEST.POSTPROCESSOR.NAME
+        else:
+            # This is required to be compatible with the skm-tea config.
+            postprocess = ""
+        return {
+            "normalizer": build_normalizer(cfg),
+            "postprocess": postprocess,
+            "device": cfg.MODEL.DEVICE,
+            "flush_period": cfg.TEST.FLUSH_PERIOD,
+        }

@@ -1,0 +1,17 @@
+_BASE_: "basic.yaml"
+MODEL:
+  META_ARCHITECTURE: "GeneralizedUnrolledCNN"
+  UNROLLED:
+    BLOCK_ARCHITECTURE: "monai/VNet"
+  MONAI:
+    VNet:
+      in_channels: 2
+      out_channels: 2
+      spatial_dims: 2
+      dropout_dim: 2
+      dropout_prob: 0.0
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+OUTPUT_DIR: "results://tests/reconstruction/unrolled/monai-vnet-block"
+VERSION: 1

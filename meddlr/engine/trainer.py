@@ -443,7 +443,7 @@ class DefaultTrainer(SimpleTrainer):
             metrics = cfg.TEST.VAL_METRICS.RECON
         else:
             metrics = None
-        return ReconEvaluator(dataset_name, cfg, metrics=metrics)
+        return ReconEvaluator(cfg, dataset_name=dataset_name, metrics=metrics)
 
     @classmethod
     def test(cls, cfg, model, evaluators=None, use_val: bool = False):

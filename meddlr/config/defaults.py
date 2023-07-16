@@ -24,59 +24,93 @@ _MRI_RECON_TFM.AUG_SENSITIVITY_MAPS = True
 # -----------------------------------------------------------------------------
 
 _C = CN()
+# The config version.
 _C.VERSION = 1
 
 _C.MODEL = CN()
+# The device to use for the experiment.
 _C.MODEL.DEVICE = "cuda"
+# The name of the model. See meddlr/modeling/meta_arch for options.
 _C.MODEL.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
+# Path to weights to use to initialize the model.
+# Useful if you want to fine tune the model.
 _C.MODEL.WEIGHTS = ""
 
 # -----------------------------------------------------------------------------
-# Unrolled model - TODO: Deprecate
+# Unrolled model config
 # -----------------------------------------------------------------------------
 _C.MODEL.UNROLLED = CN()
+# Block type to use for the unrolled model.
 _C.MODEL.UNROLLED.BLOCK_ARCHITECTURE = "ResNet"
+# Number of unrolled steps.
 _C.MODEL.UNROLLED.NUM_UNROLLED_STEPS = 5
+# Number of residual blocks per unrolled step.
+# Only applicable for ResNet block architecture.
 _C.MODEL.UNROLLED.NUM_RESBLOCKS = 2
+# Number of channels for ResNet conv block.
+# Only applicable for ResNet block architecture.
 _C.MODEL.UNROLLED.NUM_FEATURES = 256
+# Dropout after each conv block.
+# Only applicable for ResNet block architecture.
 _C.MODEL.UNROLLED.DROPOUT = 0.0
-# Padding options. "" for now. TODO: add "circular"
+# Padding options.
+# Only applicable for ResNet block architecture.
 _C.MODEL.UNROLLED.PADDING = ""
+# Step size for each unrolled block.
+# If only one element, the same step size is used for all blocks.
 _C.MODEL.UNROLLED.STEP_SIZES = (-2.0,)
+# Whether to fix the step size or make it learnable.
 _C.MODEL.UNROLLED.FIX_STEP_SIZE = False
+# Whether to share weights between each unrolled block.
 _C.MODEL.UNROLLED.SHARE_WEIGHTS = False
 # Kernel size
 _C.MODEL.UNROLLED.KERNEL_SIZE = (3,)
-# Number of ESPIRiT maps
+# Number of sensitivity maps per scan. Currently only 1 is supported.
 _C.MODEL.UNROLLED.NUM_EMAPS = 1
 
 # Conv block parameters
 _C.MODEL.UNROLLED.CONV_BLOCK = CN()
 # Either "relu" or "leaky_relu"
 _C.MODEL.UNROLLED.CONV_BLOCK.ACTIVATION = "relu"
-# Either "none", "instance", or "batch"
+# Normalization type. Either "none", "instance", or "batch"
 _C.MODEL.UNROLLED.CONV_BLOCK.NORM = "none"
-# Use affine on norm
+# Use affine on normalization block.
 _C.MODEL.UNROLLED.CONV_BLOCK.NORM_AFFINE = False
 _C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
 
+# Data consistency parameters.
+_C.MODEL.UNROLLED.DC = CN()
+_C.MODEL.UNROLLED.DC.MAX_ITER = 10
+_C.MODEL.UNROLLED.DC.EPS = 1e-4
+
+# Reconstruction loss parameters.
 _C.MODEL.RECON_LOSS = CN()
+# The reconstruction loss type. See :obj:`meddlr.modeling.loss_computer` for options.
 _C.MODEL.RECON_LOSS.NAME = "l1"
+# Whether to renormalize the predicted image before computing the loss.
 _C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
+# Consistency configuration. Used for Noise2Recon and VORTEX.
 _C.MODEL.CONSISTENCY = CN()
+# Whether to use consistency loss in the latent space.
 _C.MODEL.CONSISTENCY.USE_LATENT = False
+# Whether to use the consistency loss.
 _C.MODEL.CONSISTENCY.USE_CONSISTENCY = True
+# The loss to use for latent space consistency.
 _C.MODEL.CONSISTENCY.LATENT_LOSS_NAME = "mag_l1"
 _C.MODEL.CONSISTENCY.NUM_LATENT_LAYERS = 1
+# The consistency loss.
 _C.MODEL.CONSISTENCY.LOSS_NAME = "l1"
+# The weighting for consistency loss.
 _C.MODEL.CONSISTENCY.LOSS_WEIGHT = 0.1
+# The weighting for latent space consistency loss.
 _C.MODEL.CONSISTENCY.LATENT_LOSS_WEIGHT = 0.1
 # Consistency Augmentations
 _C.MODEL.CONSISTENCY.AUG = CN()
 _C.MODEL.CONSISTENCY.AUG.NOISE = CN()
-_C.MODEL.CONSISTENCY.AUG.MOTION = CN()
 # Noise standard deviation - 1,5,8 used for 3D FSE in Lustig paper.
 _C.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (1,)
+_C.MODEL.CONSISTENCY.AUG.MOTION = CN()
+# Motion range (alpha in the VORTEX paper).
 _C.MODEL.CONSISTENCY.AUG.MOTION.RANGE = (0.2, 0.5)
 
 # Noise scheduler
@@ -120,6 +154,26 @@ _C.MODEL.UNET.NORMALIZE = False
 _C.MODEL.UNET.BLOCK_ORDER = ("conv", "relu", "conv", "relu", "batchnorm", "dropout")
 
 # -----------------------------------------------------------------------------
+# ResNet model
+# -----------------------------------------------------------------------------
+_C.MODEL.RESNET = CN()
+_C.MODEL.RESNET.IN_CHANNELS = 2
+_C.MODEL.RESNET.CHANNELS = 256
+_C.MODEL.RESNET.NUM_BLOCKS = 2
+_C.MODEL.RESNET.KERNEL_SIZE = (3,)
+_C.MODEL.RESNET.DROPOUT = 0.0
+_C.MODEL.RESNET.PADDING = ""
+_C.MODEL.RESNET.PRE_CONV = False
+_C.MODEL.RESNET.POST_CONV = False
+_C.MODEL.RESNET.BIAS = True
+_C.MODEL.RESNET.CONV_BLOCK = CN()
+_C.MODEL.RESNET.CONV_BLOCK.NUM_BLOCKS = 2
+_C.MODEL.RESNET.CONV_BLOCK.ACTIVATION = "relu"
+_C.MODEL.RESNET.CONV_BLOCK.NORM = "none"
+_C.MODEL.RESNET.CONV_BLOCK.NORM_AFFINE = False
+_C.MODEL.RESNET.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
+
+# -----------------------------------------------------------------------------
 # Denoising model
 # -----------------------------------------------------------------------------
 _C.MODEL.DENOISING = CN()
@@ -132,7 +186,7 @@ _C.MODEL.DENOISING.NOISE.STD_DEV = (1,)
 # randomly generated undersampled kspace.
 _C.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET = True
 # Same as above, but at eval time (e.g. validation).
-# Defaults to MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET
+# Defaults to :obj:`MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET`
 _C.MODEL.DENOISING.NOISE.USE_FULLY_SAMPLED_TARGET_EVAL = None
 
 # -----------------------------------------------------------------------------
@@ -148,7 +202,7 @@ _C.MODEL.CS.MAX_ITER = 200
 _C.MODEL.N2R = CN()
 _C.MODEL.N2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
-# Use MODEL.CONSISTENCY.AUG.NOISE.STD_DEV to control noise parameters.
+# Use :obj:`MODEL.CONSISTENCY.AUG.NOISE.STD_DEV` to control noise parameters.
 
 # -----------------------------------------------------------------------------
 # Motion2Recon (M2R) model
@@ -156,7 +210,7 @@ _C.MODEL.N2R.USE_SUPERVISED_CONSISTENCY = False
 _C.MODEL.M2R = CN()
 _C.MODEL.M2R.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.M2R.USE_SUPERVISED_CONSISTENCY = False
-# Use MODEL.CONSISTENCY.AUG.MOTION_RANGE to control motion parameters.
+# Use :obj:`MODEL.CONSISTENCY.AUG.MOTION_RANGE` to control motion parameters.
 
 # -----------------------------------------------------------------------------
 # NoiseMotion2Recon (NM2R) model
@@ -180,6 +234,14 @@ _C.MODEL.SSDU = CN()
 _C.MODEL.SSDU.META_ARCHITECTURE = "GeneralizedUnrolledCNN"
 _C.MODEL.SSDU.MASKER = CN()
 _C.MODEL.SSDU.MASKER.PARAMS = CN(new_allowed=True)
+_C.MODEL.SSDU.AUGMENTOR = _MRI_RECON_TFM.clone()
+_C.MODEL.SSDU.POSTPROCESSOR = CN()
+_C.MODEL.SSDU.POSTPROCESSOR.NAME = ""
+
+# -----------------------------------------------------------------------------
+# MONAI wrapper
+# -----------------------------------------------------------------------------
+_C.MODEL.MONAI = CN(new_allowed=True)
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -337,6 +399,8 @@ _C.TEST.VAL_METRICS.RECON = ()
 # Specify if you are getting OOM errors during evaluation.
 # Set to 0 to disable.
 _C.TEST.FLUSH_PERIOD = 0
+_C.TEST.POSTPROCESSOR = CN()
+_C.TEST.POSTPROCESSOR.NAME = ""  # e.g. "hard_dc" for hard data consistency
 
 # ---------------------------------------------------------------------------- #
 # Misc options
@@ -373,3 +437,10 @@ _C.DESCRIPTION.EXP_NAME = ""
 # Tags associated with experiment.
 # e.g. "fastmri_knee_mc" for fastMRI dataset; "unrolled" for using unrolled network; etc.
 _C.DESCRIPTION.TAGS = ()
+
+# ---------------------------------------------------------------------------- #
+# Miscellaneous
+# This is a free field that can be used to add any extra config fields without
+# affecting loading of any particular config.
+# ---------------------------------------------------------------------------- #
+_C.MISC = CN(new_allowed=True)

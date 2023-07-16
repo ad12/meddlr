@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8"]
+        python-version: ["3.7", "3.8", "3.9"]
         
     steps:
       - uses: actions/checkout@v2
@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-                    
+
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
@@ -41,12 +41,27 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.7", "3.8"]
-        torchmetrics-version: ["0.6.0", "0.7.3", "latest"]
+        python-version: ["3.7", "3.8", "3.9"]
+        torchmetrics-version: ["latest"]
+        ignore-lpips: ["false"]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.9"
+            torchmetrics-version: "latest"
+            ignore-lpips: "true"
+          - os: ubuntu-latest
+            python-version: "3.9"
+            torchmetrics-version: "0.6.0"
+            ignore-lpips: "false"
+          - os: ubuntu-latest
+            python-version: "3.9"
+            torchmetrics-version: "0.7.3"
+            ignore-lpips: "false"
     env:
       TORCHMETRICS: ${{ matrix.torchmetrics-version }}
+      IGNORE_LPIPS: ${{ matrix.ignore-lpips }}
     
-    name: py${{ matrix.python-version  }}, torchmetrics-${{ matrix.torchmetrics-version }}, ${{ matrix.os }}
+    name: py${{ matrix.python-version  }}, torchmetrics-${{ matrix.torchmetrics-version }}, ignore-lpips-${{ matrix.ignore-lpips }}, ${{ matrix.os }}
 
     timeout-minutes: 50
     steps:
@@ -69,12 +84,15 @@ jobs:
           fi
           make dev
           pip install -e '.[alldev]'
+          if [[ $IGNORE_LPIPS == "true" ]]; then
+            pip uninstall -y lpips
+          fi
 
       - name: Test with pytest
         run: |
           pip install pytest
           pip install pytest-cov
-          MEDDLR_TEST_MODEL_ZOOS=True make test-cov
+          MEDDLR_TEST_MODEL_ZOOS=True MEDDLR_TEST_DEPRECATED=True make test-cov
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1
