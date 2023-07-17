@@ -2,21 +2,14 @@
 """
 import math
 from functools import partial
-<<<<<<< HEAD
 from typing import List, Optional, Sequence, Tuple
-=======
 from typing import Any, Dict
->>>>>>> main
-
 import numpy as np
 import torch
 from fvcore.common.registry import Registry
 
-<<<<<<< HEAD
 import meddlr.ops as F
-=======
 from meddlr.data.transforms.subsample import MaskFunc
->>>>>>> main
 from meddlr.forward import SenseModel
 from meddlr.ops import complex as cplx
 from meddlr.transforms.gen.spatial import RandomAffine, RandomTranslation
