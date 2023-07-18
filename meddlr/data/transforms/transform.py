@@ -532,11 +532,17 @@ class MotionDataTransform:
         self.p_noise = cfg.AUG_TRAIN.NOISE_P
         self.p_motion = cfg.AUG_TRAIN.MOTION_P
         self._normalizer = build_normalizer(cfg)
+        self._postprocessor = cfg.TEST.POSTPROCESSOR.NAME
 
         # Build augmentation pipeline.
         self.augmentor = None
         if not is_test and cfg.AUG_TRAIN.MRI_RECON.TRANSFORMS:
             pass
+    
+    def _get_mask(self, masked_kspace):
+        # If any of the coils are non-zero at a coordinate, we assume
+        assert torch.is_complex(masked_kspace)
+        return cplx.get_mask(masked_kspace, coil_dim=-1)
 
     def __call__(self, kspace, maps, target, fname, slice_id, is_fixed, acceleration: int = None):
         """
@@ -575,7 +581,20 @@ class MotionDataTransform:
         )  # handle rss vs. sensitivity-integrated
         norm = torch.sqrt(torch.mean(cplx.abs(target) ** 2))
 
+        # Apply mask in k-space
+        seed = sum(tuple(map(ord, fname))) if self._is_test or is_fixed else None  # noqa
+        masked_kspace, mask = self._subsampler(
+            kspace, mode="2D", seed=seed, acceleration=acceleration
+        )
+
         # TODO: Add other transforms here.
+
+        edge_mask = self._subsampler.edge_mask(kspace, mode="2D")
+        postprocessing_mask = None
+        if self._is_test and self._postprocessor:
+            postprocessing_mask = edge_mask
+            if self._postprocessor == "hard_dc_all":
+                postprocessing_mask = (postprocessing_mask + mask).bool().type(torch.float32)
 
         # If 2D MRI, then each slice will have different motion - seed is some
         # combination of the file name and the slice id (+).
@@ -669,4 +688,17 @@ class MotionDataTransform:
         maps = maps.squeeze(0)
         target = target.squeeze(0)
 
-        return masked_kspace, maps, target, mean, std, norm
+        out = {
+            "kspace": masked_kspace,
+            "maps": maps,
+            "target": target,
+            "mean": mean,
+            "std": std,
+            "norm": norm,
+            "edge_mask": edge_mask.squeeze(0),
+            "mask": self._get_mask(masked_kspace),
+        }
+        if postprocessing_mask is not None:
+            out["postprocessing_mask"] = postprocessing_mask.squeeze(0)
+        return out
+
