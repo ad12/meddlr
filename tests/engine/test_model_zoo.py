@@ -48,7 +48,7 @@ def test_get_model_from_zoo():
 
     model2 = get_model_from_zoo(_SAMPLE_MODEL_CFG, force_download=True)
     assert isinstance(model2, nn.Module)
-    assert type(model2) == type(model)
+    assert type(model2) == type(model)  # noqa: E721
 
     cfg = get_cfg().merge_from_file(path_mgr.get_local_path(_SAMPLE_MODEL_CFG))
     model2 = get_model_from_zoo(cfg, _SAMPLE_MODEL_WEIGHTS)
