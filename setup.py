@@ -198,7 +198,7 @@ REQUIRED = [
     "silx",
     "tqdm",
     "omegaconf",
-    "torchmetrics>=0.5.1",
+    "torchmetrics>=1.0.0",
     "iopath",
     "packaging",
 ]

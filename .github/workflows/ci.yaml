@@ -49,14 +49,6 @@ jobs:
             python-version: "3.9"
             torchmetrics-version: "latest"
             ignore-lpips: "true"
-          - os: ubuntu-latest
-            python-version: "3.9"
-            torchmetrics-version: "0.6.0"
-            ignore-lpips: "false"
-          - os: ubuntu-latest
-            python-version: "3.9"
-            torchmetrics-version: "0.7.3"
-            ignore-lpips: "false"
     env:
       TORCHMETRICS: ${{ matrix.torchmetrics-version }}
       IGNORE_LPIPS: ${{ matrix.ignore-lpips }}

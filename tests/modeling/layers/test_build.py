@@ -258,7 +258,7 @@ def test_layer_info_build(layer_info: LayerInfo, expected_layer: nn.Module):
         return x
 
     layer = layer_info.build()
-    assert type(layer) == type(expected_layer)
+    assert type(layer) == type(expected_layer)  # noqa: E721
 
     layer_shape = tensor_to_shape(layer.__dict__)
     expected = tensor_to_shape(expected_layer.__dict__)

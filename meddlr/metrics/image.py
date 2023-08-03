@@ -57,19 +57,13 @@ class PSNR(Metric):
         im_type: str = None,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="dB",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
         self.im_type = im_type
@@ -105,19 +99,13 @@ class MAE(Metric):
         im_type: str = None,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
         self.im_type = im_type
@@ -153,19 +141,13 @@ class MSE(Metric):
         im_type: str = None,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
         self.im_type = im_type
@@ -201,19 +183,13 @@ class NRMSE(Metric):
         im_type: str = None,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
         self.im_type = im_type
@@ -252,19 +228,13 @@ class RMSE(Metric):
         im_type: str = None,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
         self.im_type = im_type
@@ -301,19 +271,13 @@ class SSIM(Metric):
         im_type: str = "magnitude",
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
         self.method = method
         self.im_type = im_type
@@ -522,7 +486,6 @@ def compute_vifp_mscale(
     num = 0.0
     den = 0.0
     for scale in range(1, 5):
-
         N = 2 ** (4 - scale + 1) + 1
         sd = N / 5.0
 
