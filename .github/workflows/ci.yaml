@@ -42,12 +42,12 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.7", "3.8", "3.9"]
-        torchmetrics-version: ["latest"]
+        torchmetrics-version: ["0.11.4"]
         ignore-lpips: ["false"]
         include:
           - os: ubuntu-latest
             python-version: "3.9"
-            torchmetrics-version: "latest"
+            torchmetrics-version: "0.11.4"
             ignore-lpips: "true"
           - os: ubuntu-latest
             python-version: "3.9"
