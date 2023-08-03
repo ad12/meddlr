@@ -22,19 +22,13 @@ class DSC(Metric):
         self,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
     def func(self, preds, targets) -> torch.Tensor:
@@ -58,19 +52,13 @@ class CV(Metric):
         self,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
     def func(self, preds, targets) -> torch.Tensor:
@@ -91,19 +79,13 @@ class VOE(Metric):
         self,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         super().__init__(
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
     def func(self, preds, targets) -> torch.Tensor:
@@ -130,10 +112,7 @@ class ASSD(Metric):
         connectivity: int = 1,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         """
         Args:
@@ -145,10 +124,7 @@ class ASSD(Metric):
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
         self.connectivity = connectivity
 

@@ -180,7 +180,7 @@ VERSION = get_version()
 AUTHOR = "The Meddlr Team"
 EMAIL = "arjundd@stanford.edu"
 URL = "https://github.com/ad12/meddlr"
-REQUIRES_PYTHON = ">=3.6"
+REQUIRES_PYTHON = ">=3.8"
 
 REQUIRED = [
     "pyxb",  # need to install before ismrmrd
@@ -198,7 +198,7 @@ REQUIRED = [
     "silx",
     "tqdm",
     "omegaconf",
-    "torchmetrics>=0.5.1,<=0.11.4",
+    "torchmetrics>=1.0.0",
     "iopath",
     "packaging",
 ]
