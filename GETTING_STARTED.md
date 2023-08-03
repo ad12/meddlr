@@ -7,13 +7,15 @@ must be done prior to downloading other requirements.
 
 ```bash
 # Create and activate the environment.
-conda create -n meddlr_env python=3.7
+conda create -n meddlr_env python=3.9
 conda activate meddlr_env
 
 # Install cuda-dependant libraries. Change cuda version as needed.
 # Below we show examples for cuda-10.1
+# You can find the latest pytorch install code here:
+# https://pytorch.org/get-started/locally/
 conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
-pip install cupy-cuda101
+pip install cupy-cuda101  # Optional - useful for reconstruction.
 
 # Install as package in virtual environment (recommended):
 git clone https://github.com/ad12/meddlr.git
