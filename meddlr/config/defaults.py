@@ -339,30 +339,33 @@ _C.AUG_TEST.UNDERSAMPLE.ACCELERATIONS = (6,)
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
 
-_C.SOLVER.OPTIMIZER = "Adam"
-
-# See meddlr/solver/build.py for LR scheduler options
-_C.SOLVER.LR_SCHEDULER_NAME = "WarmupMultiStepLR"
-
 _C.SOLVER.MAX_ITER = 20
-
 _C.SOLVER.BASE_LR = 1e-4
 
+# ============== Optimizer ==============
+_C.SOLVER.OPTIMIZER = "Adam"
 _C.SOLVER.MOMENTUM = 0.9
-
+# Beta values for optimizers (e.g. Adam).
+# If empty tuple, defaults to the default value for the optimizer.
+_C.SOLVER.BETAS = ()
 _C.SOLVER.WEIGHT_DECAY = 0.0001
 # The weight decay that's applied to parameters of normalization layers
 # (typically the affine transformation)
 _C.SOLVER.WEIGHT_DECAY_NORM = 0.0
+_C.SOLVER.WEIGHT_DECAY_BIAS = _C.SOLVER.WEIGHT_DECAY
+_C.SOLVER.BIAS_LR_FACTOR = 1.0
 
+# ============== Learning rate schedule r==============
+# See meddlr/solver/build.py for LR scheduler options
+_C.SOLVER.LR_SCHEDULER_NAME = "WarmupMultiStepLR"
 _C.SOLVER.GAMMA = 0.1
 # The iteration number to decrease learning rate by GAMMA.
 _C.SOLVER.STEPS = (30000,)
-
 _C.SOLVER.WARMUP_FACTOR = 1.0 / 1000
 _C.SOLVER.WARMUP_ITERS = 1000
 _C.SOLVER.WARMUP_METHOD = "linear"
 
+# Gradient accumulation.
 _C.SOLVER.GRAD_ACCUM_ITERS = 1
 
 # Save a checkpoint after every this number of iterations
@@ -374,8 +377,6 @@ _C.SOLVER.CHECKPOINT_PERIOD = 1
 _C.SOLVER.TRAIN_BATCH_SIZE = 16
 _C.SOLVER.TEST_BATCH_SIZE = 16
 
-_C.SOLVER.BIAS_LR_FACTOR = 1.0
-_C.SOLVER.WEIGHT_DECAY_BIAS = _C.SOLVER.WEIGHT_DECAY
 
 # ---------------------------------------------------------------------------- #
 # Specific test options
