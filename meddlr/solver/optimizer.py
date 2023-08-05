@@ -5,7 +5,9 @@ import torch
 from torch import Tensor
 from torch.optim.optimizer import Optimizer
 
-__all__ = ["GradAccumOptimizer"]
+from meddlr.solver.build import OPTIMIZER_REGISTRY
+
+__all__ = ["GradAccumOptimizer", "SophiaG"]
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +66,7 @@ class GradAccumOptimizer(object):
             return getattr(self.optimizer, item)
 
 
+@OPTIMIZER_REGISTRY.register()
 class SophiaG(Optimizer):
     """
     Adapted from https://github.com/Liuhong99/Sophia/blob/main/sophia.py.
@@ -213,7 +216,6 @@ def sophiag(
     weight_decay: float,
     maximize: bool,
 ):
-
     if not all(isinstance(t, torch.Tensor) for t in state_steps):
         raise RuntimeError(
             "API has changed, `state_steps` argument must contain a list of singleton tensors"
@@ -254,7 +256,6 @@ def _single_tensor_sophiag(
     maximize: bool,
     capturable: bool,
 ):
-
     for i, param in enumerate(params):
         grad = grads[i] if not maximize else -grads[i]
         exp_avg = exp_avgs[i]
