@@ -39,6 +39,18 @@ os.environ["MEDDLR_DATASETS_DIR"] = "/path/to/datasets"
 
 Detailed instructions are available in [Getting Started](GETTING_STARTED.md).
 
+## Visualizations
+Use [MeddlrViz](https://github.com/ad12/meddlr-viz) to visualize your medical imaging datasets, ML models, and more!
+
+```bash
+pip install meddlr-viz
+```
+
+<div align="center">
+
+<image src="https://github.com/ad12/meddlr-viz/blob/main/static/brats.gif" height=400 alt="A gallery of images from the BRATS dataset" />
+</div>
+
 ## 🐘 Model Zoo
 Easily serve and download pretrained models from the model zoo. A (evolving) list of pre-trained models can be found [here](MODEL_ZOO.md), on [HuggingFace 🤗](https://huggingface.co/arjundd), and in [project folders](projects).
 
