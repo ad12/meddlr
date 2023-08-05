@@ -6,7 +6,7 @@ import torch
 from meddlr.config import CfgNode
 
 from .lr_scheduler import NoOpLR, WarmupCosineLR, WarmupMultiStepLR
-from .optimizer import GradAccumOptimizer
+from .optimizer import GradAccumOptimizer, SophiaG
 
 
 def build_optimizer(cfg: CfgNode, model: torch.nn.Module) -> torch.optim.Optimizer:
@@ -36,6 +36,9 @@ def _build_opt(params, cfg):
         optimizer = torch.optim.SGD(params, cfg.SOLVER.BASE_LR, momentum=cfg.SOLVER.MOMENTUM)
     elif optim == "Adam":
         optimizer = torch.optim.Adam(params, cfg.SOLVER.BASE_LR)
+    elif optim == "SophiaG":
+        # weight decay handled by build_optimizer
+        optimizer = SophiaG(params, cfg.SOLVER.BASE_LR, weight_decay=0.0)
     else:
         raise ValueError(f"Optimizer {optim} not supported")
 
