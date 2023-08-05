@@ -310,7 +310,7 @@ def collect_mask(
         mask = torch.permute(mask, (last_idx,) + tuple(range(0, last_idx)))
 
     if is_ndarray:
-        out = out.numpy()
+        mask = mask.numpy()
     return mask
 
 
