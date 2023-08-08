@@ -286,25 +286,31 @@ def collect_mask(
             If sub-indices are collated, they will be summed.
         out_channel_first (bool, optional): Reorders dimensions of output mask to Cx(...)
     """
+    # TODO: Make this more efficient.
     if isinstance(index, int):
         index = (index,)
 
+    is_ndarray = isinstance(mask, np.ndarray)
+    if is_ndarray:
+        mask = torch.as_tensor(mask)
+
     if not any(isinstance(idx, Sequence) for idx in index):
         mask = mask[..., index]
-        if out_channel_first:
-            last_idx = len(mask.shape) - 1
-            mask = np.transpose(mask, (last_idx,) + tuple(range(last_idx)))
-        return mask
+    else:
+        o_seg = []
+        for idx in index:
+            c_seg = mask[..., idx]
+            if isinstance(idx, Sequence):
+                c_seg = c_seg.sum(dim=-1)
+            o_seg.append(c_seg)
+        mask = torch.stack(o_seg, axis=-1)
 
-    o_seg = []
-    stack_axis = 0 if out_channel_first else -1
-    for idx in index:
-        c_seg = mask[..., idx]
-        if isinstance(idx, Sequence):
-            c_seg = np.sum(c_seg, axis=-1)
-        o_seg.append(c_seg)
-    mask = np.stack(o_seg, axis=stack_axis)
+    if out_channel_first:
+        last_idx = len(mask.shape) - 1
+        mask = torch.permute(mask, (last_idx,) + tuple(range(0, last_idx)))
 
+    if is_ndarray:
+        mask = mask.numpy()
     return mask
 
 

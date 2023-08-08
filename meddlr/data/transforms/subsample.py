@@ -379,6 +379,53 @@ class RandomMaskFunc1D(MaskFunc):
 
 
 @MASK_FUNC_REGISTRY.register()
+class EquispacedMaskFunc1D(MaskFunc):
+    """
+
+    Adapted from https://github.com/facebookresearch/fastMRI/blob/master/common/subsample.py
+    """
+
+    def __init__(self, accelerations, calib_size=None, center_fractions=None):
+        if not calib_size and not center_fractions:
+            raise ValueError("Either calib_size or center_fractions must be specified.")
+        if calib_size and center_fractions:
+            raise ValueError("Only one of calib_size or center_fractions can be specified")
+        assert not center_fractions, "Center fractions not supported for equispaced sampling."
+
+        self.center_fractions = center_fractions
+        self.calib_size = calib_size
+        super().__init__(accelerations)
+
+    def choose_acceleration(self) -> int:
+        # Accelerations for equispaced sampling must be an integer.
+        acc = super().choose_acceleration()
+        return int(round(acc))
+
+    def __call__(self, shape, seed: int = None, acceleration: int = None):
+        """
+        Args:
+            shape (iterable[int]): The shape of the mask to be created. The shape should have
+                at least 3 dimensions. Samples are drawn along the second last dimension.
+            seed (int, optional): Seed for the random number generator. Setting the seed
+                ensures the same mask is generated each time for the same shape.
+        Returns:
+            torch.Tensor: A mask of the specified shape.
+        """
+        if len(shape) < 3:
+            raise ValueError("Shape should have 3 or more dimensions")
+
+        calib = self.calib_size
+        if acceleration is None:
+            acceleration = self.choose_acceleration()
+
+        return equispaced_mask(shape, accel=acceleration, calib=calib, dim=1)
+
+    def get_edge_mask(self, kspace: torch.Tensor, out_shape: Sequence[int] = None):
+        # TODO: dims should be configured based on the number of dimenions in the input.
+        return get_cartesian_edge_mask(kspace, dims=(1, 2), out_shape=out_shape)
+
+
+@MASK_FUNC_REGISTRY.register()
 class EquispacedMaskFunc2D(MaskFunc):
     """
 

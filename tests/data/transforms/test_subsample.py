@@ -5,7 +5,9 @@ import pytest
 import torch
 
 from meddlr.data.transforms.subsample import (
+    EquispacedMaskFunc1D,
     PoissonDiskMaskFunc,
+    RandomMaskFunc,
     RandomMaskFunc1D,
     _get_center,
     get_cartesian_edge_mask,
@@ -168,3 +170,52 @@ def test_get_cartesian_edge_mask_2d(dims):
     assert torch.all(mask[:, :, :2] == 1)
     assert torch.all(mask[:, :, 5:] == 1)
     assert torch.all(mask[:, 3:8, 2:5] == 0)
+
+
+@pytest.mark.parametrize("accelerations", [4, [4], (4, 5)])
+def test_choose_acceleration(accelerations):
+    mask_func = RandomMaskFunc(accelerations, calib_size=20)
+    acc = mask_func.choose_acceleration()
+
+    if isinstance(accelerations, int):
+        assert acc == accelerations
+    elif len(accelerations) == 1:
+        assert acc == accelerations[0]
+    else:
+        assert acc >= accelerations[0] and acc <= accelerations[1]
+
+
+def test_random_mask_func_center_fractions_error():
+    """Test RandomMaskFunc raises and error when center fraction is specified."""
+    with pytest.raises(ValueError):
+        RandomMaskFunc(accelerations=4, calib_size=20, center_fractions=0.08)
+
+
+def test_equispaced1d():
+    accelerations = 4.5
+    mask_func = EquispacedMaskFunc1D(accelerations, calib_size=1)
+
+    # Equispaced sampling factor must be an integer.
+    assert mask_func.choose_acceleration() == 4
+
+    shape = (1, 50, 50)
+    mask = mask_func(shape=shape)
+    assert mask.shape == shape
+
+    mask = mask.squeeze()
+
+    # In 1D undersampling, every row in a column must have the same value.
+    # i.e. All 0 or 1
+    mask_sum = mask.sum(dim=0).bool()
+    assert torch.all((~mask_sum) ^ (mask_sum))
+
+    # Test that the samples are equispaced.
+    # For now, the offset is 0, so we can start the count from the top.
+    # Every 4th line should be 1.
+    # All other lines should 0, except for the center fraction line.
+    # In this case the center fraction occurs at line 25, which we account for
+    # in the second assert.
+    assert torch.all(mask_sum[0::4])
+    assert torch.sum(mask_sum[1::4]) == 1 and mask_sum[25] == 1
+    assert not torch.any(mask_sum[2::4])
+    assert not torch.any(mask_sum[3::4])
