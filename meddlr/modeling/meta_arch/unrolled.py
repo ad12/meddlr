@@ -13,6 +13,7 @@ from meddlr.modeling.meta_arch.resnet import ResNetModel
 from meddlr.ops.opt import conjgrad
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device
+from meddlr.viz.image import draw_reconstructions
 
 from .build import META_ARCH_REGISTRY, build_model
 
@@ -103,6 +104,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         self.order = order
         self._dc_first = order[0] == "dc"
 
+    @torch.no_grad()
     def visualize_training(
         self,
         kspace: torch.Tensor,
@@ -128,25 +130,25 @@ class GeneralizedUnrolledCNN(nn.Module):
         """
         storage = get_event_storage()
 
-        with torch.no_grad():
-            if cplx.is_complex(kspace):
-                kspace = torch.view_as_real(kspace)
-            kspace = kspace[0, ..., 0, :].unsqueeze(0).cpu()  # calc mask for first coil only
-            targets = targets[0, ...].unsqueeze(0).cpu()
-            preds = preds[0, ...].unsqueeze(0).cpu()
-            zfs = zfs[0, ...].unsqueeze(0).cpu()
+        images = {
+            "kspace": kspace[:, :, :, 0],  # take the first coil
+            "pred": preds,
+            "target": targets,
+            "zf": zfs,
+            "_all_images": lambda zf, pred, target: [zf, pred, target],
+            "images": lambda _all_images: cplx.abs(_all_images),
+            "phases": lambda _all_images: cplx.angle(_all_images),
+            "masks": lambda kspace: cplx.get_mask(kspace),
+            "errors": lambda pred, target: cplx.abs(pred - target),
+        }
+        if dc_mask is not None:
+            # Take the mask for the first coil, it should be the same for all coils.
+            images["dc_mask"] = dc_mask
 
-            all_images = torch.cat([zfs, preds, targets], dim=2)
-
-            imgs_to_write = {
-                "phases": cplx.angle(all_images),
-                "images": cplx.abs(all_images),
-                "errors": cplx.abs(preds - targets),
-                "masks": cplx.get_mask(kspace),
-            }
-            if dc_mask is not None:
-                # Take the mask for the first coil, it should be the same for all coils.
-                imgs_to_write["dc_mask"] = dc_mask[0:1, ..., 0].cpu()
+        channels = [f"echo{i}" for i in range(preds.shape[-1])] if preds.shape[-1] > 1 else None
+        imgs_to_write = draw_reconstructions(channels=channels, **images)
+        for name, data in imgs_to_write.items():
+            storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
 
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
@@ -159,7 +161,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         image: torch.Tensor,
         A: SenseModel,
         zf_image: torch.Tensor,
-        step_size: Union[torch.Tensor, float]
+        step_size: Union[torch.Tensor, float],
     ):
         grad_x = A(A(image), adjoint=True) - zf_image
         return image + step_size * grad_x
@@ -200,7 +202,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         A: SenseModel,
         zf_image: torch.Tensor,
         step_size: Union[torch.Tensor, float],
-        dims: torch.Size
+        dims: torch.Size,
     ):
         if self._dc_first:
             image = self.dc(image=image, A=A, zf_image=zf_image, step_size=step_size)
@@ -409,7 +411,7 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         image: torch.Tensor,
         A: SenseModel,
         zf_image: torch.Tensor,
-        step_size: Union[torch.Tensor, float]
+        step_size: Union[torch.Tensor, float],
     ):
         def A_op(x):
             return A(A(x), adjoint=True)
@@ -433,7 +435,7 @@ class CGUnrolledCNN(GeneralizedUnrolledCNN):
         A: SenseModel,
         zf_image: torch.Tensor,
         step_size: Union[torch.Tensor, float],
-        dims: torch.Size
+        dims: torch.Size,
     ):
         def A_op(x):
             return A(A(x), adjoint=True)

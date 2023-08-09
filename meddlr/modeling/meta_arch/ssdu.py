@@ -1,7 +1,6 @@
 import warnings
 
 import torch
-import torchvision.utils as tv_utils
 from torch import nn
 
 import meddlr.ops as oF
@@ -14,6 +13,7 @@ from meddlr.transforms.builtin.mri import MRIReconAugmentor
 from meddlr.transforms.gen.mask import RandomKspaceMask
 from meddlr.utils.events import get_event_storage
 from meddlr.utils.general import move_to_device, nested_apply
+from meddlr.viz.image import draw_reconstructions
 
 
 @META_ARCH_REGISTRY.register()
@@ -88,8 +88,16 @@ class SSDUModel(nn.Module):
             mask = cplx.get_mask(kspace)
         edge_mask = inputs["edge_mask"]
 
-        tfm: KspaceMaskTransform = masker.get_transform(kspace)
-        train_mask = tfm.generate_mask(kspace, channels_last=True)
+        # We want to generate the same mask for multi-channel inputs.
+        # Hacky way to handle this case.
+        # FIXME: Find a better way to handle this
+        assert torch.is_complex(kspace)
+        if kspace.shape[-1] == 2:
+            tfm: KspaceMaskTransform = masker.get_transform(kspace[..., 0])
+            train_mask = tfm.generate_mask(kspace, channels_last=True)
+        else:
+            tfm: KspaceMaskTransform = masker.get_transform(kspace)
+            train_mask = tfm.generate_mask(kspace, channels_last=True)
         loss_mask = mask - train_mask
 
         # The loss mask should be a subset of the original mask.
@@ -126,26 +134,44 @@ class SSDUModel(nn.Module):
 
     @torch.no_grad()
     def visualize(self, images_dict):
-        for name, images in images_dict.items():
-            storage = get_event_storage()
-            if isinstance(images, (tuple, list)):
-                images = torch.stack(images, dim=0)
-            if cplx.is_complex_as_real(images) or cplx.is_complex(images):
-                images = {
-                    f"{name}-phase": cplx.angle(images),
-                    f"{name}-mag": cplx.abs(images),
-                }
-            else:
-                images = {name: images}
+        storage = get_event_storage()
 
-            for name, data in images.items():
-                if data.shape[-1] == 1:
-                    data = data.squeeze(-1)
-                data = data.unsqueeze(1)
-                data = tv_utils.make_grid(
-                    data, nrow=len(data), padding=1, normalize=True, scale_each=True
-                )
-                storage.put_image("ssdu/{}".format(name), data.cpu().numpy(), data_format="CHW")
+        images_dict = images_dict.copy()
+        images_dict["kspace-phase"] = lambda kspace: cplx.angle(kspace)
+        images_dict["kspace-mag"] = lambda kspace: cplx.abs(kspace)
+        if "images" in images_dict:
+            images_dict["images-phase"] = lambda images: cplx.angle(images)
+            images_dict["images-mag"] = lambda images: cplx.abs(images)
+
+        images = draw_reconstructions(
+            ordering="HW", nchannels=images_dict["kspace"][0].shape[-1], **images_dict
+        )
+        for name, data in images.items():
+            storage.put_image("ssdu/{}".format(name), data.cpu().numpy(), data_format="CHW")
+
+    # @torch.no_grad()
+    # def visualize(self, images_dict):
+    #     breakpoint()
+    #     for name, images in images_dict.items():
+    #         storage = get_event_storage()
+    #         if isinstance(images, (tuple, list)):
+    #             images = torch.stack(images, dim=0)
+    #         if cplx.is_complex_as_real(images) or cplx.is_complex(images):
+    #             images = {
+    #                 f"{name}-phase": cplx.angle(images),
+    #                 f"{name}-mag": cplx.abs(images),
+    #             }
+    #         else:
+    #             images = {name: images}
+
+    #         for name, data in images.items():
+    #             if data.shape[-1] == 1:
+    #                 data = data.squeeze(-1)
+    #             data = data.unsqueeze(1)
+    #             # data = tv_utils.make_grid(
+    #             #     data, nrow=len(data), padding=1, normalize=True, scale_each=True
+    #             # )
+    #             # storage.put_image("ssdu/{}".format(name), data.cpu().numpy(), data_format="CHW")
 
     def forward(self, inputs):
         if not self.training:
@@ -230,11 +256,12 @@ class SSDUModel(nn.Module):
                     self.visualize(
                         {
                             "masks": [orig_mask[0], train_mask[0], loss_mask[0]],
+                            # dimension 3 is the coil dimension.
                             "kspace": [
-                                kspace[0, ..., 0:1],
-                                inputs_aug["kspace"][0, ..., 0:1],
-                                loss_pred_kspace[0, ..., 0:1],
-                                loss_kspace[0, ..., 0:1],
+                                kspace[0, :, :, 0:1],
+                                inputs_aug["kspace"][0, :, :, 0:1],
+                                loss_pred_kspace[0, :, :, 0:1],
+                                loss_kspace[0, :, :, 0:1],
                             ],
                             "images": [
                                 x[0]
