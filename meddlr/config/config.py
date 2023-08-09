@@ -413,7 +413,7 @@ def _format_str(val_str: str, *, cfg: CfgNode, unroll: bool):
     assert len(start) == len(end), f"Could not determine formatting string: {val_str}"
 
     if len(start) == 0:
-        return val_str
+        return eval(val_str)
 
     cfg_keys_to_search = [val_str[s + 1 : e] for s, e in zip(start, end)]
     values = [cfg.get_recursive(v) for v in cfg_keys_to_search]

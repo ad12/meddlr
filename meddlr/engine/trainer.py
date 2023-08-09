@@ -382,6 +382,7 @@ class DefaultTrainer(SimpleTrainer):
             or cfg.MODEL.META_ARCHITECTURE == "M2RModel"
             or cfg.MODEL.META_ARCHITECTURE == "NM2RModel"
             or cfg.MODEL.META_ARCHITECTURE == "A2RModel"
+            or cfg.MODEL.META_ARCHITECTURE == "VortexModel"
             else "BasicLossComputer"
         )
         return build_loss_computer(cfg, loss_computer)

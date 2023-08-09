@@ -79,6 +79,9 @@ class DatasetEvaluators(DatasetEvaluator):
         else:
             return self._evaluators
 
+    def pop(self, key):
+        return self._evaluators.pop(key)
+
     def reset(self):
         for evaluator in self.values():
             evaluator.reset()

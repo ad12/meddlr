@@ -25,7 +25,7 @@ _CURRENT_STORAGE_STACK = []
 _PATH_MANAGER = get_path_manager()
 
 
-def get_event_storage():
+def get_event_storage() -> "EventStorage":
     """
     Returns:
         The :class:`EventStorage` object that's currently being used.

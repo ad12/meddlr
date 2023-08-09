@@ -64,7 +64,10 @@ class ScanEvaluator(DatasetEvaluator):
 
         Args:
             enter_prediction_scope (bool, optional): If ``True``, enter the
-                prediction scope.
+                prediction scope. You may want to set this to ``False`` if an
+                external object is managing the prediction scope.
+                This allows the external object to access predictions before
+                they are released from memory.
             skip_last_scan (bool, optional): If ``True``, does not flush
                 most recent scan. This avoids prematurely computing metrics
                 before all slices of the scan are available.

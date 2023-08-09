@@ -342,12 +342,14 @@ class ReconEvaluator(ScanEvaluator):
                         os.path.join(self._save_scan_dir, f"{scan_id}.h5"),
                     )
 
-        if self._group_by_scan:
-            pred_vals = self._group_results_by_scan()
+        if self._compute_metrics():
+            if self._group_by_scan:
+                pred_vals = self._group_results_by_scan()
+            else:
+                pred_vals = self.slice_metrics.to_dict()
+                pred_vals.update(self.scan_metrics.to_dict())
         else:
-            pred_vals = self.slice_metrics.to_dict()
-            pred_vals.update(self.scan_metrics.to_dict())
-
+            pred_vals = {}
         self._results = pred_vals
 
         if not self._is_flushing:
@@ -374,8 +376,11 @@ class ReconEvaluator(ScanEvaluator):
 
         return pred_vals
 
+    def _compute_metrics(self) -> bool:
+        return len(self._metric_names) > 0
+
     def log_summary(self):
-        if not comm.is_main_process():
+        if not comm.is_main_process() or not self._compute_metrics():
             return
 
         output_dir = self._output_dir
@@ -431,6 +436,8 @@ class ReconEvaluator(ScanEvaluator):
         ex_id: Union[str, Sequence[str]],
         is_batch=False,
     ):
+        if len(metrics) == 0:
+            return {}
         output, target = prediction["pred"], prediction["target"]
         if not is_batch:
             output, target = output.unsqueeze(0), target.unsqueeze(0)

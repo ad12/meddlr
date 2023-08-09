@@ -104,7 +104,12 @@ class GeneralizedUnrolledCNN(nn.Module):
         self._dc_first = order[0] == "dc"
 
     def visualize_training(
-        self, kspace: torch.Tensor, zfs: torch.Tensor, targets: torch.Tensor, preds: torch.Tensor
+        self,
+        kspace: torch.Tensor,
+        zfs: torch.Tensor,
+        targets: torch.Tensor,
+        preds: torch.Tensor,
+        dc_mask: torch.Tensor = None,
     ):
         """Visualize kspace data and reconstructions.
 
@@ -139,6 +144,9 @@ class GeneralizedUnrolledCNN(nn.Module):
                 "errors": cplx.abs(preds - targets),
                 "masks": cplx.get_mask(kspace),
             }
+            if dc_mask is not None:
+                # Take the mask for the first coil, it should be the same for all coils.
+                imgs_to_write["dc_mask"] = dc_mask[0:1, ..., 0].cpu()
 
             for name, data in imgs_to_write.items():
                 data = data.squeeze(-1).unsqueeze(1)
@@ -170,7 +178,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             image = torch.view_as_real(image)
 
         # prox update
-        image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(0, 3, 1, 2)
+        image = image.reshape(dims[0:3] + (self.num_emaps * 2,)).permute(0, 3, 1, 2).contiguous()
         if hasattr(model, "base_forward") and callable(model.base_forward):
             image = model.base_forward(image)
         else:
@@ -179,9 +187,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         # This doesn't work when padding is not the same.
         # i.e. when the output is a different shape than the input.
         # However, this should not ever happen.
-        image = image.permute(0, 2, 3, 1).reshape(dims[0:3] + (self.num_emaps, 2))
-        if not image.is_contiguous():
-            image = image.contiguous()
+        image = image.permute(0, 2, 3, 1).reshape(dims[0:3] + (self.num_emaps, 2)).contiguous()
         if use_cplx:
             image = torch.view_as_complex(image)
         return image
@@ -302,7 +308,7 @@ class GeneralizedUnrolledCNN(nn.Module):
         if self.training and (vis_training or self.vis_period > 0):
             storage = get_event_storage()
             if vis_training or storage.iter % self.vis_period == 0:
-                self.visualize_training(kspace, zf_image, target, image)
+                self.visualize_training(kspace, zf_image, target, image, dc_mask=mask)
 
         output_dict["zf_image"] = zf_image
 

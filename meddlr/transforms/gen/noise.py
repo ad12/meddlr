@@ -33,7 +33,7 @@ class RandomNoise(TransformGen):
         self.use_mask = use_mask
         super().__init__(params=params, p=p)
 
-    def get_transform(self, input: torch.Tensor):
+    def get_transform(self, input: torch.Tensor) -> NoiseTransform:
         params = self._get_param_values(use_schedulers=True)
         std_devs = params["std_devs"]
         rho = params["rhos"]

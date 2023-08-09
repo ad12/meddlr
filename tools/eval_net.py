@@ -228,7 +228,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         noise_vals = [0]
 
     if include_motion:
-        motion_vals = [0] + motion_sweep_vals if motion_arg == "sweep" else [0]
+        motion_vals = motion_sweep_vals if motion_arg == "sweep" else [0]
         motion_vals = sorted(set(motion_vals))
     else:
         motion_vals = [0]

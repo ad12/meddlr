@@ -36,6 +36,10 @@ def setup(args):
     if not cfg.OUTPUT_DIR:
         raise ValueError("OUTPUT_DIR not specified")
 
+    # Always execute in reproducible mode and auto-version mode when training
+    args.reproducible = True
+    args.auto_version = True
+
     default_setup(cfg, args)
 
     # TODO: Change resume=args.resume once functionality is specified.

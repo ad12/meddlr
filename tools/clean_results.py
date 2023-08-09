@@ -21,6 +21,7 @@ from typing import Collection, Sequence, Union
 
 import pandas as pd
 from tabulate import tabulate
+from tqdm import tqdm
 
 from meddlr.config import get_cfg
 from meddlr.evaluation.testing import find_weights
@@ -56,7 +57,7 @@ def clean_results(
         iter_limit = [iter_limit]
 
     all_exp_paths = find_experiment_dirs(dirpath, completed=True)
-    for exp_path in all_exp_paths:
+    for exp_path in tqdm(all_exp_paths, desc="Searching for weights", disable=True):
         exp_path = os.path.abspath(exp_path)
         print(exp_path)
         cfg = get_cfg()
@@ -91,6 +92,7 @@ def clean_results(
             if x.endswith(".pth")
         }
         remove_files = all_model_paths - filepaths_to_keep
+        remove_files = sorted(remove_files)
 
         print(
             "Found {}/{} files to remove from {}:\n\t{}".format(
