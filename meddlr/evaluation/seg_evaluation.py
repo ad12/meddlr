@@ -4,6 +4,7 @@ import logging
 import os
 import time
 import uuid
+from typing import Any, Dict
 
 import torch
 from tqdm import tqdm
@@ -136,8 +137,16 @@ class SemSegEvaluator(ScanEvaluator):
         self.slice_metrics.eval()
         self.scan_metrics.eval()
 
-    def structure_scans(self, verbose=True):
-        """Structure scans into volumes to be used to evaluation."""
+    def structure_scans(self, verbose=True) -> Dict[str, Dict[str, Any]]:
+        """Structure scans into volumes to be used to evaluation.
+
+        Returns:
+            dict: a dictionary mapping scan_id to a dictionary with keys:
+                - "pred": the predicted segmentation mask - shape: (C, D, H, W)
+                - "target": the ground truth segmentation mask - shape: (C, D, H, W)
+                - "voxel_spacing": the voxel spacing of the scan (D, H, W, C)
+                - "affine": Affine matrix for MedicalVolume (D, H, W, C)
+        """
         out = structure_scans(self._predictions, verbose=verbose, dims={1: "slice_id"})
         return out
 
