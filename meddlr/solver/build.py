@@ -1,17 +1,33 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+import inspect
 from typing import Any, Dict, List
 
 import torch
 
 from meddlr.config import CfgNode
+from meddlr.solver.lr_scheduler import NoOpLR, WarmupCosineLR, WarmupMultiStepLR
+from meddlr.utils.registry import Registry
 
-from .lr_scheduler import NoOpLR, WarmupCosineLR, WarmupMultiStepLR
-from .optimizer import GradAccumOptimizer
+__all__ = ["build_optimizer", "build_lr_scheduler"]
+
+OPTIMIZER_REGISTRY = Registry("OPTIMIZER")  # noqa F401 isort:skip
+OPTIMIZER_REGISTRY.__doc__ = """
+Registry for custom optimizers.
+See meddlr/solver/optimizer for custom optimizers.
+"""
 
 
-def build_optimizer(cfg: CfgNode, model: torch.nn.Module) -> torch.optim.Optimizer:
-    """
-    Build an optimizer from config.
+def build_optimizer(cfg: CfgNode, model: torch.nn.Module, **kwargs) -> torch.optim.Optimizer:
+    """Build an optimizer from config.
+
+    Args:
+        cfg: The config to build the model from.
+        model: The model who's parameters to manage
+        **kwargs: Keyword arguments for optimizer.
+            These will override arguments in the config.
+
+    Returns:
+        torch.optim.Optimizer: The optimizer.
     """
     params: List[Dict[str, Any]] = []
     for key, value in model.named_parameters():
@@ -26,18 +42,37 @@ def build_optimizer(cfg: CfgNode, model: torch.nn.Module) -> torch.optim.Optimiz
             weight_decay = cfg.SOLVER.WEIGHT_DECAY_BIAS
         params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
 
-    optimizer = _build_opt(params, cfg)
+    optimizer = _build_opt(params, cfg, **kwargs)
     return optimizer
 
 
-def _build_opt(params, cfg):
+def _build_opt(params, cfg, **kwargs):
+    from meddlr.solver.optimizer import GradAccumOptimizer
+
+    opt_kwargs = {
+        "lr": cfg.SOLVER.BASE_LR,
+        # Weight decay is handled by build_optimizer.
+        "weight_decay": 0.0,
+        "momentum": cfg.SOLVER.MOMENTUM,
+    }
+    # TODO: Find a better way to indicate values that we don't want to pass in.
+    if cfg.SOLVER.BETAS:
+        opt_kwargs["betas"] = cfg.SOLVER.BETAS
+    opt_kwargs.update(kwargs)
+
+    # TODO: Add support for "torch/<optim>" to default to torch implementation.
+    # Only need to implement when meddlr has the same name as a torch optimizer.
     optim = cfg.SOLVER.OPTIMIZER
-    if optim == "SGD":
-        optimizer = torch.optim.SGD(params, cfg.SOLVER.BASE_LR, momentum=cfg.SOLVER.MOMENTUM)
-    elif optim == "Adam":
-        optimizer = torch.optim.Adam(params, cfg.SOLVER.BASE_LR)
+    if optim in OPTIMIZER_REGISTRY:
+        klass = OPTIMIZER_REGISTRY.get(optim)
+    elif hasattr(torch.optim, optim):
+        klass = getattr(torch.optim, optim)
     else:
-        raise ValueError(f"Optimizer {optim} not supported")
+        raise ValueError(f"Unknown {optim} not supported")
+
+    sig = inspect.signature(klass)
+    opt_kwargs = {k: v for k, v in opt_kwargs.items() if k in sig.parameters}
+    optimizer = klass(params, **opt_kwargs)
 
     # Gradient accumulation wrapper.
     num_grad_accum = cfg.SOLVER.GRAD_ACCUM_ITERS

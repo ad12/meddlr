@@ -9,6 +9,8 @@ import torch
 # As a result, "epoch" (e.g., as in self.last_epoch) should be understood to
 # mean "iteration" instead.
 
+__all__ = ["NoOpLR", "WarmupMultiStepLR", "WarmupCosineLR"]
+
 
 class NoOpLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(self, optimizer, last_epoch=-1):
