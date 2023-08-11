@@ -1,0 +1,10 @@
+_BASE_: "template.yaml"
+AUG_TRAIN:
+  MRI_RECON:
+    AUG_SENSITIVITY_MAPS: true
+    TRANSFORMS:
+    - name: RandomMRIMotion
+      p: 0.2
+      std_devs:
+      - 0.2
+      - 0.5

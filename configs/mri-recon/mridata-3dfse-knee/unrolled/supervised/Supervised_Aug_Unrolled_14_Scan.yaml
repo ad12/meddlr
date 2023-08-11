@@ -1,0 +1,26 @@
+# Inherit fields from the unrolled.yaml config.
+_BASE_: "../../templates/unrolled_aug.yaml"
+# DATALOADER has 14 supervised scan
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 14
+    NUM_UNDERSAMPLED: 0
+OUTPUT_DIR: results://vortex-rm/mridata_knee_3dfse/unrolled/supervised/supervised_aug_unrolled_14_scan
+DESCRIPTION:
+  BRIEF: f"Supervised Aug Unrolled 14 Scan {AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS}x mridata - loss={MODEL.RECON_LOSS.NAME}"
+  EXP_NAME: mridata_knee_3dfse/unrolled/supervised_aug_14_scan
+  TAGS:
+  - baseline
+  - supervised 
+  - 14_scan 
+  - 16x
+  - mridata_knee_3dfse
+  - unrolled
+# For no motion aug, A2R and Consistency was removed.
+# For Unrolled, made META_ARCHITECTURE GeneralizedUnrolledCNN
+MODEL:
+  META_ARCHITECTURE: GeneralizedUnrolledCNN
+  RECON_LOSS:
+    NAME: l1
+    RENORMALIZE_DATA: false
+VERSION: 1
