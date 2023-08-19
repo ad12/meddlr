@@ -2,7 +2,7 @@ from typing import Optional, Sequence, Tuple, Union
 
 import torch
 
-import meddlr.transforms.functional as stf
+import meddlr.transforms.functional.mri as stf
 from meddlr.transforms.build import TRANSFORM_REGISTRY
 from meddlr.transforms.transform import Transform
 from meddlr.transforms.transform_gen import TransformGen
