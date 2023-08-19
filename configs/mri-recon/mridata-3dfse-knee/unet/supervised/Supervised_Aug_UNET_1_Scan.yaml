@@ -1,0 +1,28 @@
+# Inherit fields from the unet.yaml config.
+_BASE_: "../../templates/unet_aug.yaml"
+# DATALOADER has only 1 supervised scan
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 1
+    NUM_UNDERSAMPLED: 0
+# Specify an output directory that is unique for this experiment.
+OUTPUT_DIR: results://vortex-rm/mridata_knee_3dfse/unet/supervised/supervised_aug_unet_1_scan
+DESCRIPTION:
+  # Use f-strings to specify reading values in braces ({}) the config file.
+  # This can only be done for string fields.
+  BRIEF: f"Supervised Aug U-Net 1 Scan {AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS}x mridata - loss={MODEL.RECON_LOSS.NAME}" 
+  EXP_NAME: mridata_knee_3dfse/unet/supervised_aug_unet_1
+  TAGS:
+  - baseline
+  - supervised
+  - one_scan
+  - 16x
+  - mridata_knee_3dfse
+  - unet
+# For UNET, kept META_ARCHITECTURE as UnetModel
+MODEL:
+  META_ARCHITECTURE: UnetModel  
+  RECON_LOSS:
+    NAME: l1
+    RENORMALIZE_DATA: false
+VERSION: 1

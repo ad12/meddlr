@@ -1,0 +1,28 @@
+_BASE_: "template.yaml"
+AUG_TRAIN:
+  MRI_RECON:
+    AUG_SENSITIVITY_MAPS: true
+    TRANSFORMS:
+    - name: RandomMRIMultiShotMotion
+      tfms_or_gens:
+      - name: RandomAffine
+        p: 1.0
+        angle: 7 
+        translate: 0.1
+        scale: 1.0
+        shear: 0 
+      - name: RandomAffine
+        p: 1.0
+        angle: 0 
+        translate: 0.2
+        scale: 1.0
+        shear: 0 
+      - name: RandomAffine
+        p: 1.0
+        angle: 15 
+        translate: 0
+        scale: 1.0
+        shear: 0 
+      nshots: 5
+      trajectory: interleaved
+      p: 1.0

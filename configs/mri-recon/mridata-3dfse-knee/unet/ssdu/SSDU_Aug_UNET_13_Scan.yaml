@@ -1,0 +1,48 @@
+# Inherit fields from the unet.yaml config.
+_BASE_: "../../templates/unet.yaml"
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    # 1 supervised and 13 unsupervised scans for training
+    NUM_TOTAL: 14
+    NUM_UNDERSAMPLED: 13
+# Specify an output directory that is unique for this experiment. 
+OUTPUT_DIR: results://vortex-rm/mridata_knee_3dfse/unet/ssdu/ssdu_aug_unet_13_scan
+DESCRIPTION:
+  # Use f-strings to specify reading values in braces ({}) the config file.
+  # This can only be done for string fields.
+  BRIEF: f"SSDU Aug U-Net {AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS}x mridata - {MODEL.SSDU.MASKER.PARAMS.kind}/loss={MODEL.RECON_LOSS.NAME}"
+  EXP_NAME: mridata_knee_3dfse/unet/SSDU_Aug
+  TAGS:
+  - baseline
+  - ssdu
+  - 16x
+  - mridata_knee_3dfse
+  - unet
+# For motion aug, A2R and Consistency were kept with std_dev range of 0.2 to 0.5.
+MODEL:
+  META_ARCHITECTURE: SSDUModel
+  RECON_LOSS:
+    NAME: k_l1
+    RENORMALIZE_DATA: false
+  SSDU:
+    # For UNET, the META_ARCHITECTURE of SSDUModel is UnetModel
+    META_ARCHITECTURE: UnetModel
+    MASKER:
+      # These paramters were taken from the VORTEX/Noise2Recon papers. 
+      PARAMS:
+        kind: uniform
+        rhos: 0.4  # Default value in SSDU code
+        p: 1.0
+        per_example: true
+    AUGMENTOR:
+      TRANSFORMS:
+      - name: RandomMRIMotion
+        p: 0.2
+        std_devs:
+        - 0.2
+        - 0.5 
+AUG_TRAIN:
+  MRI_RECON:
+    TRANSFORMS: []
+VERSION: 1
+
