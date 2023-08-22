@@ -1,5 +1,5 @@
 # Inherit fields from the unet.yaml config.
-_BASE_: "../../templates/unet_multi_aug.yaml"
+_BASE_: "../../templates/unet.yaml"
 # DATALOADER has 14 supervised scans
 DATALOADER:
   SUBSAMPLE_TRAIN:

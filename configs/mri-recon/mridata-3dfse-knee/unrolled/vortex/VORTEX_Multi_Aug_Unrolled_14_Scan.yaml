@@ -1,5 +1,5 @@
 # Inherit fields from the unrolled.yaml config.
-_BASE_: "../../templates/unrolled_multi_aug.yaml"
+_BASE_: "../../templates/unrolled.yaml"
 # DATALOADER has 14 supervised scan
 DATALOADER:
   SUBSAMPLE_TRAIN:
