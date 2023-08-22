@@ -99,7 +99,7 @@ _C.MODEL.CONSISTENCY.USE_CONSISTENCY = True
 _C.MODEL.CONSISTENCY.LATENT_LOSS_NAME = "mag_l1"
 _C.MODEL.CONSISTENCY.NUM_LATENT_LAYERS = 1
 # The consistency loss.
-_C.MODEL.CONSISTENCY.LOSS_NAME = "l1"
+_C.MODEL.CONSISTENCY.LOSS_NAME = "k_l1"
 # The weighting for consistency loss.
 _C.MODEL.CONSISTENCY.LOSS_WEIGHT = 0.1
 # The weighting for latent space consistency loss.

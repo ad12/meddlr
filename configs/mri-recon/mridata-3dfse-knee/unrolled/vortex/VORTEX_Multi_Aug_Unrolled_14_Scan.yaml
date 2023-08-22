@@ -30,7 +30,7 @@ MODEL:
       NORM: "none"
       ORDER: ("act", "conv")
   RECON_LOSS:
-    NAME: l1
+    NAME: k_l1
     RENORMALIZE_DATA: false
   A2R:
     META_ARCHITECTURE: GeneralizedUnrolledCNN 
@@ -44,18 +44,6 @@ MODEL:
             p: 1.0
             angle: 7 
             translate: 0.1
-            scale: 1.0
-            shear: 0 
-          - name: RandomAffine
-            p: 1.0
-            angle: 0 
-            translate: 0.2
-            scale: 1.0
-            shear: 0 
-          - name: RandomAffine
-            p: 1.0
-            angle: 15 
-            translate: 0
             scale: 1.0
             shear: 0 
           nshots: 5
