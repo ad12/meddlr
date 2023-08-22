@@ -1,0 +1,64 @@
+# Inherit fields from the unrolled.yaml config.
+_BASE_: "../../templates/unrolled_multi_aug.yaml"
+# DATALOADER has 14 supervised scan
+DATALOADER:
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 14
+    NUM_UNDERSAMPLED: 0
+OUTPUT_DIR: results://vortex-rm/mridata_knee_3dfse/unrolled/vortex/vortex_multi_aug_unrolled_14_scan
+DESCRIPTION:
+  BRIEF: f"VORTEX Multi Aug Unrolled 14 Scan {AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS}x mridata - loss={MODEL.RECON_LOSS.NAME}"
+  EXP_NAME: mridata_knee_3dfse/unrolled/vortex_multi_aug_14_scan
+  TAGS:
+  - baseline
+  - vortex 
+  - 14_scan 
+  - 16x
+  - mridata_knee_3dfse
+  - unrolled
+# For no motion aug, A2R and Consistency was removed.
+# For Unrolled, made META_ARCHITECTURE GeneralizedUnrolledCNN
+MODEL:
+  META_ARCHITECTURE: VortexModel 
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 8
+    NUM_RESBLOCKS: 2
+    NUM_FEATURES: 128
+    DROPOUT: 0.
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER: ("act", "conv")
+  RECON_LOSS:
+    NAME: l1
+    RENORMALIZE_DATA: false
+  A2R:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN 
+  CONSISTENCY:
+    AUG:
+      MRI_RECON:
+        TRANSFORMS: 
+        - name: RandomMRIMultiShotMotion
+          tfms_or_gens:
+          - name: RandomAffine
+            p: 1.0
+            angle: 7 
+            translate: 0.1
+            scale: 1.0
+            shear: 0 
+          - name: RandomAffine
+            p: 1.0
+            angle: 0 
+            translate: 0.2
+            scale: 1.0
+            shear: 0 
+          - name: RandomAffine
+            p: 1.0
+            angle: 15 
+            translate: 0
+            scale: 1.0
+            shear: 0 
+          nshots: 5
+          trajectory: interleaved
+          p: 1.0
+VERSION: 1
