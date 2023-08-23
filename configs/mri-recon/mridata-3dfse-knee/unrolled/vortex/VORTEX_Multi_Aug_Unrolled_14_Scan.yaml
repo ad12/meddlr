@@ -49,4 +49,5 @@ MODEL:
           nshots: 5
           trajectory: interleaved
           p: 1.0
+    LOSS_NAME: k_l1
 VERSION: 1
