@@ -60,6 +60,7 @@ Projects that use the Meddlr library should extend the default config in their o
    def add_new_fields(cfg):
       cfg.NEW_FIELD = 0
       cfg.NEW_FIELD_STR = "default"
+      return cfg
    
    cfg = get_cfg()
    cfg = add_new_fields(cfg)
