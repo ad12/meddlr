@@ -135,7 +135,7 @@ class GeneralizedUnrolledCNN(nn.Module):
             "pred": preds,
             "target": targets,
             "zf": zfs,
-            "_all_images": lambda zf, pred, target: [zf, pred, target],
+            "_all_images": lambda zf, pred, target: torch.cat([zf, pred, target], dim=2),
             "images": lambda _all_images: cplx.abs(_all_images),
             "phases": lambda _all_images: cplx.angle(_all_images),
             "masks": lambda kspace: cplx.get_mask(kspace),
@@ -143,10 +143,12 @@ class GeneralizedUnrolledCNN(nn.Module):
         }
         if dc_mask is not None:
             # Take the mask for the first coil, it should be the same for all coils.
-            images["dc_mask"] = dc_mask
+            images["dc_mask"] = dc_mask[:, :, :, 0]
 
-        channels = [f"echo{i}" for i in range(preds.shape[-1])] if preds.shape[-1] > 1 else None
-        imgs_to_write = draw_reconstructions(channels=channels, **images)
+        # channels = [f"echo{i}" for i in range(preds.shape[-1])] if preds.shape[-1] > 1 else None
+        nchannels = preds.shape[-1]
+        imgs_to_write = draw_reconstructions(nchannels=nchannels, **images)
+
         for name, data in imgs_to_write.items():
             storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
 

@@ -114,6 +114,7 @@ class VortexModel(nn.Module):
     def visualize_aug_training(
         self, kspace, kspace_aug, preds, preds_base, target=None, dc_mask=None
     ):
+
         """Visualize training of augmented data.
 
         Args:
@@ -122,6 +123,7 @@ class VortexModel(nn.Module):
             preds: Reconstruction of augmented kspace. Shape: NxHxWx2.
             preds_base: Reconstruction of base kspace. Shape: NxHxWx2.
         """
+        # TODO: fix this
         storage = get_event_storage()
 
         with torch.no_grad():

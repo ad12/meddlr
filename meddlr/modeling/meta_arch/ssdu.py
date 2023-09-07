@@ -146,6 +146,8 @@ class SSDUModel(nn.Module):
         images = draw_reconstructions(
             ordering="HW", nchannels=images_dict["kspace"][0].shape[-1], **images_dict
         )
+        # FIXME: hacky way of handling masks
+        images = {k: v.permute(2, 0, 1) if v.shape[-1] == 1 else v for k, v in images.items()}
         for name, data in images.items():
             storage.put_image("ssdu/{}".format(name), data.cpu().numpy(), data_format="CHW")
 
@@ -255,7 +257,12 @@ class SSDUModel(nn.Module):
                     base_image = A(kspace[0:1], adjoint=True)
                     self.visualize(
                         {
-                            "masks": [orig_mask[0], train_mask[0], loss_mask[0]],
+                            # "masks": [orig_mask[0], train_mask[0], loss_mask[0]],
+                            "masks": [
+                                orig_mask[0, :, :, 0],
+                                train_mask[0, :, :, 0],
+                                loss_mask[0, :, :, 0],
+                            ],
                             # dimension 3 is the coil dimension.
                             "kspace": [
                                 kspace[0, :, :, 0:1],
