@@ -148,6 +148,10 @@ class GeneralizedUnrolledCNN(nn.Module):
         # channels = [f"echo{i}" for i in range(preds.shape[-1])] if preds.shape[-1] > 1 else None
         nchannels = preds.shape[-1]
         imgs_to_write = draw_reconstructions(nchannels=nchannels, **images)
+        # FIXME: hacky way of handling masks
+        imgs_to_write = {
+            k: v.permute(2, 0, 1) if v.shape[-1] == 1 else v for k, v in imgs_to_write.items()
+        }
 
         for name, data in imgs_to_write.items():
             storage.put_image("train/{}".format(name), data.numpy(), data_format="CHW")
