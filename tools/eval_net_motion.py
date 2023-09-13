@@ -19,8 +19,6 @@ import meddlr.ops.complex as cplx
 from meddlr.checkpoint import Checkpointer
 from meddlr.config import get_cfg
 from meddlr.data.build import build_recon_val_loader
-from meddlr.data.transforms import transform as T
-from meddlr.data.transforms.subsample import build_mask_func
 from meddlr.engine import DefaultTrainer, default_argument_parser, default_setup
 from meddlr.evaluation import DatasetEvaluators, ReconEvaluator, inference_on_dataset
 from meddlr.evaluation.testing import check_consistency, find_weights
@@ -60,12 +58,12 @@ def setup(args):
         opts = opts[1:]
     cfg.merge_from_list(opts)
     cfg.freeze()
-    default_setup(cfg, args, save_cfg=args.save_cfg)
+    default_setup(cfg, args, save_cfg=False)
 
     # Setup logger for test results
     global logger
-    # dirname = "test_results"
-    logger = setup_logger(os.path.join(cfg.OUTPUT_DIR, args.test_folder), name=_FILE_NAME)
+    dirname = "test_results"
+    logger = setup_logger(os.path.join(cfg.OUTPUT_DIR, dirname), name=_FILE_NAME)
 
     logger.info(f"Command Line Args: {args}")
     return cfg
@@ -189,20 +187,17 @@ def update_metrics(metrics_new: pd.DataFrame, metrics_old: pd.DataFrame, on: Seq
 @torch.no_grad()
 def eval(cfg, args, model, weights_basename, criterion, best_value):
     zero_filled = args.zero_filled
-
-    mri_dim = args.mri_dim
     angle = args.angle
     translation = args.translation
     nshots = args.nshots
-    padlike = args.pad_like.lower()
     trajectory = args.trajectory.lower()
 
     noise_arg = args.noise.lower()
     motion_arg = args.motion.lower()
+
     include_noise = noise_arg != "false"
     include_motion = motion_arg != "false"
     noise_sweep_vals = args.sweep_vals
-    motion_sweep_vals = args.sweep_vals_motion
     skip_rescale = args.skip_rescale
     overwrite = args.overwrite
     save_scans = args.save_scans or "save_scans" in args.ops
@@ -212,55 +207,12 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     # if use_wandb:
     #     run = init_wandb_run(cfg, resume=True, job_type="eval", use_api=True)
 
-    data_transform = None
-
-    if not (
-        mri_dim is None
-        and angle is None
-        and translation is None
-        and nshots is None
-        and trajectory == "none"
-        and padlike == "none"
-    ):
-        transform_mri_dim = 2
-        transform_angle = 0
-        transform_translation = 0
-        transform_nshots = 0
-        transform_trajectory = 0
-        transform_padlike = "none"
-        if mri_dim is not None:
-            transform_mri_dim = mri_dim
-        if angle is not None:
-            transform_angle = (-angle, angle)
-        if translation is not None:
-            transform_translation = (translation, translation)
-        if nshots is not None:
-            transform_nshots = nshots
-        if trajectory != "none":
-            transform_trajectory = trajectory
-        if padlike != "none":
-            transform_padlike = padlike
-        mask_func = build_mask_func(cfg.AUG_TRAIN)
-        data_transform = T.MotionDataTransform(
-            cfg,
-            mask_func,
-            nshots=transform_nshots,
-            is_test=True,
-            add_noise=include_noise,
-            add_motion=include_motion != "false",
-            mri_dim=transform_mri_dim,
-            angle=transform_angle,
-            translation=transform_translation,
-            pad_like=transform_padlike,
-            trajectory=transform_trajectory,
-        )
-
     device = cfg.MODEL.DEVICE
     model = model.to(device)
     model = model.eval()
 
     # Get and load metrics file
-    output_dir = os.path.join(cfg.OUTPUT_DIR, args.test_folder)
+    output_dir = os.path.join(cfg.OUTPUT_DIR, "test_results")
     metrics_file = os.path.join(output_dir, args.metrics_file)
     if not overwrite and os.path.isfile(metrics_file):
         metrics = pd.read_csv(metrics_file, index_col=0)
@@ -280,14 +232,10 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
     else:
         noise_vals = [0]
 
-    if include_motion:
-        motion_vals = [0] + motion_sweep_vals if motion_arg == "sweep" else [0]
-        motion_vals = sorted(set(motion_vals))
-    else:
-        motion_vals = [0]
-
     values = itertools.product(
-        cfg.DATASETS.TEST, cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS, noise_vals, motion_vals
+        cfg.DATASETS.TEST,
+        cfg.AUG_TEST.UNDERSAMPLE.ACCELERATIONS,
+        noise_vals,
     )
     values = list(values)
     all_results = []
@@ -301,19 +249,13 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             )
         default_metrics.extend(args.extra_metrics)
 
-    for exp_idx, (dataset_name, acc, noise_level, motion_level) in enumerate(values):
+    for exp_idx, (dataset_name, acc, noise_level) in enumerate(values):
         # Check if the current configuration already has metrics computed
         # If so, dont recompute
         params = {
             "Acceleration": acc,
             "dataset": dataset_name,
             "Noise Level": noise_level,
-            "Motion Level": motion_level,
-            "Angle": str(angle),
-            "Translation": str(translation),
-            "Trajectory": trajectory,
-            "n-shots": str(nshots),
-            "mri_dim": str(mri_dim),
             "weights": weights_basename,
             "rescaled": not skip_rescale,
         }
@@ -349,7 +291,6 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         s_cfg = cfg.clone()
         s_cfg.defrost()
         s_cfg.AUG_TRAIN.UNDERSAMPLE.ACCELERATIONS = (acc,)
-        s_cfg.MODEL.CONSISTENCY.AUG.MOTION.RANGE = motion_level
         s_cfg.MODEL.CONSISTENCY.AUG.NOISE.STD_DEV = (noise_level,)
         s_cfg.freeze()
 
@@ -359,8 +300,11 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
             dataset_name,
             as_test=True,
             add_noise=noise_level > 0,
-            add_motion=(include_motion and data_transform is not None),
-            data_transform=data_transform,
+            add_motion=include_motion != "false",
+            angle=angle,
+            translation=translation,
+            nshots=nshots,
+            trajectory=trajectory,
         )
 
         # Build evaluators. Only save reconstructions for last scan.
@@ -368,8 +312,8 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         exp_output_dir = os.path.join(output_dir, dataset_name, params_str)
         evaluators = [
             ReconEvaluator(
+                dataset_name,
                 s_cfg,
-                dataset_name=dataset_name,
                 group_by_scan=group_by_scan,
                 skip_rescale=skip_rescale,
                 save_scans=save_scans,
@@ -382,10 +326,10 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
         if zero_filled:
             zf_output_dir = os.path.join(output_dir, dataset_name, "ZeroFilled-" + params_str)
 
-            evaluators = [
+            evaluators.append(
                 ZFReconEvaluator(
+                    dataset_name,
                     s_cfg,
-                    dataset_name=dataset_name,
                     group_by_scan=group_by_scan,
                     skip_rescale=skip_rescale,
                     save_scans=save_scans,
@@ -393,7 +337,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
                     metrics=eval_metrics if compute_metrics else False,
                     prefix=None,
                 )
-            ]
+            )
         evaluators = DatasetEvaluators(evaluators, as_list=True)
 
         results = inference_on_dataset(model, dataloader, evaluators)
@@ -403,7 +347,7 @@ def eval(cfg, args, model, weights_basename, criterion, best_value):
 
         results[0]["Method"] = s_cfg.MODEL.META_ARCHITECTURE
         if zero_filled:
-            results[0]["Method"] = "Zero-Filled"
+            results[1]["Method"] = "Zero-Filled"
         scan_results = pd.concat(results, ignore_index=True)
 
         if existing_metrics is not None and len(existing_metrics) > 0:
@@ -522,47 +466,35 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--angle",
-        default=None,
+        default=0,
         type=float,
-        help="How much rotation angle should be used for motion corruption of the dataset",
+        help=("How much rotation angle should be used for motion corruption " "of the dataset"),
     )
-
     parser.add_argument(
         "--translation",
-        default=None,
+        default=0,
         type=float,
-        help="How much translation should be used for motion corruption of the dataset",
+        help=("How much translation should be used for motion " "corruption of the dataset"),
     )
     parser.add_argument(
         "--nshots",
-        default=None,
+        default=0,
         type=int,
-        help="How many shots should be used for motion corruption of the dataset.",
+        help=("How many shots should be used for motion corruption " "of the dataset."),
     )
-
     parser.add_argument(
         "--trajectory",
-        default="None",
-        choices=("None", "interleaved", "blocked"),
-        help= "Chooses between interleaved or blocked shots for motion corruption of the dataset",
+        default="blocked",
+        choice=("interleaved", "blocked"),
+        help=(
+            "Chooses between interleaved or blocked shots for motion " "corruption of the dataset"
+        ),
     )
-
-    parser.add_argument("--mri_dim", default=None, type=int, help="Selects dimensionality number")
-
-    parser.add_argument(
-        "--pad_like",
-        default="None",
-        choices=("None", "MRAugment"),
-        help=("Specify pad like argument to Random Affine transformation"),
-    )
-
-    # End of Arguments for 2D Motion Corruption of the Dataset
-
     parser.add_argument(
         "--motion",
         default="false",
-        choices=("false", "standard", "sweep"),
-        help="Type of motion evaluation",
+        choices=("false", "true"),
+        help="Motion corruption included or not",
     )
     parser.add_argument(
         "--sweep-vals",
@@ -572,13 +504,7 @@ if __name__ == "__main__":
         help="args to sweep for noise",
     )
     parser.add_argument("--extra-metrics", nargs="*", help="Extra metrics for testing")
-    parser.add_argument(
-        "--sweep-vals-motion",
-        default=[0, 0.2, 0.4],
-        nargs="*",
-        type=float,
-        help="args to sweep for motion",
-    )
+
     parser.add_argument(
         "--iter-limit",
         default=None,
@@ -604,16 +530,6 @@ if __name__ == "__main__":
         default=["metrics"],
         choices=["metrics", "save_scans"],
         help="Operations to run. 'metrics': Compute metrics. 'save_scans': Save Scans",
-    )
-    parser.add_argument(
-        "--save_cfg", default=False, action="store_true", help="Save the config file"
-    )
-    parser.add_argument(
-        "--test-folder",
-        "--test_folder",
-        type=str,
-        default="test_results",
-        help="The folder to store test results",
     )
 
     args = parser.parse_args()

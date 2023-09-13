@@ -1,0 +1,41 @@
+# Configuration for DL-CS Paper
+_BASE_: "vortex_rm_template.yaml"
+MODEL:
+  DEVICE: cuda
+  META_ARCHITECTURE: VortexModel
+  A2R:
+    META_ARCHITECTURE: UnetModel 
+    USE_SUPERVISED_CONSISTENCY: false  # TUNE
+  UNROLLED:
+    NUM_UNROLLED_STEPS: 8
+    NUM_RESBLOCKS: 2
+    NUM_FEATURES: 128
+    DROPOUT: 0.
+    CONV_BLOCK:
+      ACTIVATION: "relu"
+      NORM: "none"
+      ORDER: ("act", "conv")
+  CONSISTENCY:
+    AUG:
+      MRI_RECON:
+        AUG_SENSITIVITY_MAPS: true
+        SCHEDULER_P:
+          IGNORE: false
+        TRANSFORMS:
+        - name: RandomNoise
+          p: 1.0
+          std_devs:
+          - 0.2
+          - 0.5
+          use_mask: true
+    LOSS_NAME: l1
+    LOSS_WEIGHT: 0.1
+    USE_CONSISTENCY: true
+SOLVER:
+  TRAIN_BATCH_SIZE: 16
+  TEST_BATCH_SIZE: 16
+  BASE_LR: 1e-3
+OUTPUT_DIR: "results://mri-recon/mridata-3dfse-knee/vortex_rm_unet"
+DESCRIPTION:
+  EXP_NAME: "UNET_VORTEX_RM"
+

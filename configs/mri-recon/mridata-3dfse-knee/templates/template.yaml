@@ -1,0 +1,45 @@
+# Shared/default properties between different configs for the 3d fse mridata knee dataset.
+DESCRIPTION:
+  # You want to log in the ss_recon team
+  ENTITY_NAME: 'ss_recon'
+  # You want to log in the vortex_rm project
+  PROJECT_NAME: 'vortex_rm'
+AUG_TRAIN:
+  UNDERSAMPLE:
+    # Use 16x acceleration at train time.
+    ACCELERATIONS: (16,)
+    CALIBRATION_SIZE: 20
+    CENTER_FRACTIONS: []
+    NAME: PoissonDiskMaskFunc
+AUG_TEST:
+  UNDERSAMPLE:
+    # Use 16x acceleration at validation & test time.
+    ACCELERATIONS: (16,)
+MODEL:
+  DEVICE: cuda
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
+DATALOADER:
+  DROP_LAST: True
+  NUM_WORKERS: 8
+TIME_SCALE: "iter"  # Positive values are in iterations
+SOLVER:
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: ""
+  # Checkpointing frequency
+  CHECKPOINT_PERIOD: 5000
+  # Number of iterations to train for.
+  MAX_ITER: 80000
+TEST:
+  # Validation frequency
+  EVAL_PERIOD: 5000
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim (Wang)")
+SEED: 1000
+VIS_PERIOD: 100  # save images every 100 iterations
+VERSION: 1

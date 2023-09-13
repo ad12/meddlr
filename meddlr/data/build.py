@@ -2,7 +2,7 @@ import itertools
 import logging
 import random
 from collections import defaultdict
-from typing import Dict, Mapping, Sequence, Tuple, Union
+from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from torch.utils.data import DataLoader
@@ -258,8 +258,16 @@ def build_recon_val_loader(
     as_test: bool = False,
     add_noise: bool = False,
     add_motion: bool = False,
+    data_transform: Optional[Callable] = None,
     dataset_type=None,
 ):
+    mask_func = build_mask_func(cfg.AUG_TRAIN)
+
+    if data_transform is None:
+        data_transform = T.DataTransform(
+            cfg, mask_func, is_test=as_test, add_noise=add_noise, add_motion=add_motion
+        )
+
     if (
         cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL > 0
         and cfg.DATALOADER.SUBSAMPLE_TRAIN.NUM_VAL_BY_GROUP
@@ -284,9 +292,6 @@ def build_recon_val_loader(
         dataset_type = _get_default_dataset_type(dataset_name)
 
     mask_func = build_mask_func(cfg.AUG_TRAIN)
-    data_transform = T.DataTransform(
-        cfg, mask_func, is_test=as_test, add_noise=add_noise, add_motion=add_motion
-    )
 
     val_data = _build_dataset(
         cfg, dataset_dicts, data_transform, is_eval=True, dataset_type=dataset_type

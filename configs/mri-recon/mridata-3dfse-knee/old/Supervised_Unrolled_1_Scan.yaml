@@ -1,0 +1,174 @@
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS:
+    - 16
+AUG_TRAIN:
+  MOTION_P: 0.2
+  MRI_RECON:
+    AUG_SENSITIVITY_MAPS: true
+    SCHEDULER_P:
+      IGNORE: false
+    TRANSFORMS: []
+  NOISE_P: 0.2
+  UNDERSAMPLE:
+    ACCELERATIONS:
+    - 16
+    CALIBRATION_SIZE: 20
+    CENTER_FRACTIONS: []
+    MAX_ATTEMPTS: 30
+    NAME: PoissonDiskMaskFunc
+  USE_MOTION: false
+  USE_NOISE: false
+CUDNN_BENCHMARK: false
+# DATALOADER has only 1 supervised scan
+DATALOADER:
+  ALT_SAMPLER:
+    PERIOD_SUPERVISED: 1
+    PERIOD_UNSUPERVISED: 1
+  DATA_KEYS: []
+  DROP_LAST: true
+  FILTER:
+    BY: []
+  GROUP_SAMPLER:
+    AS_BATCH_SAMPLER: false
+    BATCH_BY: []
+  NUM_WORKERS: 8
+  PREFETCH_FACTOR: 2
+  SAMPLER_TRAIN: ''
+  SUBSAMPLE_TRAIN:
+    NUM_TOTAL: 1
+    NUM_TOTAL_BY_GROUP: []
+    NUM_UNDERSAMPLED: 0
+    NUM_VAL: -1
+    NUM_VAL_BY_GROUP: []
+    SEED: 1000
+DATASETS:
+  TEST:
+  - mridata_knee_2019_test
+  TRAIN:
+  - mridata_knee_2019_train
+  VAL:
+  - mridata_knee_2019_val
+DESCRIPTION:
+  BRIEF: Aug2Recon 16x mridata baseline
+  ENTITY_NAME: ''
+  EXP_NAME: vortex/mridata_knee_3dfse/Supervised
+  PROJECT_NAME: 'vortex_rm'
+  TAGS:
+  - baseline
+  - supervised
+  - 16x
+  - mridata_knee_3dfse
+# For no motion aug, A2R and Consistency was removed.
+# For Unrolled, made META_ARCHITECTURE GeneralizedUnrolledCNN
+MODEL:
+  CS:
+    MAX_ITER: 200
+    REGULARIZATION: 0.005
+  DENOISING:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    NOISE:
+      STD_DEV: *id001
+      USE_FULLY_SAMPLED_TARGET: true
+      USE_FULLY_SAMPLED_TARGET_EVAL: null
+  DEVICE: cpu
+  M2R:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    USE_SUPERVISED_CONSISTENCY: false
+  META_ARCHITECTURE: GeneralizedUnrolledCNN
+  N2R:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    USE_SUPERVISED_CONSISTENCY: false
+  NM2R:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    USE_SUPERVISED_CONSISTENCY: false
+  NORMALIZER:
+    KEYWORDS: []
+    NAME: TopMagnitudeNormalizer
+  RECON_LOSS:
+    NAME: l1
+    RENORMALIZE_DATA: false
+  SEG:
+    ACTIVATION: sigmoid
+    CLASSES: []
+    INCLUDE_BACKGROUND: false
+  SSDU:
+    MASKER:
+      PARAMS: {}
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+  UNET:
+    BLOCK_ORDER:
+    - conv
+    - relu
+    - conv
+    - relu
+    - batchnorm
+    - dropout
+    CHANNELS: 32
+    DROPOUT: 0.0
+    IN_CHANNELS: 2
+    NORMALIZE: false
+    NUM_POOL_LAYERS: 4
+    OUT_CHANNELS: 2
+  UNROLLED:
+    BLOCK_ARCHITECTURE: ResNet
+    CONV_BLOCK:
+      ACTIVATION: relu
+      NORM: none
+      NORM_AFFINE: false
+      ORDER:
+      - norm
+      - act
+      - drop
+      - conv
+    DROPOUT: 0.0
+    FIX_STEP_SIZE: false
+    KERNEL_SIZE:
+    - 3
+    NUM_EMAPS: 1
+    NUM_FEATURES: 256
+    NUM_RESBLOCKS: 2
+    NUM_UNROLLED_STEPS: 5
+    PADDING: ''
+    SHARE_WEIGHTS: false
+  WEIGHTS: '' 
+OUTPUT_DIR: results://vortex/mridata_knee_3dfse/Supervised
+SEED: 1000
+SOLVER:
+  BASE_LR: 0.001
+  BIAS_LR_FACTOR: 1.0
+  CHECKPOINT_PERIOD: -10
+  GAMMA: 0.1
+  GRAD_ACCUM_ITERS: 1
+  LR_SCHEDULER_NAME: ''
+  MAX_ITER: -200
+  MOMENTUM: 0.9
+  OPTIMIZER: Adam
+  STEPS: []
+  TEST_BATCH_SIZE: 24
+  TRAIN_BATCH_SIZE: 24
+  WARMUP_FACTOR: 0.001
+  WARMUP_ITERS: 1000
+  WARMUP_METHOD: linear
+  WEIGHT_DECAY: 0.0001
+  WEIGHT_DECAY_BIAS: 0.0001
+  WEIGHT_DECAY_NORM: 0.0
+TEST:
+  EVAL_PERIOD: -10
+  EXPECTED_RESULTS: []
+  FLUSH_PERIOD: 0
+  VAL_AS_TEST: true
+  VAL_METRICS:
+    RECON:
+    - psnr
+    - psnr_scan
+    - psnr_mag
+    - psnr_mag_scan
+    - nrmse
+    - nrmse_scan
+    - nrmse_mag
+    - nrmse_mag_scan
+    - ssim (Wang)
+TIME_SCALE: iter
+VERSION: 1
+VIS_PERIOD: 400

@@ -1,0 +1,39 @@
+# Shared/default properties between different configs for the 3d fse mridata knee dataset.
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+AUG_TRAIN:
+  UNDERSAMPLE:
+    ACCELERATIONS: (16,)
+    CALIBRATION_SIZE: 20
+    CENTER_FRACTIONS: []
+    NAME: PoissonDiskMaskFunc
+MODEL:
+  RECON_LOSS:
+    NAME: "l1"
+    RENORMALIZE_DATA: False
+DATASETS:
+  TRAIN: ("mridata_knee_2019_train",)
+  VAL: ("mridata_knee_2019_val",)
+  TEST: ("mridata_knee_2019_test",)
+DATALOADER:
+  DROP_LAST: True
+  NUM_WORKERS: 8
+  SUBSAMPLE_TRAIN:
+    NUM_UNDERSAMPLED: 13
+SOLVER:
+  # Set to step counts, not epoch counts
+  OPTIMIZER: "Adam"
+  LR_SCHEDULER_NAME: ""
+  CHECKPOINT_PERIOD: -5000  # Checkpoint every 10 epochs
+  MAX_ITER: -8000  # Max number of epochs to train for
+TEST:
+  EVAL_PERIOD: -5000  # Run validation every 10 epochs
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim (Wang)")
+TIME_SCALE: "epoch"
+SEED: 1000
+VIS_PERIOD: -400  # save images every 400 iterations
+VERSION: 1
+DESCRIPTION:
+  PROJECT_NAME: "vortex_rm"
