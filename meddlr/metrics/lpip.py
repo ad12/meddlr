@@ -36,10 +36,7 @@ class LPIPS(Metric):
         pretrained: bool = True,
         channel_names: Sequence[str] = None,
         reduction="none",
-        compute_on_step: bool = False,
-        dist_sync_on_step: bool = False,
-        process_group: bool = None,
-        dist_sync_fn: bool = None,
+        **kwargs,
     ):
         """
         Args:
@@ -72,10 +69,7 @@ class LPIPS(Metric):
             channel_names=channel_names,
             units="",
             reduction=reduction,
-            compute_on_step=compute_on_step,
-            dist_sync_on_step=dist_sync_on_step,
-            process_group=process_group,
-            dist_sync_fn=dist_sync_fn,
+            **kwargs,
         )
 
         valid_net_type = ("vgg", "alex", "squeeze")
@@ -92,7 +86,6 @@ class LPIPS(Metric):
         self.mode = mode
 
     def func(self, preds: torch.Tensor, targets: torch.Tensor):
-
         if self.mode == "grayscale":
             loss_shape = (targets.shape[0], targets.shape[1])
         elif self.mode == "rgb":
