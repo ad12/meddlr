@@ -30,3 +30,4 @@ jupyter-sphinx
 sphinx-panels
 nbsphinx
 sphinx-togglebutton
+werkzeug>=3.1.4 # not directly required, pinned by Snyk to avoid a vulnerability
