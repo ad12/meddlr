@@ -30,3 +30,4 @@ jupyter-sphinx
 sphinx-panels
 nbsphinx
 sphinx-togglebutton
+pyasn1>=0.6.2 # not directly required, pinned by Snyk to avoid a vulnerability
